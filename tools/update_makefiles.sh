@@ -96,17 +96,32 @@ extract_dependencies() {
 	echo "${1}" | grep -Eo "\b${2}\b.*$"
 }
 
+if test ${#} -ne 1; then
+	echo "Usage: ${0} path/to/kea/repo"
+	exit
+fi
+
 # folder containing full repo
 REPO_FOLDER=${1}
 
 # filter all Makefile.am files
 MAKEFILES_LIST=$(find ${REPO_FOLDER} | grep "Makefile\.am" | grep "src\/" | sort)
 
+if test -z ${MAKEFILES_LIST}; then
+	echo "invalid repo path: no Makefile.am file found"
+	exit
+fi
+
 echo "list of Makefile.am:"
 echo "${MAKEFILES_LIST}"
 
 # base Makefile.am for all sources is in src/lib/Makefile.am
 BASE_MAKEFILE=$(echo "${MAKEFILES_LIST}" | grep -o "src\/lib\/Makefile.am")
+
+if test -z ${BASE_MAKEFILE}; then
+	echo "invalid repo path: no src/lib/Makefile.am file found"
+	exit
+fi
 
 echo "base Makefile.am:"
 echo "${BASE_MAKEFILE}"
