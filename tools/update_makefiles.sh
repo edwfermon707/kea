@@ -116,7 +116,7 @@ echo "list of Makefile.am:"
 echo "${MAKEFILES_LIST}"
 
 # base Makefile.am for all sources is in src/lib/Makefile.am
-BASE_MAKEFILE=$(echo "${MAKEFILES_LIST}" | grep -o "src\/lib\/Makefile.am")
+BASE_MAKEFILE=$(echo "${MAKEFILES_LIST}" | grep "src\/lib\/Makefile.am")
 
 if test -z ${BASE_MAKEFILE}; then
 	echo "invalid repo path: no src/lib/Makefile.am file found"
