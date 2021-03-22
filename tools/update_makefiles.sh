@@ -109,6 +109,75 @@ extract_computed_dependencies() {
 	fi
 }
 
+# compute artifact dependencies
+#
+# param ${1} artifact name
+# param ${2} artifact path
+compute_dependencies() {
+	ARTIFACT="${1}"
+	ARTIFACT_PATH="${2}"
+	# detect dependencies errors by searching for dependencies that are compiled after the current library and can generate missing symbols
+	NON_RECURSIVE_BASE_DEPENDENCIES=
+	for j in ${BASE_DEPENDENCIES}; do
+		# only add the dependency if it is in the valid dependencies list to prevent infinite recursion and log the error otherwise
+		if test $(echo "${VALID_LIST}" | grep "\b${j}\b" | wc -l) -eq 0; then
+			# search for external header and source files
+			INVALID_EXTERNAL_DEPENDENCIES=$(extract_non_include_files "${ARTIFACT}" "${j}")
+			# filter header only external files
+			EXTERNAL_HEADERS=$(echo "${INVALID_EXTERNAL_DEPENDENCIES}" | grep "HEADERS:" | cut -d ":" -f 2)
+			# filter header and source external files
+			EXTERNAL_ALL=$(echo "${INVALID_EXTERNAL_DEPENDENCIES}" | grep "HEADERS_AND_SOURCES:" | cut -d ":" -f 2)
+			echo "### ERROR ### dependencies ERROR for ${ARTIFACT_PATH}/${ARTIFACT} on ${j} with:"
+			# if there are any header only external files
+			if test $(echo "${EXTERNAL_ALL}" | wc -w) -ne 0; then
+				echo "non header files: ${EXTERNAL_ALL}"
+			fi
+			# if there are any header and source external files
+			if test $(echo "${EXTERNAL_HEADERS}" | wc -w) -ne 0; then
+				echo "only header files: ${EXTERNAL_HEADERS}"
+			fi
+		else
+			# don't add current library to it's dependencies list
+			if test ${j} != ${ARTIFACT}; then
+				NON_RECURSIVE_BASE_DEPENDENCIES="${NON_RECURSIVE_BASE_DEPENDENCIES} ${j}"
+			fi
+		fi
+	done
+	# all found dependencies in the reverse compilation order
+	BASE_DEPENDENCIES=$(echo "${BASE_DEPENDENCIES}" | xargs)
+	# all found and valid dependencies in the reverse compilation order
+	NON_RECURSIVE_BASE_DEPENDENCIES=$(echo "${NON_RECURSIVE_BASE_DEPENDENCIES}" | xargs)
+	echo "${ARTIFACT_PATH}/${ARTIFACT} base dependencies:"
+	echo "${BASE_DEPENDENCIES}"
+	echo "${ARTIFACT_PATH}/${ARTIFACT} non recursive dependencies:"
+	echo "${NON_RECURSIVE_BASE_DEPENDENCIES}"
+	# minimum set of dependencies for current library
+	DEPENDENCIES=
+	for j in ${NON_RECURSIVE_BASE_DEPENDENCIES}; do
+		NEW_DEPENDENCIES=$(extract_computed_dependencies "${j}")
+		if test "${NEW_DEPENDENCIES}" == "NONE"; then
+			echo "### ERROR ### computed dependency not found for ${j}"
+		else
+			DEPENDENCIES="${NEW_DEPENDENCIES} ${DEPENDENCIES}"
+		fi
+	done
+	DEPENDENCIES=$(echo "${DEPENDENCIES} ${NON_RECURSIVE_BASE_DEPENDENCIES}" | tr -s " " "\n" | sort | uniq | xargs)
+	echo "${ARTIFACT_PATH}/${ARTIFACT} dependencies:"
+	echo "${DEPENDENCIES}"
+	# order dependencies in the order of compilation
+	SORTED_DEPENDENCIES=
+	for j in ${LIBRARIES_LIST}; do
+		if test $(echo "${DEPENDENCIES}" | grep "\b${j}\b" | wc -l) -ne 0; then
+			SORTED_DEPENDENCIES="${j} ${SORTED_DEPENDENCIES}"
+		fi
+	done
+	echo "${ARTIFACT_PATH}/${ARTIFACT} sorted dependencies:"
+	echo "${SORTED_DEPENDENCIES}"
+	# all valid dependencies that can be added by each dependency library
+	echo "${ARTIFACT_PATH}/${ARTIFACT} valid dependencies:"
+	echo "${VALID_LIST}"
+}
+
 # if wrong number of parameters print usage
 if test ${#} -ne 1; then
 	echo "Usage: ${0} path/to/kea/repo"
@@ -178,72 +247,11 @@ for i in ${LIBRARIES_LIST}; do
 	# generate current library Makefile.am path
 	BASE_LIBRARIES_MAKEFILES="${BASE_LIBRARIES_MAKEFILES} src/lib/${i}/Makefile.am"
 	# extract dependencies found in the library folder
-	BASE_DEPENDENCIES=$(extract_includes "src/lib/${i}/Makefile.am" "${i}")
-	# generate the list of valid dependencies for the current librabry (that compilation order into account)
+	BASE_DEPENDENCIES=$(extract_includes "src/lib/${i}/Makefile.am")
+	# generate the list of valid dependencies for the current library (take compilation order into account)
 	VALID_LIST=$(extract_dependencies "${REVERSE_LIBRARIES_LIST}" "${i}")
-	# detect dependencies errors by searching for dependencies that are compiled after the current library and can generate missing symbols
-	NON_RECURSIVE_BASE_DEPENDENCIES=
-	for j in ${BASE_DEPENDENCIES}; do
-		# only add the dependency if it is in the valid dependencies list to prevent infinite recursion and log the error otherwise
-		if test $(echo "${VALID_LIST}" | grep "\b${j}\b" | wc -l) -eq 0; then
-			# search for external header and source files
-			INVALID_EXTERNAL_DEPENDENCIES=$(extract_non_include_files "${i}" "${j}")
-			# filter header only external files
-			EXTERNAL_HEADERS=$(echo "${INVALID_EXTERNAL_DEPENDENCIES}" | grep "HEADERS:" | cut -d ":" -f 2)
-			# filter header and source external files
-			EXTERNAL_ALL=$(echo "${INVALID_EXTERNAL_DEPENDENCIES}" | grep "HEADERS_AND_SOURCES:" | cut -d ":" -f 2)
-			echo "### ERROR ### dependencies ERROR for ${i} on ${j} with:"
-			# if there are any header only external files
-			if test $(echo "${EXTERNAL_ALL}" | wc -w) -ne 0; then
-				echo "non header files: ${EXTERNAL_ALL}"
-			fi
-			# if there are any header and source external files
-			if test $(echo "${EXTERNAL_HEADERS}" | wc -w) -ne 0; then
-				echo "only header files: ${EXTERNAL_HEADERS}"
-			fi
-		else
-			# don't add current library to it's dependencies list
-			if test ${j} != ${i}; then
-				NON_RECURSIVE_BASE_DEPENDENCIES="${NON_RECURSIVE_BASE_DEPENDENCIES} ${j}"
-			fi
-		fi
-	done
-	# all found dependencies in the reverse compilation order
-	BASE_DEPENDENCIES=$(echo "${BASE_DEPENDENCIES}" | xargs)
-	# all found and valid dependencies in the reverse compilation order
-	NON_RECURSIVE_BASE_DEPENDENCIES=$(echo "${NON_RECURSIVE_BASE_DEPENDENCIES}" | xargs)
-	echo "${i} base dependencies:"
-	echo "${BASE_DEPENDENCIES}"
-	echo "${i} non recursive dependencies:"
-	echo "${NON_RECURSIVE_BASE_DEPENDENCIES}"
-	# minimum set of dependencies for current library
-	DEPENDENCIES=
-	for j in ${NON_RECURSIVE_BASE_DEPENDENCIES}; do
-		NEW_DEPENDENCIES=$(extract_computed_dependencies "${j}")
-		if test "${NEW_DEPENDENCIES}" == "NONE"; then
-			echo "### ERROR ### computed dependency not found for ${j}"
-		else
-			DEPENDENCIES="${NEW_DEPENDENCIES} ${DEPENDENCIES}"
-		fi
-	done
-	DEPENDENCIES=$(echo "${DEPENDENCIES} ${NON_RECURSIVE_BASE_DEPENDENCIES}" | tr -s " " "\n" | sort | uniq | xargs)
-	echo "${i} dependencies:"
-	echo "${DEPENDENCIES}"
-	# order dependencies in the order of compilation
-	SORTED_DEPENDENCIES=
-	for j in ${LIBRARIES_LIST}; do
-		if test $(echo "${DEPENDENCIES}" | grep "\b${j}\b" | wc -l) -ne 0; then
-			SORTED_DEPENDENCIES="${j} ${SORTED_DEPENDENCIES}"
-		fi
-	done
-	echo "${i} sorted dependencies:"
-	echo "${SORTED_DEPENDENCIES}"
-	# all valid dependencies that can be added by each dependency library
-	echo "${i} valid dependencies:"
-	echo "${VALID_LIST}"
+	compute_dependencies "${i}" "src/lib/${i}"
 	declare COMPUTED_DEPENDENCIES_${i}="${SORTED_DEPENDENCIES}"
-
-	# todo: only extent with dependencies that each dependency asks for, not all possible dependencies
 done
 
 # remove empty spaces
@@ -252,7 +260,23 @@ BASE_LIBRARIES_MAKEFILES=$(echo "${BASE_LIBRARIES_MAKEFILES}" | xargs | tr -s " 
 echo "base Makefiles.am files:"
 echo "${BASE_LIBRARIES_MAKEFILES}"
 
-# todo: continue with Makefile.am that are not in src/lib folder
+OTHER_MAKEFILES=$(echo "${MAKEFILES_LIST}" | tr -s " " "\n" | grep -v "src/lib/" | grep -v "src/share/" | grep -v "src/Makefile.am")
+# remove empty spaces
+OTHER_MAKEFILES=$(echo "${OTHER_MAKEFILES}" | xargs | tr -s " " "\n")
+
+echo "remaining Makefile.am files:"
+echo ${OTHER_MAKEFILES}
+
+for i in ${OTHER_MAKEFILES}; do
+	# extract dependencies found in the library folder
+	BASE_DEPENDENCIES=$(extract_includes "${i}")
+	# generate the list of valid dependencies for the current library (take compilation order into account)
+	VALID_LIST="${REVERSE_LIBRARIES_LIST}"
+	ARTIFACT=$(echo "${i}" | rev | cut -d "/" -f 2 | rev)
+	ARTIFACT_PATH=$(echo "${i}" | rev | cut -d "/" -f 3- | rev | sed -e "s#${REPO_FOLDER}##g")
+	compute_dependencies "${ARTIFACT}" "${ARTIFACT_PATH}"
+	declare COMPUTED_DEPENDENCIES_${ARTIFACT}="${SORTED_DEPENDENCIES}"
+done
 
 exit
 
