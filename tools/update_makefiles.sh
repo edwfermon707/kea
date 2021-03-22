@@ -171,6 +171,8 @@ FILE_LIST=$(find "${REPO_FOLDER}" 2>/dev/null | grep -v "\.git" | grep -v "\/\.l
 #echo "files:"
 #echo "${FILE_LIST}"
 
+BASE_LIBRARIES_MAKEFILES=
+
 # generate the list of dependencies for all libraries in src/lib
 for i in ${LIBRARIES_LIST}; do
 	# generate current library Makefile.am path
@@ -244,7 +246,10 @@ for i in ${LIBRARIES_LIST}; do
 	# todo: only extent with dependencies that each dependency asks for, not all possible dependencies
 done
 
-echo "base Makefiles.am:"
+# remove empty spaces
+BASE_LIBRARIES_MAKEFILES=$(echo "${BASE_LIBRARIES_MAKEFILES}" | xargs | tr -s " " "\n")
+
+echo "base Makefiles.am files:"
 echo "${BASE_LIBRARIES_MAKEFILES}"
 
 # todo: continue with Makefile.am that are not in src/lib folder
