@@ -214,7 +214,7 @@ for i in ${LIBRARIES_LIST}; do
 	echo "${BASE_DEPENDENCIES}"
 	echo "${i} non recursive dependencies:"
 	echo "${NON_RECURSIVE_BASE_DEPENDENCIES}"
-	# all valid dependencies that can be added by each dependency library
+	# minimum set of dependencies for current library
 	DEPENDENCIES=
 	for j in ${NON_RECURSIVE_BASE_DEPENDENCIES}; do
 		NEW_DEPENDENCIES=$(extract_computed_dependencies "${j}")
@@ -236,6 +236,9 @@ for i in ${LIBRARIES_LIST}; do
 	done
 	echo "${i} sorted dependencies:"
 	echo "${SORTED_DEPENDENCIES}"
+	# all valid dependencies that can be added by each dependency library
+	echo "${i} valid dependencies:"
+	echo "${VALID_LIST}"
 	declare COMPUTED_DEPENDENCIES_${i}="${SORTED_DEPENDENCIES}"
 
 	# todo: only extent with dependencies that each dependency asks for, not all possible dependencies
