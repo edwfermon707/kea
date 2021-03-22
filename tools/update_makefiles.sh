@@ -116,6 +116,11 @@ extract_computed_dependencies() {
 compute_dependencies() {
 	ARTIFACT="${1}"
 	ARTIFACT_PATH="${2}"
+	echo ""
+	echo "########################################"
+	echo "### ${ARTIFACT_PATH}/${ARTIFACT}"
+	echo "########################################"
+	echo ""
 	# detect dependencies errors by searching for dependencies that are compiled after the current library and can generate missing symbols
 	NON_RECURSIVE_BASE_DEPENDENCIES=
 	for j in ${BASE_DEPENDENCIES}; do
@@ -176,6 +181,9 @@ compute_dependencies() {
 	# all valid dependencies that can be added by each dependency library
 	echo "${ARTIFACT_PATH}/${ARTIFACT} valid dependencies:"
 	echo "${VALID_LIST}"
+	echo ""
+	echo "########################################"
+	echo ""
 }
 
 # if wrong number of parameters print usage
@@ -187,8 +195,12 @@ fi
 # folder containing full repo
 REPO_FOLDER=${1}
 
+if test $(echo -n ${REPO_FOLDER} | tail -c 1) != "/"; then
+	REPO_FOLDER="${REPO_FOLDER}/"
+fi
+
 # filter all Makefile.am files
-MAKEFILES_LIST=$(find ${REPO_FOLDER} | grep "Makefile\.am" | grep "src\/" | sort)
+MAKEFILES_LIST=$(find ${REPO_FOLDER} | grep "Makefile\.am" | sed -e "s#${REPO_FOLDER}##g" | grep "src\/" | sort)
 
 # if no Makefile.am found exit
 if test -z "${MAKEFILES_LIST}"; then
@@ -250,7 +262,7 @@ for i in ${LIBRARIES_LIST}; do
 	BASE_DEPENDENCIES=$(extract_includes "src/lib/${i}/Makefile.am")
 	# generate the list of valid dependencies for the current library (take compilation order into account)
 	VALID_LIST=$(extract_dependencies "${REVERSE_LIBRARIES_LIST}" "${i}")
-	compute_dependencies "${i}" "src/lib/${i}"
+	compute_dependencies "${i}" "src/lib"
 	declare COMPUTED_DEPENDENCIES_${i}="${SORTED_DEPENDENCIES}"
 done
 
@@ -265,15 +277,15 @@ OTHER_MAKEFILES=$(echo "${MAKEFILES_LIST}" | tr -s " " "\n" | grep -v "src/lib/"
 OTHER_MAKEFILES=$(echo "${OTHER_MAKEFILES}" | xargs | tr -s " " "\n")
 
 echo "remaining Makefile.am files:"
-echo ${OTHER_MAKEFILES}
+echo "${OTHER_MAKEFILES}"
 
 for i in ${OTHER_MAKEFILES}; do
-	# extract dependencies found in the library folder
+	# extract dependencies found in the artifact folder
 	BASE_DEPENDENCIES=$(extract_includes "${i}")
-	# generate the list of valid dependencies for the current library (take compilation order into account)
+	# generate the list of valid dependencies for the current artifact (take compilation order into account)
 	VALID_LIST="${REVERSE_LIBRARIES_LIST}"
 	ARTIFACT=$(echo "${i}" | rev | cut -d "/" -f 2 | rev)
-	ARTIFACT_PATH=$(echo "${i}" | rev | cut -d "/" -f 3- | rev | sed -e "s#${REPO_FOLDER}##g")
+	ARTIFACT_PATH=$(echo "${i}" | rev | cut -d "/" -f 3- | rev)
 	compute_dependencies "${ARTIFACT}" "${ARTIFACT_PATH}"
 	declare COMPUTED_DEPENDENCIES_${ARTIFACT}="${SORTED_DEPENDENCIES}"
 done
