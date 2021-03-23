@@ -123,6 +123,9 @@ compute_dependencies() {
 	echo "### ${ARTIFACT_PATH}/${ARTIFACT}"
 	echo "########################################"
 	echo ""
+	# all valid dependencies that can be added by each dependency library
+	echo "${ARTIFACT_PATH}/${ARTIFACT} valid dependencies:"
+	echo "${VALID_LIST}"
 	# detect dependencies errors by searching for dependencies that are compiled after the current library and can generate missing symbols
 	NON_RECURSIVE_BASE_DEPENDENCIES=
 	for j in ${BASE_DEPENDENCIES}; do
@@ -169,8 +172,6 @@ compute_dependencies() {
 		fi
 	done
 	DEPENDENCIES=$(echo "${DEPENDENCIES} ${NON_RECURSIVE_BASE_DEPENDENCIES}" | tr -s " " "\n" | sort | uniq | xargs)
-	echo "${ARTIFACT_PATH}/${ARTIFACT} dependencies:"
-	echo "${DEPENDENCIES}"
 	# order dependencies in the order of compilation
 	SORTED_DEPENDENCIES=
 	for j in ${LIBRARIES_LIST}; do
@@ -178,11 +179,8 @@ compute_dependencies() {
 			SORTED_DEPENDENCIES="${j} ${SORTED_DEPENDENCIES}"
 		fi
 	done
-	echo "${ARTIFACT_PATH}/${ARTIFACT} sorted dependencies:"
+	echo "${ARTIFACT_PATH}/${ARTIFACT} minimum dependencies:"
 	echo "${SORTED_DEPENDENCIES}"
-	# all valid dependencies that can be added by each dependency library
-	echo "${ARTIFACT_PATH}/${ARTIFACT} valid dependencies:"
-	echo "${VALID_LIST}"
 	echo ""
 	echo "########################################"
 	echo ""
