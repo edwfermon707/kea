@@ -111,6 +111,22 @@ extract_computed_dependencies() {
 	fi
 }
 
+# extract library directive
+#
+# param ${1} artifact path
+extract_library_directive() {
+	ARTIFACT_PATH="${1}"
+	echo `cat ${ARTIFACT_PATH}/Makefile.am | grep "LIBADD\|LDADD" | sort | tr -s ' ' | cut -d " " -f 1 | sort -u`
+}
+
+# extract library name
+#
+# param ${1} artifact path
+extract_library_name() {
+	ARTIFACT_PATH="${1}"
+	echo `cat ${ARTIFACT_PATH}/Makefile.am | grep "LIBRARIES" | tr -s ' ' | cut -d " " -f 3`
+}
+
 # compute artifact dependencies
 #
 # param ${1} artifact name
@@ -140,11 +156,11 @@ compute_dependencies() {
 			echo "### ERROR ### dependencies ERROR for ${ARTIFACT_PATH}/${ARTIFACT} on ${j} with:"
 			# if there are any header only external files
 			if test $(echo "${EXTERNAL_ALL}" | wc -w) -ne 0; then
-				echo "non header files: ${EXTERNAL_ALL}"
+				echo "non header only files: ${EXTERNAL_ALL}"
 			fi
 			# if there are any header and source external files
 			if test $(echo "${EXTERNAL_HEADERS}" | wc -w) -ne 0; then
-				echo "only header files: ${EXTERNAL_HEADERS}"
+				echo "header only files: ${EXTERNAL_HEADERS}"
 			fi
 		else
 			# don't add current library to it's dependencies list
@@ -182,6 +198,13 @@ compute_dependencies() {
 	echo "${ARTIFACT_PATH}/${ARTIFACT} minimum dependencies:"
 	echo "${SORTED_DEPENDENCIES}"
 	echo ""
+	echo "++++++++++++++++++++++++++++++++++++++++"
+	ARTIFACT_DIRECTIVE=$(extract_library_directive ${ARTIFACT_PATH}/${ARTIFACT})
+	for j in ${SORTED_DEPENDENCIES}; do
+		DEPENDENCY_LIBRARY_NAME=$(extract_library_name "src/lib/${j}")
+		echo "${ARTIFACT_DIRECTIVE} += \$(top_builddir)/src/lib/${j}/${DEPENDENCY_LIBRARY_NAME}"
+	done
+	echo "++++++++++++++++++++++++++++++++++++++++"
 	echo "########################################"
 	echo ""
 }
