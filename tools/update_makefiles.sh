@@ -225,7 +225,7 @@ echo "${BASE_MAKEFILE}"
 
 # generate the list of libraries in the compilation order
 LIBRARIES_LIST=
-RAW_LIBRARIES_LIST=$(cat "${BASE_MAKEFILE}" | grep "SUBDIRS")
+RAW_LIBRARIES_LIST=$(cat "${REPO_FOLDER}${BASE_MAKEFILE}" | grep "SUBDIRS")
 for i in ${RAW_LIBRARIES_LIST}; do
 	LIBRARIES_LIST="${LIBRARIES_LIST} $(echo ${i} | grep -v "SUBDIRS" | grep -v '=')"
 done
