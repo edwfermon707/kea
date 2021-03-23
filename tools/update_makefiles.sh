@@ -99,9 +99,11 @@ extract_dependencies() {
 # extract computed dependency for specified library
 #
 # param ${1} library name for which the dependency list is retrieved
+# param ${2} library path for which the dependency list is retrieved
 # return stored value of computed dependencies or 'NONE' if dependencies have not been computed yet
 extract_computed_dependencies() {
-	NAME="COMPUTED_DEPENDENCIES_${1}"
+	PATH_TO_NAME=$(echo "${2}" | tr -s "/" "_")
+	NAME="COMPUTED_DEPENDENCIES_${PATH_TO_NAME}_${1}"
 	if test -n "${!NAME+x}"; then
 		echo "${!NAME}"
 	else
@@ -159,7 +161,7 @@ compute_dependencies() {
 	# minimum set of dependencies for current library
 	DEPENDENCIES=
 	for j in ${NON_RECURSIVE_BASE_DEPENDENCIES}; do
-		NEW_DEPENDENCIES=$(extract_computed_dependencies "${j}")
+		NEW_DEPENDENCIES=$(extract_computed_dependencies "${j}" "src/lib")
 		if test "${NEW_DEPENDENCIES}" == "NONE"; then
 			echo "### ERROR ### computed dependency not found for ${j}"
 		else
@@ -263,7 +265,8 @@ for i in ${LIBRARIES_LIST}; do
 	# generate the list of valid dependencies for the current library (take compilation order into account)
 	VALID_LIST=$(extract_dependencies "${REVERSE_LIBRARIES_LIST}" "${i}")
 	compute_dependencies "${i}" "src/lib"
-	declare COMPUTED_DEPENDENCIES_${i}="${SORTED_DEPENDENCIES}"
+	PATH_TO_NAME=$(echo "src/lib" | tr -s "/" "_")
+	declare COMPUTED_DEPENDENCIES_${PATH_TO_NAME}_${i}="${SORTED_DEPENDENCIES}"
 done
 
 # remove empty spaces
@@ -287,7 +290,8 @@ for i in ${OTHER_MAKEFILES}; do
 	ARTIFACT=$(echo "${i}" | rev | cut -d "/" -f 2 | rev)
 	ARTIFACT_PATH=$(echo "${i}" | rev | cut -d "/" -f 3- | rev)
 	compute_dependencies "${ARTIFACT}" "${ARTIFACT_PATH}"
-	declare COMPUTED_DEPENDENCIES_${ARTIFACT}="${SORTED_DEPENDENCIES}"
+	PATH_TO_NAME=$(echo "${ARTIFACT_PATH}" | tr -s "/" "_")
+	declare COMPUTED_DEPENDENCIES_${PATH_TO_NAME}_${ARTIFACT}="${SORTED_DEPENDENCIES}"
 done
 
 exit
