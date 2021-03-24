@@ -19,6 +19,8 @@ using namespace std;
 
 namespace {
 
+int ut_thread_;
+
 /// @brief define CallBack type
 typedef function<void()> CallBack;
 
@@ -43,6 +45,7 @@ public:
     /// thread to stop waiting
     void run() {
         {
+            ++ut_thread_;
             // make sure this thread has started and it is accounted for
             lock_guard<mutex> lk(mutex_);
             auto id = this_thread::get_id();

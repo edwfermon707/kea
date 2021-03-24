@@ -219,6 +219,8 @@ TEST_F(ReadWriteMutexTest, write) {
     thread->join();
 }
 
+int ut_thread_;
+
 // Verify read lock guard can be acquired by multiple threads.
 TEST_F(ReadWriteMutexTest, readRead) {
     // Take mutex to wait for work thread signals.
@@ -227,7 +229,10 @@ TEST_F(ReadWriteMutexTest, readRead) {
         unique_lock<mutex> started_lock(syncr_.started_mtx);
 
         // Create a work thread.
-        thread = boost::make_shared<std::thread>([this](){ reader(rw_mutex_, syncr_); });
+        thread = boost::make_shared<std::thread>([this]() {
+            reader(rw_mutex_, syncr_);
+            ++ut_thread_;
+        });
 
         // Enter a read lock guard.
         ReadLockGuard rwlock(rw_mutex_);
@@ -253,6 +258,8 @@ TEST_F(ReadWriteMutexTest, readRead) {
         lock_guard<mutex> terminate_lock(syncr_.terminate_mtx);
         syncr_.terminate = true;
     }
+
+    ++ut_thread_;
     syncr_.terminate_cv.notify_one();
 
     // Join the thread.
