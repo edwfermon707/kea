@@ -104,6 +104,7 @@ shellcheck:
     - SCRIPTS+="tools/add-config-h.sh "
     - SCRIPTS+="tools/bump-lib-versions.sh "
     - SCRIPTS+="tools/check-for-duplicate-includes.sh "
+    - SCRIPTS+="tools/check-messages.sh "
     - SCRIPTS+="tools/cql_config "
     - SCRIPTS+="tools/mk_cfgrpt.sh "
     - SCRIPTS+="tools/path_replacer.sh.in "
@@ -168,6 +169,15 @@ missing-git-attribute:
     - ./tools/print-generated-files.sh -a
     - git_diff=$(git diff)
     - if test -n "${git_diff}"; then printf '%s\n\n.gitattributes are missing a generated file. Please run "./tools/print-generated-files.sh -a" and commit the resulting change to fix them.\n' "${git_diff}"; exit 1; fi
+
+messages:
+  stage: test
+  image: "${CI_REGISTRY_IMAGE}:latest"
+  tags:
+    - linux
+    - amd64
+  script:
+    - ./tools/check-messages.sh
 
 ############################### SAST ################################
 # Read more about this feature here: https://docs.gitlab.com/ee/user/application_security/sast/
