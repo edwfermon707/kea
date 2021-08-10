@@ -6,6 +6,7 @@ hooks library. The details of the error are provided as argument of
 the log message.
 
 % FLEX_OPTION_PROCESS_ADD Added the option code %1 value by %2
+Logged at debug log level 40.
 This debug message is printed when an option was added into the response
 packet. The option code and the value (between quotes if printable, in
 hexadecimal is not) are provided.
@@ -17,10 +18,12 @@ from the query and the details of the error are provided as arguments
 of the log message.
 
 % FLEX_OPTION_PROCESS_REMOVE Removed option code %1
+Logged at debug log level 40.
 This debug message is printed when an option was removed from the response
 packet. The option code is provided.
 
 % FLEX_OPTION_PROCESS_SUPERSEDE Supersedes the value of option code %1 by %2
+Logged at debug log level 40.
 This debug message is printed when an option was superseded into the response
 packet. The option code and the value (between quotes if printable, in
 hexadecimal is not) are provided.

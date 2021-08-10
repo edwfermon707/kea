@@ -50,6 +50,7 @@ This fatal error message indicates that the application attempted to load its
 initial configuration from file and has failed. The service will exit.
 
 % DCTL_CONFIG_START parsing new configuration: %1
+Logged at debug log level 10.
 A debug message indicating that the application process has received an
 updated configuration and has passed it to its configuration manager
 for parsing.
@@ -59,10 +60,12 @@ This warning message is displayed when the version is a development
 (vs stable) one: the second number of the version is odd.
 
 % DCTL_INIT_PROCESS %1 initializing the application
+Logged at debug log level 0.
 This debug message is issued just before the controller attempts
 to create and initialize its application instance.
 
 % DCTL_INIT_PROCESS_FAIL %1 application initialization failed: %2
+Logged at debug log level 0.
 This error message is issued if the controller could not initialize the
 application and will exit.
 
@@ -96,6 +99,7 @@ application and is terminating. The reason for the failure is
 included in the message.
 
 % DCTL_RUN_PROCESS %1 starting application event loop
+Logged at debug log level 0.
 This debug message is issued just before the controller invokes
 the application run method.
 
@@ -104,10 +108,12 @@ This is an informational message indicating that the service has shut
 down. The argument specifies a name of the service.
 
 % DCTL_SHUTDOWN_SIGNAL_RECVD OS signal %1 received, starting shutdown
+Logged at debug log level 0.
 This is a debug message indicating the application has received a signal
 instructing it to shutdown.
 
 % DCTL_STANDALONE %1 skipping message queue, running standalone
+Logged at debug log level 0.
 This is a debug message indicating that the controller is running in the
 application in standalone mode. This means it will not connected to the Kea
 message queue. Standalone mode is only useful during program development,
