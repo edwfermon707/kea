@@ -1248,6 +1248,20 @@ def _configure_pgsql(system, features):
 
     log.info('postgresql just configured')
 
+def _configure_kerberos(system, revision):
+    if system == 'centos' and int(revision) >= 8 or \
+        system == 'fedora' and int(revision) >= 34:
+        # Add "permitted_enctypes = arcfour-hmac-md5" if it doesn't already exist.
+        execute("""
+          if ! grep -E 'permitted_enctypes =.*arcfour-hmac-md5' /etc/krb5.conf.d/crypto-policies; then
+            if grep -E 'permitted_enctypes =' /etc/krb5.conf.d/crypto-policies; then
+              awk '{gsub("permitted_enctypes =", "permitted_enctypes = arcfour-hmac-md5")}1' /etc/krb5.conf.d/crypto-policies > /tmp/crypto-policies
+            else
+              awk '/^\[libdefaults\]$/{print; print "    permitted_enctypes = arcfour-hmac-md5"; next}1' /etc/krb5.conf.d/crypto-policies > /tmp/crypto-policies
+            fi
+            sudo mv /tmp/krb5.conf.d/crypto-policies /etc/krb5.conf.d/crypto-policies
+          fi
+        """)
 
 def _apt_update(system, revision, env=None, check_times=False, attempts=1, sleep_time_after_attempt=None,
                 capture=False):
@@ -1789,6 +1803,9 @@ def prepare_system_local(features, check_times):
     # Packages required by these functions have been installed. Now call them.
     for f in deferred_functions:
         f()
+
+    if 'gssapi' in features:
+        _configure_kerberos(system, revision)
 
     if 'mysql' in features:
         _configure_mysql(system, revision, features)
