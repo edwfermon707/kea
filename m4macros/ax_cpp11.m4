@@ -1,4 +1,5 @@
 AC_DEFUN([AX_ISC_CPP11], [
+cxx_dump_version=$1
 
 CXX_SAVED=$CXX
 CPPFLAGS_SAVED=$CPPFLAGS
@@ -229,7 +230,12 @@ for retry in "none" "--std=c++11" "--std=c++0x" "--std=c++1x" "fail"; do
 
         AC_MSG_CHECKING(noreturn support)
         feature="noreturn"
-        CPPFLAGS="-Werror=implicit-fallthrough -Wimplicit-fallthrough $CPPFLAGS"
+        # -Wimplicit-fallthrough is available only for gcc 7 or greater. For
+        # lower versions, simply check that noreturn does not cause a compiler
+        # error and give up on checking for warnings.
+        if less_than '7' "${cxx_dump_version}"; then
+                CPPFLAGS="-Werror=implicit-fallthrough -Wimplicit-fallthrough $CPPFLAGS"
+        fi
         AC_COMPILE_IFELSE(
                 [AC_LANG_PROGRAM(
                         [#include <cstdlib>

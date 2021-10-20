@@ -158,8 +158,26 @@ AC_CHECK_DECL([__clang__], [CLANGPP="yes"], [CLANGPP="no"])
 # USE_CLANGPP is no longer used, keep it by symmetry with USE_GXX?
 AM_CONDITIONAL(USE_CLANGPP, test "X${CLANGPP}" = "Xyes")
 
+# Comparison function based on the sort command that works with decimal numbers
+# in a portable manner to the detriment of expr, test and most other commands.
+less_than() {
+    # Equal means not less than.
+    if test "${1}" = "${2}"; then
+        return 1
+    fi
+
+    # Sort numerically, check the first item against ${1}.
+    if test "$(printf '%s\n%s\n' "${1}" "${2}" | sort -V | head -n 1)" = "${1}"; then
+        return 0
+    fi
+
+    # ${2} is smaller than ${1}.
+    return 1
+}
+
 # Check for C++11 features support
-AX_ISC_CPP11
+CXX_DUMP_VERSION=$("${CXX}" -dumpversion | cut -d . -f 1-2)
+AX_ISC_CPP11("${CXX_DUMP_VERSION}")
 
 # Check for std::is_base_of support
 AC_MSG_CHECKING([for std::is_base_of])
@@ -265,23 +283,6 @@ if test "X$CLANGPP" = "Xyes"; then
 CXX_VERSION=`$CXX --version 2> /dev/null | head -1`
 KEA_CXXFLAGS="$KEA_CXXFLAGS -Qunused-arguments"
 fi
-
-# Comparison function based on the sort command that works with decimal numbers
-# in a portable manner to the detriment of expr, test and most other commands.
-less_than() {
-    # Equal means not less than.
-    if test "${1}" = "${2}"; then
-        return 1
-    fi
-
-    # Sort numerically, check the first item against ${1}.
-    if test "$(printf '%s\n%s\n' "${1}" "${2}" | sort -V | head -n 1)" = "${1}"; then
-        return 0
-    fi
-
-    # ${2} is smaller than ${1}.
-    return 1
-}
 
 # gcc/clang specific settings:
 if test "X$GXX" = "Xyes"; then
