@@ -13,9 +13,10 @@ sphinxopts += -j 2
 sphinxopts += -c "${abs_srcdir}"
 
 static_sources =
-include static/static_sources.mk
-
-EXTRA_DIST += static/static_sources.mk
+static_sources += static/kea-imageonly-100bw.png
+static_sources += static/kea-logo-100x70.png
+static_sources += static/kea-logo-200.png
+static_sources += static/kea.css
 
 # ARM
 rst_arm_sources =
