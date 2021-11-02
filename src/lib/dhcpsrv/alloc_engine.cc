@@ -1852,8 +1852,36 @@ Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
     }
 }
 
+Lease6Collection AllocEngine::getLeaseByHint(ClientContext6& ctx) {
+    // Check if we have a lease with this hint.
+    Lease6Collection leases;
+    if (!ctx.currentIA().hints_.empty()) {
+        // Only one hint supported at this time.
+        IOAddress const& hint(ctx.currentIA().hints_[0].getAddress());
+
+        Lease6Ptr lease(LeaseMgrFactory::instance().getLease6(ctx.currentIA().type_, hint));
+
+        // Sanity check the subnet.
+        if (lease) {
+            Subnet6Ptr subnet = ctx.subnet_;
+            while (subnet) {
+                if (lease->subnet_id_ == subnet->getID()) {
+                    leases.push_back(lease);
+                    break;
+                }
+                subnet = subnet->getNextSubnet(ctx.subnet_);
+            }
+        }
+    }
+
+    // If leases are empty at this point, it means that the hint was not found
+    // or that subnet doesn't check out.
+    return leases;
+}
+
 Lease6Collection
-AllocEngine::renewLeases6(ClientContext6& ctx) {
+AllocEngine::renewLeases6FromExistingCollection(ClientContext6& ctx,
+                                                Lease6Collection leases) {
     try {
         if (!ctx.subnet_) {
             isc_throw(InvalidOperation, "Subnet is required for allocation");
@@ -1861,20 +1889,6 @@ AllocEngine::renewLeases6(ClientContext6& ctx) {
 
         if (!ctx.duid_) {
             isc_throw(InvalidOperation, "DUID is mandatory for allocation");
-        }
-
-        // Check if there are any leases for this client.
-        Subnet6Ptr subnet = ctx.subnet_;
-        Lease6Collection leases;
-        while (subnet) {
-            Lease6Collection leases_subnet =
-                LeaseMgrFactory::instance().getLeases6(ctx.currentIA().type_,
-                                                       *ctx.duid_,
-                                                       ctx.currentIA().iaid_,
-                                                       subnet->getID());
-            leases.insert(leases.end(), leases_subnet.begin(), leases_subnet.end());
-
-            subnet = subnet->getNextSubnet(ctx.subnet_);
         }
 
         if (!leases.empty()) {
@@ -1952,6 +1966,56 @@ AllocEngine::renewLeases6(ClientContext6& ctx) {
     }
 
     return (Lease6Collection());
+}
+
+Lease6Collection
+AllocEngine::renewLeases6(ClientContext6& ctx) {
+    // Find a lease strictly by hint for now.
+    Lease6Collection leases(getLeaseByHint(ctx));
+
+    // Make sure lease type, DUID, IAID are matched and that a subnet is
+    // available for this lease.
+    if (!leases.empty()) {
+        std::vector<SubnetID> subnet_IDs;
+
+        Subnet6Ptr subnet = ctx.subnet_;
+        while (subnet) {
+            subnet_IDs.push_back(subnet->getID());
+            subnet = subnet->getNextSubnet(ctx.subnet_);
+        }
+
+        leases.erase(std::remove_if(leases.begin(), leases.end(), [&](Lease6Ptr const& lease) {
+            return ctx.currentIA().type_ != lease->type_ || \
+                *ctx.duid_ != *lease->duid_ || \
+                ctx.currentIA().iaid_ != lease->iaid_ || \
+                std::count(subnet_IDs.begin(), subnet_IDs.end(), lease->subnet_id_) == 0;
+        }));
+    }
+
+    // Try to renew hint. This will work most of the time.
+    if (!leases.empty()) {
+        leases = renewLeases6FromExistingCollection(ctx, leases);
+    }
+
+    // On the offchance that the hint wasn't right, try to find a lease
+    // by lease type, DUID, IAID, subnet ID.
+    if (leases.empty()) {
+        Subnet6Ptr subnet = ctx.subnet_;
+        while (subnet) {
+            Lease6Collection leases_subnet =
+                LeaseMgrFactory::instance().getLeases6(ctx.currentIA().type_,
+                                                       *ctx.duid_,
+                                                       ctx.currentIA().iaid_,
+                                                       subnet->getID());
+            leases.insert(leases.end(), leases_subnet.begin(), leases_subnet.end());
+
+            subnet = subnet->getNextSubnet(ctx.subnet_);
+        }
+
+        leases = renewLeases6FromExistingCollection(ctx, leases);
+    }
+
+    return leases;
 }
 
 void
@@ -3055,8 +3119,8 @@ void findClientLease(AllocEngine::ClientContext4& ctx, Lease4Ptr& client_lease) 
         // multiple queries, one for each subnet.
         Lease4Collection leases_client_id = lease_mgr.getLease4(*ctx.clientid_);
 
-        // Iterate over the subnets within the shared network to see if any client's
-        // lease belongs to them.
+        // Iterate over the subnets within the shared network to see if any of
+        // the client's leases belongs to them.
         for (Subnet4Ptr subnet = original_subnet; subnet;
              subnet = subnet->getNextSubnet(original_subnet, classes)) {
 
@@ -3104,6 +3168,86 @@ void findClientLease(AllocEngine::ClientContext4& ctx, Lease4Ptr& client_lease) 
                     ctx.subnet_ = subnet;
                     return;
                 }
+            }
+        }
+    }
+}
+
+/// @brief Finds existing leases in the database by address.
+///
+/// This function searches for leases by the address provided as hint by the
+/// client requesting allocation. If the client has supplied the client
+/// identifier this identifier is used to look up the lease. If the lease is
+/// not found using the client identifier, an additional lookup is performed
+/// using the HW address, if supplied. If the lease is found using the HW
+/// address, the function also checks if the lease belongs to the client, i.e.
+/// there is no conflict between the client identifiers.
+///
+/// @param [out] ctx Context holding data extracted from the client's message,
+/// including the HW address and client identifier. The current subnet may be
+/// modified by this function if it belongs to a shared network.
+/// @param [out] client_lease A pointer to the lease returned by this function
+/// or null value if no has been lease found.
+void
+findClientLeaseByAddress(AllocEngine::ClientContext4& ctx, Lease4Ptr& client_lease) {
+    if (ctx.requested_address_.isV4Zero()) {
+        return;
+    }
+
+    Lease4Ptr const& lease(LeaseMgrFactory::instance().getLease4(ctx.requested_address_));
+    if (!lease) {
+        return;
+    }
+
+    Subnet4Ptr original_subnet = ctx.subnet_;
+
+    // Client identifier is optional. First check if we can try to lookup
+    // by client-id.
+    bool try_clientid_check =
+        (ctx.clientid_ &&
+         SharedNetwork4::subnetsIncludeMatchClientId(original_subnet, ctx.query_->getClasses()));
+
+    // If it is possible to use client identifier to try to find client's lease.
+    if (try_clientid_check) {
+        // Iterate over the subnets within the shared network to see if any of
+        // the client's leases belongs to them.
+        for (Subnet4Ptr subnet = original_subnet; subnet;
+             subnet = subnet->getNextSubnet(original_subnet, ctx.query_->getClasses())) {
+
+            // If client identifier has been supplied and the server wasn't
+            // explicitly configured to ignore client identifiers for this subnet
+            // check if there is a lease within this subnet.
+            if (subnet->getMatchClientId()) {
+                if (lease->subnet_id_ == subnet->getID()) {
+                    // Lease found, so stick to this lease.
+                    client_lease = lease;
+                    ctx.subnet_ = subnet;
+                    return;
+                }
+            }
+        }
+    }
+
+    // If no lease found using the client identifier, try the lookup using
+    // the HW address.
+    if (!client_lease && ctx.hwaddr_) {
+        for (Subnet4Ptr subnet = original_subnet; subnet;
+             subnet = subnet->getNextSubnet(original_subnet, ctx.query_->getClasses())) {
+            ClientIdPtr client_id;
+            if (subnet->getMatchClientId()) {
+                client_id = ctx.clientid_;
+            }
+
+            // Try to find the lease that matches current subnet and belongs to
+            // this client, so both HW address and client identifier match.
+            if ((lease && lease->subnet_id_ == subnet->getID()) &&
+                lease->belongsToClient(ctx.hwaddr_, client_id)) {
+                // Found the lease of this client, so return it.
+                client_lease = lease;
+                // We got a lease but the subnet it belongs to may differ from
+                // the original subnet. Let's now stick to this subnet.
+                ctx.subnet_ = subnet;
+                return;
             }
         }
     }
@@ -3506,7 +3650,22 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
     // if there is a conflict with existing lease and the allocation should
     // not be continued.
     Lease4Ptr client_lease;
-    findClientLease(ctx, client_lease);
+    Lease4Ptr existing;
+
+    // Attempt to find by hint first.
+    findClientLeaseByAddress(ctx, existing);
+
+    // If not belonging to this client, forget about it.
+    if (existing && ctx.clientid_ && existing->client_id_ &&
+        *ctx.clientid_ == *existing->client_id_) {
+        existing = nullptr;
+    }
+
+    if (existing) {
+        client_lease = existing;
+    } else {
+        findClientLease(ctx, client_lease);
+    }
 
     // When the client sends the DHCPREQUEST, it should always specify the
     // address which it is requesting or renewing. That is, the client should
@@ -3544,7 +3703,6 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
     if (!ctx.requested_address_.isV4Zero()) {
         // There is a specific address to be allocated. Let's find out if
         // the address is in use.
-        Lease4Ptr existing = LeaseMgrFactory::instance().getLease4(ctx.requested_address_);
         // If the address is in use (allocated and not expired), we check
         // if the address is in use by our client or another client.
         // If it is in use by another client, the address can't be

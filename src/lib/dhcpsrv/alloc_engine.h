@@ -579,7 +579,21 @@ public:
     Lease6Collection
     allocateLeases6(ClientContext6& ctx);
 
-    /// @brief Renews existing DHCPv6 leases for a given IA.
+    /// @brief Returns all existing leases that have the lease type and the
+    /// address requested by the client.
+    ///
+    /// @param ctx Message processing context. It holds various information
+    /// extracted from the client's message and required to allocate a lease.
+    /// In particular, @ref ClientContext6::IAContext::hints_ provides list
+    /// of addresses or
+    /// prefixes the client had sent. @ref ClientContext6::IAContext::old_leases_
+    /// will contain removed leases in this case.
+    ///
+    /// @return resulting leases
+    Lease6Collection getLeaseByHint(ClientContext6& ctx);
+
+    /// @brief Renews existing DHCPv6 leases for a given IA and a list of
+    /// prefetched leases.
     ///
     /// This method updates the leases associated with a specified IA container.
     /// It will extend the leases under normal circumstances, but sometimes
@@ -597,8 +611,28 @@ public:
     /// of addresses or
     /// prefixes the client had sent. @ref ClientContext6::IAContext::old_leases_
     /// will contain removed leases in this case.
+    /// @param leases the list of prefetched leases to attempt renew for
     ///
-    /// @return Returns renewed lease.
+    /// @return the renewed lease, or NULL if the lease cannot be renewed
+    Lease6Collection
+    renewLeases6FromExistingCollection(ClientContext6& ctx,
+                                       Lease6Collection leases);
+
+    /// @brief Renews existing DHCPv6 leases for a given IA.
+    ///
+    /// This method has two attempts at updating the leases associated with a
+    /// specific IA container:
+    /// - one with lookup by address hint
+    /// - the other with lookup by lease type, DUID, IAID, subnet ID.
+    ///
+    /// @param ctx Message processing context. It holds various information
+    /// extracted from the client's message and required to allocate a lease.
+    /// In particular, @ref ClientContext6::IAContext::hints_ provides list
+    /// of addresses or
+    /// prefixes the client had sent. @ref ClientContext6::IAContext::old_leases_
+    /// will contain removed leases in this case.
+    ///
+    /// @return the renewed lease, or NULL if the lease cannot be renewed
     Lease6Collection renewLeases6(ClientContext6& ctx);
 
     /// @brief Reclaims expired IPv6 leases.
