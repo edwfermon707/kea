@@ -1,4 +1,4 @@
-// A Bison parser, made by GNU Bison 3.7.6.
+// A Bison parser, made by GNU Bison 3.8.2.
 
 // Skeleton interface for Bison LALR(1) parsers in C++
 
@@ -133,12 +133,18 @@ using namespace std;
 # define YY_USE(E) /* empty */
 #endif
 
-#if defined __GNUC__ && ! defined __ICC && 407 <= __GNUC__ * 100 + __GNUC_MINOR__
 /* Suppress an incorrect diagnostic about yylval being uninitialized.  */
-# define YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN                            \
+#if defined __GNUC__ && ! defined __ICC && 406 <= __GNUC__ * 100 + __GNUC_MINOR__
+# if __GNUC__ * 100 + __GNUC_MINOR__ < 407
+#  define YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN                           \
+    _Pragma ("GCC diagnostic push")                                     \
+    _Pragma ("GCC diagnostic ignored \"-Wuninitialized\"")
+# else
+#  define YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN                           \
     _Pragma ("GCC diagnostic push")                                     \
     _Pragma ("GCC diagnostic ignored \"-Wuninitialized\"")              \
     _Pragma ("GCC diagnostic ignored \"-Wmaybe-uninitialized\"")
+# endif
 # define YY_IGNORE_MAYBE_UNINITIALIZED_END      \
     _Pragma ("GCC diagnostic pop")
 #else
@@ -200,7 +206,7 @@ using namespace std;
 
 #line 14 "d2_parser.yy"
 namespace isc { namespace d2 {
-#line 204 "d2_parser.h"
+#line 210 "d2_parser.h"
 
 
 
@@ -209,27 +215,32 @@ namespace isc { namespace d2 {
   class D2Parser
   {
   public:
-#ifndef D2_PARSER_STYPE
+#ifdef D2_PARSER_STYPE
+# ifdef __GNUC__
+#  pragma GCC message "bison: do not #define D2_PARSER_STYPE in C++, use %define api.value.type"
+# endif
+    typedef D2_PARSER_STYPE value_type;
+#else
   /// A buffer to store and retrieve objects.
   ///
   /// Sort of a variant, but does not keep track of the nature
   /// of the stored data, since that knowledge is available
   /// via the current parser state.
-  class semantic_type
+  class value_type
   {
   public:
     /// Type of *this.
-    typedef semantic_type self_type;
+    typedef value_type self_type;
 
     /// Empty construction.
-    semantic_type () YY_NOEXCEPT
-      : yybuffer_ ()
+    value_type () YY_NOEXCEPT
+      : yyraw_ ()
       , yytypeid_ (YY_NULLPTR)
     {}
 
     /// Construct and fill.
     template <typename T>
-    semantic_type (YY_RVREF (T) t)
+    value_type (YY_RVREF (T) t)
       : yytypeid_ (&typeid (T))
     {
       D2_PARSER__ASSERT (sizeof (T) <= size);
@@ -238,13 +249,13 @@ namespace isc { namespace d2 {
 
 #if 201103L <= YY_CPLUSPLUS
     /// Non copyable.
-    semantic_type (const self_type&) = delete;
+    value_type (const self_type&) = delete;
     /// Non copyable.
     self_type& operator= (const self_type&) = delete;
 #endif
 
     /// Destruction, allowed only if empty.
-    ~semantic_type () YY_NOEXCEPT
+    ~value_type () YY_NOEXCEPT
     {
       D2_PARSER__ASSERT (!yytypeid_);
     }
@@ -388,7 +399,7 @@ namespace isc { namespace d2 {
   private:
 #if YY_CPLUSPLUS < 201103L
     /// Non copyable.
-    semantic_type (const self_type&);
+    value_type (const self_type&);
     /// Non copyable.
     self_type& operator= (const self_type&);
 #endif
@@ -398,7 +409,7 @@ namespace isc { namespace d2 {
     T*
     yyas_ () YY_NOEXCEPT
     {
-      void *yyp = yybuffer_.yyraw;
+      void *yyp = yyraw_;
       return static_cast<T*> (yyp);
      }
 
@@ -407,7 +418,7 @@ namespace isc { namespace d2 {
     const T*
     yyas_ () const YY_NOEXCEPT
     {
-      const void *yyp = yybuffer_.yyraw;
+      const void *yyp = yyraw_;
       return static_cast<const T*> (yyp);
      }
 
@@ -439,18 +450,19 @@ namespace isc { namespace d2 {
     union
     {
       /// Strongest alignment constraints.
-      long double yyalign_me;
+      long double yyalign_me_;
       /// A buffer large enough to store any of the semantic values.
-      char yyraw[size];
-    } yybuffer_;
+      char yyraw_[size];
+    };
 
     /// Whether the content is built: if defined, the name of the stored type.
     const std::type_info *yytypeid_;
   };
 
-#else
-    typedef D2_PARSER_STYPE semantic_type;
 #endif
+    /// Backward compatibility (Bison 3.8).
+    typedef value_type semantic_type;
+
     /// Symbol locations.
     typedef location location_type;
 
@@ -492,60 +504,61 @@ namespace isc { namespace d2 {
     TOKEN_IP_ADDRESS = 266,        // "ip-address"
     TOKEN_PORT = 267,              // "port"
     TOKEN_DNS_SERVER_TIMEOUT = 268, // "dns-server-timeout"
-    TOKEN_NCR_PROTOCOL = 269,      // "ncr-protocol"
-    TOKEN_UDP = 270,               // "UDP"
-    TOKEN_TCP = 271,               // "TCP"
-    TOKEN_NCR_FORMAT = 272,        // "ncr-format"
-    TOKEN_JSON = 273,              // "JSON"
-    TOKEN_USER_CONTEXT = 274,      // "user-context"
-    TOKEN_COMMENT = 275,           // "comment"
-    TOKEN_FORWARD_DDNS = 276,      // "forward-ddns"
-    TOKEN_REVERSE_DDNS = 277,      // "reverse-ddns"
-    TOKEN_DDNS_DOMAINS = 278,      // "ddns-domains"
-    TOKEN_KEY_NAME = 279,          // "key-name"
-    TOKEN_DNS_SERVERS = 280,       // "dns-servers"
-    TOKEN_HOSTNAME = 281,          // "hostname"
-    TOKEN_TSIG_KEYS = 282,         // "tsig-keys"
-    TOKEN_ALGORITHM = 283,         // "algorithm"
-    TOKEN_DIGEST_BITS = 284,       // "digest-bits"
-    TOKEN_SECRET = 285,            // "secret"
-    TOKEN_CONTROL_SOCKET = 286,    // "control-socket"
-    TOKEN_SOCKET_TYPE = 287,       // "socket-type"
-    TOKEN_SOCKET_NAME = 288,       // "socket-name"
-    TOKEN_HOOKS_LIBRARIES = 289,   // "hooks-libraries"
-    TOKEN_LIBRARY = 290,           // "library"
-    TOKEN_PARAMETERS = 291,        // "parameters"
-    TOKEN_LOGGERS = 292,           // "loggers"
-    TOKEN_NAME = 293,              // "name"
-    TOKEN_OUTPUT_OPTIONS = 294,    // "output_options"
-    TOKEN_OUTPUT = 295,            // "output"
-    TOKEN_DEBUGLEVEL = 296,        // "debuglevel"
-    TOKEN_SEVERITY = 297,          // "severity"
-    TOKEN_FLUSH = 298,             // "flush"
-    TOKEN_MAXSIZE = 299,           // "maxsize"
-    TOKEN_MAXVER = 300,            // "maxver"
-    TOKEN_PATTERN = 301,           // "pattern"
-    TOKEN_TOPLEVEL_JSON = 302,     // TOPLEVEL_JSON
-    TOKEN_TOPLEVEL_DHCPDDNS = 303, // TOPLEVEL_DHCPDDNS
-    TOKEN_SUB_DHCPDDNS = 304,      // SUB_DHCPDDNS
-    TOKEN_SUB_TSIG_KEY = 305,      // SUB_TSIG_KEY
-    TOKEN_SUB_TSIG_KEYS = 306,     // SUB_TSIG_KEYS
-    TOKEN_SUB_DDNS_DOMAIN = 307,   // SUB_DDNS_DOMAIN
-    TOKEN_SUB_DDNS_DOMAINS = 308,  // SUB_DDNS_DOMAINS
-    TOKEN_SUB_DNS_SERVER = 309,    // SUB_DNS_SERVER
-    TOKEN_SUB_DNS_SERVERS = 310,   // SUB_DNS_SERVERS
-    TOKEN_SUB_HOOKS_LIBRARY = 311, // SUB_HOOKS_LIBRARY
-    TOKEN_STRING = 312,            // "constant string"
-    TOKEN_INTEGER = 313,           // "integer"
-    TOKEN_FLOAT = 314,             // "floating point"
-    TOKEN_BOOLEAN = 315            // "boolean"
+    TOKEN_DNS_SERVER_MAX_ATTEMPTS = 269, // "dns_server_max-attempts"
+    TOKEN_NCR_PROTOCOL = 270,      // "ncr-protocol"
+    TOKEN_UDP = 271,               // "UDP"
+    TOKEN_TCP = 272,               // "TCP"
+    TOKEN_NCR_FORMAT = 273,        // "ncr-format"
+    TOKEN_JSON = 274,              // "JSON"
+    TOKEN_USER_CONTEXT = 275,      // "user-context"
+    TOKEN_COMMENT = 276,           // "comment"
+    TOKEN_FORWARD_DDNS = 277,      // "forward-ddns"
+    TOKEN_REVERSE_DDNS = 278,      // "reverse-ddns"
+    TOKEN_DDNS_DOMAINS = 279,      // "ddns-domains"
+    TOKEN_KEY_NAME = 280,          // "key-name"
+    TOKEN_DNS_SERVERS = 281,       // "dns-servers"
+    TOKEN_HOSTNAME = 282,          // "hostname"
+    TOKEN_TSIG_KEYS = 283,         // "tsig-keys"
+    TOKEN_ALGORITHM = 284,         // "algorithm"
+    TOKEN_DIGEST_BITS = 285,       // "digest-bits"
+    TOKEN_SECRET = 286,            // "secret"
+    TOKEN_CONTROL_SOCKET = 287,    // "control-socket"
+    TOKEN_SOCKET_TYPE = 288,       // "socket-type"
+    TOKEN_SOCKET_NAME = 289,       // "socket-name"
+    TOKEN_HOOKS_LIBRARIES = 290,   // "hooks-libraries"
+    TOKEN_LIBRARY = 291,           // "library"
+    TOKEN_PARAMETERS = 292,        // "parameters"
+    TOKEN_LOGGERS = 293,           // "loggers"
+    TOKEN_NAME = 294,              // "name"
+    TOKEN_OUTPUT_OPTIONS = 295,    // "output_options"
+    TOKEN_OUTPUT = 296,            // "output"
+    TOKEN_DEBUGLEVEL = 297,        // "debuglevel"
+    TOKEN_SEVERITY = 298,          // "severity"
+    TOKEN_FLUSH = 299,             // "flush"
+    TOKEN_MAXSIZE = 300,           // "maxsize"
+    TOKEN_MAXVER = 301,            // "maxver"
+    TOKEN_PATTERN = 302,           // "pattern"
+    TOKEN_TOPLEVEL_JSON = 303,     // TOPLEVEL_JSON
+    TOKEN_TOPLEVEL_DHCPDDNS = 304, // TOPLEVEL_DHCPDDNS
+    TOKEN_SUB_DHCPDDNS = 305,      // SUB_DHCPDDNS
+    TOKEN_SUB_TSIG_KEY = 306,      // SUB_TSIG_KEY
+    TOKEN_SUB_TSIG_KEYS = 307,     // SUB_TSIG_KEYS
+    TOKEN_SUB_DDNS_DOMAIN = 308,   // SUB_DDNS_DOMAIN
+    TOKEN_SUB_DDNS_DOMAINS = 309,  // SUB_DDNS_DOMAINS
+    TOKEN_SUB_DNS_SERVER = 310,    // SUB_DNS_SERVER
+    TOKEN_SUB_DNS_SERVERS = 311,   // SUB_DNS_SERVERS
+    TOKEN_SUB_HOOKS_LIBRARY = 312, // SUB_HOOKS_LIBRARY
+    TOKEN_STRING = 313,            // "constant string"
+    TOKEN_INTEGER = 314,           // "integer"
+    TOKEN_FLOAT = 315,             // "floating point"
+    TOKEN_BOOLEAN = 316            // "boolean"
       };
       /// Backward compatibility alias (Bison 3.6).
       typedef token_kind_type yytokentype;
     };
 
     /// Token kind, as returned by yylex.
-    typedef token::yytokentype token_kind_type;
+    typedef token::token_kind_type token_kind_type;
 
     /// Backward compatibility alias (Bison 3.6).
     typedef token_kind_type token_type;
@@ -555,7 +568,7 @@ namespace isc { namespace d2 {
     {
       enum symbol_kind_type
       {
-        YYNTOKENS = 61, ///< Number of tokens.
+        YYNTOKENS = 62, ///< Number of tokens.
         S_YYEMPTY = -2,
         S_YYEOF = 0,                             // "end of file"
         S_YYerror = 1,                           // error
@@ -571,204 +584,206 @@ namespace isc { namespace d2 {
         S_IP_ADDRESS = 11,                       // "ip-address"
         S_PORT = 12,                             // "port"
         S_DNS_SERVER_TIMEOUT = 13,               // "dns-server-timeout"
-        S_NCR_PROTOCOL = 14,                     // "ncr-protocol"
-        S_UDP = 15,                              // "UDP"
-        S_TCP = 16,                              // "TCP"
-        S_NCR_FORMAT = 17,                       // "ncr-format"
-        S_JSON = 18,                             // "JSON"
-        S_USER_CONTEXT = 19,                     // "user-context"
-        S_COMMENT = 20,                          // "comment"
-        S_FORWARD_DDNS = 21,                     // "forward-ddns"
-        S_REVERSE_DDNS = 22,                     // "reverse-ddns"
-        S_DDNS_DOMAINS = 23,                     // "ddns-domains"
-        S_KEY_NAME = 24,                         // "key-name"
-        S_DNS_SERVERS = 25,                      // "dns-servers"
-        S_HOSTNAME = 26,                         // "hostname"
-        S_TSIG_KEYS = 27,                        // "tsig-keys"
-        S_ALGORITHM = 28,                        // "algorithm"
-        S_DIGEST_BITS = 29,                      // "digest-bits"
-        S_SECRET = 30,                           // "secret"
-        S_CONTROL_SOCKET = 31,                   // "control-socket"
-        S_SOCKET_TYPE = 32,                      // "socket-type"
-        S_SOCKET_NAME = 33,                      // "socket-name"
-        S_HOOKS_LIBRARIES = 34,                  // "hooks-libraries"
-        S_LIBRARY = 35,                          // "library"
-        S_PARAMETERS = 36,                       // "parameters"
-        S_LOGGERS = 37,                          // "loggers"
-        S_NAME = 38,                             // "name"
-        S_OUTPUT_OPTIONS = 39,                   // "output_options"
-        S_OUTPUT = 40,                           // "output"
-        S_DEBUGLEVEL = 41,                       // "debuglevel"
-        S_SEVERITY = 42,                         // "severity"
-        S_FLUSH = 43,                            // "flush"
-        S_MAXSIZE = 44,                          // "maxsize"
-        S_MAXVER = 45,                           // "maxver"
-        S_PATTERN = 46,                          // "pattern"
-        S_TOPLEVEL_JSON = 47,                    // TOPLEVEL_JSON
-        S_TOPLEVEL_DHCPDDNS = 48,                // TOPLEVEL_DHCPDDNS
-        S_SUB_DHCPDDNS = 49,                     // SUB_DHCPDDNS
-        S_SUB_TSIG_KEY = 50,                     // SUB_TSIG_KEY
-        S_SUB_TSIG_KEYS = 51,                    // SUB_TSIG_KEYS
-        S_SUB_DDNS_DOMAIN = 52,                  // SUB_DDNS_DOMAIN
-        S_SUB_DDNS_DOMAINS = 53,                 // SUB_DDNS_DOMAINS
-        S_SUB_DNS_SERVER = 54,                   // SUB_DNS_SERVER
-        S_SUB_DNS_SERVERS = 55,                  // SUB_DNS_SERVERS
-        S_SUB_HOOKS_LIBRARY = 56,                // SUB_HOOKS_LIBRARY
-        S_STRING = 57,                           // "constant string"
-        S_INTEGER = 58,                          // "integer"
-        S_FLOAT = 59,                            // "floating point"
-        S_BOOLEAN = 60,                          // "boolean"
-        S_YYACCEPT = 61,                         // $accept
-        S_start = 62,                            // start
-        S_63_1 = 63,                             // $@1
-        S_64_2 = 64,                             // $@2
-        S_65_3 = 65,                             // $@3
-        S_66_4 = 66,                             // $@4
-        S_67_5 = 67,                             // $@5
-        S_68_6 = 68,                             // $@6
-        S_69_7 = 69,                             // $@7
-        S_70_8 = 70,                             // $@8
-        S_71_9 = 71,                             // $@9
-        S_72_10 = 72,                            // $@10
-        S_value = 73,                            // value
-        S_sub_json = 74,                         // sub_json
-        S_map2 = 75,                             // map2
-        S_76_11 = 76,                            // $@11
-        S_map_value = 77,                        // map_value
-        S_map_content = 78,                      // map_content
-        S_not_empty_map = 79,                    // not_empty_map
-        S_list_generic = 80,                     // list_generic
-        S_81_12 = 81,                            // $@12
-        S_list_content = 82,                     // list_content
-        S_not_empty_list = 83,                   // not_empty_list
-        S_unknown_map_entry = 84,                // unknown_map_entry
-        S_syntax_map = 85,                       // syntax_map
-        S_86_13 = 86,                            // $@13
-        S_global_object = 87,                    // global_object
-        S_88_14 = 88,                            // $@14
-        S_sub_dhcpddns = 89,                     // sub_dhcpddns
-        S_90_15 = 90,                            // $@15
-        S_dhcpddns_params = 91,                  // dhcpddns_params
-        S_dhcpddns_param = 92,                   // dhcpddns_param
-        S_ip_address = 93,                       // ip_address
-        S_94_16 = 94,                            // $@16
-        S_port = 95,                             // port
-        S_dns_server_timeout = 96,               // dns_server_timeout
-        S_ncr_protocol = 97,                     // ncr_protocol
-        S_98_17 = 98,                            // $@17
-        S_ncr_protocol_value = 99,               // ncr_protocol_value
-        S_ncr_format = 100,                      // ncr_format
-        S_101_18 = 101,                          // $@18
-        S_user_context = 102,                    // user_context
-        S_103_19 = 103,                          // $@19
-        S_comment = 104,                         // comment
-        S_105_20 = 105,                          // $@20
-        S_forward_ddns = 106,                    // forward_ddns
-        S_107_21 = 107,                          // $@21
-        S_reverse_ddns = 108,                    // reverse_ddns
-        S_109_22 = 109,                          // $@22
-        S_ddns_mgr_params = 110,                 // ddns_mgr_params
-        S_not_empty_ddns_mgr_params = 111,       // not_empty_ddns_mgr_params
-        S_ddns_mgr_param = 112,                  // ddns_mgr_param
-        S_ddns_domains = 113,                    // ddns_domains
-        S_114_23 = 114,                          // $@23
-        S_sub_ddns_domains = 115,                // sub_ddns_domains
-        S_116_24 = 116,                          // $@24
-        S_ddns_domain_list = 117,                // ddns_domain_list
-        S_not_empty_ddns_domain_list = 118,      // not_empty_ddns_domain_list
-        S_ddns_domain = 119,                     // ddns_domain
-        S_120_25 = 120,                          // $@25
-        S_sub_ddns_domain = 121,                 // sub_ddns_domain
-        S_122_26 = 122,                          // $@26
-        S_ddns_domain_params = 123,              // ddns_domain_params
-        S_ddns_domain_param = 124,               // ddns_domain_param
-        S_ddns_domain_name = 125,                // ddns_domain_name
-        S_126_27 = 126,                          // $@27
-        S_ddns_key_name = 127,                   // ddns_key_name
-        S_128_28 = 128,                          // $@28
-        S_dns_servers = 129,                     // dns_servers
-        S_130_29 = 130,                          // $@29
-        S_sub_dns_servers = 131,                 // sub_dns_servers
-        S_132_30 = 132,                          // $@30
-        S_dns_server_list = 133,                 // dns_server_list
-        S_dns_server = 134,                      // dns_server
-        S_135_31 = 135,                          // $@31
-        S_sub_dns_server = 136,                  // sub_dns_server
-        S_137_32 = 137,                          // $@32
-        S_dns_server_params = 138,               // dns_server_params
-        S_dns_server_param = 139,                // dns_server_param
-        S_dns_server_hostname = 140,             // dns_server_hostname
-        S_141_33 = 141,                          // $@33
-        S_dns_server_ip_address = 142,           // dns_server_ip_address
-        S_143_34 = 143,                          // $@34
-        S_dns_server_port = 144,                 // dns_server_port
-        S_tsig_keys = 145,                       // tsig_keys
-        S_146_35 = 146,                          // $@35
-        S_sub_tsig_keys = 147,                   // sub_tsig_keys
-        S_148_36 = 148,                          // $@36
-        S_tsig_keys_list = 149,                  // tsig_keys_list
-        S_not_empty_tsig_keys_list = 150,        // not_empty_tsig_keys_list
-        S_tsig_key = 151,                        // tsig_key
-        S_152_37 = 152,                          // $@37
-        S_sub_tsig_key = 153,                    // sub_tsig_key
-        S_154_38 = 154,                          // $@38
-        S_tsig_key_params = 155,                 // tsig_key_params
-        S_tsig_key_param = 156,                  // tsig_key_param
-        S_tsig_key_name = 157,                   // tsig_key_name
-        S_158_39 = 158,                          // $@39
-        S_tsig_key_algorithm = 159,              // tsig_key_algorithm
-        S_160_40 = 160,                          // $@40
-        S_tsig_key_digest_bits = 161,            // tsig_key_digest_bits
-        S_tsig_key_secret = 162,                 // tsig_key_secret
-        S_163_41 = 163,                          // $@41
-        S_control_socket = 164,                  // control_socket
-        S_165_42 = 165,                          // $@42
-        S_control_socket_params = 166,           // control_socket_params
-        S_control_socket_param = 167,            // control_socket_param
-        S_control_socket_type = 168,             // control_socket_type
-        S_169_43 = 169,                          // $@43
-        S_control_socket_name = 170,             // control_socket_name
-        S_171_44 = 171,                          // $@44
-        S_hooks_libraries = 172,                 // hooks_libraries
-        S_173_45 = 173,                          // $@45
-        S_hooks_libraries_list = 174,            // hooks_libraries_list
-        S_not_empty_hooks_libraries_list = 175,  // not_empty_hooks_libraries_list
-        S_hooks_library = 176,                   // hooks_library
-        S_177_46 = 177,                          // $@46
-        S_sub_hooks_library = 178,               // sub_hooks_library
-        S_179_47 = 179,                          // $@47
-        S_hooks_params = 180,                    // hooks_params
-        S_hooks_param = 181,                     // hooks_param
-        S_library = 182,                         // library
-        S_183_48 = 183,                          // $@48
-        S_parameters = 184,                      // parameters
-        S_185_49 = 185,                          // $@49
-        S_loggers = 186,                         // loggers
-        S_187_50 = 187,                          // $@50
-        S_loggers_entries = 188,                 // loggers_entries
-        S_logger_entry = 189,                    // logger_entry
-        S_190_51 = 190,                          // $@51
-        S_logger_params = 191,                   // logger_params
-        S_logger_param = 192,                    // logger_param
-        S_name = 193,                            // name
-        S_194_52 = 194,                          // $@52
-        S_debuglevel = 195,                      // debuglevel
-        S_severity = 196,                        // severity
-        S_197_53 = 197,                          // $@53
-        S_output_options_list = 198,             // output_options_list
-        S_199_54 = 199,                          // $@54
-        S_output_options_list_content = 200,     // output_options_list_content
-        S_output_entry = 201,                    // output_entry
-        S_202_55 = 202,                          // $@55
-        S_output_params_list = 203,              // output_params_list
-        S_output_params = 204,                   // output_params
-        S_output = 205,                          // output
-        S_206_56 = 206,                          // $@56
-        S_flush = 207,                           // flush
-        S_maxsize = 208,                         // maxsize
-        S_maxver = 209,                          // maxver
-        S_pattern = 210,                         // pattern
-        S_211_57 = 211                           // $@57
+        S_DNS_SERVER_MAX_ATTEMPTS = 14,          // "dns_server_max-attempts"
+        S_NCR_PROTOCOL = 15,                     // "ncr-protocol"
+        S_UDP = 16,                              // "UDP"
+        S_TCP = 17,                              // "TCP"
+        S_NCR_FORMAT = 18,                       // "ncr-format"
+        S_JSON = 19,                             // "JSON"
+        S_USER_CONTEXT = 20,                     // "user-context"
+        S_COMMENT = 21,                          // "comment"
+        S_FORWARD_DDNS = 22,                     // "forward-ddns"
+        S_REVERSE_DDNS = 23,                     // "reverse-ddns"
+        S_DDNS_DOMAINS = 24,                     // "ddns-domains"
+        S_KEY_NAME = 25,                         // "key-name"
+        S_DNS_SERVERS = 26,                      // "dns-servers"
+        S_HOSTNAME = 27,                         // "hostname"
+        S_TSIG_KEYS = 28,                        // "tsig-keys"
+        S_ALGORITHM = 29,                        // "algorithm"
+        S_DIGEST_BITS = 30,                      // "digest-bits"
+        S_SECRET = 31,                           // "secret"
+        S_CONTROL_SOCKET = 32,                   // "control-socket"
+        S_SOCKET_TYPE = 33,                      // "socket-type"
+        S_SOCKET_NAME = 34,                      // "socket-name"
+        S_HOOKS_LIBRARIES = 35,                  // "hooks-libraries"
+        S_LIBRARY = 36,                          // "library"
+        S_PARAMETERS = 37,                       // "parameters"
+        S_LOGGERS = 38,                          // "loggers"
+        S_NAME = 39,                             // "name"
+        S_OUTPUT_OPTIONS = 40,                   // "output_options"
+        S_OUTPUT = 41,                           // "output"
+        S_DEBUGLEVEL = 42,                       // "debuglevel"
+        S_SEVERITY = 43,                         // "severity"
+        S_FLUSH = 44,                            // "flush"
+        S_MAXSIZE = 45,                          // "maxsize"
+        S_MAXVER = 46,                           // "maxver"
+        S_PATTERN = 47,                          // "pattern"
+        S_TOPLEVEL_JSON = 48,                    // TOPLEVEL_JSON
+        S_TOPLEVEL_DHCPDDNS = 49,                // TOPLEVEL_DHCPDDNS
+        S_SUB_DHCPDDNS = 50,                     // SUB_DHCPDDNS
+        S_SUB_TSIG_KEY = 51,                     // SUB_TSIG_KEY
+        S_SUB_TSIG_KEYS = 52,                    // SUB_TSIG_KEYS
+        S_SUB_DDNS_DOMAIN = 53,                  // SUB_DDNS_DOMAIN
+        S_SUB_DDNS_DOMAINS = 54,                 // SUB_DDNS_DOMAINS
+        S_SUB_DNS_SERVER = 55,                   // SUB_DNS_SERVER
+        S_SUB_DNS_SERVERS = 56,                  // SUB_DNS_SERVERS
+        S_SUB_HOOKS_LIBRARY = 57,                // SUB_HOOKS_LIBRARY
+        S_STRING = 58,                           // "constant string"
+        S_INTEGER = 59,                          // "integer"
+        S_FLOAT = 60,                            // "floating point"
+        S_BOOLEAN = 61,                          // "boolean"
+        S_YYACCEPT = 62,                         // $accept
+        S_start = 63,                            // start
+        S_64_1 = 64,                             // $@1
+        S_65_2 = 65,                             // $@2
+        S_66_3 = 66,                             // $@3
+        S_67_4 = 67,                             // $@4
+        S_68_5 = 68,                             // $@5
+        S_69_6 = 69,                             // $@6
+        S_70_7 = 70,                             // $@7
+        S_71_8 = 71,                             // $@8
+        S_72_9 = 72,                             // $@9
+        S_73_10 = 73,                            // $@10
+        S_value = 74,                            // value
+        S_sub_json = 75,                         // sub_json
+        S_map2 = 76,                             // map2
+        S_77_11 = 77,                            // $@11
+        S_map_value = 78,                        // map_value
+        S_map_content = 79,                      // map_content
+        S_not_empty_map = 80,                    // not_empty_map
+        S_list_generic = 81,                     // list_generic
+        S_82_12 = 82,                            // $@12
+        S_list_content = 83,                     // list_content
+        S_not_empty_list = 84,                   // not_empty_list
+        S_unknown_map_entry = 85,                // unknown_map_entry
+        S_syntax_map = 86,                       // syntax_map
+        S_87_13 = 87,                            // $@13
+        S_global_object = 88,                    // global_object
+        S_89_14 = 89,                            // $@14
+        S_sub_dhcpddns = 90,                     // sub_dhcpddns
+        S_91_15 = 91,                            // $@15
+        S_dhcpddns_params = 92,                  // dhcpddns_params
+        S_dhcpddns_param = 93,                   // dhcpddns_param
+        S_ip_address = 94,                       // ip_address
+        S_95_16 = 95,                            // $@16
+        S_port = 96,                             // port
+        S_dns_server_timeout = 97,               // dns_server_timeout
+        S_dns_server_max_attempts = 98,          // dns_server_max_attempts
+        S_ncr_protocol = 99,                     // ncr_protocol
+        S_100_17 = 100,                          // $@17
+        S_ncr_protocol_value = 101,              // ncr_protocol_value
+        S_ncr_format = 102,                      // ncr_format
+        S_103_18 = 103,                          // $@18
+        S_user_context = 104,                    // user_context
+        S_105_19 = 105,                          // $@19
+        S_comment = 106,                         // comment
+        S_107_20 = 107,                          // $@20
+        S_forward_ddns = 108,                    // forward_ddns
+        S_109_21 = 109,                          // $@21
+        S_reverse_ddns = 110,                    // reverse_ddns
+        S_111_22 = 111,                          // $@22
+        S_ddns_mgr_params = 112,                 // ddns_mgr_params
+        S_not_empty_ddns_mgr_params = 113,       // not_empty_ddns_mgr_params
+        S_ddns_mgr_param = 114,                  // ddns_mgr_param
+        S_ddns_domains = 115,                    // ddns_domains
+        S_116_23 = 116,                          // $@23
+        S_sub_ddns_domains = 117,                // sub_ddns_domains
+        S_118_24 = 118,                          // $@24
+        S_ddns_domain_list = 119,                // ddns_domain_list
+        S_not_empty_ddns_domain_list = 120,      // not_empty_ddns_domain_list
+        S_ddns_domain = 121,                     // ddns_domain
+        S_122_25 = 122,                          // $@25
+        S_sub_ddns_domain = 123,                 // sub_ddns_domain
+        S_124_26 = 124,                          // $@26
+        S_ddns_domain_params = 125,              // ddns_domain_params
+        S_ddns_domain_param = 126,               // ddns_domain_param
+        S_ddns_domain_name = 127,                // ddns_domain_name
+        S_128_27 = 128,                          // $@27
+        S_ddns_key_name = 129,                   // ddns_key_name
+        S_130_28 = 130,                          // $@28
+        S_dns_servers = 131,                     // dns_servers
+        S_132_29 = 132,                          // $@29
+        S_sub_dns_servers = 133,                 // sub_dns_servers
+        S_134_30 = 134,                          // $@30
+        S_dns_server_list = 135,                 // dns_server_list
+        S_dns_server = 136,                      // dns_server
+        S_137_31 = 137,                          // $@31
+        S_sub_dns_server = 138,                  // sub_dns_server
+        S_139_32 = 139,                          // $@32
+        S_dns_server_params = 140,               // dns_server_params
+        S_dns_server_param = 141,                // dns_server_param
+        S_dns_server_hostname = 142,             // dns_server_hostname
+        S_143_33 = 143,                          // $@33
+        S_dns_server_ip_address = 144,           // dns_server_ip_address
+        S_145_34 = 145,                          // $@34
+        S_dns_server_port = 146,                 // dns_server_port
+        S_tsig_keys = 147,                       // tsig_keys
+        S_148_35 = 148,                          // $@35
+        S_sub_tsig_keys = 149,                   // sub_tsig_keys
+        S_150_36 = 150,                          // $@36
+        S_tsig_keys_list = 151,                  // tsig_keys_list
+        S_not_empty_tsig_keys_list = 152,        // not_empty_tsig_keys_list
+        S_tsig_key = 153,                        // tsig_key
+        S_154_37 = 154,                          // $@37
+        S_sub_tsig_key = 155,                    // sub_tsig_key
+        S_156_38 = 156,                          // $@38
+        S_tsig_key_params = 157,                 // tsig_key_params
+        S_tsig_key_param = 158,                  // tsig_key_param
+        S_tsig_key_name = 159,                   // tsig_key_name
+        S_160_39 = 160,                          // $@39
+        S_tsig_key_algorithm = 161,              // tsig_key_algorithm
+        S_162_40 = 162,                          // $@40
+        S_tsig_key_digest_bits = 163,            // tsig_key_digest_bits
+        S_tsig_key_secret = 164,                 // tsig_key_secret
+        S_165_41 = 165,                          // $@41
+        S_control_socket = 166,                  // control_socket
+        S_167_42 = 167,                          // $@42
+        S_control_socket_params = 168,           // control_socket_params
+        S_control_socket_param = 169,            // control_socket_param
+        S_control_socket_type = 170,             // control_socket_type
+        S_171_43 = 171,                          // $@43
+        S_control_socket_name = 172,             // control_socket_name
+        S_173_44 = 173,                          // $@44
+        S_hooks_libraries = 174,                 // hooks_libraries
+        S_175_45 = 175,                          // $@45
+        S_hooks_libraries_list = 176,            // hooks_libraries_list
+        S_not_empty_hooks_libraries_list = 177,  // not_empty_hooks_libraries_list
+        S_hooks_library = 178,                   // hooks_library
+        S_179_46 = 179,                          // $@46
+        S_sub_hooks_library = 180,               // sub_hooks_library
+        S_181_47 = 181,                          // $@47
+        S_hooks_params = 182,                    // hooks_params
+        S_hooks_param = 183,                     // hooks_param
+        S_library = 184,                         // library
+        S_185_48 = 185,                          // $@48
+        S_parameters = 186,                      // parameters
+        S_187_49 = 187,                          // $@49
+        S_loggers = 188,                         // loggers
+        S_189_50 = 189,                          // $@50
+        S_loggers_entries = 190,                 // loggers_entries
+        S_logger_entry = 191,                    // logger_entry
+        S_192_51 = 192,                          // $@51
+        S_logger_params = 193,                   // logger_params
+        S_logger_param = 194,                    // logger_param
+        S_name = 195,                            // name
+        S_196_52 = 196,                          // $@52
+        S_debuglevel = 197,                      // debuglevel
+        S_severity = 198,                        // severity
+        S_199_53 = 199,                          // $@53
+        S_output_options_list = 200,             // output_options_list
+        S_201_54 = 201,                          // $@54
+        S_output_options_list_content = 202,     // output_options_list_content
+        S_output_entry = 203,                    // output_entry
+        S_204_55 = 204,                          // $@55
+        S_output_params_list = 205,              // output_params_list
+        S_output_params = 206,                   // output_params
+        S_output = 207,                          // output
+        S_208_56 = 208,                          // $@56
+        S_flush = 209,                           // flush
+        S_maxsize = 210,                         // maxsize
+        S_maxver = 211,                          // maxver
+        S_pattern = 212,                         // pattern
+        S_213_57 = 213                           // $@57
       };
     };
 
@@ -791,7 +806,7 @@ namespace isc { namespace d2 {
       typedef Base super_type;
 
       /// Default constructor.
-      basic_symbol ()
+      basic_symbol () YY_NOEXCEPT
         : value ()
         , location ()
       {}
@@ -926,6 +941,8 @@ namespace isc { namespace d2 {
         clear ();
       }
 
+
+
       /// Destroy contents, and record that is empty.
       void clear () YY_NOEXCEPT
       {
@@ -987,7 +1004,7 @@ switch (yykind)
       void move (basic_symbol& s);
 
       /// The semantic value.
-      semantic_type value;
+      value_type value;
 
       /// The location.
       location_type location;
@@ -1002,22 +1019,24 @@ switch (yykind)
     /// Type access provider for token (enum) based symbols.
     struct by_kind
     {
-      /// Default constructor.
-      by_kind ();
-
-#if 201103L <= YY_CPLUSPLUS
-      /// Move constructor.
-      by_kind (by_kind&& that);
-#endif
-
-      /// Copy constructor.
-      by_kind (const by_kind& that);
-
       /// The symbol kind as needed by the constructor.
       typedef token_kind_type kind_type;
 
+      /// Default constructor.
+      by_kind () YY_NOEXCEPT;
+
+#if 201103L <= YY_CPLUSPLUS
+      /// Move constructor.
+      by_kind (by_kind&& that) YY_NOEXCEPT;
+#endif
+
+      /// Copy constructor.
+      by_kind (const by_kind& that) YY_NOEXCEPT;
+
       /// Constructor from (external) token numbers.
-      by_kind (kind_type t);
+      by_kind (kind_type t) YY_NOEXCEPT;
+
+
 
       /// Record that this symbol is empty.
       void clear () YY_NOEXCEPT;
@@ -1047,59 +1066,69 @@ switch (yykind)
       typedef basic_symbol<by_kind> super_type;
 
       /// Empty symbol.
-      symbol_type () {}
+      symbol_type () YY_NOEXCEPT {}
 
       /// Constructor for valueless symbols, and symbols from each type.
 #if 201103L <= YY_CPLUSPLUS
       symbol_type (int tok, location_type l)
-        : super_type(token_type (tok), std::move (l))
+        : super_type (token_kind_type (tok), std::move (l))
 #else
       symbol_type (int tok, const location_type& l)
-        : super_type(token_type (tok), l)
+        : super_type (token_kind_type (tok), l)
 #endif
       {
+#if !defined _MSC_VER || defined __clang__
         D2_PARSER__ASSERT (tok == token::TOKEN_END
                    || (token::TOKEN_D2_PARSER_error <= tok && tok <= token::TOKEN_SUB_HOOKS_LIBRARY));
+#endif
       }
 #if 201103L <= YY_CPLUSPLUS
       symbol_type (int tok, bool v, location_type l)
-        : super_type(token_type (tok), std::move (v), std::move (l))
+        : super_type (token_kind_type (tok), std::move (v), std::move (l))
 #else
       symbol_type (int tok, const bool& v, const location_type& l)
-        : super_type(token_type (tok), v, l)
+        : super_type (token_kind_type (tok), v, l)
 #endif
       {
+#if !defined _MSC_VER || defined __clang__
         D2_PARSER__ASSERT (tok == token::TOKEN_BOOLEAN);
+#endif
       }
 #if 201103L <= YY_CPLUSPLUS
       symbol_type (int tok, double v, location_type l)
-        : super_type(token_type (tok), std::move (v), std::move (l))
+        : super_type (token_kind_type (tok), std::move (v), std::move (l))
 #else
       symbol_type (int tok, const double& v, const location_type& l)
-        : super_type(token_type (tok), v, l)
+        : super_type (token_kind_type (tok), v, l)
 #endif
       {
+#if !defined _MSC_VER || defined __clang__
         D2_PARSER__ASSERT (tok == token::TOKEN_FLOAT);
+#endif
       }
 #if 201103L <= YY_CPLUSPLUS
       symbol_type (int tok, int64_t v, location_type l)
-        : super_type(token_type (tok), std::move (v), std::move (l))
+        : super_type (token_kind_type (tok), std::move (v), std::move (l))
 #else
       symbol_type (int tok, const int64_t& v, const location_type& l)
-        : super_type(token_type (tok), v, l)
+        : super_type (token_kind_type (tok), v, l)
 #endif
       {
+#if !defined _MSC_VER || defined __clang__
         D2_PARSER__ASSERT (tok == token::TOKEN_INTEGER);
+#endif
       }
 #if 201103L <= YY_CPLUSPLUS
       symbol_type (int tok, std::string v, location_type l)
-        : super_type(token_type (tok), std::move (v), std::move (l))
+        : super_type (token_kind_type (tok), std::move (v), std::move (l))
 #else
       symbol_type (int tok, const std::string& v, const location_type& l)
-        : super_type(token_type (tok), v, l)
+        : super_type (token_kind_type (tok), v, l)
 #endif
       {
+#if !defined _MSC_VER || defined __clang__
         D2_PARSER__ASSERT (tok == token::TOKEN_STRING);
+#endif
       }
     };
 
@@ -1148,7 +1177,7 @@ switch (yykind)
     /// YYSYMBOL.  No bounds checking.
     static std::string symbol_name (symbol_kind_type yysymbol);
 
-    // Implementation of make_symbol for each symbol type.
+    // Implementation of make_symbol for each token kind.
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
@@ -1357,6 +1386,21 @@ switch (yykind)
       make_DNS_SERVER_TIMEOUT (const location_type& l)
       {
         return symbol_type (token::TOKEN_DNS_SERVER_TIMEOUT, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_DNS_SERVER_MAX_ATTEMPTS (location_type l)
+      {
+        return symbol_type (token::TOKEN_DNS_SERVER_MAX_ATTEMPTS, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_DNS_SERVER_MAX_ATTEMPTS (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_DNS_SERVER_MAX_ATTEMPTS, l);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
@@ -2110,19 +2154,19 @@ switch (yykind)
 
     /// Whether the given \c yypact_ value indicates a defaulted state.
     /// \param yyvalue   the value to check
-    static bool yy_pact_value_is_default_ (int yyvalue);
+    static bool yy_pact_value_is_default_ (int yyvalue) YY_NOEXCEPT;
 
     /// Whether the given \c yytable_ value indicates a syntax error.
     /// \param yyvalue   the value to check
-    static bool yy_table_value_is_error_ (int yyvalue);
+    static bool yy_table_value_is_error_ (int yyvalue) YY_NOEXCEPT;
 
     static const short yypact_ninf_;
     static const signed char yytable_ninf_;
 
     /// Convert a scanner token kind \a t to a symbol kind.
     /// In theory \a t should be a token_kind_type, but character literals
-    /// are valid, yet not members of the token_type enum.
-    static symbol_kind_type yytranslate_ (int t);
+    /// are valid, yet not members of the token_kind_type enum.
+    static symbol_kind_type yytranslate_ (int t) YY_NOEXCEPT;
 
     /// Convert the symbol name \a n to a form suitable for a diagnostic.
     static std::string yytnamerr_ (const char *yystr);
@@ -2154,14 +2198,14 @@ switch (yykind)
 
     static const short yycheck_[];
 
-    // YYSTOS[STATE-NUM] -- The (internal number of the) accessing
-    // symbol of state STATE-NUM.
+    // YYSTOS[STATE-NUM] -- The symbol kind of the accessing symbol of
+    // state STATE-NUM.
     static const unsigned char yystos_[];
 
-    // YYR1[YYN] -- Symbol number of symbol that rule YYN derives.
+    // YYR1[RULE-NUM] -- Symbol kind of the left-hand side of rule RULE-NUM.
     static const unsigned char yyr1_[];
 
-    // YYR2[YYN] -- Number of symbols on the right hand side of rule YYN.
+    // YYR2[RULE-NUM] -- Number of symbols on the right-hand side of rule RULE-NUM.
     static const signed char yyr2_[];
 
 
@@ -2260,7 +2304,7 @@ switch (yykind)
       typedef typename S::size_type size_type;
       typedef typename std::ptrdiff_t index_type;
 
-      stack (size_type n = 200)
+      stack (size_type n = 200) YY_NOEXCEPT
         : seq_ (n)
       {}
 
@@ -2339,7 +2383,7 @@ switch (yykind)
       class slice
       {
       public:
-        slice (const stack& stack, index_type range)
+        slice (const stack& stack, index_type range) YY_NOEXCEPT
           : stack_ (stack)
           , range_ (range)
         {}
@@ -2389,13 +2433,13 @@ switch (yykind)
     void yypush_ (const char* m, state_type s, YY_MOVE_REF (symbol_type) sym);
 
     /// Pop \a n symbols from the stack.
-    void yypop_ (int n = 1);
+    void yypop_ (int n = 1) YY_NOEXCEPT;
 
     /// Constants.
     enum
     {
-      yylast_ = 307,     ///< Last index in yytable_.
-      yynnts_ = 151,  ///< Number of nonterminal symbols.
+      yylast_ = 309,     ///< Last index in yytable_.
+      yynnts_ = 152,  ///< Number of nonterminal symbols.
       yyfinal_ = 22 ///< Termination state number.
     };
 
@@ -2407,7 +2451,7 @@ switch (yykind)
 
   inline
   D2Parser::symbol_kind_type
-  D2Parser::yytranslate_ (int t)
+  D2Parser::yytranslate_ (int t) YY_NOEXCEPT
   {
     // YYTRANSLATE[TOKEN-NUM] -- Symbol number corresponding to
     // TOKEN-NUM as returned by yylex.
@@ -2446,15 +2490,15 @@ switch (yykind)
       25,    26,    27,    28,    29,    30,    31,    32,    33,    34,
       35,    36,    37,    38,    39,    40,    41,    42,    43,    44,
       45,    46,    47,    48,    49,    50,    51,    52,    53,    54,
-      55,    56,    57,    58,    59,    60
+      55,    56,    57,    58,    59,    60,    61
     };
     // Last valid token kind.
-    const int code_max = 315;
+    const int code_max = 316;
 
     if (t <= 0)
       return symbol_kind::S_YYEOF;
     else if (t <= code_max)
-      return YY_CAST (symbol_kind_type, translate_table[t]);
+      return static_cast <symbol_kind_type> (translate_table[t]);
     else
       return symbol_kind::S_YYUNDEF;
   }
@@ -2498,12 +2542,14 @@ switch (yykind)
 
 
 
+
   template <typename Base>
   D2Parser::symbol_kind_type
   D2Parser::basic_symbol<Base>::type_get () const YY_NOEXCEPT
   {
     return this->kind ();
   }
+
 
   template <typename Base>
   bool
@@ -2550,13 +2596,13 @@ switch (yykind)
 
   // by_kind.
   inline
-  D2Parser::by_kind::by_kind ()
+  D2Parser::by_kind::by_kind () YY_NOEXCEPT
     : kind_ (symbol_kind::S_YYEMPTY)
   {}
 
 #if 201103L <= YY_CPLUSPLUS
   inline
-  D2Parser::by_kind::by_kind (by_kind&& that)
+  D2Parser::by_kind::by_kind (by_kind&& that) YY_NOEXCEPT
     : kind_ (that.kind_)
   {
     that.clear ();
@@ -2564,14 +2610,16 @@ switch (yykind)
 #endif
 
   inline
-  D2Parser::by_kind::by_kind (const by_kind& that)
+  D2Parser::by_kind::by_kind (const by_kind& that) YY_NOEXCEPT
     : kind_ (that.kind_)
   {}
 
   inline
-  D2Parser::by_kind::by_kind (token_kind_type t)
+  D2Parser::by_kind::by_kind (token_kind_type t) YY_NOEXCEPT
     : kind_ (yytranslate_ (t))
   {}
+
+
 
   inline
   void
@@ -2595,6 +2643,7 @@ switch (yykind)
     return kind_;
   }
 
+
   inline
   D2Parser::symbol_kind_type
   D2Parser::by_kind::type_get () const YY_NOEXCEPT
@@ -2602,9 +2651,10 @@ switch (yykind)
     return this->kind ();
   }
 
+
 #line 14 "d2_parser.yy"
 } } // isc::d2
-#line 2608 "d2_parser.h"
+#line 2658 "d2_parser.h"
 
 
 
