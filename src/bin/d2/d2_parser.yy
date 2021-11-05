@@ -53,6 +53,7 @@ using namespace std;
   IP_ADDRESS "ip-address"
   PORT "port"
   DNS_SERVER_TIMEOUT "dns-server-timeout"
+  DNS_SERVER_MAX_ATTEMPTS "dns_server_max-attempts"
   NCR_PROTOCOL "ncr-protocol"
   UDP "UDP"
   TCP "TCP"
@@ -259,6 +260,7 @@ dhcpddns_params: dhcpddns_param
 dhcpddns_param: ip_address
               | port
               | dns_server_timeout
+              | dns_server_max_attempts
               | ncr_protocol
               | ncr_format
               | forward_ddns
@@ -297,6 +299,16 @@ dns_server_timeout: DNS_SERVER_TIMEOUT COLON INTEGER {
     } else {
         ElementPtr i(new IntElement($3, ctx.loc2pos(@3)));
         ctx.stack_.back()->set("dns-server-timeout", i);
+    }
+};
+
+dns_server_max_attempts: DNS_SERVER_MAX_ATTEMPTS COLON INTEGER {
+    ctx.unique("dns-server-max-attempts", ctx.loc2pos(@1));
+    if ($3 <= 0) {
+        error(@3, "dns-server-max-attempts must be greater than zero");
+    } else {
+        ElementPtr i(new IntElement($3, ctx.loc2pos(@3)));
+        ctx.stack_.back()->set("dns-server-max-attempts", i);
     }
 };
 

@@ -80,11 +80,12 @@ namespace d2 {
 /// in DhcpDdns) are optional. If not defined, the following values will be
 /// used.
 const SimpleDefaults D2SimpleParser::D2_GLOBAL_DEFAULTS = {
-    { "ip-address",         Element::string, "127.0.0.1" },
-    { "port",               Element::integer, "53001" },
-    { "dns-server-timeout", Element::integer, "100" }, // in milliseconds
-    { "ncr-protocol",       Element::string, "UDP" },
-    { "ncr-format",         Element::string, "JSON" }
+    { "ip-address",              Element::string, "127.0.0.1" },
+    { "port",                    Element::integer, "53001" },
+    { "dns-server-timeout",      Element::integer, "100" }, // in milliseconds
+    { "dns-server-max-attempts", Element::integer, "3" },
+    { "ncr-protocol",            Element::string, "UDP" },
+    { "ncr-format",              Element::string, "JSON" }
 };
 
 /// Supplies defaults for ddns-domains list elements (i.e. DdnsDomains)

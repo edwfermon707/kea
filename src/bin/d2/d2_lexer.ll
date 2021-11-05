@@ -215,6 +215,15 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"dns-server-max-attempts\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::DHCPDDNS:
+        return isc::d2::D2Parser::make_DNS_SERVER_MAX_ATTEMPTS(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("dns-server-max-attempts", driver.loc_);
+    }
+}
+
 \"ncr-protocol\" {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::DHCPDDNS:
