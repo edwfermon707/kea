@@ -242,6 +242,15 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"max-ncr-queue-size\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::DHCPDDNS:
+        return isc::d2::D2Parser::make_MAX_NCR_QUEUE_SIZE(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("max-ncr-queue-size", driver.loc_);
+    }
+}
+
 (?i:\"UDP\") {
     /* dhcp-ddns value keywords are case insensitive */
     if (driver.ctx_ == isc::d2::D2ParserContext::NCR_PROTOCOL) {

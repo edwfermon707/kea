@@ -53,12 +53,13 @@ using namespace std;
   IP_ADDRESS "ip-address"
   PORT "port"
   DNS_SERVER_TIMEOUT "dns-server-timeout"
-  DNS_SERVER_MAX_ATTEMPTS "dns_server_max-attempts"
+  DNS_SERVER_MAX_ATTEMPTS "dns-server-max-attempts"
   NCR_PROTOCOL "ncr-protocol"
   UDP "UDP"
   TCP "TCP"
   NCR_FORMAT "ncr-format"
   JSON "JSON"
+  MAX_NCR_QUEUE_SIZE "max-ncr-queue-size"
   USER_CONTEXT "user-context"
   COMMENT "comment"
   FORWARD_DDNS "forward-ddns"
@@ -263,6 +264,7 @@ dhcpddns_param: ip_address
               | dns_server_max_attempts
               | ncr_protocol
               | ncr_format
+              | max_ncr_queue_size
               | forward_ddns
               | reverse_ddns
               | tsig_keys
@@ -332,6 +334,16 @@ ncr_format: NCR_FORMAT {
     ElementPtr json(new StringElement("JSON", ctx.loc2pos(@4)));
     ctx.stack_.back()->set("ncr-format", json);
     ctx.leave();
+};
+
+max_ncr_queue_size: MAX_NCR_QUEUE_SIZE COLON INTEGER {
+    ctx.unique("max-ncr-queue-size", ctx.loc2pos(@1));
+    if ($3 <= 0) {
+        error(@3, "max-ncr-queue-size must be greater than zero");
+    } else {
+        ElementPtr i(new IntElement($3, ctx.loc2pos(@3)));
+        ctx.stack_.back()->set("max-ncr-queue-size", i);
+    }
 };
 
 user_context: USER_CONTEXT {
