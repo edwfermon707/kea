@@ -85,7 +85,8 @@ const SimpleDefaults D2SimpleParser::D2_GLOBAL_DEFAULTS = {
     { "dns-server-timeout",      Element::integer, "100" }, // in milliseconds
     { "dns-server-max-attempts", Element::integer, "3" },
     { "ncr-protocol",            Element::string, "UDP" },
-    { "ncr-format",              Element::string, "JSON" }
+    { "ncr-format",              Element::string, "JSON" },
+    { "max-ncr-queue-size",      Element::integer, "1024" }
 };
 
 /// Supplies defaults for ddns-domains list elements (i.e. DdnsDomains)
@@ -234,8 +235,10 @@ void D2SimpleParser::parse(const D2CfgContextPtr& ctx,
     asiolink::IOAddress ip_address(0);
     uint32_t port = 0;
     uint32_t dns_server_timeout = 0;
+    uint32_t dns_server_max_attempts = 0;
     dhcp_ddns::NameChangeProtocol ncr_protocol = dhcp_ddns::NCR_UDP;
     dhcp_ddns::NameChangeFormat ncr_format = dhcp_ddns::FMT_JSON;
+    uint32_t max_ncr_queue_size;
 
     ip_address = SimpleParser::getAddress(config, "ip-address");
 
@@ -249,6 +252,8 @@ void D2SimpleParser::parse(const D2CfgContextPtr& ctx,
     port = SimpleParser::getUint32(config, "port");
 
     dns_server_timeout = SimpleParser::getUint32(config, "dns-server-timeout");
+
+    dns_server_max_attempts = SimpleParser::getUint32(config, "dns-server-max-attempts");
 
     ncr_protocol = getProtocol(config, "ncr-protocol");
     if (ncr_protocol != dhcp_ddns::NCR_UDP) {
@@ -265,6 +270,8 @@ void D2SimpleParser::parse(const D2CfgContextPtr& ctx,
                   << " is not yet supported"
                   << " (" << config->get("ncr-format")->getPosition() << ")");
     }
+
+    max_ncr_queue_size = SimpleParser::getUint32(config, "max-ncr-queue-size");
 
     ConstElementPtr user = config->get("user-context");
     if (user) {
@@ -293,7 +300,8 @@ void D2SimpleParser::parse(const D2CfgContextPtr& ctx,
     // Attempt to create the new client config. This ought to fly as
     // we already validated everything.
     D2ParamsPtr params(new D2Params(ip_address, port, dns_server_timeout,
-                                    ncr_protocol, ncr_format));
+                                    dns_server_max_attempts, ncr_protocol,
+                                    ncr_format, max_ncr_queue_size));
 
     ctx->getD2Params() = params;
 

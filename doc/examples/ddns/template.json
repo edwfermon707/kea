@@ -15,8 +15,10 @@
 //    "ip-address" : "127.0.0.1",
 //    "port" : 53001,
 //    "dns-server-timeout" : 100,
+//    "dns-server-max-attempts" : 3
 //    "ncr-protocol" : "UDP"
 //    "ncr-format" : "JSON"
+//    "max-ncr-queue-size" : 1024
 
 //
 // ----------------- Control Socket -----------------

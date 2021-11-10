@@ -422,6 +422,14 @@ D2Process::reconfigureQueueMgr() {
                                                         getNcrProtocol()));
         }
 
+        // Set the maximum queue size if it extends the current queue.
+        size_t new_max_queue = d2_params->getMaxNcrQueueSize();
+        if (new_max_queue != queue_mgr_->getMaxQueueSize()) {
+            if (new_max_queue >= queue_mgr_->getQueueSize()) {
+                queue_mgr_->setMaxQueueSize(new_max_queue);
+            } // @todo emit a warning on illegal shrink attempt.
+        }
+
         // Now start it. This assumes that starting is a synchronous,
         // blocking call that executes quickly.
         /// @todo Should that change then we will have to expand the state model

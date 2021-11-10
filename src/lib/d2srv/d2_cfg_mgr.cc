@@ -75,6 +75,10 @@ D2CfgContext::toElement() const {
     size_t dns_server_timeout = d2_params_->getDnsServerTimeout();
     d2->set("dns-server-timeout",
             Element::create(static_cast<int64_t>(dns_server_timeout)));
+    // Set dns-server-max-attempts
+    size_t dns_server_max_attempts = d2_params_->getDnsServerMaxAttempts();
+    d2->set("dns-server-max-attempts",
+            Element::create(static_cast<int64_t>(dns_server_max_attempts)));
     // Set ncr-protocol
     const dhcp_ddns::NameChangeProtocol& ncr_protocol =
         d2_params_->getNcrProtocol();
@@ -84,6 +88,10 @@ D2CfgContext::toElement() const {
     const dhcp_ddns::NameChangeFormat& ncr_format = d2_params_->getNcrFormat();
     d2->set("ncr-format",
             Element::create(dhcp_ddns::ncrFormatToString(ncr_format)));
+    // Set max-ncr-queue-size
+    size_t max_ncr_queue_size = d2_params_->getMaxNcrQueueSize();
+    d2->set("max-ncr-queue-size",
+            Element::create(static_cast<int64_t>(max_ncr_queue_size)));
     // Set forward-ddns
     ElementPtr forward_ddns = Element::createMap();
     forward_ddns->set("ddns-domains", forward_mgr_->toElement());

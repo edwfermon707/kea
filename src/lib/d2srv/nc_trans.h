@@ -150,8 +150,14 @@ public:
     /// so unit tests will run within a reasonable amount of time.
     static const unsigned int DNS_UPDATE_DEFAULT_TIMEOUT = 100;
 
-    /// @brief Maximum times to attempt a single update on a given server.
-    static const unsigned int MAX_UPDATE_TRIES_PER_SERVER = 3;
+    /// @brief Default maximum times to attempt a single update on a given server.
+    static const unsigned int DEF_MAX_UPDATE_TRIES_PER_SERVER = 3;
+
+    /// @brief Minimum maximum times to attempt a single update on a given server.
+    static const unsigned int MIN_MAX_UPDATE_TRIES_PER_SERVER = 1;
+
+    /// @brief Maximum maximum times to attempt a single update on a given server.
+    static const unsigned int MAX_MAX_UPDATE_TRIES_PER_SERVER = 10;
 
     /// @brief Constructor
     ///
@@ -358,6 +364,11 @@ protected:
     /// @param value is the new value to assign.
     void setUpdateAttempts(const size_t value);
 
+    /// @brief Sets the maximum update attempt count to the given value.
+    ///
+    /// @param value is the new value to assign.
+    void setMaxUpdateAttempts(const size_t value);
+
     /// @brief Fetches the IOService the transaction uses for IO processing.
     ///
     /// @return returns a const pointer to the IOService.
@@ -527,6 +538,12 @@ public:
     /// been attempted against the current server.
     size_t getUpdateAttempts() const;
 
+    /// @brief Fetches the maximum update attempt count for the current update.
+    ///
+    /// @return size_t which is the maximumnumber of times the current request
+    /// will be attempted against the current server.
+    size_t getMaxUpdateAttempts() const;
+
     /// @brief Returns the DHCP data type for the lease address
     ///
     /// @return constant reference to dns::RRType::A() if the lease address
@@ -586,6 +603,9 @@ private:
 
     /// @brief Number of transmit attempts for the current request.
     size_t update_attempts_;
+
+    /// @brief Maximum number of transmit attempts for the current request.
+    size_t max_update_attempts_;
 
     /// @brief Pointer to the configuration manager.
     D2CfgMgrPtr cfg_mgr_;

@@ -693,7 +693,7 @@ TEST_F(NameAddTransactionTest, addingFwdAddrsHandler_OtherRcode) {
 //
 //  The request includes a forward and reverse change.
 //  Initial posted event is SERVER_SELECTED_EVT.
-//  The update request send times out MAX_UPDATE_TRIES_PER_SERVER times.
+//  The update request send times out DEF_MAX_UPDATE_TRIES_PER_SERVER times.
 //
 TEST_F(NameAddTransactionTest, addingFwdAddrsHandler_Timeout) {
     NameAddStubPtr name_add;
@@ -712,7 +712,7 @@ TEST_F(NameAddTransactionTest, addingFwdAddrsHandler_Timeout) {
 
     // Verify that we can make maximum number of update attempts permitted
     // and then transition to selecting a new server.
-    int max_tries = NameChangeTransaction::MAX_UPDATE_TRIES_PER_SERVER;
+    int max_tries = NameChangeTransaction::DEF_MAX_UPDATE_TRIES_PER_SERVER;
     for (int i = 1; i <= max_tries; ++i) {
         // Run addingFwdAddrsHandler to send the request.
         EXPECT_NO_THROW(name_add->addingFwdAddrsHandler());
@@ -749,7 +749,7 @@ TEST_F(NameAddTransactionTest, addingFwdAddrsHandler_Timeout) {
 //  The request includes a forward and reverse change.
 //  Initial posted event is SERVER_SELECTED_EVT.
 //  The update request is sent but a corrupt response is received, this occurs
-//  MAX_UPDATE_TRIES_PER_SERVER times.
+//  DEF_MAX_UPDATE_TRIES_PER_SERVER times.
 //
 TEST_F(NameAddTransactionTest, addingFwdAddrsHandler_InvalidResponse) {
     NameAddStubPtr name_add;
@@ -768,7 +768,7 @@ TEST_F(NameAddTransactionTest, addingFwdAddrsHandler_InvalidResponse) {
 
     // Verify that we can make maximum number of update attempts permitted
     // and then transition to selecting a new server.
-    int max_tries = NameChangeTransaction::MAX_UPDATE_TRIES_PER_SERVER;
+    int max_tries = NameChangeTransaction::DEF_MAX_UPDATE_TRIES_PER_SERVER;
     for (int i = 1; i <= max_tries; ++i) {
         // Run addingFwdAddrsHandler to construct send the request.
         EXPECT_NO_THROW(name_add->addingFwdAddrsHandler());
@@ -1025,7 +1025,7 @@ TEST_F(NameAddTransactionTest, replacingFwdAddrsHandler_OtherRcode) {
 //
 //  The request includes a forward and reverse change.
 //  Initial posted event is FQDN_IN_USE_EVT.
-//  The update request send times out MAX_UPDATE_TRIES_PER_SERVER times.
+//  The update request send times out DEF_MAX_UPDATE_TRIES_PER_SERVER times.
 //
 TEST_F(NameAddTransactionTest, replacingFwdAddrsHandler_Timeout) {
     NameAddStubPtr name_add;
@@ -1042,7 +1042,7 @@ TEST_F(NameAddTransactionTest, replacingFwdAddrsHandler_Timeout) {
 
     // Verify that we can make maximum number of update attempts permitted
     // and then transition to selecting a new server.
-    int max_tries = NameChangeTransaction::MAX_UPDATE_TRIES_PER_SERVER;
+    int max_tries = NameChangeTransaction::DEF_MAX_UPDATE_TRIES_PER_SERVER;
     for (int i = 1; i <= max_tries; ++i) {
         // Run replacingFwdAddrsHandler to send the request.
         EXPECT_NO_THROW(name_add->replacingFwdAddrsHandler());
@@ -1079,7 +1079,7 @@ TEST_F(NameAddTransactionTest, replacingFwdAddrsHandler_Timeout) {
 //  The request includes a forward and reverse change.
 //  Initial posted event is FQDN_IN_USE_EVT.
 //  The update request is sent but a corrupt response is received, this occurs
-//  MAX_UPDATE_TRIES_PER_SERVER times.
+//  DEF_MAX_UPDATE_TRIES_PER_SERVER times.
 //
 TEST_F(NameAddTransactionTest, replacingFwdAddrsHandler_CorruptResponse) {
     NameAddStubPtr name_add;
@@ -1095,7 +1095,7 @@ TEST_F(NameAddTransactionTest, replacingFwdAddrsHandler_CorruptResponse) {
 
     // Verify that we can make maximum number of update attempts permitted
     // and then transition to selecting a new server.
-    int max_tries = NameChangeTransaction::MAX_UPDATE_TRIES_PER_SERVER;
+    int max_tries = NameChangeTransaction::DEF_MAX_UPDATE_TRIES_PER_SERVER;
     for (int i = 1; i <= max_tries; ++i) {
         // Run replacingFwdAddrsHandler to send the request.
         EXPECT_NO_THROW(name_add->replacingFwdAddrsHandler());
@@ -1309,7 +1309,7 @@ TEST_F(NameAddTransactionTest, replacingRevPtrsHandler_OtherRcode) {
 //
 //  The request includes only a reverse change.
 //  Initial posted event is SERVER_SELECTED_EVT.
-//  The update request send times out MAX_UPDATE_TRIES_PER_SERVER times.
+//  The update request send times out DEF_MAX_UPDATE_TRIES_PER_SERVER times.
 //
 TEST_F(NameAddTransactionTest, replacingRevPtrsHandler_Timeout) {
     NameAddStubPtr name_add;
@@ -1324,7 +1324,7 @@ TEST_F(NameAddTransactionTest, replacingRevPtrsHandler_Timeout) {
 
     // Verify that we can make maximum number of update attempts permitted
     // and then transition to selecting a new server.
-    int max_tries = NameChangeTransaction::MAX_UPDATE_TRIES_PER_SERVER;
+    int max_tries = NameChangeTransaction::DEF_MAX_UPDATE_TRIES_PER_SERVER;
     for (int i = 1; i <= max_tries; ++i) {
         // Run replacingRevPtrsHandler to send the request.
         EXPECT_NO_THROW(name_add->replacingRevPtrsHandler());
@@ -1361,7 +1361,7 @@ TEST_F(NameAddTransactionTest, replacingRevPtrsHandler_Timeout) {
 //  The request includes only a reverse change.
 //  Initial posted event is SERVER_SELECTED_EVT.
 //  The update request is sent but a corrupt response is received, this occurs
-//  MAX_UPDATE_TRIES_PER_SERVER times.
+//  DEF_MAX_UPDATE_TRIES_PER_SERVER times.
 //
 TEST_F(NameAddTransactionTest, replacingRevPtrsHandler_CorruptResponse) {
     NameAddStubPtr name_add;
@@ -1376,7 +1376,7 @@ TEST_F(NameAddTransactionTest, replacingRevPtrsHandler_CorruptResponse) {
 
     // Verify that we can make maximum number of update attempts permitted
     // and then transition to selecting a new server.
-    int max_tries = NameChangeTransaction::MAX_UPDATE_TRIES_PER_SERVER;
+    int max_tries = NameChangeTransaction::DEF_MAX_UPDATE_TRIES_PER_SERVER;
     for (int i = 1; i <= max_tries; ++i) {
         // Run replacingRevPtrsHandler to send the request.
         EXPECT_NO_THROW(name_add->replacingRevPtrsHandler());

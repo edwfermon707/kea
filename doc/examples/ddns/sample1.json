@@ -12,11 +12,13 @@
 //
 //   D2 will listen for update requests for Kea DHCP servers at 127.0.0.1
 //   on port 53001.  Maximum time to we will  wait for a DNS server to
-//   respond to us is 1000 ms.
+//   respond to us is 1000 ms, and there will be at most 5 DNS update
+//   attempts per server.
 
     "ip-address": "127.0.0.1",
     "port": 53001,
     "dns-server-timeout" : 1000,
+    "dns-server-max-attempts" : 5,
 
 // One extra feature that requires some explanation is
 // user-context. This is a structure that you can define at global scope,

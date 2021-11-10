@@ -273,8 +273,8 @@ TEST_F(D2SimpleParserTest, globalD2Defaults) {
 
     EXPECT_NO_THROW(num = D2SimpleParser::setAllDefaults(empty));
 
-    // We expect 5 parameters to be inserted.
-    EXPECT_EQ(num, 8);
+    // We expect 10 parameters to be inserted.
+    EXPECT_EQ(num, 10);
 
     // Let's go over all parameters we have defaults for.
     BOOST_FOREACH(SimpleDefault deflt, D2SimpleParser::D2_GLOBAL_DEFAULTS) {

@@ -30,21 +30,26 @@ namespace d2 {
 D2Params::D2Params(const isc::asiolink::IOAddress& ip_address,
                    const size_t port,
                    const size_t dns_server_timeout,
+                   const size_t dns_server_max_attempts,
                    const dhcp_ddns::NameChangeProtocol& ncr_protocol,
-                   const dhcp_ddns::NameChangeFormat& ncr_format)
+                   const dhcp_ddns::NameChangeFormat& ncr_format,
+                   const size_t max_ncr_queue_size)
     : ip_address_(ip_address),
-    port_(port),
-    dns_server_timeout_(dns_server_timeout),
-    ncr_protocol_(ncr_protocol),
-    ncr_format_(ncr_format) {
+      port_(port),
+      dns_server_timeout_(dns_server_timeout),
+      dns_server_max_attempts_(dns_server_max_attempts),
+      ncr_protocol_(ncr_protocol),
+      ncr_format_(ncr_format),
+      max_ncr_queue_size_(max_ncr_queue_size)
+ {
     validateContents();
 }
 
 D2Params::D2Params()
     : ip_address_(isc::asiolink::IOAddress("127.0.0.1")),
-     port_(53001), dns_server_timeout_(100),
-     ncr_protocol_(dhcp_ddns::NCR_UDP),
-     ncr_format_(dhcp_ddns::FMT_JSON) {
+      port_(53001), dns_server_timeout_(100), dns_server_max_attempts_(3),
+      ncr_protocol_(dhcp_ddns::NCR_UDP), ncr_format_(dhcp_ddns::FMT_JSON),
+      max_ncr_queue_size_(1024) {
     validateContents();
 }
 
@@ -66,6 +71,11 @@ D2Params::validateContents() {
                   "D2Params: DNS server timeout must be larger than 0");
     }
 
+    if ((dns_server_max_attempts_ < 1) || (dns_server_max_attempts_ > 10)) {
+        isc_throw(D2CfgError,
+                  "D2Params: DNS server maximum attempts must be in [1..10]");
+    }
+
     if (ncr_format_ != dhcp_ddns::FMT_JSON) {
         isc_throw(D2CfgError, "D2Params: NCR Format:"
                   << dhcp_ddns::ncrFormatToString(ncr_format_)
@@ -76,6 +86,11 @@ D2Params::validateContents() {
         isc_throw(D2CfgError, "D2Params: NCR Protocol:"
                   << dhcp_ddns::ncrProtocolToString(ncr_protocol_)
                   << " is not yet supported");
+    }
+
+    if ((max_ncr_queue_size_ < 1) || (max_ncr_queue_size_ > 100000)) {
+        isc_throw(D2CfgError,
+                  "D2Params: max NCR queue size must be in [1..100000]");
     }
 }
 
@@ -92,8 +107,10 @@ D2Params::operator == (const D2Params& other) const {
     return ((ip_address_ == other.ip_address_) &&
             (port_ == other.port_) &&
             (dns_server_timeout_ == other.dns_server_timeout_) &&
+            (dns_server_max_attempts_ == other.dns_server_max_attempts_) &&
             (ncr_protocol_ == other.ncr_protocol_) &&
-            (ncr_format_ == other.ncr_format_));
+            (ncr_format_ == other.ncr_format_) &&
+            (max_ncr_queue_size_ == other.max_ncr_queue_size_));
 }
 
 bool
@@ -107,11 +124,13 @@ D2Params::toText() const {
 
     stream << ", ip-address: " << ip_address_.toText()
            << ", port: " << port_
-           << ", dns-server-timeout_: " << dns_server_timeout_
+           << ", dns-server-timeout: " << dns_server_timeout_
+           << ", dns-server-max-attempts: " << dns_server_max_attempts_
            << ", ncr-protocol: "
            << dhcp_ddns::ncrProtocolToString(ncr_protocol_)
            << ", ncr-format: " << ncr_format_
-           << dhcp_ddns::ncrFormatToString(ncr_format_);
+           << dhcp_ddns::ncrFormatToString(ncr_format_)
+           << "max_ncr_queue_size: " << max_ncr_queue_size_;
 
     return (stream.str());
 }

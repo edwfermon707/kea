@@ -14,6 +14,8 @@ namespace d2 {
 
 // Makes constant visible to Google test macros.
 const size_t D2QueueMgr::MAX_QUEUE_DEFAULT;
+const size_t D2QueueMgr::MAX_QUEUE_MINIMUM;
+const size_t D2QueueMgr::MAX_QUEUE_MAXIMUM;
 
 D2QueueMgr::D2QueueMgr(asiolink::IOServicePtr& io_service, const size_t max_queue_size)
     : io_service_(io_service), max_queue_size_(max_queue_size),

@@ -4,6 +4,7 @@
             "socket-name": "/tmp/kea-ddns-ctrl-socket",
             "socket-type": "unix"
         },
+        "dns-server-max-attempts": 5,
         "dns-server-timeout": 1000,
         "forward-ddns": {
             "ddns-domains": [
@@ -58,6 +59,7 @@
                 "severity": "INFO"
             }
         ],
+        "max-ncr-queue-size": 1024,
         "ncr-format": "JSON",
         "ncr-protocol": "UDP",
         "port": 53001,

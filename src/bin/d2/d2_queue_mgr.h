@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015,2017,2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -131,10 +131,19 @@ public:
 class D2QueueMgr : public dhcp_ddns::NameChangeListener::RequestReceiveHandler,
                    boost::noncopyable {
 public:
-    /// @brief Maximum number of entries allowed in the request queue.
-    /// NOTE that 1024 is an arbitrary choice picked for the initial
+    /// @brief Default maximum number of entries allowed in the request queue.
+    /// @note 1024 is an arbitrary choice picked for the initial
     /// implementation.
     static const size_t MAX_QUEUE_DEFAULT = 1024;
+
+    /// @brief Minimum maximum number of entries allowed in the request queue.
+    /// @note: excluding 0 means we do not support unbounded size.
+    static const size_t MAX_QUEUE_MINIMUM = 1;
+
+    /// @brief Maximum maximum number of entries allowed in the request queue.
+    /// @note Another arbitrary number... Anyway if not enough there are
+    /// more critical problems than this one.
+    static const size_t MAX_QUEUE_MAXIMUM = 10000;
 
     /// @brief Defines the list of possible states for D2QueueMgr.
     enum State {

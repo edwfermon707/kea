@@ -26,6 +26,10 @@
     // Unit is the millisecond, default is 100ms.
     "dns-server-timeout" : 100,
 
+    // Maximum number of DNS update attempts per server.
+    // Default is 3, the value must be between 1 and 10 inclusive.
+    "dns-server-max-attempts": 3,
+
     // Protocol to use for Name Change Requests from a Kea DHCP server.
     // Currently only 'UDP' is supported.
     "ncr-protocol": "UDP",
@@ -33,6 +37,10 @@
     // Format to use for Name Change Requests from a Kea DHCP server.
     // Currently only 'JSON' is supported.
     "ncr-format": "JSON",
+
+    // Maximum size of the NCR queue.
+    // Default is 1024, the value must be between 1 and 10000 inclusive.
+    "max-ncr-queue-size": 1024,
 
     // Command control socket configuration parameters for Kea DHCP-DDNS server.
     "control-socket": {

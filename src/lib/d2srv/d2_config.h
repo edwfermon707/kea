@@ -146,22 +146,29 @@ public:
     ///
     /// @param ip_address IP address at which D2 should listen for NCRs
     /// @param port port on which D2 should listen NCRs
-    /// @param dns_server_timeout  maximum amount of time in milliseconds to
+    /// @param dns_server_timeout maximum amount of time in milliseconds to
     /// wait for a response to a single DNS update request.
+    /// @param dns_server_max_attempts maximum number of DNS update attempts
+    /// per server.
     /// @param ncr_protocol socket protocol D2 should use to receive NCRS
     /// @param ncr_format packet format of the inbound NCRs
+    /// @param max_ncr_queue_size maximum size of the NCR queue.
     ///
     /// @throw D2CfgError if:
     /// -# ip_address is 0.0.0.0 or ::
     /// -# port is 0
     /// -# dns_server_timeout is < 1
+    /// -# dns_server_max_attempts is < 1 or > 10
     /// -# ncr_protocol is invalid, currently only NCR_UDP is supported
     /// -# ncr_format is invalid, currently only FMT_JSON is supported
+    /// -# max_ncr_queue_size is < 1 or > 100000
     D2Params(const isc::asiolink::IOAddress& ip_address,
-                   const size_t port,
-                   const size_t dns_server_timeout,
-                   const dhcp_ddns::NameChangeProtocol& ncr_protocol,
-                   const dhcp_ddns::NameChangeFormat& ncr_format);
+             const size_t port,
+             const size_t dns_server_timeout,
+             const size_t dns_server_max_attempts,
+             const dhcp_ddns::NameChangeProtocol& ncr_protocol,
+             const dhcp_ddns::NameChangeFormat& ncr_format,
+             const size_t max_ncr_queue_size);
 
     /// @brief Default constructor
     /// The default constructor creates an instance that has updates disabled.
@@ -185,6 +192,11 @@ public:
         return(dns_server_timeout_);
     }
 
+    /// @brief Return the DNS server max attempt value.
+    size_t getDnsServerMaxAttempts() const {
+        return(dns_server_max_attempts_);
+    }
+
     /// @brief Return the socket protocol in use.
     const dhcp_ddns::NameChangeProtocol& getNcrProtocol() const {
          return(ncr_protocol_);
@@ -193,6 +205,11 @@ public:
     /// @brief Return the expected format of inbound requests (NCRs).
     const dhcp_ddns::NameChangeFormat& getNcrFormat() const {
         return(ncr_format_);
+    }
+
+    /// @brief Return the maximum NCR queue size.
+    size_t getMaxNcrQueueSize() const {
+        return(max_ncr_queue_size_);
     }
 
     /// @brief Return summary of the configuration used by D2.
@@ -221,8 +238,10 @@ protected:
     /// -# ip_address is not 0.0.0.0 or ::
     /// -# port is not 0
     /// -# dns_server_timeout is 0
+    /// -# dns_server_max_attempts is between 1 and 10
     /// -# ncr_protocol is UDP
     /// -# ncr_format is JSON
+    /// -# max_ncr_queue_size is between 1 and 100000
     ///
     /// @throw D2CfgError if contents are invalid
     virtual void validateContents();
@@ -237,6 +256,9 @@ private:
     /// @brief Timeout for a single DNS packet exchange in milliseconds.
     size_t dns_server_timeout_;
 
+    /// @brief Maximum number of DNS update attempts per server.
+    size_t dns_server_max_attempts_;
+
     /// @brief The socket protocol to use.
     /// Currently only UDP is supported.
     dhcp_ddns::NameChangeProtocol ncr_protocol_;
@@ -244,6 +266,9 @@ private:
     /// @brief Format of the inbound requests (NCRs).
     /// Currently only JSON format is supported.
     dhcp_ddns::NameChangeFormat ncr_format_;
+
+    /// @brief Maximum size of the NCR queue.
+    size_t max_ncr_queue_size_;
 };
 
 /// @brief Dumps the contents of a D2Params as text to an output stream

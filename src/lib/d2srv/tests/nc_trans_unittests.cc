@@ -909,7 +909,7 @@ TEST_F(NameChangeTransactionTest, retryTransition) {
 
     // Verify that we have not exceeded maximum number of attempts.
     ASSERT_LT(name_change->getUpdateAttempts(),
-              NameChangeTransaction::MAX_UPDATE_TRIES_PER_SERVER);
+              name_change->getMaxUpdateAttempts());
 
     // Call retryTransition.
     ASSERT_NO_THROW(name_change->retryTransition(
@@ -923,9 +923,9 @@ TEST_F(NameChangeTransactionTest, retryTransition) {
     ASSERT_EQ(NameChangeTransaction::SERVER_SELECTED_EVT,
               name_change->getNextEvent());
 
-    // Now set the number of attempts to the maximum.
+    // Now set the number of attempts to the default maximum.
     name_change->setUpdateAttempts(NameChangeTransaction::
-                                   MAX_UPDATE_TRIES_PER_SERVER);
+                                   DEF_MAX_UPDATE_TRIES_PER_SERVER);
     // Call retryTransition.
     ASSERT_NO_THROW(name_change->retryTransition(
                     NameChangeTransaction::PROCESS_TRANS_FAILED_ST));
@@ -1276,4 +1276,4 @@ TEST_F(NameChangeTransactionTest, addPtrRdata) {
     EXPECT_EQ(ncr->getFqdn(), rdata_it->getCurrent().toText());
 }
 
-}; // anonymous namespace
+} // anonymous namespace

@@ -184,8 +184,10 @@ is a template that can be customized to individual requirements.
        "ip-address": "127.0.0.1",
        "port": 53001,
        "dns-server-timeout": 100,
+       "dns-server-max-attempts": 3,
        "ncr-protocol": "UDP",
        "ncr-format": "JSON",
+       "max-ncr-queue-size": 1024,
        "tsig-keys": [ ],
        "forward-ddns": {
            "ddns-domains": [ ]
@@ -226,11 +228,17 @@ Global Server Parameters
    that D2 will wait for a response from a DNS server to a single DNS
    update message.
 
+-  ``dns-server-max-attempts`` - the maximum number of DNS update attempts
+   per server. Default is 3, the value must be between 1 and 10 inclusive.
+
 -  ``ncr-protocol`` - the socket protocol to use when sending requests to
    D2. Currently only UDP is supported.
 
 -  ``ncr-format`` - the packet format to use when sending requests to D2.
    Currently only JSON format is supported.
+
+-  ``max-ncr-queue-size`` - the maximum size of the NCR queue. Default is
+   1024, the value must be between 1 and 100000 inclusive.
 
 D2 must listen for change requests on a known address and port. By
 default it listens at 127.0.0.1 on port 53001. The following example

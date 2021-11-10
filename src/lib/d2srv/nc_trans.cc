@@ -62,7 +62,9 @@ const int NameChangeTransaction::UPDATE_FAILED_EVT;
 
 const int NameChangeTransaction::NCT_DERIVED_EVENT_MIN;
 
-const unsigned int NameChangeTransaction::MAX_UPDATE_TRIES_PER_SERVER;
+const unsigned int NameChangeTransaction::DEF_MAX_UPDATE_TRIES_PER_SERVER;
+const unsigned int NameChangeTransaction::MIN_MAX_UPDATE_TRIES_PER_SERVER;
+const unsigned int NameChangeTransaction::MAX_MAX_UPDATE_TRIES_PER_SERVER;
 
 NameChangeTransaction::
 NameChangeTransaction(asiolink::IOServicePtr& io_service,
@@ -75,7 +77,8 @@ NameChangeTransaction(asiolink::IOServicePtr& io_service,
      dns_update_status_(DNSClient::OTHER), dns_update_response_(),
      forward_change_completed_(false), reverse_change_completed_(false),
      current_server_list_(), current_server_(), next_server_pos_(0),
-     update_attempts_(0), cfg_mgr_(cfg_mgr), tsig_key_() {
+     update_attempts_(0), max_update_attempts_(DEF_MAX_UPDATE_TRIES_PER_SERVER),
+     cfg_mgr_(cfg_mgr), tsig_key_() {
     /// @todo if io_service is NULL we are multi-threading and should
     /// instantiate our own
     if (!io_service_) {
@@ -101,6 +104,9 @@ NameChangeTransaction(asiolink::IOServicePtr& io_service,
         isc_throw(NameChangeTransactionError,
                   "Configuration manager cannot be null");
     }
+
+    // TODO: set the maximum number of attempts.
+    max_update_attempts_ = cfg_mgr_->getD2Params()->getDnsServerMaxAttempts();
 }
 
 NameChangeTransaction::~NameChangeTransaction(){
@@ -284,7 +290,7 @@ NameChangeTransaction::onModelFailure(const std::string& explanation) {
 
 void
 NameChangeTransaction::retryTransition(const int fail_to_state) {
-    if (update_attempts_ < MAX_UPDATE_TRIES_PER_SERVER) {
+    if (update_attempts_ < max_update_attempts_) {
         // Re-enter the current state with same server selected.
         transition(getCurrState(), SERVER_SELECTED_EVT);
     } else  {
@@ -337,6 +343,11 @@ NameChangeTransaction::setReverseChangeCompleted(const bool value) {
 void
 NameChangeTransaction::setUpdateAttempts(const size_t value) {
     update_attempts_ = value;
+}
+
+void
+NameChangeTransaction::setMaxUpdateAttempts(const size_t value) {
+    max_update_attempts_ = value;
 }
 
 D2UpdateMessagePtr
@@ -567,6 +578,11 @@ NameChangeTransaction::getReverseChangeCompleted() const {
 size_t
 NameChangeTransaction::getUpdateAttempts() const {
     return (update_attempts_);
+}
+
+size_t
+NameChangeTransaction::getMaxUpdateAttempts() const {
+    return (max_update_attempts_);
 }
 
 const dns::RRType&
