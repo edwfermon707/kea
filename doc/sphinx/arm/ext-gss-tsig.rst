@@ -592,18 +592,18 @@ An excerpt from D2 server is provided below. More examples are available in the
 This configuration file contains a number of extra elements.
 
 First, a list of forward and/or reverse domains with related DNS servers
-identified by their IP+port pairs is defined. If port is not
-specified, the default of 53 is assumed. This is similar to basic mode with no
-authentication or authentication done using TSIG keys, with the
-exception that static TSIG keys are not referenced by name.
+identified by their IP+port pairs is defined. If port is not specified, the
+default of 53 is assumed. This is similar to basic mode with no authentication
+or authentication done using TSIG keys, with the exception that static TSIG keys
+are not referenced by name.
 
 Second, the ``libddns_gss_tsig.so`` library has to be specified on the
 ``hooks-libraries`` list. This hook takes many parameters. The most important
 one is ``servers``, which is a list of GSS-TSIG capable servers.  If there are
 several servers and they share some characteristics, the values can be specified
-in ``parameters`` scope as defaults. In the example above, the defaults that apply
-to all servers unless otherwise specified on per server scope, are defined in
-lines 63 through 68. The defaults can be skipped if there is only one server
+in ``parameters`` scope as defaults. In the example above, the defaults that
+apply to all servers unless otherwise specified on per server scope, are defined
+in lines 63 through 68. The defaults can be skipped if there is only one server
 defined or all servers have different values.
 
 .. table:: List of available parameters
@@ -897,9 +897,8 @@ per DNS server levels:
 The relationship between keys and DNS servers are very different between
 the D2 code and static TSIG keys, and GSS-TSIG keys and DNS servers:
 
- - a static TSIG key can be shared between many DNS servers
- - a GSS-TSIG key is used only by one DNS server inside a dedicated
-   set of keys.
+ - a static TSIG key can be shared between many DNS servers.
+ - a GSS-TSIG key is used only by one DNS server inside a dedicated set of keys.
 
 .. _commands-gss-tsig:
 
