@@ -52,6 +52,15 @@ the following command-line switches:
    is a copy of the ``config.report`` file produced by ``./configure``;
    it is embedded in the executable binary.
 
+The ``config.report`` file may also be accessed directly, via the
+following command. The binary ``path`` may be found in the install
+directory or in the ``.libs`` subdirectory in the source tree. For
+example: ``kea/src/bin/dhcp4/.libs/kea-dhcp4``.
+
+::
+
+   strings path/kea-dhcp4 | sed -n 's/;;;; //p'
+
 On startup, the server detects available network interfaces and
 attempts to open UDP sockets on all interfaces listed in the
 configuration file. Since the DHCPv4 server opens privileged ports, it

@@ -610,6 +610,15 @@ kea-netconf accepts the following command-line switches:
    is a copy of the ``config.report`` file produced by ``./configure``;
    it is embedded in the executable binary.
 
+The ``config.report`` file may also be accessed directly, via the
+following command. The binary ``path`` may be found in the install
+directory or in the ``.libs`` subdirectory in the source tree. For
+example: ``kea/src/bin/netconf/.libs/kea-netconf``.
+
+::
+
+   strings path/kea-netconf | sed -n 's/;;;; //p'
+
 .. _operation-example:
 
 A Step-by-Step NETCONF Agent Operation Example

@@ -138,6 +138,15 @@ directly. It accepts the following command-line switches:
    messages to standard output and errors to standard error when testing
    the configuration.
 
+The ``config.report`` file may also be accessed directly, via the
+following command. The binary ``path`` may be found in the install
+directory or in the ``.libs`` subdirectory in the source tree. For
+example: ``kea/src/bin/d2/.libs/kea-dhcp-ddns``.
+
+::
+
+   strings path/kea-dhcp-ddns | sed -n 's/;;;; //p'
+
 Upon startup, the module loads its configuration and begins listening
 for NCRs based on that configuration.
 
