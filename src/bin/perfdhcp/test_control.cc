@@ -1911,6 +1911,9 @@ static void mergeOptionIntoPacket(Pkt4Ptr const& packet,
                                    extra_option->getData())));
             return;
         default:
+            if (packet->getOption(code)) {
+                packet->delOption(code);
+            }
             // For all others, add option as usual, it will result in "Option
             // already present in this message" error.
             break;
