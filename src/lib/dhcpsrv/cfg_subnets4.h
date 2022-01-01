@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -319,11 +319,20 @@ public:
     /// @return a pointer to unparsed configuration
     virtual isc::data::ElementPtr toElement() const;
 
+    /// @brief Return a reference to auxiliary tables.
+    ///
+    /// @return a reference to auxiliary tables.
+    AuxiliaryTables<Subnet4Ptr>& getAuxTables() {
+        return (tables_);
+    }
+
 private:
 
     /// @brief A container for IPv4 subnets.
     Subnet4Collection subnets_;
 
+    /// @brief Auxiliary tables.
+    AuxiliaryTables<Subnet4Ptr> tables_;
 };
 
 /// @name Pointer to the @c CfgSubnets4 objects.

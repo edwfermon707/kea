@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -51,6 +51,7 @@ public:
         }
 
         static_cast<void>(networks_.push_back(network));
+        tables_.add(network);
     }
 
     /// @brief Deletes shared network from the configuration.
@@ -65,8 +66,10 @@ public:
             // Delete all subnets from the network
             (*shared_network)->delAll();
 
-            // Then delete the network from the networks list.
+            // Then delete the network from the networks list and tables.
+            auto shared_network_it = *shared_network;
             index.erase(shared_network);
+            tables_.remove(shared_network_it);
         } else {
             isc_throw(BadValue, "unable to delete non-existing network '"
                       << name << "' from shared networks configuration");
@@ -90,9 +93,10 @@ public:
         auto sn_range = index.equal_range(id);
 
         // For each shared network found, dereference the subnets belonging
-        // to it.
+        // to it and remove it from tables.
         for (auto it = sn_range.first; it != sn_range.second; ++it) {
             (*it)->delAll();
+            tables_.remove(*it);
         }
 
         // Remove the shared networks.
@@ -195,7 +199,9 @@ public:
                 }
 
                 // Now we discard the existing copy of the network.
+                auto existing_network_it = *existing_network;
                 index.erase(existing_network);
+                tables_.remove(existing_network_it);
             }
 
             // Create the network's options based on the given definitions.
@@ -203,13 +209,22 @@ public:
 
             // Add the new/updated nework.
             static_cast<void>(networks_.push_back(*other_network));
+            tables_.add(*other_network);
         }
+    }
+
+    /// @brief Return a reference to auxiliary tables.
+    AuxiliaryTables<SharedNetworkPtrType>& getAuxTables() {
+        return (tables_);
     }
 
 protected:
 
     /// @brief Multi index container holding shared networks.
     SharedNetworkCollection networks_;
+
+    /// @brief Auxiliary tables.
+    AuxiliaryTables<SharedNetworkPtrType> tables_;
 };
 
 /// @brief Represents configuration of IPv4 shared networks.

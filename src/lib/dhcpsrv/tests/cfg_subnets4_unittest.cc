@@ -29,6 +29,7 @@
 #include <util/doubles.h>
 
 #include <gtest/gtest.h>
+#include <map>
 #include <vector>
 
 using namespace isc;
@@ -2057,6 +2058,243 @@ TEST(CfgSubnets4Test, outOfRangeHost) {
     std::string msg = "specified reservation '10.2.2.1' is not within ";
     msg += "the IPv4 subnet '10.1.2.0/24'";
     EXPECT_THROW_MSG(parser.parse(elems), DhcpConfigError, msg);
+}
+
+/// @brief Auxiliary table for testing.
+class ModTable {
+public:
+    /// @brief Constructor.
+    ///
+    /// @brief modulo The number to get modulo from.
+    ModTable(unsigned modulo = 2) : modulo_(modulo) {
+    }
+
+    /// @brief The name.
+    static std::string name;
+
+    /// @brief The remove method.
+    ///
+    /// @param subnet The subnet to remove.
+    /// @param purge True if empty modulo entries must be removed.
+    void remove(const Subnet4Ptr& subnet, bool purge = true) {
+        if (!subnet) {
+            isc_throw(InvalidParameter, "ModTable::remove null subnet");
+        }
+        auto mod = mods_.find(subnet->getID() % modulo_);
+        if (mod == mods_.end()) {
+            /// Should not happen?
+            return;
+        }
+        auto it = mod->second.find(subnet->getID());
+        if (it == mod->second.end()) {
+            /// Not found.
+            return;
+        }
+        ++removed_;
+        mod->second.erase(it);
+        if (purge && mod->second.empty()) {
+            ++purged_;
+            mods_.erase(mod);
+        }
+    }
+
+    /// @brief The add method.
+    ///
+    /// @param subnet The subnet to add.
+    void add(const Subnet4Ptr& subnet) {
+        if (!subnet) {
+            isc_throw(InvalidParameter, "ModTable::add null subnet");
+        }
+        /// If the entry does not exist the operator[] creates it.
+        auto& mod = mods_[subnet->getID() % modulo_];
+        ++added_;
+        mod[subnet->getID()] = subnet;
+    }
+
+    /// @brief The update method.
+    ///
+    /// @param from The previous subnet.
+    /// @param to The new subnet.
+    void update(const Subnet4Ptr& from, const Subnet4Ptr& to) {
+        if (!from || !to) {
+            isc_throw(InvalidParameter, "ModTable::update null subnet");
+        }
+        bool purge = ((from->getID() % modulo_) != (to->getID() % modulo_));
+        remove(from, purge);
+        add(to);
+    }
+
+    /// @brief The lookup method.
+    ///
+    /// @param id The ID of the subnet to find.
+    Subnet4Ptr lookup(SubnetID id) {
+        auto mod = mods_.find(id % modulo_);
+        if (mod == mods_.end()) {
+            ++no_mod_;
+            return (Subnet4Ptr());
+        }
+        auto it = mod->second.find(id);
+        if (it == mod->second.end()) {
+            ++not_found_;
+            return (Subnet4Ptr());
+        } else {
+            ++found_;
+            return (it->second);
+        }
+    }
+
+    /// @brief Counters.
+    unsigned purged_ = 0;
+    unsigned removed_ = 0;
+    unsigned added_ = 0;
+    unsigned found_ = 0;
+    unsigned not_found_ = 0;
+    unsigned no_mod_ = 0;
+
+private:
+    /// @brief The modulo value.
+    unsigned modulo_;
+
+    /// @brief The table.
+    std::map<unsigned, std::map<SubnetID, Subnet4Ptr> > mods_;
+};
+
+std::string ModTable::name = "modulo";
+
+/// @brief Type of subnet4 auxiliary table.
+typedef AuxiliaryTable<Subnet4Ptr> Subnet4AuxTable;
+
+// This test verifies that an even/odd auxiliary table is handled as expected.
+TEST(CfgSubnets4Test, modulo2) {
+    ModTable mod2(2);
+    Subnet4AuxTable::RemoveType remove2 =
+        [&mod2] (const Subnet4Ptr& subnet) { mod2.remove(subnet); };
+    Subnet4AuxTable::AddType add2 =
+        [&mod2] (const Subnet4Ptr& subnet) { mod2.add(subnet); };
+    AuxiliaryTablePtr<Subnet4Ptr>
+        mod2p(new Subnet4AuxTable(mod2.name, remove2, add2));
+    CfgSubnets4 cfg;
+    cfg.getAuxTables().addTable(mod2p);
+
+    // Create some subnets.
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.1"),
+                                   26, 1, 2, 3, SubnetID(1)));
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.2"),
+                                   26, 1, 2, 3, SubnetID(2)));
+    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.3"),
+                                   26, 1, 2, 3, SubnetID(3)));
+    Subnet4Ptr subnet4(new Subnet4(IOAddress("192.0.2.4"),
+                                   26, 1, 2, 3, SubnetID(4)));
+    Subnet4Ptr subnet5(new Subnet4(IOAddress("192.0.2.5"),
+                                   26, 1, 2, 3, SubnetID(5)));
+    Subnet4Ptr subnet1b(new Subnet4(IOAddress("192.0.2.1"),
+                                    26, 1, 2, 10, SubnetID(1)));
+    Subnet4Ptr subnet4b(new Subnet4(IOAddress("192.0.2.4"),
+                                    26, 1, 2, 10, SubnetID(4)));
+
+    // Exercise the table.
+    EXPECT_FALSE(mod2.lookup(0));
+    ASSERT_NO_THROW(cfg.add(subnet1));
+    ASSERT_NO_THROW(cfg.add(subnet2));
+    ASSERT_NO_THROW(cfg.add(subnet3));
+    ASSERT_NO_THROW(cfg.add(subnet4));
+    ASSERT_NO_THROW(cfg.add(subnet5));
+    ASSERT_NO_THROW(cfg.del(subnet2));
+    Subnet4Ptr got1 = mod2.lookup(1);
+    EXPECT_TRUE(got1);
+    EXPECT_EQ(got1, subnet1);
+    EXPECT_FALSE(mod2.lookup(100));
+
+    // Check table.
+    EXPECT_EQ(0, mod2.purged_);
+    EXPECT_EQ(1, mod2.removed_);
+    EXPECT_EQ(5, mod2.added_);
+    EXPECT_EQ(1, mod2.found_);
+    EXPECT_EQ(1, mod2.not_found_);
+    EXPECT_EQ(1, mod2.no_mod_);
+
+    // Check update.
+    ASSERT_NO_THROW(cfg.replace(subnet1b));
+    got1 = mod2.lookup(1);
+    EXPECT_TRUE(got1);
+    EXPECT_EQ(got1, subnet1b);
+    ASSERT_NO_THROW(cfg.replace(subnet4b));
+
+    EXPECT_EQ(1, mod2.purged_);
+    EXPECT_EQ(3, mod2.removed_);
+    EXPECT_EQ(7, mod2.added_);
+    EXPECT_EQ(2, mod2.found_);
+    EXPECT_EQ(1, mod2.not_found_);
+    EXPECT_EQ(1, mod2.no_mod_);
+}
+
+// This test verifies that an even/odd auxiliary table is handled as expected.
+TEST(CfgSubnets4Test, modulo2withUpdate) {
+    ModTable mod2(2);
+    Subnet4AuxTable::RemoveType remove2 =
+        [&mod2] (const Subnet4Ptr& subnet) { mod2.remove(subnet); };
+    Subnet4AuxTable::AddType add2 =
+        [&mod2] (const Subnet4Ptr& subnet) { mod2.add(subnet); };
+    Subnet4AuxTable::UpdateType update2 =
+        [&mod2] (const Subnet4Ptr& from, const Subnet4Ptr& to) {
+            mod2.update(from, to);
+        };
+    AuxiliaryTablePtr<Subnet4Ptr>
+        mod2p(new Subnet4AuxTable(mod2.name, remove2, add2, update2));
+    CfgSubnets4 cfg;
+    cfg.getAuxTables().addTable(mod2p);
+
+    // Create some subnets.
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.1"),
+                                   26, 1, 2, 3, SubnetID(1)));
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.2"),
+                                   26, 1, 2, 3, SubnetID(2)));
+    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.3"),
+                                   26, 1, 2, 3, SubnetID(3)));
+    Subnet4Ptr subnet4(new Subnet4(IOAddress("192.0.2.4"),
+                                   26, 1, 2, 3, SubnetID(4)));
+    Subnet4Ptr subnet5(new Subnet4(IOAddress("192.0.2.5"),
+                                   26, 1, 2, 3, SubnetID(5)));
+    Subnet4Ptr subnet1b(new Subnet4(IOAddress("192.0.2.1"),
+                                    26, 1, 2, 10, SubnetID(1)));
+    Subnet4Ptr subnet4b(new Subnet4(IOAddress("192.0.2.4"),
+                                    26, 1, 2, 10, SubnetID(4)));
+
+    // Exercise the table.
+    EXPECT_FALSE(mod2.lookup(0));
+    ASSERT_NO_THROW(cfg.add(subnet1));
+    ASSERT_NO_THROW(cfg.add(subnet2));
+    ASSERT_NO_THROW(cfg.add(subnet3));
+    ASSERT_NO_THROW(cfg.add(subnet4));
+    ASSERT_NO_THROW(cfg.add(subnet5));
+    ASSERT_NO_THROW(cfg.del(subnet2));
+    Subnet4Ptr got1 = mod2.lookup(1);
+    EXPECT_TRUE(got1);
+    EXPECT_EQ(got1, subnet1);
+    EXPECT_FALSE(mod2.lookup(100));
+
+    // Check table.
+    EXPECT_EQ(0, mod2.purged_);
+    EXPECT_EQ(1, mod2.removed_);
+    EXPECT_EQ(5, mod2.added_);
+    EXPECT_EQ(1, mod2.found_);
+    EXPECT_EQ(1, mod2.not_found_);
+    EXPECT_EQ(1, mod2.no_mod_);
+
+    // Check update.
+    ASSERT_NO_THROW(cfg.replace(subnet1b));
+    got1 = mod2.lookup(1);
+    EXPECT_TRUE(got1);
+    EXPECT_EQ(got1, subnet1b);
+    ASSERT_NO_THROW(cfg.replace(subnet4b));
+
+    // Same as before but a spurious purge was avoided.
+    EXPECT_EQ(0, mod2.purged_);
+    EXPECT_EQ(3, mod2.removed_);
+    EXPECT_EQ(7, mod2.added_);
+    EXPECT_EQ(2, mod2.found_);
+    EXPECT_EQ(1, mod2.not_found_);
+    EXPECT_EQ(1, mod2.no_mod_);
 }
 
 } // end of anonymous namespace

@@ -11,6 +11,7 @@
 #include <cc/data.h>
 #include <cc/user_context.h>
 #include <dhcp/option_space_container.h>
+#include <dhcpsrv/auxiliary_tables.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/network.h>
 #include <dhcpsrv/pool.h>
@@ -521,6 +522,10 @@ typedef boost::shared_ptr<const Subnet4> ConstSubnet4Ptr;
 /// @brief A pointer to a @c Subnet4 object.
 typedef boost::shared_ptr<Subnet4> Subnet4Ptr;
 
+/// @brief Instantiate auxiliary tables for @c Subnet4 objects.
+typedef AuxiliaryTable<Subnet4Ptr> Subnet4AuxiliaryTable;
+typedef AuxiliaryTables<Subnet4Ptr> Subnet4AuxiliaryTables;
+
 /// @brief A configuration holder for IPv4 subnet.
 ///
 /// This class represents an IPv4 subnet.
@@ -668,6 +673,10 @@ typedef boost::shared_ptr<const Subnet6> ConstSubnet6Ptr;
 
 /// @brief A pointer to a Subnet6 object
 typedef boost::shared_ptr<Subnet6> Subnet6Ptr;
+
+/// @brief Instantiate auxiliary tables for @c Subnet6 objects.
+typedef AuxiliaryTable<Subnet6Ptr> Subnet6AuxiliaryTable;
+typedef AuxiliaryTables<Subnet6Ptr> Subnet6AuxiliaryTables;
 
 /// @brief A configuration holder for IPv6 subnet.
 ///

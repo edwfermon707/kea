@@ -119,6 +119,10 @@ typedef std::function<data::ConstElementPtr()> FetchNetworkGlobalsFn;
 /// which can be associated with the @c Network object. This callback
 /// implements the logic to retrieve global parameters and return them
 /// in a well known form, so as the @c Network accessors can use them.
+///
+/// @note Some operations as the subnet selection rely on the fact
+/// that some parameters do not change outside (re)configuration
+/// phase so take care of all set methods here and in derived classes.
 class Network : public virtual isc::data::StampedElement,
                 public virtual isc::data::UserContext,
                 public isc::data::CfgToElement {

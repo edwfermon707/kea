@@ -11,6 +11,8 @@
 #include <testutils/test_to_element.h>
 #include <asiolink/io_address.h>
 #include <gtest/gtest.h>
+#include <cctype>
+#include <map>
 
 using namespace isc;
 using namespace isc::dhcp;
@@ -374,6 +376,151 @@ TEST(CfgSharedNetworks4Test, mergeNetworks) {
     // Network1 should have doubled its valid lifetime and still subnet3.
     ASSERT_NO_FATAL_FAILURE(checkMergedNetwork(cfg_to, "network3", Triplet<uint32_t>(600),
                                                std::vector<SubnetID>{SubnetID(3)}));
+}
+
+/// @brief Auxiliary table for testing.
+class CaseTable {
+public:
+    /// @brief The name.
+    static std::string name;
+
+    /// @brief Count the number of upper case letters in a name.
+    ///
+    /// @param name The name to scan.
+    static size_t uppers(const std::string& name) {
+        size_t ret(0);
+        for (char c : name) {
+            if (isupper(static_cast<int>(c))) {
+                ++ret;
+            }
+        }
+        return (ret);
+    }
+
+    /// @brief The remove method.
+    ///
+    /// @param network The shared network to remove.
+    void remove(const SharedNetwork4Ptr& network) {
+        if (!network) {
+            isc_throw(InvalidParameter, "CaseTable::remove null network");
+        }
+        auto count = counts_.find(uppers(network->getName()));
+        if (count == counts_.end()) {
+            /// Should not happen?
+            return;
+        }
+        auto it = count->second.find(network->getName());
+        if (it == count->second.end()) {
+            /// Not found.
+            return;
+        }
+        ++removed_;
+        count->second.erase(it);
+        if (count->second.empty()) {
+            ++purged_;
+            counts_.erase(count);
+        }
+    }
+
+    /// @brief The add method.
+    ///
+    /// @param network The shared network to add.
+    void add(const SharedNetwork4Ptr& network) {
+        if (!network) {
+            isc_throw(InvalidParameter, "CaseTable::add null network");
+        }
+        /// If the entry does not exist the operator[] creates it.
+        auto& count = counts_[uppers(network->getName())];
+        ++added_;
+        count[network->getName()] = network;
+    }
+
+    /// @note No update method.
+
+    /// @brief The lookup method.
+    ///
+    /// @param name The name of the shared network to find.
+    SharedNetwork4Ptr lookup(const std::string& name) {
+        auto count = counts_.find(uppers(name));
+        if (count == counts_.end()) {
+            ++no_count_;
+            return (SharedNetwork4Ptr());
+        }
+        auto it = count->second.find(name);
+        if (it == count->second.end()) {
+            ++not_found_;
+            return (SharedNetwork4Ptr());
+        } else {
+            ++found_;
+            return (it->second);
+        }
+    }
+
+    /// @brief Get the number of entries.
+    ///
+    /// @return the number of entries.
+    size_t size() const {
+        return (counts_.size());
+    }
+
+    /// @brief Counters.
+    unsigned purged_ = 0;
+    unsigned removed_ = 0;
+    unsigned added_ = 0;
+    unsigned found_ = 0;
+    unsigned not_found_ = 0;
+    unsigned no_count_ = 0;
+
+private:
+    /// @brief The table.
+    std::map<size_t, std::map<std::string, SharedNetwork4Ptr> > counts_;
+};
+
+std::string CaseTable::name = "case";
+
+/// @brief Type of share network4 auxiliary table.
+typedef AuxiliaryTable<SharedNetwork4Ptr> SharedNetwork4AuxTable;
+
+// This test verifies that a case counting auxiliary table is handled
+// as expected.
+TEST(CfgSharedNetworks4Test, auxTable) {
+    CaseTable ctab;
+    SharedNetwork4AuxTable::RemoveType removect =
+        [&ctab] (const SharedNetwork4Ptr& network) { ctab.remove(network); };
+    SharedNetwork4AuxTable::AddType addct =
+        [&ctab] (const SharedNetwork4Ptr& network) { ctab.add(network); };
+    AuxiliaryTablePtr<SharedNetwork4Ptr>
+        ctabp(new SharedNetwork4AuxTable(ctab.name, removect, addct));
+    CfgSharedNetworks4 cfg;
+    cfg.getAuxTables().addTable(ctabp);
+
+    // Create some shared networks.
+    SharedNetwork4Ptr network1(new SharedNetwork4("FROG"));
+    SharedNetwork4Ptr network2(new SharedNetwork4("Foo"));
+    SharedNetwork4Ptr network3(new SharedNetwork4("Bar"));
+    SharedNetwork4Ptr network4(new SharedNetwork4("dog"));
+
+    // Exercise the table.
+    EXPECT_EQ(0, ctab.size());
+    EXPECT_FALSE(ctab.lookup("dog"));
+    ASSERT_NO_THROW(cfg.add(network1));
+    ASSERT_NO_THROW(cfg.add(network2));
+    ASSERT_NO_THROW(cfg.add(network3));
+    ASSERT_NO_THROW(cfg.add(network4));
+    ASSERT_NO_THROW(cfg.del(network2->getName()));
+    ASSERT_NO_THROW(cfg.del(network4->getName()));
+    SharedNetwork4Ptr got = ctab.lookup("Bar");
+    EXPECT_TRUE(got);
+    EXPECT_EQ(got, network3);
+    EXPECT_FALSE(ctab.lookup("Foobar"));
+
+    // Check table.
+    EXPECT_EQ(1, ctab.purged_);
+    EXPECT_EQ(2, ctab.removed_);
+    EXPECT_EQ(4, ctab.added_);
+    EXPECT_EQ(1, ctab.found_);
+    EXPECT_EQ(1, ctab.not_found_);
+    EXPECT_EQ(1, ctab.no_count_);
 }
 
 } // end of anonymous namespace

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -269,6 +269,13 @@ public:
     /// @return a pointer to unparsed configuration
     virtual isc::data::ElementPtr toElement() const;
 
+    /// @brief Return a reference to auxiliary tables.
+    ///
+    /// @return a reference to auxiliary tables.
+    AuxiliaryTables<Subnet6Ptr>& getAuxTables() {
+        return (tables_);
+    }
+
 private:
 
     /// @brief Selects a subnet using the interface name.
@@ -322,6 +329,8 @@ private:
     /// @brief A container for IPv6 subnets.
     Subnet6Collection subnets_;
 
+    /// @brief Auxiliary tables.
+    AuxiliaryTables<Subnet6Ptr> tables_;
 };
 
 /// @name Pointer to the @c CfgSubnets6 objects.

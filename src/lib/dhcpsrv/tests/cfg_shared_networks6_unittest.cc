@@ -11,6 +11,7 @@
 #include <asiolink/io_address.h>
 #include <testutils/test_to_element.h>
 #include <gtest/gtest.h>
+#include <map>
 
 using namespace isc;
 using namespace isc::dhcp;
@@ -382,6 +383,138 @@ TEST(CfgSharedNetworks6Test, mergeNetworks) {
     // Network1 should have doubled its valid lifetime and still subnet3.
     ASSERT_NO_FATAL_FAILURE(checkMergedNetwork(cfg_to, "network3", Triplet<uint32_t>(600),
                                                std::vector<SubnetID>{SubnetID(3)}));
+}
+
+/// @brief Auxiliary table for testing.
+class SizeTable {
+public:
+    /// @brief The name.
+    static std::string name;
+
+    /// @brief The remove method.
+    ///
+    /// @param network The shared network to remove.
+    void remove(const SharedNetwork6Ptr& network) {
+        if (!network) {
+            isc_throw(InvalidParameter, "SizeTable::remove null network");
+        }
+        auto size = sizes_.find(network->getName().size());
+        if (size == sizes_.end()) {
+            /// Should not happen?
+            return;
+        }
+        auto it = size->second.find(network->getName());
+        if (it == size->second.end()) {
+            /// Not found.
+            return;
+        }
+        ++removed_;
+        size->second.erase(it);
+        if (size->second.empty()) {
+            ++purged_;
+            sizes_.erase(size);
+        }
+    }
+
+    /// @brief The add method.
+    ///
+    /// @param network The shared network to add.
+    void add(const SharedNetwork6Ptr& network) {
+        if (!network) {
+            isc_throw(InvalidParameter, "SizeTable::add null network");
+        }
+        /// If the entry does not exist the operator[] creates it.
+        auto& size = sizes_[network->getName().size()];
+        ++added_;
+        size[network->getName()] = network;
+    }
+
+    /// @note No update method.
+
+    /// @brief The lookup method.
+    ///
+    /// @param name The name of the shared network to find.
+    SharedNetwork6Ptr lookup(const std::string& name) {
+        auto size = sizes_.find(name.size());
+        if (size == sizes_.end()) {
+            ++no_size_;
+            return (SharedNetwork6Ptr());
+        }
+        auto it = size->second.find(name);
+        if (it == size->second.end()) {
+            ++not_found_;
+            return (SharedNetwork6Ptr());
+        } else {
+            ++found_;
+            return (it->second);
+        }
+    }
+
+    /// @brief Get the number of entries.
+    ///
+    /// @return the number of entries.
+    size_t size() const {
+        return (sizes_.size());
+    }
+
+    /// @brief Counters.
+    unsigned purged_ = 0;
+    unsigned removed_ = 0;
+    unsigned added_ = 0;
+    unsigned found_ = 0;
+    unsigned not_found_ = 0;
+    unsigned no_size_ = 0;
+
+private:
+    /// @brief The table.
+    std::map<size_t, std::map<std::string, SharedNetwork6Ptr> > sizes_;
+};
+
+std::string SizeTable::name = "size";
+
+/// @brief Type of share network6 auxiliary table.
+typedef AuxiliaryTable<SharedNetwork6Ptr> SharedNetwork6AuxTable;
+
+// This test verifies that a case counting auxiliary table is handled
+// as expected.
+TEST(CfgSharedNetworks6Test, auxTable) {
+    SizeTable ctab;
+    SharedNetwork6AuxTable::RemoveType removect =
+        [&ctab] (const SharedNetwork6Ptr& network) { ctab.remove(network); };
+    SharedNetwork6AuxTable::AddType addct =
+        [&ctab] (const SharedNetwork6Ptr& network) { ctab.add(network); };
+    AuxiliaryTablePtr<SharedNetwork6Ptr>
+        ctabp(new SharedNetwork6AuxTable(ctab.name, removect, addct));
+    CfgSharedNetworks6 cfg;
+    cfg.getAuxTables().addTable(ctabp);
+
+    // Create some shared networks.
+    SharedNetwork6Ptr network1(new SharedNetwork6("FROG"));
+    SharedNetwork6Ptr network2(new SharedNetwork6("Foo"));
+    SharedNetwork6Ptr network3(new SharedNetwork6("Bar"));
+    SharedNetwork6Ptr network4(new SharedNetwork6("hotdog"));
+
+    // Exercise the table.
+    EXPECT_EQ(0, ctab.size());
+    EXPECT_FALSE(ctab.lookup("dog"));
+    ASSERT_NO_THROW(cfg.add(network1));
+    ASSERT_NO_THROW(cfg.add(network2));
+    ASSERT_NO_THROW(cfg.add(network3));
+    ASSERT_NO_THROW(cfg.add(network4));
+    ASSERT_NO_THROW(cfg.del(network2->getName()));
+    SharedNetwork6Ptr got = ctab.lookup("Bar");
+    EXPECT_TRUE(got);
+    EXPECT_EQ(got, network3);
+    EXPECT_FALSE(ctab.lookup("Foobar"));
+    ASSERT_NO_THROW(cfg.del(network4->getName()));
+
+    // Check table.
+    EXPECT_EQ(1, ctab.purged_);
+    EXPECT_EQ(2, ctab.removed_);
+    EXPECT_EQ(4, ctab.added_);
+    EXPECT_EQ(1, ctab.found_);
+    EXPECT_EQ(1, ctab.not_found_);
+    EXPECT_EQ(1, ctab.no_size_);
 }
 
 } // end of anonymous namespace

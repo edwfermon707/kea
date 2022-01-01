@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -44,6 +44,10 @@ class SharedNetwork4;
 
 /// @brief Pointer to @ref SharedNetwork4 object.
 typedef boost::shared_ptr<SharedNetwork4> SharedNetwork4Ptr;
+
+/// @brief Instantiate auxiliary tables for @ref SharedNetwork4 objects.
+typedef AuxiliaryTable<SharedNetwork4Ptr> SharedNetwork4AuxiliaryTable;
+typedef AuxiliaryTables<SharedNetwork4Ptr> SharedNetwork4AuxiliaryTables;
 
 /// @brief Shared network holding IPv4 subnets.
 ///
@@ -256,6 +260,10 @@ class SharedNetwork6;
 
 /// @brief Pointer to @ref SharedNetwork6 object.
 typedef boost::shared_ptr<SharedNetwork6> SharedNetwork6Ptr;
+
+/// @brief Instantiate auxiliary tables for @ref SharedNetwork6 objects.
+typedef AuxiliaryTable<SharedNetwork6Ptr> SharedNetwork6AuxiliaryTable;
+typedef AuxiliaryTables<SharedNetwork6Ptr> SharedNetwork6AuxiliaryTables;
 
 /// @brief Shared network holding IPv6 subnets.
 ///
