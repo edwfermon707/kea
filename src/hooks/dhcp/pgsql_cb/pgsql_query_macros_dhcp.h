@@ -1072,7 +1072,7 @@ namespace {
     PGSQL_UPDATE_OPTION_WITH_TAG(dhcp4, "", AND s.tag = $13 __VA_ARGS__)
 
 #define PGSQL_UPDATE_OPTION6_WITH_TAG(...) \
-    PGSQL_UPDATE_OPTION_WITH_TAG(dhcp4, \
+    PGSQL_UPDATE_OPTION_WITH_TAG(dhcp6, \
     ", pd_pool_id = $13 ", AND s.tag = $14 __VA_ARGS__)
 
 #ifndef PGSQL_UPDATE_CLIENT_CLASS4
