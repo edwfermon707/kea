@@ -2040,7 +2040,7 @@ TaggedStatementArray tagged_statements = { {
         "  reservations_out_of_pool = $31,"
         "  cache_threshold = cast($32 as float),"
         "  cache_max_age =  $33"
-        "WHERE subnet_id = $34 OR subnet_prefix = $35" 
+        "WHERE subnet_id = $34 OR subnet_prefix = $35"
     },
 
     // Update existing shared network.
@@ -2113,7 +2113,7 @@ TaggedStatementArray tagged_statements = { {
         "  reservations_out_of_pool = $29,"
         "  cache_threshold = cast($30 as float),"
         "  cache_max_age = $31 "
-        "WHERE name = $32" 
+        "WHERE name = $32"
     },
 
     // Update existing option definition.
@@ -2296,29 +2296,90 @@ TaggedStatementArray tagged_statements = { {
                                     AND o.code = $15 AND o.space = $16)
     },
 
-#if 0 
     // Update existing client class level option.
     {
         // PgSqlConfigBackendDHCPv6Impl::UPDATE_OPTION6_CLIENT_CLASS,
-      PGSQL_UPDATE_OPTION6_NO_TAG(o.scope_id = 2 AND o.dhcp_client_class = ? AND o.code = ? AND o.space = ?)
+        16,
+        {
+            OID_INT2,       //  1 code
+            OID_BYTEA,      //  2 value
+            OID_TEXT,       //  3 formatted_value
+            OID_VARCHAR,    //  4 space
+            OID_BOOL,       //  5 persistent
+            OID_VARCHAR,    //  6 dhcp_client_class
+            OID_INT8,       //  7 dhcp6_subnet_id
+            OID_INT2,       //  8 scope_id
+            OID_TEXT,       //  9 user_context
+            OID_VARCHAR,    // 10 shared_network_name
+            OID_INT8,       // 11 pool_id
+            OID_TIMESTAMP,  // 12 modification_ts
+            OID_INT8,       // 13 pd_pool_id
+            OID_VARCHAR,    // 14 client_class (of option to update)
+            OID_INT2,       // 15 code (of option to update)
+            OID_VARCHAR     // 16 space (of option to update)
+        },
+        "UPDATE_OPTION6_CIENT_CLASS",
+        PGSQL_UPDATE_OPTION6_NO_TAG(o.scope_id = 2 AND o.dhcp_client_class = $14 \
+                                    AND o.code = $15 AND o.space = $16)
     },
 
     // Update existing client class with specifying its position.
     {
         // PgSqlConfigBackendDHCPv6Impl::UPDATE_CLIENT_CLASS6,
-      PGSQL_UPDATE_CLIENT_CLASS6("follow_class_name = ?,")
+        13,
+        {
+            OID_VARCHAR,    //  1 name
+            OID_TEXT,       //  2 test
+            OID_BOOL,       //  3 only_if_required
+            OID_INT8,       //  4 valid_lifetime
+            OID_INT8,       //  5 min_valid_lifetime
+            OID_INT8,       //  6 max_valid_lifetime
+            OID_BOOL,       //  7 depend_on_known_directly
+            OID_TIMESTAMP,  //  8 modification_ts
+            OID_INT8,       //  9 preferred_lifetime
+            OID_INT8,       // 10 min_preferred_lifetime
+            OID_INT8,       // 11 max_preferred_lifetime
+            OID_VARCHAR,    // 12 name (of class to update)
+            OID_VARCHAR     // 13 follow_class_name
+        },
+        "UPDATE_CLIENT_CLASS6",
+        PGSQL_UPDATE_CLIENT_CLASS6("follow_class_name = $13,")
     },
 
     // Update existing client class without specifying its position.
     {
         // PgSqlConfigBackendDHCPv6Impl::UPDATE_CLIENT_CLASS6_SAME_POSITION,
-      PGSQL_UPDATE_CLIENT_CLASS6("")
+        12,
+        {
+            OID_VARCHAR,    //  1 name
+            OID_TEXT,       //  2 test
+            OID_BOOL,       //  3 only_if_required
+            OID_INT8,       //  4 valid_lifetime
+            OID_INT8,       //  5 min_valid_lifetime
+            OID_INT8,       //  6 max_valid_lifetime
+            OID_BOOL,       //  7 depend_on_known_directly
+            OID_TIMESTAMP,  //  8 modification_ts
+            OID_INT8,       //  9 preferred_lifetime
+            OID_INT8,       // 10 min_preferred_lifetime
+            OID_INT8,       // 11 max_preferred_lifetime
+            OID_VARCHAR,    // 12 name (of class to update)
+        },
+        "UPDATE_CLIENT_CLASS6_SAME_POSITION",
+        PGSQL_UPDATE_CLIENT_CLASS6("")
     },
 
     // Update existing server, e.g. server description.
     {
         // PgSqlConfigBackendDHCPv6Impl::UPDATE_SERVER6,
-      PGSQL_UPDATE_SERVER(dhcp6)
+        4,
+        {
+            OID_VARCHAR,    // 1 tag
+            OID_VARCHAR,    // 2 description
+            OID_TIMESTAMP,  // 3 modification_ts
+            OID_VARCHAR     // 4 tag (of server to update)
+        },
+        "UPDATE_SERVER6",
+        PGSQL_UPDATE_SERVER(dhcp6)
     },
 
     // Delete global parameter by name.
@@ -2347,221 +2408,422 @@ TaggedStatementArray tagged_statements = { {
     // Delete subnet by id with specifying server tag.
     {
         // PgSqlConfigBackendDHCPv6Impl::DELETE_SUBNET6_ID_WITH_TAG,
-      PGSQL_DELETE_SUBNET_WITH_TAG(dhcp6, AND s.subnet_id = ?)
+        2,
+        {
+            OID_VARCHAR,    // 1 server_tag
+            OID_INT8        // 2 subnet_id
+        },
+        "DELETE_SUBNET6_ID_WITH_TAG",
+        PGSQL_DELETE_SUBNET_WITH_TAG(dhcp6, AND s.subnet_id = $2)
     },
 
     // Delete subnet by id without specifying server tag.
     {
         // PgSqlConfigBackendDHCPv6Impl::DELETE_SUBNET6_ID_ANY,
-      PGSQL_DELETE_SUBNET_ANY(dhcp6, WHERE s.subnet_id = ?)
+        1,
+        {
+            OID_INT8    // 1 subnet_id
+        },
+        "DELETE_SUBNET6_ID_ANY",
+        PGSQL_DELETE_SUBNET_ANY(dhcp6, WHERE s.subnet_id = $1)
     },
 
     // Delete subnet by prefix with specifying server tag.
     {
         // PgSqlConfigBackendDHCPv6Impl::DELETE_SUBNET6_PREFIX_WITH_TAG,
-      PGSQL_DELETE_SUBNET_WITH_TAG(dhcp6, AND s.subnet_prefix = ?)
+        2,
+        {
+            OID_VARCHAR,    // 1 server_tag
+            OID_VARCHAR     // 2 subnet_prefix
+        },
+        "DELETE_SUBNET6_PREFIX_WITH_TAG",
+        PGSQL_DELETE_SUBNET_WITH_TAG(dhcp6, AND s.subnet_prefix = $2)
     },
 
     // Delete subnet by prefix without specifying server tag.
     {
         // PgSqlConfigBackendDHCPv6Impl::DELETE_SUBNET6_PREFIX_ANY,
-      PGSQL_DELETE_SUBNET_ANY(dhcp6, WHERE s.subnet_prefix = ?)
+        1,
+        {
+            OID_VARCHAR // 1 subnet_prefix
+        },
+        "DELETE_SUBNET6_PREFIX_ANY",
+        PGSQL_DELETE_SUBNET_ANY(dhcp6, WHERE s.subnet_prefix = $1)
     },
 
     // Delete all subnets.
     {
         // PgSqlConfigBackendDHCPv6Impl::DELETE_ALL_SUBNETS6,
-      PGSQL_DELETE_SUBNET_WITH_TAG(dhcp6)
+        1,
+        {
+            OID_VARCHAR // 1 server_tag
+        },
+        "DELETE_ALL_SUBNETS6",
+        PGSQL_DELETE_SUBNET_WITH_TAG(dhcp6)
     },
 
     // Delete all unassigned subnets.
     {
         // PgSqlConfigBackendDHCPv6Impl::DELETE_ALL_SUBNETS6_UNASSIGNED,
-      PGSQL_DELETE_SUBNET_UNASSIGNED(dhcp6)
+        0,
+        {
+            OID_NONE
+        },
+        "DELETE_ALL_SUBNETS6_UNASSIGNED",
+        PGSQL_DELETE_SUBNET_UNASSIGNED(dhcp6)
     },
 
     // Delete all subnets for a shared network.
     {
         // PgSqlConfigBackendDHCPv6Impl::DELETE_ALL_SUBNETS6_SHARED_NETWORK_NAME,
-      PGSQL_DELETE_SUBNET_ANY(dhcp6, WHERE s.shared_network_name = ?)
+        1,
+        {
+            OID_VARCHAR // 1 shared_network_name
+        },
+        "DELETE_ALL_SUBNETS6_SHARED_NETWORK_NAME",
+        PGSQL_DELETE_SUBNET_ANY(dhcp6, WHERE s.shared_network_name = $1)
     },
 
     // Delete associations of a subnet with server.
     {
         // PgSqlConfigBackendDHCPv6Impl::DELETE_SUBNET6_SERVER,
-      PGSQL_DELETE_SUBNET_SERVER(dhcp6),
+        1,
+        {
+            OID_INT8    // 1 subnet_id
+        },
+        "DELETE_SUBNET6_SERVER",
+        PGSQL_DELETE_SUBNET_SERVER(dhcp6),
     },
 
     // Delete pools for a subnet.
     {
         // PgSqlConfigBackendDHCPv6Impl::DELETE_POOLS6,
-      PGSQL_DELETE_POOLS(dhcp6)
+        2,
+        {
+            OID_INT8,   // 1 subnet_id
+            OID_VARCHAR // 2 subnet_prefix
+        },
+        "DELETE_POOLS6",
+        PGSQL_DELETE_POOLS(dhcp6)
     },
 
     // Delete pd pools for a subnet.
     {
         // PgSqlConfigBackendDHCPv6Impl::DELETE_PD_POOLS,
-      PGSQL_DELETE_PD_POOLS()
+        2,
+        {
+            OID_INT8,   // 1 subnet_id
+            OID_VARCHAR // 2 subnet_prefix
+        },
+        "DELETE_PD_POOLS",
+        PGSQL_DELETE_PD_POOLS()
     },
 
     // Delete shared network by name with specifying server tag.
     {
         // PgSqlConfigBackendDHCPv6Impl::DELETE_SHARED_NETWORK6_NAME_WITH_TAG,
-      PGSQL_DELETE_SHARED_NETWORK_WITH_TAG(dhcp6, AND n.name = ?)
+        2,
+        {
+            OID_VARCHAR,    // 1 server_tag
+            OID_VARCHAR     // 2 shared_network_name
+        },
+        "DELETE_SHARED_NETWORK6_NAME_WITH_TAG",
+        PGSQL_DELETE_SHARED_NETWORK_WITH_TAG(dhcp6, AND n.name = $2)
     },
 
     // Delete shared network by name without specifying server tag.
     {
         // PgSqlConfigBackendDHCPv6Impl::DELETE_SHARED_NETWORK6_NAME_ANY,
-      PGSQL_DELETE_SHARED_NETWORK_ANY(dhcp6, WHERE n.name = ?)
+        1,
+        {
+            OID_VARCHAR // 1 shared_network_name
+        },
+        "DELETE_SHARED_NETWORK6_NAME_ANY",
+        PGSQL_DELETE_SHARED_NETWORK_ANY(dhcp6, WHERE n.name = $1)
     },
 
     // Delete all shared networks.
     {
         // PgSqlConfigBackendDHCPv6Impl::DELETE_ALL_SHARED_NETWORKS6,
-      PGSQL_DELETE_SHARED_NETWORK_WITH_TAG(dhcp6)
+        1,
+        {
+            OID_VARCHAR // 1 server_tag
+        },
+        "DELETE_ALL_SHARED_NETWORKS6",
+        PGSQL_DELETE_SHARED_NETWORK_WITH_TAG(dhcp6)
     },
 
     // Delete all unassigned shared networks.
     {
         // PgSqlConfigBackendDHCPv6Impl::DELETE_ALL_SHARED_NETWORKS6_UNASSIGNED,
-      PGSQL_DELETE_SHARED_NETWORK_UNASSIGNED(dhcp6)
+        0,
+        {
+            OID_NONE
+        },
+        "DELETE_ALL_SHARED_NETWORKS6_UNASSIGNED",
+        PGSQL_DELETE_SHARED_NETWORK_UNASSIGNED(dhcp6)
     },
 
     // Delete associations of a shared network with server.
     {
         // PgSqlConfigBackendDHCPv6Impl::DELETE_SHARED_NETWORK6_SERVER,
-      PGSQL_DELETE_SHARED_NETWORK_SERVER(dhcp6)
+        1,
+        {
+            OID_VARCHAR // 1 shared_network_name
+        },
+        "DELETE_SHARED_NETWORK6_SERVER",
+        PGSQL_DELETE_SHARED_NETWORK_SERVER(dhcp6)
     },
 
     // Delete option definition.
     {
         // PgSqlConfigBackendDHCPv6Impl::DELETE_OPTION_DEF6_CODE_NAME,
-      PGSQL_DELETE_OPTION_DEF(dhcp6, AND code = ? AND space = ?)
+        3,
+        {
+            OID_VARCHAR,    // 1 server_tag
+            OID_INT2,       // 2 code
+            OID_VARCHAR     // 3 space
+        },
+        "DELETE_OPTION_DEF6_CODE_NAME",
+        PGSQL_DELETE_OPTION_DEF(dhcp6, AND code = $2 AND space = $3)
     },
 
     // Delete all option definitions.
     {
         // PgSqlConfigBackendDHCPv6Impl::DELETE_ALL_OPTION_DEFS6,
-      PGSQL_DELETE_OPTION_DEF(dhcp6)
+        1,
+        {
+            OID_VARCHAR // 1 server_tag
+        },
+        "DELETE_ALL_OPTION_DEFS6",
+        PGSQL_DELETE_OPTION_DEF(dhcp6)
     },
 
     // Delete all option definitions which are assigned to no servers.
     {
         // PgSqlConfigBackendDHCPv6Impl::DELETE_ALL_OPTION_DEFS6_UNASSIGNED,
-      PGSQL_DELETE_OPTION_DEF_UNASSIGNED(dhcp6)
+        0,
+        {
+            OID_NONE
+        },
+        "DELETE_ALL_OPTION_DEFS6_UNASSIGNED",
+        PGSQL_DELETE_OPTION_DEF_UNASSIGNED(dhcp6)
     },
 
     // Delete client class specific option definitions.
     {
         // PgSqlConfigBackendDHCPv6Impl::DELETE_OPTION_DEFS6_CLIENT_CLASS,
-      PGSQL_DELETE_OPTION_DEFS_CLIENT_CLASS(dhcp6)
+        1,
+        {
+            OID_VARCHAR // 1 class name
+        },
+        "DELETE_OPTION_DEFS6_CLIENT_CLASS",
+        PGSQL_DELETE_OPTION_DEFS_CLIENT_CLASS(dhcp6)
     },
 
     // Delete single global option.
     {
         // PgSqlConfigBackendDHCPv6Impl::DELETE_OPTION6,
-      PGSQL_DELETE_OPTION_WITH_TAG(dhcp6, AND o.scope_id = 0  AND o.code = ? AND o.space = ?)
+        3,
+        {
+            OID_VARCHAR,    // 1 server_tag
+            OID_INT2,       // 2 code
+            OID_VARCHAR     // 3 space
+        },
+        "DELETE_OPTION6",
+        PGSQL_DELETE_OPTION_WITH_TAG(dhcp6, AND o.scope_id = 0 \
+                                     AND o.code = $2 AND o.space = $3)
     },
 
     // Delete all global options which are unassigned to any servers.
     {
         // PgSqlConfigBackendDHCPv6Impl::DELETE_ALL_GLOBAL_OPTIONS6_UNASSIGNED,
-      PGSQL_DELETE_OPTION_UNASSIGNED(dhcp6, AND o.scope_id = 0)
+        0,
+        {
+            OID_NONE
+        },
+        "DELETE_ALL_GLOBAL_OPTIONS6_UNASSIGNED",
+        PGSQL_DELETE_OPTION_UNASSIGNED(dhcp6, AND o.scope_id = 0)
     },
 
     // Delete single option from a subnet.
     {
         // PgSqlConfigBackendDHCPv6Impl::DELETE_OPTION6_SUBNET_ID,
-      PGSQL_DELETE_OPTION_NO_TAG(dhcp6,
-                          WHERE o.scope_id = 1 AND o.dhcp6_subnet_id = ? AND o.code = ? AND o.space = ?)
+        3,
+        {
+            OID_INT8,   // 1 subnet_id
+            OID_INT2,   // 2 code
+            OID_VARCHAR // 3 space
+        },
+        "DELETE_OPTION6_SUBNET_ID",
+        PGSQL_DELETE_OPTION_NO_TAG(dhcp6, WHERE o.scope_id = 1 AND o.dhcp6_subnet_id = $1 \
+                                   AND o.code = $2 AND o.space = $3)
     },
 
     // Delete single option from a pool.
     {
         // PgSqlConfigBackendDHCPv6Impl::DELETE_OPTION6_POOL_RANGE,
-      PGSQL_DELETE_OPTION_POOL_RANGE(dhcp6, o.scope_id = 5 AND o.code = ? AND o.space = ?)
+        4,
+        {
+            OID_TEXT,   // 1 start_address - cast as inet
+            OID_TEXT,   // 2 start_address - cast as inet
+            OID_INT2,   // 3 code
+            OID_VARCHAR // 4 space
+        },
+        "DELETE_OPTION6_POOL_RANGE",
+        PGSQL_DELETE_OPTION_POOL_RANGE(dhcp6, o.scope_id = 5 AND o.code = $3 AND o.space = $4)
     },
 
     // Delete single option from a pd pool.
     {
         // PgSqlConfigBackendDHCPv6Impl::DELETE_OPTION6_PD_POOL,
-      PGSQL_DELETE_OPTION_PD_POOL(o.scope_id = 6 AND o.code = ? AND o.space = ?)
+        4,
+        {
+            OID_TEXT,   // 1 prefix
+            OID_INT2,   // 2 prefix_length
+            OID_INT2,   // 3 code
+            OID_VARCHAR // 4 space
+        },
+        "DELETE_OPTION6_PD_POOL",
+        PGSQL_DELETE_OPTION_PD_POOL(o.scope_id = 6 AND o.code = $3 AND o.space = $4)
     },
 
     // Delete single option from a shared network.
     {
         // PgSqlConfigBackendDHCPv6Impl::DELETE_OPTION6_SHARED_NETWORK,
-      PGSQL_DELETE_OPTION_NO_TAG(dhcp6,
-                          WHERE o.scope_id = 4 AND o.shared_network_name = ? AND o.code = ? AND o.space = ?)
+        3,
+        {
+            OID_VARCHAR,    // 1 shared_network_name
+            OID_INT2,       // 2 code
+            OID_VARCHAR     // 3 space
+        },
+        "DELETE_OPTION6_SHARED_NETWORK",
+        PGSQL_DELETE_OPTION_NO_TAG(dhcp6, WHERE o.scope_id = 4 AND o.shared_network_name = $1 \
+                                   AND o.code = $2 AND o.space = $3)
     },
 
     // Delete options belonging to a subnet.
     {
         // PgSqlConfigBackendDHCPv6Impl::DELETE_OPTIONS6_SUBNET_ID_PREFIX,
-      PGSQL_DELETE_OPTION_SUBNET_ID_PREFIX(dhcp6)
+        2,
+        {
+            OID_INT8,   // 1 subnet_id
+            OID_VARCHAR // 2 subnet_prefix
+        },
+        "DELETE_OPTIONS6_SUBNET_ID_PREFIX",
+        PGSQL_DELETE_OPTION_SUBNET_ID_PREFIX(dhcp6)
     },
 
     // Delete options belonging to a shared_network.
     {
         // PgSqlConfigBackendDHCPv6Impl::DELETE_OPTIONS6_SHARED_NETWORK,
-      PGSQL_DELETE_OPTION_NO_TAG(dhcp6, WHERE o.scope_id = 4 AND o.shared_network_name = ?)
+        1,
+        {
+            OID_VARCHAR // shared_network_name
+        },
+        "DELETE_OPTIONS6_SHARED_NETWORK",
+        PGSQL_DELETE_OPTION_NO_TAG(dhcp6, WHERE o.scope_id = 4 AND o.shared_network_name = $1)
     },
 
     // Delete options belonging to a client class.
     {
         // PgSqlConfigBackendDHCPv6Impl::DELETE_OPTIONS6_CLIENT_CLASS,
-      PGSQL_DELETE_OPTION_NO_TAG(dhcp6, WHERE o.scope_id = 2 AND o.dhcp_client_class = ?)
+        1,
+        {
+            OID_VARCHAR // dhcp_client_class
+        },
+        "DELETE_OPTIONS6_CLIENT_CLASS",
+        PGSQL_DELETE_OPTION_NO_TAG(dhcp6, WHERE o.scope_id = 2 AND o.dhcp_client_class = $1)
     },
 
     // Delete all dependencies of a client class.
     {
         // PgSqlConfigBackendDHCPv6Impl::DELETE_CLIENT_CLASS6_DEPENDENCY,
-      PGSQL_DELETE_CLIENT_CLASS_DEPENDENCY(dhcp6)
+        1,
+        {
+            OID_VARCHAR, // 1 classname
+        },
+        "DELETE_CLIENT_CLASS6_DEPENDENCY",
+        PGSQL_DELETE_CLIENT_CLASS_DEPENDENCY(dhcp6)
     },
 
     // Delete associations of a client class with server.
     {
         // PgSqlConfigBackendDHCPv6Impl::DELETE_CLIENT_CLASS6_SERVER,
-      PGSQL_DELETE_CLIENT_CLASS_SERVER(dhcp6),
+        1,
+        {
+            OID_VARCHAR // 1 classname
+        },
+        "DELETE_CLIENT_CLASS6_SERVER",
+        PGSQL_DELETE_CLIENT_CLASS_SERVER(dhcp6),
     },
 
     // Delete all client classes.
     {
         // PgSqlConfigBackendDHCPv6Impl::DELETE_ALL_CLIENT_CLASSES6,
-      PGSQL_DELETE_CLIENT_CLASS_WITH_TAG(dhcp6)
+        1,
+        {
+            OID_VARCHAR // 1 server_tag
+        },
+        "DELETE_ALL_CLIENT_CLASSES6",
+        PGSQL_DELETE_CLIENT_CLASS_WITH_TAG(dhcp6)
     },
 
     // Delete all unassigned client classes.
     {
         // PgSqlConfigBackendDHCPv6Impl::DELETE_ALL_CLIENT_CLASSES6_UNASSIGNED,
-      PGSQL_DELETE_CLIENT_CLASS_UNASSIGNED(dhcp6)
+        0,
+        {
+            OID_NONE
+        },
+        "DELETE_ALL_CLIENT_CLASSES6_UNASSIGNED",
+        PGSQL_DELETE_CLIENT_CLASS_UNASSIGNED(dhcp6)
     },
 
     // Delete specified client class.
     {
         // PgSqlConfigBackendDHCPv6Impl::DELETE_CLIENT_CLASS6,
-      PGSQL_DELETE_CLIENT_CLASS_WITH_TAG(dhcp6, AND name = ?)
+        2,
+        {
+            OID_VARCHAR,    // 1 server_tag
+            OID_VARCHAR     // 2 name
+        },
+        "DELETE_CLIENT_CLASS6",
+        PGSQL_DELETE_CLIENT_CLASS_WITH_TAG(dhcp6, AND name = $2)
     },
 
     // Delete any client class with a given name.
     {
         // PgSqlConfigBackendDHCPv6Impl::DELETE_CLIENT_CLASS6_ANY,
-      PGSQL_DELETE_CLIENT_CLASS_ANY(dhcp6, AND name = ?)
+        1,
+        {
+            OID_VARCHAR     // 1 name
+        },
+        "DELETE_CLIENT_CLASS6_ANY",
+        PGSQL_DELETE_CLIENT_CLASS_ANY(dhcp6, AND name = $1)
     },
 
     // Delete a server by tag.
     {
         // PgSqlConfigBackendDHCPv6Impl::DELETE_SERVER6,
-      PGSQL_DELETE_SERVER(dhcp6)
+        1,
+        {
+            OID_VARCHAR // server_tag
+        },
+        "DELETE_SERVER6",
+        PGSQL_DELETE_SERVER(dhcp6)
     },
 
     // Deletes all servers except logical server 'all'.
     {
         // PgSqlConfigBackendDHCPv6Impl::DELETE_ALL_SERVERS6,
-      PGSQL_DELETE_ALL_SERVERS(dhcp6)
+        0,
+        {
+            OID_NONE
+        },
+        "DELETE_ALL_SERVERS6",
+        PGSQL_DELETE_ALL_SERVERS(dhcp6)
     },
-#endif
 
     // Fetches the last sequence id for the given table and column.
     {
@@ -2581,7 +2843,8 @@ TaggedStatementArray tagged_statements = { {
 } // end anonymous namespace
 
 PgSqlConfigBackendDHCPv6Impl::PgSqlConfigBackendDHCPv6Impl(const DatabaseConnection::ParameterMap& parameters)
-    : PgSqlConfigBackendImpl(parameters, &PgSqlConfigBackendDHCPv6Impl::dbReconnect) {
+    : PgSqlConfigBackendImpl(parameters, &PgSqlConfigBackendDHCPv6Impl::dbReconnect,
+      PgSqlConfigBackendDHCPv6Impl::GET_LAST_INSERT_ID6) {
     // Prepare query statements. Those are will be only used to retrieve
     // information from the database, so they can be used even if the
     // database is read only for the current user.
@@ -3263,7 +3526,7 @@ bool
 PgSqlConfigBackendDHCPv6::registerBackendType() {
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_REGISTER_BACKEND_TYPE6);
     return (
-        dhcp::ConfigBackendDHCPv6Mgr::instance().registerBackendFactory("pgsql",
+        dhcp::ConfigBackendDHCPv6Mgr::instance().registerBackendFactory("postgresql",
             [](const db::DatabaseConnection::ParameterMap& params) -> dhcp::ConfigBackendDHCPv6Ptr {
             return (dhcp::PgSqlConfigBackendDHCPv6Ptr(new dhcp::PgSqlConfigBackendDHCPv6(params)));
         })
@@ -3273,7 +3536,7 @@ PgSqlConfigBackendDHCPv6::registerBackendType() {
 void
 PgSqlConfigBackendDHCPv6::unregisterBackendType() {
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_UNREGISTER_BACKEND_TYPE6);
-    dhcp::ConfigBackendDHCPv6Mgr::instance().unregisterBackendFactory("pgsql");
+    dhcp::ConfigBackendDHCPv6Mgr::instance().unregisterBackendFactory("postgresql");
 }
 
 } // end of namespace isc::dhcp
