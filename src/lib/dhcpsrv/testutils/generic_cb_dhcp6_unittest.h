@@ -132,6 +132,13 @@ public:
                            const size_t new_entries_num = 1,
                            const size_t max_tested_entries = 65535);
 
+    /// @brief This test verifies that the server can be added, updated and deleted.
+    void createUpdateDeleteServerTest();
+
+    /// @brief  This test verifies that it is possible to retrieve all servers from the
+    /// database and then delete all of them.
+    void getAndDeleteAllServersTest();
+
     /// @brief Holds pointers to subnets used in tests.
     std::vector<Subnet6Ptr> test_subnets_;
 

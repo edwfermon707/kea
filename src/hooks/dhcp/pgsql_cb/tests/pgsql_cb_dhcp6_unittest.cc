@@ -129,6 +129,14 @@ TEST_F(PgSqlConfigBackendDHCPv6Test, getPort) {
     getPortTest();
 }
 
+TEST_F(PgSqlConfigBackendDHCPv6Test, createUpdateDeleteServerTest) {
+    createUpdateDeleteServerTest();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, getAndDeleteAllServersTest) {
+    getAndDeleteAllServersTest();
+}
+
 /// @brief Test fixture for verifying database connection loss-recovery
 /// behavior.
 class PgSqlConfigBackendDHCPv6DbLostCallbackTest : public GenericConfigBackendDbLostCallbackTest {

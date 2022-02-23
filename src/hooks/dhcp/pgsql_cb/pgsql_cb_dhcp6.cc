@@ -1056,17 +1056,6 @@ TaggedStatementArray tagged_statements = { {
         PGSQL_GET_GLOBAL_PARAMETER(dhcp6, AND g.modification_ts >= $2)
     },
 
-    // Delete all global parameters which are unassigned to any servers.
-    {
-        // PgSqlConfigBackendDHCPv6Impl::DELETE_ALL_GLOBAL_PARAMETERS6_UNASSIGNED,
-        0,
-        {
-            OID_NONE
-        },
-        "DELETE_ALL_GLOBAL_PARAMETERS6_UNASSIGNED",
-        PGSQL_DELETE_GLOBAL_PARAMETER_UNASSIGNED(dhcp6)
-    },
-
     // Select subnet by id.
     {
         // PgSqlConfigBackendDHCPv6Impl::GET_SUBNET6_ID_NO_TAG,
@@ -2403,6 +2392,17 @@ TaggedStatementArray tagged_statements = { {
         },
         "DELETE_ALL_GLOBAL_PARAMETERS6",
         PGSQL_DELETE_GLOBAL_PARAMETER(dhcp6)
+    },
+
+    // Delete all global parameters which are unassigned to any servers.
+    {
+        // PgSqlConfigBackendDHCPv6Impl::DELETE_ALL_GLOBAL_PARAMETERS6_UNASSIGNED,
+        0,
+        {
+            OID_NONE
+        },
+        "DELETE_ALL_GLOBAL_PARAMETERS6_UNASSIGNED",
+        PGSQL_DELETE_GLOBAL_PARAMETER_UNASSIGNED(dhcp6)
     },
 
     // Delete subnet by id with specifying server tag.
