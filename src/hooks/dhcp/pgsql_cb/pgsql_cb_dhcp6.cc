@@ -868,7 +868,6 @@ public:
         multipleUpdateDeleteQueries(DELETE_ALL_GLOBAL_PARAMETERS6_UNASSIGNED,
                                     DELETE_ALL_GLOBAL_OPTIONS6_UNASSIGNED,
                                     DELETE_ALL_OPTION_DEFS6_UNASSIGNED);
-        isc_throw(NotImplemented, NOT_IMPL_STR);
     }
 
     /// @brief Attempts to delete a server having a given tag.
@@ -877,8 +876,39 @@ public:
     /// @return Number of deleted servers.
     /// @throw isc::InvalidOperation when trying to delete the logical
     /// server 'all'.
-    uint64_t deleteServer6(const data::ServerTag& /* server_tag */) {
-        isc_throw(NotImplemented, NOT_IMPL_STR);
+    uint64_t deleteServer6(const data::ServerTag& server_tag) {
+        // It is not allowed to delete 'all' logical server.
+        if (server_tag.amAll()) {
+            isc_throw(InvalidOperation, "'all' is a name reserved for the server tag which"
+                      " associates the configuration elements with all servers connecting"
+                      " to the database and may not be deleted");
+        }
+
+        PgSqlTransaction transaction(conn_);
+
+        // Create scoped audit revision. As long as this instance exists
+        // no new audit revisions are created in any subsequent calls.
+        ScopedAuditRevision
+            audit_revision(this, PgSqlConfigBackendDHCPv6Impl::CREATE_AUDIT_REVISION,
+                           ServerSelector::ALL(), "deleting a server", false);
+
+        // Specify which server should be deleted.
+        PsqlBindArray in_bindings;
+        in_bindings.addTempString(server_tag.get());
+
+        // Attempt to delete the server.
+        auto count = updateDeleteQuery(PgSqlConfigBackendDHCPv6Impl::DELETE_SERVER6,
+                                       in_bindings);
+
+        // If we have deleted any servers we have to remove any dangling global
+        // parameters, options and option definitions.
+        if (count > 0) {
+            purgeUnassignedConfig();
+        }
+
+        transaction.commit();
+
+        return (count);
     }
 
     /// @brief Attempts to delete all servers.
@@ -888,7 +918,33 @@ public:
     ///
     /// @return Number of deleted servers.
     uint64_t deleteAllServers6() {
-        isc_throw(NotImplemented, NOT_IMPL_STR);
+        // Start transaction.
+        PgSqlTransaction transaction(conn_);
+
+        // Create scoped audit revision. As long as this instance exists
+        // no new audit revisions are created in any subsequent calls.
+        ScopedAuditRevision
+            audit_revision(this, PgSqlConfigBackendDHCPv6Impl::CREATE_AUDIT_REVISION,
+                           ServerSelector::ALL(), "deleting all servers",
+                           false);
+
+        // No arguments, hence empty input bindings.
+        PsqlBindArray in_bindings;
+
+        // Attempt to delete the servers.
+        auto count = updateDeleteQuery(PgSqlConfigBackendDHCPv6Impl::DELETE_ALL_SERVERS6,
+                                       in_bindings);
+
+        // If we have deleted any servers we have to remove any dangling global
+        // parameters, options and option definitions.
+        if (count > 0) {
+            purgeUnassignedConfig();
+        }
+
+        // Commit the transaction.
+        transaction.commit();
+
+        return (count);
     }
 
     /// @brief Attempts to reconnect the server to the config DB backend manager.
