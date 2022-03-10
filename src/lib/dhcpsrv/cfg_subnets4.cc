@@ -425,7 +425,13 @@ CfgSubnets4::selectSubnet(const std::string& iface,
                     .arg((*subnet)->toText())
                     .arg(iface);
                 return (subnet_selected);
+            } else {
+                LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL_DATA,
+                          "Subnet does not meet class criteria.");
             }
+        } else {
+            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL_DATA,
+                      "Subnet not matched by interface.");
         }
     }
 

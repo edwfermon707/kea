@@ -736,6 +736,11 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query, bool& drop,
     CfgMgr& cfgmgr = CfgMgr::instance();
     subnet = cfgmgr.getCurrentCfg()->getCfgSubnets4()->selectSubnet(selector);
 
+    if (!subnet) {
+        LOG_DEBUG(packet4_logger, DBGLVL_TRACE_DETAIL_DATA,
+                  "Selector could not find a subnet.");
+    }
+
     // Let's execute all callouts registered for subnet4_select
     // (skip callouts if the selectSubnet was called to do sanity checks only)
     if (!sanity_only &&
