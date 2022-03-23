@@ -1931,6 +1931,9 @@ to the option one with:
   parameter in the container option entry applies to the whole ``sub-options``
   list.
 
+- ``sub-options`` - specifies a list of sub-option configuration similar to the
+  option one.
+
 For instance this configuration adds a string sub-option in the DHCPv4
 ``vendor-encapsulated-options`` (code 43) option. Note this option
 in last resort encapsulates the ``vendor-encapsulated-options`` space.

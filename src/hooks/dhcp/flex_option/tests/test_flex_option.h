@@ -24,9 +24,6 @@ public:
     /// Export getMutableOptionConfigMap.
     using FlexOptionImpl::getMutableOptionConfigMap;
 
-    /// Export getMutableSubOptionConfigMap.
-    using FlexOptionImpl::getMutableSubOptionConfigMap;
-
     /// @Brief Configure clone which records the error.
     ///
     /// @param options The element with option config list.

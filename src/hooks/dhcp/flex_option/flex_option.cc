@@ -95,6 +95,7 @@ const SimpleKeywords FlexOptionImpl::SUB_OPTION_PARAMETERS = {
     { "add",               Element::string },
     { "supersede",         Element::string },
     { "remove",            Element::string },
+    { "sub-options",       Element::list },
     { "container-add",     Element::boolean },
     { "container-remove",  Element::boolean },
     { "client-class",      Element::string },
@@ -126,7 +127,6 @@ FlexOptionImpl::FlexOptionImpl() {
 }
 
 FlexOptionImpl::~FlexOptionImpl() {
-    sub_option_config_map_.clear();
     option_config_map_.clear();
 }
 
@@ -292,6 +292,15 @@ FlexOptionImpl::parseOptionConfig(ConstElementPtr option) {
                       << "incompatible in the same entry");
         }
         parseSubOptions(sub_options, opt_cfg, universe);
+
+        // Add the option configuration only if there was at least one
+        // sub-option added.
+        if (opt_cfg->getSubOptionConfigMap().size()) {
+            // The [] operator creates the item if it does not exist before
+            // returning a reference to it.
+            OptionConfigList& opt_lst = option_config_map_[code];
+            opt_lst.push_back(opt_cfg);
+        }
     } else {
         parseAction(option, opt_cfg, universe,
                     "add", ADD, EvalContext::PARSER_STRING);
@@ -448,6 +457,8 @@ FlexOptionImpl::parseSubOption(ConstElementPtr sub_option,
         sub_cfg->setClass(class_elem->stringValue());
     }
 
+    ConstElementPtr sub_options = sub_option->get("sub-options");
+
     // sub_cfg initial action is NONE.
     parseAction(sub_option, sub_cfg, universe,
                 "add", ADD, EvalContext::PARSER_STRING);
@@ -456,7 +467,7 @@ FlexOptionImpl::parseSubOption(ConstElementPtr sub_option,
     parseAction(sub_option, sub_cfg, universe,
                 "remove", REMOVE, EvalContext::PARSER_BOOL);
 
-    if (sub_cfg->getAction() == NONE) {
+    if (sub_cfg->getAction() == NONE && !sub_options) {
         isc_throw(BadValue, "no action: " << sub_option->str());
     }
 
@@ -477,12 +488,28 @@ FlexOptionImpl::parseSubOption(ConstElementPtr sub_option,
     // The [] operator creates the item if it does not exist before
     // returning a reference to it.
     uint16_t opt_code = opt_cfg->getCode();
-    SubOptionConfigMap& sub_map = sub_option_config_map_[opt_code];
+    SubOptionConfigMap& sub_map = opt_cfg->getMutableSubOptionConfigMap();
     if (sub_map.count(code)) {
         isc_throw(BadValue, "sub-option " << code << " of option " << opt_code
                   << " was already specified");
     }
     sub_map[code] = sub_cfg;
+
+    if (sub_options) {
+        string action;
+        if (sub_option->contains("add")) {
+            action = "add";
+        } else if (sub_option->contains("supersede")) {
+            action = "supersede";
+        } else if (sub_option->contains("remove")) {
+            action = "remove";
+        }
+        if (!action.empty()) {
+            isc_throw(BadValue, "'sub-options' and '" << action << "' are "
+                      << "incompatible in the same entry");
+        }
+        parseSubOptions(sub_options, sub_cfg, universe);
+    }
 }
 
 void

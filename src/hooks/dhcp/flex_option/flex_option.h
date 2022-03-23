@@ -50,6 +50,16 @@ public:
         REMOVE
     };
 
+    /// @brief Forward declaration of Sub-option configuration.
+    class SubOptionConfig;
+
+    /// @brief The type of shared pointers to sub-option config.
+    typedef boost::shared_ptr<SubOptionConfig> SubOptionConfigPtr;
+
+    /// @brief The type of the sub-option config map.
+    /// @note the index is the sub-option code.
+    typedef std::map<uint16_t, SubOptionConfigPtr> SubOptionConfigMap;
+
     /// @brief Base option configuration.
     ///
     /// Per option configuration.
@@ -134,6 +144,35 @@ public:
             return (class_);
         }
 
+        /// @brief Process a query / response pair.
+        ///
+        /// @tparam PktType The type of pointers to packets: Pkt4Ptr or Pkt6Ptr.
+        /// @param universe The option universe: Option::V4 or Option::V6.
+        /// @param query The query packet.
+        /// @param response The response packet.
+        /// @param parent_opt The parent option or null if options are stored in
+        /// the packet itself.
+        ///
+        /// @return true if parent option needs to be added to the option chain.
+        template <typename PktType>
+        bool processSubOptions(isc::dhcp::Option::Universe universe,
+                               PktType query, PktType response,
+                               isc::dhcp::OptionPtr parent_opt = isc::dhcp::OptionPtr());
+
+        /// @brief Get the sub-option config map.
+        ///
+        /// @return The sub-option config map.
+        const SubOptionConfigMap& getSubOptionConfigMap() const {
+            return (sub_option_config_map_);
+        }
+
+        /// @brief Get a mutable reference to the sub-option config map.
+        ///
+        /// @return The sub-option config map.
+        SubOptionConfigMap& getMutableSubOptionConfigMap() {
+            return (sub_option_config_map_);
+        }
+
     private:
         /// @brief The code.
         uint16_t code_;
@@ -153,6 +192,9 @@ public:
 
         /// @brief The client class aka guard name.
         isc::dhcp::ClientClass class_;
+
+        /// @brief The sub-option config map.
+        SubOptionConfigMap sub_option_config_map_;
     };
 
     /// @brief The type of shared pointers to option config.
@@ -163,93 +205,6 @@ public:
 
     /// @brief The type of the option config map.
     typedef std::map<uint16_t, OptionConfigList> OptionConfigMap;
-
-    /// @brief Sub-option configuration.
-    ///
-    /// Per sub-option configuration.
-    class SubOptionConfig : public OptionConfig {
-    public:
-        /// @brief Constructor.
-        ///
-        /// @param code the sub-option code.
-        /// @param def the sub-option definition.
-        /// @param container pointer to the container option.
-        SubOptionConfig(uint16_t code, isc::dhcp::OptionDefinitionPtr def,
-                        OptionConfigPtr container);
-
-        /// @brief Destructor.
-        virtual ~SubOptionConfig();
-
-        /// @brief Set vendor id.
-        ///
-        /// @param vendor_id the vendor id.
-        void setVendorId(uint32_t vendor_id) {
-            vendor_id_ = vendor_id;
-        }
-
-        /// @brief Return vendor id.
-        ///
-        /// @return vendor id.
-        uint32_t getVendorId() const {
-            return (vendor_id_);
-        }
-
-        /// @brief Return container code.
-        ///
-        /// @return container code.
-        uint16_t getContainerCode() const {
-            return (container_->getCode());
-        }
-
-        /// @brief Return container definition.
-        ///
-        /// @return container definition.
-        isc::dhcp::OptionDefinitionPtr getContainerDef() const {
-            return (container_->getOptionDef());
-        }
-
-        /// @brief Return container client class.
-        ///
-        /// @return container client class name.
-        const isc::dhcp::ClientClass& getContainerClass() const {
-            return (container_->getClass());
-        }
-
-        /// @brief Set action on the container.
-        ///
-        /// @param action the action.
-        void setContainerAction(Action action) {
-            container_action_ = action;
-        }
-
-        /// @brief Return action on the container.
-        ///
-        /// @return action on the container.
-        Action getContainerAction() const {
-            return (container_action_);
-        }
-
-    private:
-        /// @brief Pointer to the container option configuration.
-        OptionConfigPtr container_;
-
-        /// @brief Vendor id (0 when the container is not a vendor one).
-        uint32_t vendor_id_;
-
-        /// @brief The action on the container.
-        Action container_action_;
-    };
-
-    /// @brief The type of shared pointers to sub-option config.
-    typedef boost::shared_ptr<SubOptionConfig> SubOptionConfigPtr;
-
-    /// @brief The type of the sub-option config map.
-    /// @note the index is the sub-option code.
-    typedef std::map<uint16_t, SubOptionConfigPtr> SubOptionConfigMap;
-
-    /// @brief The type of the map of sub-option config maps.
-    /// @note the index is the container option code.
-    typedef std::map<uint16_t, SubOptionConfigMap> SubOptionConfigMapMap;
 
     /// @brief Constructor.
     FlexOptionImpl();
@@ -262,13 +217,6 @@ public:
     /// @return The option config map.
     const OptionConfigMap& getOptionConfigMap() const {
         return (option_config_map_);
-    }
-
-    /// @brief Get the sub-option config map of maps.
-    ///
-    /// @return The sub-option config map of maps.
-    const SubOptionConfigMapMap& getSubOptionConfigMap() const {
-        return (sub_option_config_map_);
     }
 
     /// @brief Configure the Flex Option implementation.
@@ -372,175 +320,86 @@ public:
                     logAction(REMOVE, code, "");
                     break;
                 }
-            }
-        }
-        for (auto pair : getSubOptionConfigMap()) {
-            for (auto sub_pair : pair.second) {
-                const SubOptionConfigPtr& sub_cfg = sub_pair.second;
-                uint16_t sub_code = sub_cfg->getCode();
-                uint16_t opt_code = sub_cfg->getContainerCode();
-                const isc::dhcp::ClientClass& opt_class =
-                    sub_cfg->getContainerClass();
-                if (!opt_class.empty()) {
-                    if (!query->inClass(opt_class)) {
-                        logClass(opt_class, opt_code);
-                        continue;
-                    }
-                }
-                const isc::dhcp::ClientClass& sub_class =
-                    sub_cfg->getClass();
-                if (!sub_class.empty()) {
-                    if (!query->inClass(sub_class)) {
-                        logSubClass(sub_class, sub_code, opt_code);
-                        continue;
-                    }
-                }
-                std::string value;
-                isc::dhcp::OptionBuffer buffer;
-                isc::dhcp::OptionPtr opt = response->getOption(opt_code);
-                isc::dhcp::OptionPtr sub;
-                isc::dhcp::OptionDefinitionPtr def = sub_cfg->getOptionDef();
-                uint32_t vendor_id = sub_cfg->getVendorId();
-                switch (sub_cfg->getAction()) {
-                case NONE:
-                    break;
-                case ADD:
-                    // If no container and no magic add return
-                    if (!opt && (sub_cfg->getContainerAction() != ADD)) {
-                        break;
-                    }
-                    // Do nothing is the expression evaluates to empty.
-                    value = isc::dhcp::evaluateString(*sub_cfg->getExpr(),
-                                                      *query);
-                    if (value.empty()) {
-                        break;
-                    }
-                    // Check vendor id mismatch.
-                    if (opt && vendor_id && !checkVendor(opt, vendor_id)) {
-                        break;
-                    }
-                    // Don't add if sub-option is already there.
-                    if (opt && opt->getOption(sub_code)) {
-                        break;
-                    }
-                    // Set the value.
-                    if (def) {
-                        std::vector<std::string> split_vec =
-                            isc::util::str::tokens(value, ",", true);
-                        sub = def->optionFactory(universe, sub_code,
-                                                 split_vec);
-                    } else {
-                        buffer.assign(value.begin(), value.end());
-                        sub.reset(new isc::dhcp::Option(universe, sub_code,
-                                                        buffer));
-                    }
-                    // If the container does not exist add it.
-                    if (!opt) {
-                        if (!vendor_id) {
-                            opt.reset(new isc::dhcp::Option(universe,
-                                                            opt_code));
-                        } else {
-                            opt.reset(new isc::dhcp::OptionVendor(universe,
-                                                                  vendor_id));
-                        }
-                        response->addOption(opt);
-                        if (vendor_id) {
-                            logAction(ADD, opt_code, vendor_id);
-                        } else {
-                            logAction(ADD, opt_code, "");
-                        }
-                    }
-                    // Add the sub-option.
-                    opt->addOption(sub);
-                    logSubAction(ADD, sub_code, opt_code, value);
-                    break;
-                case SUPERSEDE:
-                    // If no container and no magic add return
-                    if (!opt && (sub_cfg->getContainerAction() != ADD)) {
-                        break;
-                    }
-                    // Do nothing is the expression evaluates to empty.
-                    value = isc::dhcp::evaluateString(*sub_cfg->getExpr(),
-                                                      *query);
-                    if (value.empty()) {
-                        break;
-                    }
-                    // Check vendor id mismatch.
-                    if (opt && vendor_id && !checkVendor(opt, vendor_id)) {
-                        break;
-                    }
-                    // Set the value.
-                    if (def) {
-                        std::vector<std::string> split_vec =
-                            isc::util::str::tokens(value, ",", true);
-                        sub = def->optionFactory(universe, sub_code,
-                                                 split_vec);
-                    } else {
-                        buffer.assign(value.begin(), value.end());
-                        sub.reset(new isc::dhcp::Option(universe, sub_code,
-                                                        buffer));
-                    }
-                    // Remove the sub-option if already there.
-                    if (opt) {
-                        while (opt->getOption(sub_code)) {
-                            opt->delOption(sub_code);
-                        }
-                    }
-                    // If the container does not exist add it.
-                    if (!opt) {
-                        if (!vendor_id) {
-                            opt.reset(new isc::dhcp::Option(universe,
-                                                            opt_code));
-                        } else {
-                            opt.reset(new isc::dhcp::OptionVendor(universe,
-                                                                  vendor_id));
-                        }
-                        response->addOption(opt);
-                        if (vendor_id) {
-                            logAction(ADD, opt_code, vendor_id);
-                        } else {
-                            logAction(ADD, opt_code, "");
-                        }
-                    }
-                    // Add the sub-option.
-                    opt->addOption(sub);
-                    logSubAction(SUPERSEDE, sub_code, opt_code, value);
-                    break;
-                case REMOVE:
-                    // Nothing to remove if container is not present.
-                    if (!opt) {
-                        break;
-                    }
-                    sub = opt->getOption(sub_code);
-                    // Nothing to remove if sub-option is not present.
-                    if (!sub) {
-                        break;
-                    }
-                    // Do nothing is the expression evaluates to false.
-                    if (!isc::dhcp::evaluateBool(*sub_cfg->getExpr(), *query)) {
-                        break;
-                    }
-                    // Check vendor id mismatch.
-                    if (opt && vendor_id && !checkVendor(opt, vendor_id)) {
-                        break;
-                    }
-                    // Remove the sub-option.
-                    while (opt->getOption(sub_code)) {
-                        opt->delOption(sub_code);
-                    }
-                    logSubAction(REMOVE, sub_code, opt_code, "");
-                    // Remove the empty container when wanted.
-                    if ((sub_cfg->getContainerAction() == REMOVE) &&
-                        opt->getOptions().empty()) {
-                        response->delOption(opt_code);
-                        logAction(REMOVE, opt_code, "");
-                    }
-                    break;
-                }
+                opt_cfg->processSubOptions(universe, query, response);
             }
         }
     }
 
+    /// @brief Sub-option configuration.
+    ///
+    /// Per sub-option configuration.
+    class SubOptionConfig : public OptionConfig {
+    public:
+        /// @brief Constructor.
+        ///
+        /// @param code the sub-option code.
+        /// @param def the sub-option definition.
+        /// @param container pointer to the container option.
+        SubOptionConfig(uint16_t code, isc::dhcp::OptionDefinitionPtr def,
+                        OptionConfigPtr container);
+
+        /// @brief Destructor.
+        virtual ~SubOptionConfig();
+
+        /// @brief Set vendor id.
+        ///
+        /// @param vendor_id the vendor id.
+        void setVendorId(uint32_t vendor_id) {
+            vendor_id_ = vendor_id;
+        }
+
+        /// @brief Return vendor id.
+        ///
+        /// @return vendor id.
+        uint32_t getVendorId() const {
+            return (vendor_id_);
+        }
+
+        /// @brief Return container code.
+        ///
+        /// @return container code.
+        uint16_t getContainerCode() const {
+            return (container_->getCode());
+        }
+
+        /// @brief Return container definition.
+        ///
+        /// @return container definition.
+        isc::dhcp::OptionDefinitionPtr getContainerDef() const {
+            return (container_->getOptionDef());
+        }
+
+        /// @brief Return container client class.
+        ///
+        /// @return container client class name.
+        const isc::dhcp::ClientClass& getContainerClass() const {
+            return (container_->getClass());
+        }
+
+        /// @brief Set action on the container.
+        ///
+        /// @param action the action.
+        void setContainerAction(Action action) {
+            container_action_ = action;
+        }
+
+        /// @brief Return action on the container.
+        ///
+        /// @return action on the container.
+        Action getContainerAction() const {
+            return (container_action_);
+        }
+
+    private:
+        /// @brief Pointer to the container option configuration.
+        OptionConfigPtr container_;
+
+        /// @brief Vendor id (0 when the container is not a vendor one).
+        uint32_t vendor_id_;
+
+        /// @brief The action on the container.
+        Action container_action_;
+    };
 
     /// @brief Log the client class for option.
     ///
@@ -596,13 +455,6 @@ protected:
         return (option_config_map_);
     }
 
-    /// @brief Get a mutable reference to the sub-option config map of maps.
-    ///
-    /// @return The sub-option config map of maps.
-    SubOptionConfigMapMap& getMutableSubOptionConfigMap() {
-        return (sub_option_config_map_);
-    }
-
 private:
     /// @brief Option parameters.
     static const data::SimpleKeywords OPTION_PARAMETERS;
@@ -612,9 +464,6 @@ private:
 
     /// @brief The option config map (code and pointer to option config).
     OptionConfigMap option_config_map_;
-
-    /// @brief The sub-option config map of maps.
-    SubOptionConfigMapMap sub_option_config_map_;
 
     /// @brief Parse an option config.
     ///
@@ -640,6 +489,240 @@ private:
                          OptionConfigPtr opt_cfg,
                          isc::dhcp::Option::Universe universe);
 };
+
+template <typename PktType>
+bool
+FlexOptionImpl::OptionConfig::processSubOptions(isc::dhcp::Option::Universe universe,
+                                                PktType query, PktType response,
+                                                isc::dhcp::OptionPtr parent_opt) {
+    bool result = false;
+    for (auto sub_pair : getSubOptionConfigMap()) {
+        const SubOptionConfigPtr& sub_cfg = sub_pair.second;
+        uint16_t sub_code = sub_cfg->getCode();
+        uint16_t opt_code = sub_cfg->getContainerCode();
+        const isc::dhcp::ClientClass& opt_class =
+            sub_cfg->getContainerClass();
+        if (!opt_class.empty()) {
+            if (!query->inClass(opt_class)) {
+                logClass(opt_class, opt_code);
+                continue;
+            }
+        }
+        const isc::dhcp::ClientClass& sub_class =
+            sub_cfg->getClass();
+        if (!sub_class.empty()) {
+            if (!query->inClass(sub_class)) {
+                logSubClass(sub_class, sub_code, opt_code);
+                continue;
+            }
+        }
+        std::string value;
+        isc::dhcp::OptionBuffer buffer;
+        isc::dhcp::OptionPtr opt;
+        if (parent_opt) {
+            opt = parent_opt->getOption(opt_code);
+        } else {
+            opt = response->getOption(opt_code);
+        }
+
+        isc::dhcp::OptionPtr sub;
+        isc::dhcp::OptionDefinitionPtr def = sub_cfg->getOptionDef();
+        uint32_t vendor_id = sub_cfg->getVendorId();
+        switch (sub_cfg->getAction()) {
+        case NONE: {
+                // If there is no parent option, but the top level requires creating
+                // one, this temporary option will be added at the end.
+                bool empty = false;
+                bool option_created = false;
+                if (!opt) {
+                    if (!vendor_id) {
+                        opt.reset(new isc::dhcp::Option(universe,
+                                                        opt_code));
+                    } else {
+                        opt.reset(new isc::dhcp::OptionVendor(universe,
+                                                              vendor_id));
+                    }
+                    option_created = true;
+                } else {
+                    empty = opt->getOptions().empty();
+                }
+                result = result || sub_cfg->processSubOptions(universe, query, response, opt);
+                if (result && option_created) {
+                    if (parent_opt) {
+                        parent_opt->addOption(opt);
+                    } else {
+                        response->addOption(opt);
+                    }
+                    if (vendor_id) {
+                        logAction(ADD, opt_code, vendor_id);
+                    } else {
+                        logAction(ADD, opt_code, "");
+                    }
+                }
+                // If the option existed and was not empty but now it is,
+                // remove it from the parent.
+                if (!option_created && !empty && opt->getOptions().empty()) {
+                    if (parent_opt) {
+                        parent_opt->delOption(opt_code);
+                    } else {
+                        response->delOption(opt_code);
+                    }
+                    logAction(REMOVE, opt_code, "");
+                }
+            }
+            break;
+        case ADD:
+            // If no container and no magic add return
+            if (!opt && (sub_cfg->getContainerAction() != ADD)) {
+                break;
+            }
+            // Do nothing is the expression evaluates to empty.
+            value = isc::dhcp::evaluateString(*sub_cfg->getExpr(),
+                                              *query);
+            if (value.empty()) {
+                break;
+            }
+            // Check vendor id mismatch.
+            if (opt && vendor_id && !checkVendor(opt, vendor_id)) {
+                break;
+            }
+            // Don't add if sub-option is already there.
+            if (opt && opt->getOption(sub_code)) {
+                break;
+            }
+            // Set the value.
+            if (def) {
+                std::vector<std::string> split_vec =
+                    isc::util::str::tokens(value, ",", true);
+                sub = def->optionFactory(universe, sub_code,
+                                         split_vec);
+            } else {
+                buffer.assign(value.begin(), value.end());
+                sub.reset(new isc::dhcp::Option(universe, sub_code,
+                                                buffer));
+            }
+            // If the container does not exist add it.
+            if (!opt) {
+                if (!vendor_id) {
+                    opt.reset(new isc::dhcp::Option(universe,
+                                                    opt_code));
+                } else {
+                    opt.reset(new isc::dhcp::OptionVendor(universe,
+                                                          vendor_id));
+                }
+                if (parent_opt) {
+                    parent_opt->addOption(opt);
+                } else {
+                    response->addOption(opt);
+                }
+                if (vendor_id) {
+                    logAction(ADD, opt_code, vendor_id);
+                } else {
+                    logAction(ADD, opt_code, "");
+                }
+            }
+
+            // Add the sub-option.
+            opt->addOption(sub);
+            logSubAction(ADD, sub_code, opt_code, value);
+            result = true;
+            break;
+        case SUPERSEDE:
+            // If no container and no magic add return
+            if (!opt && (sub_cfg->getContainerAction() != ADD)) {
+                break;
+            }
+            // Do nothing is the expression evaluates to empty.
+            value = isc::dhcp::evaluateString(*sub_cfg->getExpr(),
+                                              *query);
+            if (value.empty()) {
+                break;
+            }
+            // Check vendor id mismatch.
+            if (opt && vendor_id && !checkVendor(opt, vendor_id)) {
+                break;
+            }
+            // Set the value.
+            if (def) {
+                std::vector<std::string> split_vec =
+                    isc::util::str::tokens(value, ",", true);
+                sub = def->optionFactory(universe, sub_code,
+                                         split_vec);
+            } else {
+                buffer.assign(value.begin(), value.end());
+                sub.reset(new isc::dhcp::Option(universe, sub_code,
+                                                buffer));
+            }
+            // Remove the sub-option if already there.
+            if (opt) {
+                while (opt->getOption(sub_code)) {
+                    opt->delOption(sub_code);
+                }
+            }
+            // If the container does not exist add it.
+            if (!opt) {
+                if (!vendor_id) {
+                    opt.reset(new isc::dhcp::Option(universe,
+                                                    opt_code));
+                } else {
+                    opt.reset(new isc::dhcp::OptionVendor(universe,
+                                                          vendor_id));
+                }
+                if (parent_opt) {
+                    parent_opt->addOption(opt);
+                } else {
+                    response->addOption(opt);
+                }
+                if (vendor_id) {
+                    logAction(ADD, opt_code, vendor_id);
+                } else {
+                    logAction(ADD, opt_code, "");
+                }
+            }
+
+            // Add the sub-option.
+            opt->addOption(sub);
+            logSubAction(SUPERSEDE, sub_code, opt_code, value);
+            result = true;
+            break;
+        case REMOVE:
+            // Nothing to remove if container is not present.
+            if (!opt) {
+                break;
+            }
+            sub = opt->getOption(sub_code);
+            // Nothing to remove if sub-option is not present.
+            if (!sub) {
+                break;
+            }
+            // Do nothing is the expression evaluates to false.
+            if (!isc::dhcp::evaluateBool(*sub_cfg->getExpr(), *query)) {
+                break;
+            }
+            // Check vendor id mismatch.
+            if (opt && vendor_id && !checkVendor(opt, vendor_id)) {
+                break;
+            }
+            // Remove the sub-option.
+            while (opt->getOption(sub_code)) {
+                opt->delOption(sub_code);
+            }
+            logSubAction(REMOVE, sub_code, opt_code, "");
+            // Remove the empty container when wanted.
+            if ((sub_cfg->getContainerAction() == REMOVE) &&
+                opt->getOptions().empty()) {
+                if (parent_opt) {
+                    parent_opt->delOption(opt_code);
+                } else {
+                    response->delOption(opt_code);
+                }
+                logAction(REMOVE, opt_code, "");
+            }
+            break;
+        }
+    }
+    return (result);
+}
 
 /// @brief The type of shared pointers to Flex Option implementations.
 typedef boost::shared_ptr<FlexOptionImpl> FlexOptionImplPtr;

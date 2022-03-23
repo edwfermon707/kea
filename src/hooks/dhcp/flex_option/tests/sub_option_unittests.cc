@@ -66,7 +66,6 @@ TEST_F(FlexSubOptionTest, configEmpty) {
     EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     EXPECT_TRUE(impl_->getOptionConfigMap().empty());
-    EXPECT_TRUE(impl_->getSubOptionConfigMap().empty());
 }
 
 // Verify that a sub-option configuration must exist.
@@ -378,9 +377,9 @@ TEST_F(FlexSubOptionTest, subOptionConfigUnknownCodeNoCSVFormat) {
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
-    auto map = impl_->getSubOptionConfigMap();
+    auto map = impl_->getMutableOptionConfigMap();
     EXPECT_EQ(1, map.count(109));
-    auto smap = map[109];
+    auto smap = map[109].front()->getSubOptionConfigMap();
     EXPECT_EQ(1, smap.count(222));
 }
 
@@ -406,9 +405,9 @@ TEST_F(FlexSubOptionTest, subOptionConfigUnknownCodeDisableCSVFormat) {
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
-    auto map = impl_->getSubOptionConfigMap();
+    auto map = impl_->getMutableOptionConfigMap();
     EXPECT_EQ(1, map.count(109));
-    auto smap = map[109];
+    auto smap = map[109].front()->getSubOptionConfigMap();
     EXPECT_EQ(1, smap.count(222));
 }
 
@@ -462,9 +461,9 @@ TEST_F(FlexSubOptionTest, subOptionConfigDefinedName) {
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
-    auto map = impl_->getSubOptionConfigMap();
+    auto map = impl_->getMutableOptionConfigMap();
     EXPECT_EQ(1, map.count(109));
-    auto smap = map[109];
+    auto smap = map[109].front()->getSubOptionConfigMap();
     EXPECT_EQ(1, smap.count(222));
 }
 
@@ -495,9 +494,9 @@ TEST_F(FlexSubOptionTest, subOptionConfigLastResortName) {
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
-    auto map = impl_->getSubOptionConfigMap();
+    auto map = impl_->getMutableOptionConfigMap();
     EXPECT_EQ(1, map.count(DHO_VENDOR_ENCAPSULATED_OPTIONS));
-    auto smap = map[DHO_VENDOR_ENCAPSULATED_OPTIONS];
+    auto smap = map[DHO_VENDOR_ENCAPSULATED_OPTIONS].front()->getSubOptionConfigMap();
     EXPECT_EQ(1, smap.count(222));
 }
 
@@ -534,9 +533,9 @@ TEST_F(FlexSubOptionTest, subOptionConfigLastResortCode) {
 
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
-    auto map = impl_->getSubOptionConfigMap();
+    auto map = impl_->getMutableOptionConfigMap();
     EXPECT_EQ(1, map.count(DHO_VENDOR_ENCAPSULATED_OPTIONS));
-    auto smap = map[DHO_VENDOR_ENCAPSULATED_OPTIONS];
+    auto smap = map[DHO_VENDOR_ENCAPSULATED_OPTIONS].front()->getSubOptionConfigMap();
     EXPECT_EQ(1, smap.count(222));
 }
 
@@ -568,9 +567,9 @@ TEST_F(FlexSubOptionTest, subOptionConfigVendorName) {
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
-    auto map = impl_->getSubOptionConfigMap();
+    auto map = impl_->getMutableOptionConfigMap();
     EXPECT_EQ(1, map.count(D6O_VENDOR_OPTS));
-    auto smap = map[D6O_VENDOR_OPTS];
+    auto smap = map[D6O_VENDOR_OPTS].front()->getSubOptionConfigMap();
     EXPECT_EQ(1, smap.count(222));
 }
 
@@ -609,9 +608,9 @@ TEST_F(FlexSubOptionTest, subOptionConfigVendorCode) {
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
-    auto map = impl_->getSubOptionConfigMap();
+    auto map = impl_->getMutableOptionConfigMap();
     EXPECT_EQ(1, map.count(D6O_VENDOR_OPTS));
-    auto smap = map[D6O_VENDOR_OPTS];
+    auto smap = map[D6O_VENDOR_OPTS].front()->getSubOptionConfigMap();
     EXPECT_EQ(1, smap.count(222));
 }
 
@@ -636,9 +635,9 @@ TEST_F(FlexSubOptionTest, subOptionConfigDosSISName) {
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
-    auto map = impl_->getSubOptionConfigMap();
+    auto map = impl_->getMutableOptionConfigMap();
     EXPECT_EQ(1, map.count(DHO_VIVSO_SUBOPTIONS));
-    auto smap = map[DHO_VIVSO_SUBOPTIONS];
+    auto smap = map[DHO_VIVSO_SUBOPTIONS].front()->getSubOptionConfigMap();
     // DOCSIS3_V4_TFTP_SERVERS is 2
     EXPECT_EQ(1, smap.count(2));
 }
@@ -667,9 +666,9 @@ TEST_F(FlexSubOptionTest, subOptionConfigDosSISCode) {
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
-    auto map = impl_->getSubOptionConfigMap();
+    auto map = impl_->getMutableOptionConfigMap();
     EXPECT_EQ(1, map.count(DHO_VIVSO_SUBOPTIONS));
-    auto smap = map[DHO_VIVSO_SUBOPTIONS];
+    auto smap = map[DHO_VIVSO_SUBOPTIONS].front()->getSubOptionConfigMap();
     // DOCSIS3_V4_TFTP_SERVERS is 2
     EXPECT_EQ(1, smap.count(2));
 }
@@ -1041,9 +1040,9 @@ TEST_F(FlexSubOptionTest, subOptionConfigComplex) {
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
-    auto map = impl_->getSubOptionConfigMap();
+    auto map = impl_->getMutableOptionConfigMap();
     EXPECT_EQ(1, map.count(109));
-    auto smap = map[109];
+    auto smap = map[109].front()->getSubOptionConfigMap();
     FlexOptionImpl::SubOptionConfigPtr sub_cfg;
     ASSERT_NO_THROW(sub_cfg = smap.at(1));
     ASSERT_TRUE(sub_cfg);
@@ -1091,8 +1090,9 @@ TEST_F(FlexSubOptionTest, subProcessNone) {
     OptionDefinitionPtr def;
     FlexOptionImpl::SubOptionConfigPtr
         sub_cfg(new FlexOptionImpl::SubOptionConfig(1, def, opt_cfg));
-    auto& map = impl_->getMutableSubOptionConfigMap();
-    auto& smap = map[DHO_DHCP_AGENT_OPTIONS];
+    auto& map = impl_->getMutableOptionConfigMap();
+    map[DHO_DHCP_AGENT_OPTIONS].push_back(opt_cfg);
+    auto& smap = map[DHO_DHCP_AGENT_OPTIONS].front()->getMutableSubOptionConfigMap();
     smap[1] = sub_cfg;
 
     Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
@@ -1158,6 +1158,76 @@ TEST_F(FlexSubOptionTest, subProcessAddEnableCSVFormat) {
     EXPECT_EQ(0, buffer[12]);
 }
 
+// Verify that ADD action adds the specified sub-option in csv format in
+// deep encapsulated space.
+TEST_F(FlexSubOptionTest, subProcessAddComplexEnableCSVFormat) {
+    OptionDefSpaceContainer defs;
+    OptionDefinitionPtr def(new OptionDefinition("my-container", 222,
+                                                 DHCP4_OPTION_SPACE, "empty",
+                                                 "my-space"));
+    defs.addItem(def);
+    OptionDefinitionPtr sdef(new OptionDefinition("my-container", 4,
+                                                  "my-space", "empty",
+                                                  "my-other-space"));
+    defs.addItem(sdef);
+    OptionDefinitionPtr ssdef(new OptionDefinition("my-option", 1, "my-other-space",
+                                                   "fqdn", true));
+    defs.addItem(ssdef);
+    EXPECT_NO_THROW(LibDHCP::setRuntimeOptionDefs(defs));
+
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(222);
+    option->set("code", code);
+    ElementPtr sub_options = Element::createList();
+    option->set("sub-options", sub_options);
+    ElementPtr sub_option = Element::createMap();
+    sub_options->add(sub_option);
+    ElementPtr space = Element::create(string("my-space"));
+    sub_option->set("space", space);
+    ElementPtr other_code = Element::create(4);
+    sub_option->set("code", other_code);
+    ElementPtr sub_sub_options = Element::createList();
+    sub_option->set("sub-options", sub_sub_options);
+    ElementPtr sub_sub_option = Element::createMap();
+    sub_sub_options->add(sub_sub_option);
+    ElementPtr other_space = Element::create(string("my-other-space"));
+    sub_sub_option->set("space", other_space);
+    ElementPtr add = Element::create(string("'example.com'"));
+    sub_sub_option->set("add", add);
+    ElementPtr name = Element::create(string("my-option"));
+    sub_sub_option->set("name", name);
+    sub_sub_option->set("csv-format", Element::create(true));
+
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
+
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
+    Pkt4Ptr response(new Pkt4(DHCPOFFER, 12345));
+    EXPECT_FALSE(response->getOption(222));
+
+    EXPECT_NO_THROW(impl_->process<Pkt4Ptr>(Option::V4, query, response));
+
+    OptionPtr opt = response->getOption(222);
+    ASSERT_TRUE(opt);
+    EXPECT_EQ(222, opt->getType());
+    OptionPtr sub = opt->getOption(4);
+    ASSERT_TRUE(sub);
+    EXPECT_EQ(4, sub->getType());
+    OptionPtr sub_sub = sub->getOption(1);
+    ASSERT_TRUE(sub_sub);
+    EXPECT_EQ(1, sub_sub->getType());
+    // The fqdn array is the most complex encoding of one element...
+    const OptionBuffer& buffer = sub_sub->getData();
+    ASSERT_EQ(13, buffer.size());
+    EXPECT_EQ(7, buffer[0]);
+    EXPECT_EQ(0, memcmp(&buffer[1], "example", 7));
+    EXPECT_EQ(3, buffer[8]);
+    EXPECT_EQ(0, memcmp(&buffer[9], "com", 3));
+    EXPECT_EQ(0, buffer[12]);
+}
+
 // Verify that ADD action does nothing when the container does not exist and
 // container-add is false.
 TEST_F(FlexSubOptionTest, subProcessAddNoContainer) {
@@ -1187,6 +1257,62 @@ TEST_F(FlexSubOptionTest, subProcessAddNoContainer) {
     ElementPtr name = Element::create(string("my-option"));
     sub_option->set("name", name);
     sub_option->set("container-add", Element::create(false));
+
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
+
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
+    Pkt4Ptr response(new Pkt4(DHCPOFFER, 12345));
+    string response_txt = response->toText();
+    EXPECT_FALSE(response->getOption(222));
+
+    EXPECT_NO_THROW(impl_->process<Pkt4Ptr>(Option::V4, query, response));
+
+    EXPECT_EQ(response_txt, response->toText());
+    EXPECT_FALSE(response->getOption(222));
+}
+
+// Verify that ADD action does nothing when the container does not exist
+// and container-add is false in deep encapsulated space.
+TEST_F(FlexSubOptionTest, subProcessAddComplexNoContainer) {
+    OptionDefSpaceContainer defs;
+    OptionDefinitionPtr def(new OptionDefinition("my-container", 222,
+                                                 DHCP4_OPTION_SPACE, "empty",
+                                                 "my-space"));
+    defs.addItem(def);
+    OptionDefinitionPtr sdef(new OptionDefinition("my-container", 4,
+                                                  "my-space", "empty",
+                                                  "my-other-space"));
+    defs.addItem(sdef);
+    OptionDefinitionPtr ssdef(new OptionDefinition("my-option", 1, "my-other-space",
+                                                   "fqdn", true));
+    defs.addItem(ssdef);
+    EXPECT_NO_THROW(LibDHCP::setRuntimeOptionDefs(defs));
+
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(222);
+    option->set("code", code);
+    ElementPtr sub_options = Element::createList();
+    option->set("sub-options", sub_options);
+    ElementPtr sub_option = Element::createMap();
+    sub_options->add(sub_option);
+    ElementPtr space = Element::create(string("my-space"));
+    sub_option->set("space", space);
+    ElementPtr other_code = Element::create(4);
+    sub_option->set("code", other_code);
+    ElementPtr sub_sub_options = Element::createList();
+    sub_option->set("sub-options", sub_sub_options);
+    ElementPtr sub_sub_option = Element::createMap();
+    sub_sub_options->add(sub_sub_option);
+    ElementPtr other_space = Element::create(string("my-other-space"));
+    sub_sub_option->set("space", other_space);
+    ElementPtr add = Element::create(string("'example.com'"));
+    sub_sub_option->set("add", add);
+    ElementPtr name = Element::create(string("my-option"));
+    sub_sub_option->set("name", name);
+    sub_sub_option->set("container-add", Element::create(false));
 
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
@@ -1787,6 +1913,76 @@ TEST_F(FlexSubOptionTest, subProcessSupersedeEnableCSVFormat) {
     EXPECT_EQ(0, buffer[12]);
 }
 
+// Verify that SUPERSEDE action adds the specified sub-option in csv format in
+// deep encapsulated space.
+TEST_F(FlexSubOptionTest, subProcessSupersedeComplexEnableCSVFormat) {
+    OptionDefSpaceContainer defs;
+    OptionDefinitionPtr def(new OptionDefinition("my-container", 222,
+                                                 DHCP4_OPTION_SPACE, "empty",
+                                                 "my-space"));
+    defs.addItem(def);
+    OptionDefinitionPtr sdef(new OptionDefinition("my-container", 4,
+                                                  "my-space", "empty",
+                                                  "my-other-space"));
+    defs.addItem(sdef);
+    OptionDefinitionPtr ssdef(new OptionDefinition("my-option", 1, "my-other-space",
+                                                   "fqdn", true));
+    defs.addItem(ssdef);
+    EXPECT_NO_THROW(LibDHCP::setRuntimeOptionDefs(defs));
+
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(222);
+    option->set("code", code);
+    ElementPtr sub_options = Element::createList();
+    option->set("sub-options", sub_options);
+    ElementPtr sub_option = Element::createMap();
+    sub_options->add(sub_option);
+    ElementPtr space = Element::create(string("my-space"));
+    sub_option->set("space", space);
+    ElementPtr other_code = Element::create(4);
+    sub_option->set("code", other_code);
+    ElementPtr sub_sub_options = Element::createList();
+    sub_option->set("sub-options", sub_sub_options);
+    ElementPtr sub_sub_option = Element::createMap();
+    sub_sub_options->add(sub_sub_option);
+    ElementPtr other_space = Element::create(string("my-other-space"));
+    sub_sub_option->set("space", other_space);
+    ElementPtr supersede = Element::create(string("'example.com'"));
+    sub_sub_option->set("supersede", supersede);
+    ElementPtr name = Element::create(string("my-option"));
+    sub_sub_option->set("name", name);
+    sub_sub_option->set("csv-format", Element::create(true));
+
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
+
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
+    Pkt4Ptr response(new Pkt4(DHCPOFFER, 12345));
+    EXPECT_FALSE(response->getOption(222));
+
+    EXPECT_NO_THROW(impl_->process<Pkt4Ptr>(Option::V4, query, response));
+
+    OptionPtr opt = response->getOption(222);
+    ASSERT_TRUE(opt);
+    EXPECT_EQ(222, opt->getType());
+    OptionPtr sub = opt->getOption(4);
+    ASSERT_TRUE(sub);
+    EXPECT_EQ(4, sub->getType());
+    OptionPtr sub_sub = sub->getOption(1);
+    ASSERT_TRUE(sub_sub);
+    EXPECT_EQ(1, sub_sub->getType());
+    // The fqdn array is the most complex encoding of one element...
+    const OptionBuffer& buffer = sub_sub->getData();
+    ASSERT_EQ(13, buffer.size());
+    EXPECT_EQ(7, buffer[0]);
+    EXPECT_EQ(0, memcmp(&buffer[1], "example", 7));
+    EXPECT_EQ(3, buffer[8]);
+    EXPECT_EQ(0, memcmp(&buffer[9], "com", 3));
+    EXPECT_EQ(0, buffer[12]);
+}
+
 // Verify that SUPERSEDE action does nothing when the container does not exist
 // and container-add is false.
 TEST_F(FlexSubOptionTest, subProcessSupersedeNoContainer) {
@@ -1816,6 +2012,62 @@ TEST_F(FlexSubOptionTest, subProcessSupersedeNoContainer) {
     ElementPtr name = Element::create(string("my-option"));
     sub_option->set("name", name);
     sub_option->set("container-add", Element::create(false));
+
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
+
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
+    Pkt4Ptr response(new Pkt4(DHCPOFFER, 12345));
+    string response_txt = response->toText();
+    EXPECT_FALSE(response->getOption(222));
+
+    EXPECT_NO_THROW(impl_->process<Pkt4Ptr>(Option::V4, query, response));
+
+    EXPECT_EQ(response_txt, response->toText());
+    EXPECT_FALSE(response->getOption(222));
+}
+
+// Verify that SUPERSEDE action does nothing when the container does not exist
+// and container-add is false in deep encapsulated space.
+TEST_F(FlexSubOptionTest, subProcessSupersedeComplexNoContainer) {
+    OptionDefSpaceContainer defs;
+    OptionDefinitionPtr def(new OptionDefinition("my-container", 222,
+                                                 DHCP4_OPTION_SPACE, "empty",
+                                                 "my-space"));
+    defs.addItem(def);
+    OptionDefinitionPtr sdef(new OptionDefinition("my-container", 4,
+                                                  "my-space", "empty",
+                                                  "my-other-space"));
+    defs.addItem(sdef);
+    OptionDefinitionPtr ssdef(new OptionDefinition("my-option", 1, "my-other-space",
+                                                   "fqdn", true));
+    defs.addItem(ssdef);
+    EXPECT_NO_THROW(LibDHCP::setRuntimeOptionDefs(defs));
+
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(222);
+    option->set("code", code);
+    ElementPtr sub_options = Element::createList();
+    option->set("sub-options", sub_options);
+    ElementPtr sub_option = Element::createMap();
+    sub_options->add(sub_option);
+    ElementPtr space = Element::create(string("my-space"));
+    sub_option->set("space", space);
+    ElementPtr other_code = Element::create(4);
+    sub_option->set("code", other_code);
+    ElementPtr sub_sub_options = Element::createList();
+    sub_option->set("sub-options", sub_sub_options);
+    ElementPtr sub_sub_option = Element::createMap();
+    sub_sub_options->add(sub_sub_option);
+    ElementPtr other_space = Element::create(string("my-other-space"));
+    sub_sub_option->set("space", other_space);
+    ElementPtr supersede = Element::create(string("'example.com'"));
+    sub_sub_option->set("supersede", supersede);
+    ElementPtr name = Element::create(string("my-option"));
+    sub_sub_option->set("name", name);
+    sub_sub_option->set("container-add", Element::create(false));
 
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
@@ -2407,6 +2659,68 @@ TEST_F(FlexSubOptionTest, subProcessRemove) {
     EXPECT_FALSE(response->getOption(222));
 }
 
+// Verify that REMOVE action removes an already existing sub-option in deep
+// encapsulated space.
+TEST_F(FlexSubOptionTest, subProcessRemoveComplex) {
+    OptionDefSpaceContainer defs;
+    OptionDefinitionPtr def(new OptionDefinition("my-container", 222,
+                                                 DHCP4_OPTION_SPACE, "empty",
+                                                 "my-space"));
+    defs.addItem(def);
+    OptionDefinitionPtr sdef(new OptionDefinition("my-container", 4,
+                                                  "my-space", "empty",
+                                                  "my-other-space"));
+    defs.addItem(sdef);
+    OptionDefinitionPtr ssdef(new OptionDefinition("my-option", 1, "my-other-space",
+                                                   "string"));
+    defs.addItem(ssdef);
+    EXPECT_NO_THROW(LibDHCP::setRuntimeOptionDefs(defs));
+
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(222);
+    option->set("code", code);
+    ElementPtr sub_options = Element::createList();
+    option->set("sub-options", sub_options);
+    ElementPtr sub_option = Element::createMap();
+    sub_options->add(sub_option);
+    ElementPtr space = Element::create(string("my-space"));
+    sub_option->set("space", space);
+    ElementPtr other_code = Element::create(4);
+    sub_option->set("code", other_code);
+    ElementPtr sub_sub_options = Element::createList();
+    sub_option->set("sub-options", sub_sub_options);
+    ElementPtr sub_sub_option = Element::createMap();
+    sub_sub_options->add(sub_sub_option);
+    ElementPtr other_space = Element::create(string("my-other-space"));
+    sub_sub_option->set("space", other_space);
+    ElementPtr remove = Element::create(string("'abc' == 'abc'"));
+    sub_sub_option->set("remove", remove);
+    ElementPtr name = Element::create(string("my-option"));
+    sub_sub_option->set("name", name);
+
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
+
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
+    Pkt4Ptr response(new Pkt4(DHCPOFFER, 12345));
+    string response_txt = response->toText();
+    OptionPtr container(new Option(Option::V4, 222));
+    response->addOption(container);
+    OptionPtr other_container(new Option(Option::V4, 4));
+    container->addOption(other_container);
+    EXPECT_TRUE(response->getOption(222));
+    EXPECT_TRUE(response->getOption(222)->getOption(4));
+    OptionStringPtr str(new OptionString(Option::V4, 1, "xyzt"));
+    other_container->addOption(str);
+
+    EXPECT_NO_THROW(impl_->process<Pkt4Ptr>(Option::V4, query, response));
+
+    EXPECT_EQ(response_txt, response->toText());
+    EXPECT_FALSE(response->getOption(222));
+}
+
 // Verify that REMOVE action removes an already existing sub-option but
 // leaves the container option when container-remove is false.
 TEST_F(FlexSubOptionTest, subProcessRemoveLeaveContainer) {
@@ -2453,6 +2767,75 @@ TEST_F(FlexSubOptionTest, subProcessRemoveLeaveContainer) {
 
     EXPECT_EQ(response_txt, response->toText());
     OptionPtr opt = response->getOption(222);
+    ASSERT_TRUE(opt);
+    EXPECT_FALSE(opt->getOption(1));
+    EXPECT_TRUE(opt->getOptions().empty());
+}
+
+// Verify that REMOVE action removes an already existing sub-option in deep
+// encapsulated space but leaves the container option when container-remove is
+// false.
+TEST_F(FlexSubOptionTest, subProcessRemoveComplexLeaveContainer) {
+    OptionDefSpaceContainer defs;
+    OptionDefinitionPtr def(new OptionDefinition("my-container", 222,
+                                                 DHCP4_OPTION_SPACE, "empty",
+                                                 "my-space"));
+    defs.addItem(def);
+    OptionDefinitionPtr sdef(new OptionDefinition("my-container", 4,
+                                                  "my-space", "empty",
+                                                  "my-other-space"));
+    defs.addItem(sdef);
+    OptionDefinitionPtr ssdef(new OptionDefinition("my-option", 1, "my-other-space",
+                                                   "string"));
+    defs.addItem(ssdef);
+    EXPECT_NO_THROW(LibDHCP::setRuntimeOptionDefs(defs));
+
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(222);
+    option->set("code", code);
+    ElementPtr sub_options = Element::createList();
+    option->set("sub-options", sub_options);
+    ElementPtr sub_option = Element::createMap();
+    sub_options->add(sub_option);
+    ElementPtr space = Element::create(string("my-space"));
+    sub_option->set("space", space);
+    ElementPtr other_code = Element::create(4);
+    sub_option->set("code", other_code);
+    ElementPtr sub_sub_options = Element::createList();
+    sub_option->set("sub-options", sub_sub_options);
+    ElementPtr sub_sub_option = Element::createMap();
+    sub_sub_options->add(sub_sub_option);
+    ElementPtr other_space = Element::create(string("my-other-space"));
+    sub_sub_option->set("space", other_space);
+    ElementPtr remove = Element::create(string("'abc' == 'abc'"));
+    sub_sub_option->set("remove", remove);
+    ElementPtr name = Element::create(string("my-option"));
+    sub_sub_option->set("name", name);
+    sub_sub_option->set("container-remove", Element::create(false));
+
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
+
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
+    Pkt4Ptr response(new Pkt4(DHCPOFFER, 12345));
+    OptionPtr container(new Option(Option::V4, 222));
+    response->addOption(container);
+    OptionPtr other_container(new Option(Option::V4, 4));
+    container->addOption(other_container);
+    EXPECT_TRUE(response->getOption(222));
+    EXPECT_TRUE(response->getOption(222)->getOption(4));
+    string response_txt = response->toText();
+    OptionStringPtr str(new OptionString(Option::V4, 1, "xyzt"));
+    other_container->addOption(str);
+
+    EXPECT_NO_THROW(impl_->process<Pkt4Ptr>(Option::V4, query, response));
+
+    EXPECT_EQ(response_txt, response->toText());
+    OptionPtr opt = response->getOption(222);
+    ASSERT_TRUE(opt);
+    opt = opt->getOption(4);
     ASSERT_TRUE(opt);
     EXPECT_FALSE(opt->getOption(1));
     EXPECT_TRUE(opt->getOptions().empty());
@@ -2553,6 +2936,66 @@ TEST_F(FlexSubOptionTest, subProcessRemoveContainerNoSubOption) {
     OptionPtr container(new Option(Option::V4, 222));
     response->addOption(container);
     EXPECT_TRUE(response->getOption(222));
+    string response_txt = response->toText();
+
+    EXPECT_NO_THROW(impl_->process<Pkt4Ptr>(Option::V4, query, response));
+
+    EXPECT_EQ(response_txt, response->toText());
+    EXPECT_TRUE(response->getOption(222));
+}
+
+// Verify that REMOVE action does not removes the container option when the
+// sub-option does not exist in deep encapsulated space.
+TEST_F(FlexSubOptionTest, subProcessRemoveComplexContainerNoSubOption) {
+    OptionDefSpaceContainer defs;
+    OptionDefinitionPtr def(new OptionDefinition("my-container", 222,
+                                                 DHCP4_OPTION_SPACE, "empty",
+                                                 "my-space"));
+    defs.addItem(def);
+    OptionDefinitionPtr sdef(new OptionDefinition("my-container", 4,
+                                                  "my-space", "empty",
+                                                  "my-other-space"));
+    defs.addItem(sdef);
+    OptionDefinitionPtr ssdef(new OptionDefinition("my-option", 1, "my-other-space",
+                                                   "string"));
+    defs.addItem(ssdef);
+    EXPECT_NO_THROW(LibDHCP::setRuntimeOptionDefs(defs));
+
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(222);
+    option->set("code", code);
+    ElementPtr sub_options = Element::createList();
+    option->set("sub-options", sub_options);
+    ElementPtr sub_option = Element::createMap();
+    sub_options->add(sub_option);
+    ElementPtr space = Element::create(string("my-space"));
+    sub_option->set("space", space);
+    ElementPtr other_code = Element::create(4);
+    sub_option->set("code", other_code);
+    ElementPtr sub_sub_options = Element::createList();
+    sub_option->set("sub-options", sub_sub_options);
+    ElementPtr sub_sub_option = Element::createMap();
+    sub_sub_options->add(sub_sub_option);
+    ElementPtr other_space = Element::create(string("my-other-space"));
+    sub_sub_option->set("space", other_space);
+    ElementPtr remove = Element::create(string("'abc' == 'abc'"));
+    sub_sub_option->set("remove", remove);
+    ElementPtr name = Element::create(string("my-option"));
+    sub_sub_option->set("name", name);
+
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
+
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
+    Pkt4Ptr response(new Pkt4(DHCPOFFER, 12345));
+    OptionPtr container(new Option(Option::V4, 222));
+    response->addOption(container);
+    OptionPtr other_container(new Option(Option::V4, 4));
+    container->addOption(other_container);
+    EXPECT_TRUE(response->getOption(222));
+    EXPECT_TRUE(response->getOption(222)->getOption(4));
     string response_txt = response->toText();
 
     EXPECT_NO_THROW(impl_->process<Pkt4Ptr>(Option::V4, query, response));
@@ -2969,9 +3412,9 @@ TEST_F(FlexSubOptionTest, subOptionConfigGuardValid) {
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
-    auto map = impl_->getSubOptionConfigMap();
+    auto map = impl_->getMutableOptionConfigMap();
     EXPECT_EQ(1, map.count(109));
-    auto smap = map[109];
+    auto smap = map[109].front()->getSubOptionConfigMap();
     FlexOptionImpl::SubOptionConfigPtr sub_cfg;
     ASSERT_NO_THROW(sub_cfg = smap.at(222));
     ASSERT_TRUE(sub_cfg);
