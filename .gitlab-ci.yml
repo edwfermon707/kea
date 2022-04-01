@@ -22,7 +22,7 @@ stages:
 
 shellcheck:
   stage: test
-  image: "${CI_REGISTRY_IMAGE}:latest"
+  image: "${CI_REGISTRY_IMAGE}:backup"
   tags:
     - linux
     - amd64
@@ -125,13 +125,13 @@ danger:
 dhcpdb_create-upgrade-consistency:
   allow_failure: false
   stage: test
-  image: "${CI_REGISTRY_IMAGE}:latest"
+  image: "${CI_REGISTRY_IMAGE}:backup"
   script:
     - ./src/share/database/scripts/utils/are-scripts-in-sync.py
 
 duplicate-includes:
   stage: test
-  image: "${CI_REGISTRY_IMAGE}:latest"
+  image: "${CI_REGISTRY_IMAGE}:backup"
   tags:
     - linux
     - amd64
@@ -140,7 +140,7 @@ duplicate-includes:
 
 missing-config-h-include:
   stage: test
-  image: "${CI_REGISTRY_IMAGE}:latest"
+  image: "${CI_REGISTRY_IMAGE}:backup"
   tags:
     - linux
     - amd64
@@ -151,7 +151,7 @@ missing-config-h-include:
 
 missing-git-attribute:
   stage: test
-  image: "${CI_REGISTRY_IMAGE}:latest"
+  image: "${CI_REGISTRY_IMAGE}:backup"
   tags:
     - linux
     - amd64
