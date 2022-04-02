@@ -1,0 +1,34 @@
+// Copyright (C) 2022 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+/**
+
+@page libca_rbac Kea Role Based Access Control Hooks Library
+
+@section libca_rbacIntro Introduction
+
+Welcome to Kea Role Based Access Control Hooks Library. This documentation is
+addressed to developers who are interested in the internal operation
+of the Role Based Access Control library. This file provides information needed
+to understand and perhaps extend this library.
+
+This documentation is stand-alone: you should have read and understood
+the <a href="https://reports.kea.isc.org/dev_guide/">Kea
+Developer's Guide</a> and in particular its section about hooks.
+
+@section libca_rbacUser Now To Use libca_rbac
+## Introduction
+
+## Configuring the DHCP Modules
+
+## Internal operation
+
+@section libca_rbacMTCompatibility Multi-Threading Compatibility
+
+The libca_rbac hooks library is compatible with multi-threading which
+is not used by the Control Agent.
+
+*/

@@ -1458,6 +1458,10 @@ AC_CONFIG_FILES([src/bin/shell/tests/shell_unittest.py],
 AC_CONFIG_FILES([src/bin/shell/tests/tls_ca_process_tests.sh],
                 [chmod +x src/bin/shell/tests/tls_ca_process_tests.sh])
 AC_CONFIG_FILES([src/hooks/Makefile])
+AC_CONFIG_FILES([src/hooks/agent/Makefile])
+AC_CONFIG_FILES([src/hooks/agent/rbac/Makefile])
+AC_CONFIG_FILES([src/hooks/agent/rbac/libloadtests/Makefile])
+AC_CONFIG_FILES([src/hooks/agent/rbac/tests/Makefile])
 AC_CONFIG_FILES([src/hooks/dhcp/Makefile])
 AC_CONFIG_FILES([src/hooks/dhcp/bootp/Makefile])
 AC_CONFIG_FILES([src/hooks/dhcp/bootp/tests/Makefile])
