@@ -163,6 +163,7 @@ of the libraries can be verified with this command:
 ::
 
    $ ls -l /usr/local/lib/kea/hooks/*.so
+   /usr/local/lib/kea/hooks/libca_rbac.so
    /usr/local/lib/kea/hooks/libdhcp_class_cmds.so
    /usr/local/lib/kea/hooks/libdhcp_flex_id.so
    /usr/local/lib/kea/hooks/libdhcp_flex_option.so

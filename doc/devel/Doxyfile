@@ -861,6 +861,7 @@ INPUT                  = ../../src/bin/agent \
                          ../../src/bin/lfc \
                          ../../src/bin/netconf \
                          ../../src/bin/perfdhcp \
+                         ../../src/hooks/agent/rbac \
                          ../../src/hooks/dhcp/bootp \
                          ../../src/hooks/dhcp/flex_option \
                          ../../src/hooks/dhcp/high_availability \
