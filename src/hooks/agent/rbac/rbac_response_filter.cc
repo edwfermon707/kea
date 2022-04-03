@@ -21,6 +21,43 @@ using namespace std;
 namespace isc {
 namespace rbac {
 
+ResponseFilterTable responseFilterTable;
+
+void
+ResponseFilter::initResponseFilterTable() {
+    responseFilterTable.clear();
+    responseFilterTable["list-commands"] =
+        ResponseFilterPtr(new ListCommandsResponseFilter);
+    responseFilterTable["control-config"] =
+        ResponseFilterPtr(new ConfigResponseFilter);
+}
+
+ResponseFilterList
+ResponseFilter::parse(ConstElementPtr cfg) {
+    if (!cfg) {
+        isc_throw(BadValue, "parse null response filter list");
+    }
+    if (cfg->getType() != Element::list) {
+        isc_throw(BadValue, "response filter list is not a list");
+    }
+    ResponseFilterList filters;
+    for (auto const& elem : cfg->listValue()) {
+        if (elem->getType() != Element::string) {
+            isc_throw(BadValue, "response filter name is not a string");
+        }
+        const string& name = cfg->stringValue();
+        if (name.empty()) {
+            isc_throw(BadValue, "response filter name is empty");
+        }
+        auto it = responseFilterTable.find(name);
+        if (it == responseFilterTable.end()) {
+            isc_throw(BadValue, "unknown response filter '" << name << "'");
+        }
+        filters.push_back(it->second);
+    }
+    return (filters);
+}
+
 void
 ListCommandsResponseFilter::filter(const string& role, ConstElementPtr body) {
     if (!body || (body->getType() != Element::map)) {

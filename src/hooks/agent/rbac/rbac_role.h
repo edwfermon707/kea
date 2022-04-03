@@ -13,6 +13,12 @@
 namespace isc {
 namespace rbac {
 
+/// @brief Forward declaration of Role.
+class Role;
+
+/// @brief Type of shared pointers to Role.
+typedef boost::shared_ptr<Role> RolePtr;
+
 /// @brief Role assignment base class.
 class Role {
 public:
@@ -50,6 +56,11 @@ public:
     static bool requireTls(const http::HttpRequestPtr& request) {
         return (request && request->getTls());
     }
+
+    /// @brief Parse a role assignment value.
+    ///
+    /// @param cfg Configuration of a role assignment.
+    static RolePtr parse(data::ConstElementPtr cfg);
 
 protected:
     /// @brief The class name.
@@ -194,9 +205,6 @@ private:
     /// @brief The static role.
     std::string role_;
 };
-
-/// @brief Type of shared pointers to Role.
-typedef boost::shared_ptr<Role> RolePtr;
 
 } // end of namespace rbac
 } // end of namespace isc

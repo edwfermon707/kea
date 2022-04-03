@@ -8,14 +8,28 @@
 #define RBAC_ACL_H
 
 #include <rbac_api.h>
+#include <cc/data.h>
 #include <exceptions/exceptions.h>
 #include <boost/shared_ptr.hpp>
 #include <list>
+#include <map>
 #include <set>
 #include <string>
 
 namespace isc {
 namespace rbac {
+
+/// @brief Forward declaration of the access control list class.
+class Acl;
+
+/// @brief Type of shared pointers to Acl.
+typedef boost::shared_ptr<Acl> AclPtr;
+
+/// @brief Type of list of shared pointers to Acl.
+typedef std::list<AclPtr> AclList;
+
+/// @brief Type of the access control list table.
+typedef std::map<std::string, AclPtr> AclTable;
 
 /// @brief Access control list base class.
 class Acl {
@@ -34,10 +48,10 @@ public:
     /// @brief Destructor.
     virtual ~Acl() = default;
 
-    /// @brief Returns the name.
+    /// @brief Returns the class name.
     ///
-    /// @return the name.
-    std::string getName() const {
+    /// @return the class name.
+    std::string getClassName() const {
         return (name_);
     }
 
@@ -47,16 +61,69 @@ public:
     /// @return whether the command matches the access control list.
     virtual bool match(const std::string& command) = 0;
 
+    /// @brief Initialize the access control list table.
+    static void initTable();
+
+    /// @brief Parse an access control list.
+    ///
+    /// @param cfg Configuration of an access control list.
+    static AclPtr parse(data::ConstElementPtr cfg);
+
+    /// @brief Parse a list of access control lists.
+    ///
+    /// @param cfg Configuration of a list of access control lists.
+    static AclList parseList(data::ConstElementPtr cfg);
+
 protected:
     /// @brief The class name.
     std::string name_;
 };
 
-/// @brief Type of shared pointers to Acl.
-typedef boost::shared_ptr<Acl> AclPtr;
+/// @brief Alias of an access control list.
+class AliasAcl : public Acl {
+public:
 
-/// @brief Type of list of shared pointers to Acl.
-typedef std::list<AclPtr> AclList;
+    /// @brief Constructor.
+    ///
+    /// @param acl The aliased acl.
+    /// @param name The alias name.
+    /// @throw Unexpected when the acl is null.
+    AliasAcl(const std::string& name, const AclPtr& acl)
+        : Acl("alias"), name_(name), acl_(acl) {
+        if (!acl) {
+            isc_throw(Unexpected, "null acl in alias");
+        }
+    }
+
+    /// @brief Match the access control list.
+    ///
+    /// @param command.
+    /// @return the negation of the acl matching.
+    virtual bool match(const std::string& command) final {
+        return (!acl_->match(command));
+    }
+
+    /// @brief Returns the name.
+    ///
+    /// @return the name.
+    std::string getName() const {
+        return (name_);
+    }
+
+    /// @brief Returns the acl.
+    ///
+    /// @return the acl.
+    const AclPtr& getAcl() const {
+        return (acl_);
+    }
+
+private:
+    /// @brief The alias name.
+    std::string name_;
+
+    /// @brief The access control list.
+    AclPtr acl_;
+};
 
 /// Boolean operators.
 
@@ -326,6 +393,9 @@ private:
     /// @brief Hook name.
     std::string hook_;
 };
+
+/// @brief The access control list table.
+extern AclTable aclTable;
 
 } // end of namespace rbac
 } // end of namespace isc
