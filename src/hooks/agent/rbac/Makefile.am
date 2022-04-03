@@ -15,6 +15,10 @@ CLEANFILES = *.gcno *.gcda
 noinst_LTLIBRARIES = librbac.la
 
 librbac_la_SOURCES  = rbac.cc rbac.h
+librbac_la_SOURCES += rbac_api.h rbac_api.cc
+librbac_la_SOURCES += rbac_role.h
+librbac_la_SOURCES += rbac_acl.h
+librbac_la_SOURCES += rbac_response_filter.h rbac_response_filter.cc
 librbac_la_SOURCES += rbac_log.cc rbac_log.h
 librbac_la_SOURCES += rbac_messages.cc rbac_messages.h
 librbac_la_SOURCES += version.cc
