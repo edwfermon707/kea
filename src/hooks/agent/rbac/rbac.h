@@ -7,20 +7,9 @@
 #ifndef RBAC_H
 #define RBAC_H
 
-#include <cc/data.h>
-#include <cc/simple_parser.h>
-#include <dhcp/classify.h>
-#include <dhcp/libdhcp++.h>
-#include <dhcp/option.h>
-#include <dhcp/option_definition.h>
-#include <dhcp/option_vendor.h>
-#include <dhcp/std_option_defs.h>
-#include <eval/evaluate.h>
-#include <eval/token.h>
-#include <util/strutil.h>
-
-#include <map>
-#include <string>
+#include <rbac_acl.h>
+#include <rbac_response_filter.h>
+#include <rbac_role.h>
 
 namespace isc {
 namespace rbac {
@@ -36,7 +25,7 @@ public:
     ~RbacImpl();
 };
 
-/// @brief The type of shared pointers to Flex Option implementations.
+/// @brief The type of shared pointers to RBAC hook implementations.
 typedef boost::shared_ptr<RbacImpl> RbacImplPtr;
 
 } // end of namespace rbac
