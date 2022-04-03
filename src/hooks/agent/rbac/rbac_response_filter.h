@@ -9,9 +9,22 @@
 
 #include <http/response_json.h>
 #include <list>
+#include <map>
 
 namespace isc {
 namespace rbac {
+
+/// @brief Forward declaration of ResponseFilter.
+class ResponseFilter;
+
+/// @brief The type of shared pointers to response filters.
+typedef boost::shared_ptr<ResponseFilter> ResponseFilterPtr;
+
+/// @brief The type of list of shared pointers to response filters.
+typedef std::list<ResponseFilterPtr> ResponseFilterList;
+
+/// @brief The type of the response filter table.
+typedef std::map<std::string, ResponseFilterPtr> ResponseFilterTable;
 
 /// @brief Response filter base class.
 class ResponseFilter {
@@ -43,6 +56,14 @@ public:
     /// @param body The JSON response body.
     virtual void filter(const std::string& role,
                         data::ConstElementPtr body) = 0;
+
+    /// @brief Initialize the response filter table.
+    static void initResponseFilterTable();
+
+    /// @brief Parse a response filter list.
+    ///
+    /// @param cfg Configuration of response filter list.
+    static ResponseFilterList parse(data::ConstElementPtr cfg);
 
 protected:
     /// @brief The class name.
@@ -83,11 +104,8 @@ public:
     virtual void filter(const std::string&, data::ConstElementPtr body) final;
 };
 
-/// @brief The type of shared pointers to response filters.
-typedef boost::shared_ptr<ResponseFilter> ResponseFilterPtr;
-
-/// @brief The type of list of shared pointers to response filters.
-typedef std::list<ResponseFilterPtr> ResponseFilterList;
+/// @brief The response filter table.
+extern ResponseFilterTable responseFilterTable;
 
 } // end of namespace rbac
 } // end of namespace isc

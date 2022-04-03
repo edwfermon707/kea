@@ -7,6 +7,7 @@
 #ifndef RBAC_API_H
 #define RBAC_API_H
 
+#include <cc/data.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/hashed_index.hpp>
@@ -17,7 +18,7 @@
 namespace isc {
 namespace rbac {
 
-/// @brief Forward definition of the Api class.
+/// @brief Forward declaration of the Api class.
 class Api;
 
 /// @brief Type of shared pointer to Api.
@@ -85,6 +86,12 @@ public:
     /// @param dirname The API directy name.
     static void fillApiTable(const std::string& dirname);
 
+    /// @brief Parse a command config.
+    ///
+    /// @param cfg Configuration of a command.
+    /// @param others Accept other keywords.
+    static void parse(data::ConstElementPtr cfg, bool others = false);
+
 protected:
     /// @brief The command name (may not be set).
     std::string name_;
@@ -127,6 +134,9 @@ typedef boost::multi_index_container<
         >
     >
 > ApiTable;
+
+/// @brief The API command table.
+extern ApiTable apiTable;
 
 } // end of namespace rbac
 } // end of namespace isc

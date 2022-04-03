@@ -14,19 +14,122 @@
 namespace isc {
 namespace rbac {
 
-/// @brief Role Based Access Control hook implementation.
-class RbacImpl {
+/// @brief Forward declaration of RoleConfig.
+class RoleConfig;
+
+/// @brief Type of shared pointers to role configurations.
+typedef boost::shared_ptr<RoleConfig> RoleConfigPtr;
+
+/// @brief Type of the role configurations table.
+typedef std::map<std::string, RoleConfigPtr> RoleConfigTable;
+
+/// @brief Per role configuration class.
+///
+/// When a command does not match accept and reject ACLs it is an
+/// other commands: true is for the accept action, false for the reject one.
+/// When a command matches both accept and reject ACLs the preference true
+/// follows the accept ACL, false the deny ACL.
+class RoleConfig {
 public:
 
     /// @brief Constructor.
-    RbacImpl();
+    ///
+    /// @param name Role name.
+    /// @param accept Accept commands access .
+    /// @param reject Reject commands filter.
+    /// @param others Action for other commands.
+    /// @param preference Action for matching both commands.
+    /// @param response_filters Response filters.
+    RoleConfig(const std::string& name,
+               const AclPtr& accept, const AclPtr& reject,
+               bool others, bool preference,
+               const ResponseFilterList& response_filters)
+        : name_(name), accept_(accept), reject_(reject),
+          others_(others), preference_(preference),
+          response_filters_(response_filters) {
+    }
 
     /// @brief Destructor.
-    ~RbacImpl();
+    virtual ~RoleConfig() = default;
+
+    /// @brief Role name.
+    std::string name_;
+
+    /// @brief Accept command access control list.
+    AclPtr accept_;
+
+    /// @brief Reject command access control list.
+    AclPtr reject_;
+
+    /// @brief Action for other commands.
+    bool others_;
+
+    /// @brief Action for both matching.
+    bool preference_;
+
+    /// @brief Response filters.
+    ResponseFilterList response_filters_;
+
+    /// @brief Match access control list.
+    ///
+    /// @param command The command.
+    /// @return whether accept (true) or reject (false) the command.
+    bool match(const std::string& command) {
+        if (preference_) {
+            if (accept_ && accept_->match(command)) {
+                return (true);
+            }
+            if (reject_ && reject_->match(command)) {
+                return (false);
+            }
+        } else {
+            if (reject_ && reject_->match(command)) {
+                return (false);
+            }
+            if (accept_ && accept_->match(command)) {
+                return (true);
+            }
+        }
+        return (others_);
+    }
+
+    /// @brief Filter a response.
+    ///
+    /// @param body The JSON response body.
+    void filter(data::ConstElementPtr body) {
+        for (auto const& filter : response_filters_) {
+            if (filter) {
+                filter->filter(name_, body);
+            }
+        }
+    }
+
+    /// @brief Return the role config.
+    ///
+    /// @param role The role name.
+    /// @return the role config, default if empty, unknown if not in table.
+    static RoleConfigPtr getConfig(const std::string& role);
+
+    /// @brief Create a reject response.
+    ///
+    /// @param request The request.
+    /// @param status_code The status code
+    static http::HttpResponseJsonPtr
+    createReject(const http::HttpRequestPtr& request,
+                 const http::HttpStatusCode& status_code);
 };
 
-/// @brief The type of shared pointers to RBAC hook implementations.
-typedef boost::shared_ptr<RbacImpl> RbacImplPtr;
+/// @brief The role assignment.
+extern RolePtr roleAssign;
+
+/// @brief The role configurations table.
+extern RoleConfigTable roleConfigTable;
+
+/// @brief The default (role is "") role configuration.
+extern RoleConfigPtr defaultRoleConfig;
+
+/// @brief The unknown (role is not in the table) role configuration.
+extern RoleConfigPtr unknownRoleConfig;
 
 } // end of namespace rbac
 } // end of namespace isc
