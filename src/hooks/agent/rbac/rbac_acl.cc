@@ -118,5 +118,29 @@ Acl::parseList(ConstElementPtr cfg) {
     return (acls);
 }
 
+void
+AliasAcl::parse(ConstElementPtr cfg) {
+    if (!cfg) {
+        isc_throw(BadValue, "null access control list config");
+    }
+    if (cfg->getType() != Element::map) {
+        isc_throw(BadValue, "access control list config is not a map");
+    }
+    if (cfg->size() != 1) {
+        isc_throw(BadValue, "access control list config must have one entry");
+    }
+    for (auto entry : cfg->mapValue()) {
+        const string& name = entry.first;
+        if (name.empty()) {
+            isc_throw(BadValue, "access control list config name is empty");
+        }
+        if (aclTable.count(entry.first) != 0) {
+            isc_throw(BadValue, "access control list '" << name
+                      << "' is already defined");
+        }
+        aclTable[name] = Acl::parse(entry.second);
+    }
+}
+
 } // end of namespace rbac
 } // end of namespace isc
