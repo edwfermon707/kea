@@ -95,17 +95,20 @@ Config::parse(ConstElementPtr cfg) {
 
     // Roles definitions.
     ConstElementPtr roles = cfg->get("roles");
-    for (ConstElementPtr elem : roles->listValue()) {
-        RoleConfigPtr role = RoleConfig::parse(elem);
-        if (!role) {
-            isc_throw(Unexpected, "role config parsing error for "
-                      << elem->str());
+    if (roles) {
+        for (ConstElementPtr elem : roles->listValue()) {
+            RoleConfigPtr role = RoleConfig::parse(elem);
+            if (!role) {
+                isc_throw(Unexpected, "role config parsing error for "
+                          << elem->str());
+            }
+            const string& name = role->name_;
+            if (roleConfigTable.count(name) != 0) {
+                isc_throw(BadValue, "role '" << name
+                          << "' is already defined");
+            }
+            roleConfigTable[name] = role;
         }
-        const string& name = role->name_;
-        if (roleConfigTable.count(name) != 0) {
-            isc_throw(BadValue, "role '" << name << "' is already defined");
-        }
-        roleConfigTable[name] = role;
     }
 
     // Default role (use when role assignment returns the empty string).

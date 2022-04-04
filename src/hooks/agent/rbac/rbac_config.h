@@ -60,7 +60,7 @@ public:
 
 private:
     /// @brief The directory where to find API files.
-    /// Default is "$datadir/kea/api".
+    /// Default could be "$datadir/kea/api".
     std::string api_files_;
 
     /// @brief The require TLS flag.
