@@ -67,11 +67,13 @@ public:
     /// @brief Parse an access control list.
     ///
     /// @param cfg Configuration of an access control list.
+    /// @return the parsed access control list.
     static AclPtr parse(data::ConstElementPtr cfg);
 
     /// @brief Parse a list of access control lists.
     ///
     /// @param cfg Configuration of a list of access control lists.
+    /// @return the list of parsed access control lists.
     static AclList parseList(data::ConstElementPtr cfg);
 
 protected:
@@ -116,6 +118,11 @@ public:
     const AclPtr& getAcl() const {
         return (acl_);
     }
+
+    /// @Parse an access control list configuration.
+    ///
+    /// @param cfg Configuration of an access control list.
+    static void parse(data::ConstElementPtr cfg);
 
 private:
     /// @brief The alias name.

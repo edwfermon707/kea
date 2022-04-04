@@ -10,6 +10,7 @@
 #include <rbac_acl.h>
 #include <rbac_response_filter.h>
 #include <rbac_role.h>
+#include <cc/simple_parser.h>
 
 namespace isc {
 namespace rbac {
@@ -31,6 +32,8 @@ typedef std::map<std::string, RoleConfigPtr> RoleConfigTable;
 /// follows the accept ACL, false the deny ACL.
 class RoleConfig {
 public:
+    /// @brief Role configuration parameters.
+    static const data::SimpleKeywords ROLE_PARAMETERS;
 
     /// @brief Constructor.
     ///
@@ -109,6 +112,14 @@ public:
     /// @param role The role name.
     /// @return the role config, default if empty, unknown if not in table.
     static RoleConfigPtr getConfig(const std::string& role);
+
+    /// @brief Parse a role config.
+    ///
+    /// @param cfg The role config.
+    /// @param name The name (empty when to be get from the config).
+    /// @return the parse role config.
+    static RoleConfigPtr parse(data::ConstElementPtr cfg,
+                               std::string name = "");
 
     /// @brief Create a reject response.
     ///

@@ -3,7 +3,7 @@ SUBDIRS = .
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += -I$(top_builddir)/src/hooks/agent/rbac -I$(top_srcdir)/src/hooks/agent/rbac
 AM_CPPFLAGS += $(BOOST_INCLUDES)
-AM_CPPFLAGS += -DRBAC_LIB_SO=\"$(abs_top_builddir)/src/hooks/agent/rbac/.libs/libdhcp_rbac.so\"
+AM_CPPFLAGS += -DRBAC_LIB_SO=\"$(abs_top_builddir)/src/hooks/agent/rbac/.libs/libca_rbac.so\"
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
@@ -26,8 +26,7 @@ if HAVE_GTEST
 TESTS += rbac_unittests
 
 rbac_unittests_SOURCES = run_unittests.cc
-#rbac_unittests_SOURCES += callout_unittests.cc
-#rbac_unittests_SOURCES += load_unload_unittests.cc
+rbac_unittests_SOURCES += load_unload_unittests.cc
 
 rbac_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
 

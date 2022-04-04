@@ -10,6 +10,7 @@
 #include <rbac_log.h>
 
 using namespace isc;
+using namespace isc::data;
 using namespace isc::http;
 using namespace isc::log;
 using namespace isc::rbac;
@@ -26,6 +27,16 @@ RoleConfigPtr defaultRoleConfig;
 
 RoleConfigPtr unknownRoleConfig;
 
+const SimpleKeywords RoleConfig::ROLE_PARAMETERS = {
+    { "name",              Element::string },
+    { "accept-commands",   Element::any },
+    { "reject-commands",   Element::any },
+    { "other-commands",    Element::boolean },
+    { "preference",        Element::string },
+    { "response-filters",  Element::list },
+    { "comment",           Element::string }
+};
+
 RoleConfigPtr
 RoleConfig::getConfig(const string& role) {
     if (role.empty()) {
@@ -36,6 +47,77 @@ RoleConfig::getConfig(const string& role) {
         return (unknownRoleConfig);
     }
     return (it->second);
+}
+
+RoleConfigPtr
+RoleConfig::parse(ConstElementPtr cfg, string name) {
+    if (!cfg) {
+        isc_throw(BadValue, "parse null role config");
+    }
+    if (cfg->getType() != Element::map) {
+        isc_throw(BadValue, "role config is not a map");
+    }
+
+    // Keywords.
+    SimpleParser::checkKeywords(RoleConfig::ROLE_PARAMETERS, cfg);
+
+    // Name.
+    ConstElementPtr name_elem = cfg->get("name");
+    if (!name.empty() && name_elem) {
+        isc_throw(BadValue, "spurious 'name' parameter for " << name
+                  << " role");
+    } else if (name.empty() && !name_elem) {
+        isc_throw(BadValue, "'name' parameter is required in " << cfg->str());
+    }
+    if (name_elem) {
+        name = name_elem->stringValue();
+        if (name.empty()) {
+            isc_throw(BadValue, "role config name is empty");
+        }
+    }
+
+    // Accept ACL.
+    ConstElementPtr accept_elem = cfg->get("accept-commands");
+    AclPtr accept;
+    if (accept_elem) {
+        accept = Acl::parse(accept_elem);
+    }
+
+    // Reject ACL.
+    ConstElementPtr reject_elem = cfg->get("reject-commands");
+    AclPtr reject;
+    if (reject_elem) {
+        reject = Acl::parse(reject_elem);
+    }
+
+    // Others.
+    bool others = false;
+    ConstElementPtr others_elem = cfg->get("other-commands");
+    if (others_elem) {
+        others = others_elem->boolValue();
+    }
+
+    // Preference.
+    bool preference = true;
+    ConstElementPtr pref_elem = cfg->get("preference");
+    if (pref_elem) {
+        const string& pref = pref_elem->stringValue();
+        if ((pref != "accept") && (pref != "reject")) {
+            isc_throw(BadValue, "role preference '" << pref
+                      << "' is not 'accept' or 'reject'");
+        }
+        preference = (pref == "accept");
+    }
+
+    // Response filters.
+    ConstElementPtr resp_filters = cfg->get("response-filters");
+    ResponseFilterList response_filters;
+    if (resp_filters) {
+        response_filters = ResponseFilter::parse(resp_filters);
+    }
+
+    return (RoleConfigPtr(new RoleConfig(name, accept, reject, others,
+                                         preference, response_filters)));
 }
 
 HttpResponseJsonPtr
