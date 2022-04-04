@@ -149,9 +149,6 @@ TEST_F(ApiTest, fillApiTable) {
 
     EXPECT_TRUE(apiTable.empty());
     EXPECT_NO_THROW(Api::fillApiTable(string(API_DIR)));
-    cout << "got " << apiTable.size() << " commands\n";
-    cout << "got " << apiAccesses.size() << " accesses\n";
-    cout << "got " << apiHooks.size() << " hooks\n";
 }
 
 } // end of anonymous namespace

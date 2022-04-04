@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <rbac_api.h>
+#include <rbac_log.h>
 #include <exceptions/exceptions.h>
 
 // C++11 has no directory walking tool.
@@ -80,6 +81,12 @@ Api::fillApiTable(const string& dirname) {
         isc_throw(BadValue, "fill API table from '" << dirname
                   << "' failed with " << ex.what());
     }
+
+    LOG_INFO(rbac_logger, RBAC_READ_API_FILES)
+      .arg(dirname)
+      .arg(apiTable.size())
+      .arg(apiAccesses.size())
+      .arg(apiHooks.size());
 }
 
 void

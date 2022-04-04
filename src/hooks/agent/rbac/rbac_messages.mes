@@ -1,5 +1,17 @@
 # Copyright (C) 2022 Internet Systems Consortium, Inc. ("ISC")
 
+% RBAC_CONFIGURED_ACLS RBAC hooks library has configured %1 named ACLs.
+This debug message indicates that some named access control lists
+has been configured. The count is displayed.
+
+% RBAC_CONFIGURED_COMMANDS RBAC hooks library has configured %1 extra commands.
+This debug message indicates that some extra commands has been configured.
+The count is displayed.
+
+% RBAC_CONFIGURED_ROLES hooks library has configured %1 roles.
+This debug message indicates that some roles has been configured. The count
+is displayed.
+
 % RBAC_LOAD_FAILED RBAC hooks library failed to load: %1.
 This error message indicates that an error occurred attempting to
 load the RBAC hooks library. The argument details the error.
@@ -7,6 +19,11 @@ load the RBAC hooks library. The argument details the error.
 % RBAC_LOAD_OK RBAC hooks library loaded successfully.
 This info message indicates that the RBAC hooks library has
 been loaded successfully.
+
+% RBAC_READ_API_FILES RBAC hooks library read API files from '%1' getting %2 commands, %3 access types and %4 hooks.
+This info message indicates that the RBAC hooks library has read API files
+from the configured directory. The name of the directory and some statistics
+are displayed.
 
 % RBAC_UNLOAD_OK RBAC hooks library unloaded successfully.
 This info message indicates that the RBAC hooks library has been
