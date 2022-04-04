@@ -102,7 +102,7 @@ public:
     /// @param command.
     /// @return the negation of the acl matching.
     virtual bool match(const std::string& command) final {
-        return (!acl_->match(command));
+        return (acl_->match(command));
     }
 
     /// @brief Returns the name.
@@ -119,10 +119,10 @@ public:
         return (acl_);
     }
 
-    /// @Parse an access control list configuration.
+    /// @Parse an access control list definition.
     ///
-    /// @param cfg Configuration of an access control list.
-    static void parse(data::ConstElementPtr cfg);
+    /// @param def Definition of an access control list.
+    static void parse(data::ConstElementPtr def);
 
 private:
     /// @brief The alias name.
@@ -228,7 +228,7 @@ public:
     ///
     /// @param acls Acls to disjunct..
     /// @throw Unexpected when an acl is null.
-    OrAcl(const AclList& acls) : Acl("and"), acls_(acls) {
+    OrAcl(const AclList& acls) : Acl("or"), acls_(acls) {
         for (const AclPtr& acl : acls) {
             if (!acl) {
                 isc_throw(Unexpected, "null acl in or");
@@ -305,40 +305,41 @@ public:
 };
 
 /// @brief Explicit access control list.
-class NamesAcl : public Acl {
+class CommandsAcl : public Acl {
 public:
 
     /// @brief Constructor.
     ///
-    /// @param names The set of command names.
-    NamesAcl(const std::set<std::string>& names) : Acl("names"), names_(names) {
+    /// @param commands The set of command names.
+    CommandsAcl(const std::set<std::string>& commands)
+        : Acl("commands"), commands_(commands) {
     }
 
-    /// @brief Add a name.
+    /// @brief Add a command name.
     ///
-    /// @param name The command name to add.
-    void add(const std::string& name) {
+    /// @param command The command name to add.
+    void add(const std::string& command) {
         // Insert an already existing member is a noop.
-        static_cast<void>(names_.insert(name));
+        static_cast<void>(commands_.insert(command));
     }
 
     /// @brief Match the access control list.
     ///
     /// @return whether the command access matches.
     virtual bool match(const std::string& command) final {
-        return (names_.count(command) != 0);
+        return (commands_.count(command) != 0);
     }
 
-    /// @brief Returns the names.
+    /// @brief Returns the command names.
     ///
-    /// @return the names.
-    const std::set<std::string>& getNames() const {
-        return (names_);
+    /// @return the command names.
+    const std::set<std::string>& getCommands() const {
+        return (commands_);
     }
 
 private:
     /// @brief The set of command names.
-    std::set<std::string> names_;
+    std::set<std::string> commands_;
 };
 
 /// @brief Read or write access control list.
