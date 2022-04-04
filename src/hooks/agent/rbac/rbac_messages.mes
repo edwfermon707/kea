@@ -1,8 +1,13 @@
 # Copyright (C) 2022 Internet Systems Consortium, Inc. ("ISC")
 
-% RBAC_LOAD_ERROR loading RBAC hooks library failed: %1
-This error message indicates an error during loading the RBAC hooks library.
-The details of the error are provided as argument of the log message.
+% RBAC_LOAD_FAILED RBAC hooks library failed to load: %1.
+This error message indicates that an error occurred attempting to
+load the RBAC hooks library. The argument details the error.
 
-% RBAC_UNLOAD RBAC hooks library has been unloaded
-This info message indicates that the RBAC hooks library has been unloaded.
+% RBAC_LOAD_OK RBAC hooks library loaded successfully.
+This info message indicates that the RBAC hooks library has
+been loaded successfully.
+
+% RBAC_UNLOAD_OK RBAC hooks library unloaded successfully.
+This info message indicates that the RBAC hooks library has been
+unloaded successfully.

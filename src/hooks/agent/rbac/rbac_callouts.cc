@@ -13,6 +13,7 @@
 #include <exceptions/exceptions.h>
 #include <hooks/hooks.h>
 #include <http/post_request_json.h>
+#include <process/daemon.h>
 
 using namespace isc;
 using namespace isc::config;
@@ -20,6 +21,7 @@ using namespace isc::data;
 using namespace isc::hooks;
 using namespace isc::http;
 using namespace isc::log;
+using namespace isc::process;
 using namespace isc::rbac;
 using namespace std;
 
@@ -34,7 +36,24 @@ extern "C" {
 /// @return 0 when initialization is successful, 1 otherwise.
 int
 load(LibraryHandle& handle) {
-    /// @todo: parse config.
+    try {
+        // Make the hook library loadable only by the control agent.
+        const string& proc_name = Daemon::getProcName();
+        if (proc_name != "kea-ctrl-agent") {
+            isc_throw(Unexpected, "Bad process name: " << proc_name
+                      << ", expected kea-ctrl-agent");
+        }
+
+        // Load the configuration.
+        ConstElementPtr config = handle.getParameters();
+        Config::parse(config);
+    } catch (const std::exception& ex) {
+        LOG_ERROR(rbac_logger, RBAC_LOAD_FAILED)
+            .arg(ex.what());
+        return (1);
+    }
+
+    LOG_INFO(rbac_logger, RBAC_LOAD_OK);
     return (0);
 }
 
@@ -52,6 +71,8 @@ unload() {
     apiAccesses.clear();
     apiHooks.clear();
     responseFilterTable.clear();
+
+    LOG_INFO(rbac_logger, RBAC_UNLOAD_OK);
     return (0);
 }
 

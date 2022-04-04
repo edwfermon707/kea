@@ -5,6 +5,7 @@ AM_CPPFLAGS += -I$(top_builddir)/src/hooks/agent/rbac -I$(top_srcdir)/src/hooks/
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -DRBAC_LIB_SO=\"$(abs_top_builddir)/src/hooks/agent/rbac/.libs/libca_rbac.so\"
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
+AM_CPPFLAGS += -DAPI_DIR=\"$(abs_top_srcdir)/src/share/api\"
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
