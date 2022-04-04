@@ -27,6 +27,7 @@ if HAVE_GTEST
 TESTS += rbac_unittests
 
 rbac_unittests_SOURCES = run_unittests.cc
+rbac_unittests_SOURCES += rbac_unittests.cc
 rbac_unittests_SOURCES += rbac_acl_unittests.cc
 rbac_unittests_SOURCES += rbac_api_unittests.cc
 rbac_unittests_SOURCES += rbac_role_unittests.cc

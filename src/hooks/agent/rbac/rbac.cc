@@ -137,6 +137,12 @@ RoleConfig::createReject(const HttpRequestPtr& request,
     }
     HttpResponseJsonPtr response(new HttpResponseJson(http_version,
                                                       status_code));
+    ElementPtr body = Element::createMap();
+    uint16_t result = HttpResponse::statusCodeToNumber(status_code);
+    body->set("result", Element::create(static_cast<long long>(result)));
+    const string& text = HttpResponse::statusCodeToString(status_code);
+    body->set("text", Element::create(text));
+    response->setBodyAsJson(body);
     response->finalize();
     return (response);
 }

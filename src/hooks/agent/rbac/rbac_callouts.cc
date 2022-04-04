@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <rbac.h>
+#include <rbac_config.h>
 #include <rbac_log.h>
 #include <cc/command_interpreter.h>
 #include <exceptions/exceptions.h>
@@ -82,6 +83,12 @@ auth(CalloutHandle& handle) {
         // Most errors will be caught later.
         if (!request) {
             // No request.
+            return (0);
+        }
+        // Check TLS.
+        if (rbacConfig.getRequireTls() && !Role::requireTls(request)) {
+            response = RoleConfig::createReject(request, status_code);
+            handle.setArgument("response", response);
             return (0);
         }
         PostHttpRequestJsonPtr request_json =
