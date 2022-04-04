@@ -30,6 +30,7 @@ rbac_unittests_SOURCES = run_unittests.cc
 rbac_unittests_SOURCES += rbac_unittests.cc
 rbac_unittests_SOURCES += rbac_acl_unittests.cc
 rbac_unittests_SOURCES += rbac_api_unittests.cc
+rbac_unittests_SOURCES += rbac_config_unittests.cc
 rbac_unittests_SOURCES += rbac_role_unittests.cc
 
 rbac_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
