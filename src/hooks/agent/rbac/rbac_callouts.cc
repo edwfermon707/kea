@@ -48,6 +48,7 @@ unload() {
     unknownRoleConfig.reset();
     aclTable.clear();
     apiTable.clear();
+    apiAccesses.clear();
     apiHooks.clear();
     responseFilterTable.clear();
     return (0);

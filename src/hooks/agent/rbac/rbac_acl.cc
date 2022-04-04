@@ -89,7 +89,10 @@ Acl::parse(ConstElementPtr cfg) {
             if (access.empty()) {
                 isc_throw(BadValue, "access control list access is empty");
             }
-            acl.reset(new AccessAcl(entry.second->stringValue()));
+            if (apiAccesses.count(access) == 0) {
+                isc_throw(BadValue, "unknown access '" << access << "'");
+            }
+            acl.reset(new AccessAcl(access));
         } else if (entry.first == "hook") {
             if (entry.second->getType() != Element::string) {
                 isc_throw(BadValue, "hook access control list is not a "
