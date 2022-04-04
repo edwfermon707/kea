@@ -25,6 +25,8 @@ namespace rbac {
 
 ApiTable apiTable;
 
+set<string> apiHooks;
+
 ApiPtr
 Api::getApiByName(const string& name) {
     auto const& it = apiTable.find(name);
@@ -65,12 +67,15 @@ Api::fillApiTable(const string& dirname) {
                 // not [a-z]*.json: skip it.
                 continue;
             }
+            filename = dirname + "/" + filename;
             ConstElementPtr json = Element::fromJSONFile(filename, true);
             Api::parse(json, true);
         }
         static_cast<void>(closedir(dir));
     } catch (const std::exception& ex) {
-        static_cast<void>(closedir(dir));
+        if (dir) {
+            static_cast<void>(closedir(dir));
+        }
         isc_throw(BadValue, "fill API table from '" << dirname
                   << "' failed with " << ex.what());
     }
@@ -104,7 +109,7 @@ Api::parse(ConstElementPtr cfg, bool others) {
             if (access.empty()) {
                 isc_throw(BadValue, "command access is empty");
             }
-            if (others && (access != "read") && (access != "write")) {
+            if ((access != "read") && (access != "write")) {
                 isc_throw(BadValue, "command access '" << access
                           << "' is not 'read' or 'write'");
             }
@@ -128,6 +133,9 @@ Api::parse(ConstElementPtr cfg, bool others) {
         isc_throw(BadValue, "command '" << name << "' is already defined");
     }
     static_cast<void>(apiTable.insert(ApiPtr(new Api(name, access, hook))));
+    if (!hook.empty()) {
+        static_cast<void>(apiHooks.insert(hook));
+    }
 }
 
 } // end of namespace rbac

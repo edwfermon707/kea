@@ -33,7 +33,7 @@ Acl::initTable() {
 AclPtr
 Acl::parse(ConstElementPtr cfg) {
     if (!cfg) {
-        isc_throw(BadValue, "parse null access control list config");
+        isc_throw(BadValue, "parse null access control list");
     }
     if (cfg->getType() == Element::string) {
         const string& name = cfg->stringValue();
@@ -45,7 +45,7 @@ Acl::parse(ConstElementPtr cfg) {
         return (it->second);
     }
     if (cfg->getType() != Element::map) {
-      isc_throw(BadValue, "access control list config is not a map");
+      isc_throw(BadValue, "access control list is not a string or a map");
     }
     AclPtr acl;
     for (auto entry : cfg->mapValue()) {
@@ -67,23 +67,27 @@ Acl::parse(ConstElementPtr cfg) {
                 isc_throw(BadValue, "commands access control list is not "
                           << "a list");
             }
-            std::set<std::string> names;
+            std::set<std::string> commands;
             for (auto const& elem : entry.second->listValue()) {
                 if (elem->getType() != Element::string) {
                     isc_throw(BadValue, "commands access control list item is "
                               << "not a string");
                 }
-                const string& name = elem->stringValue();
-                if (!Api::getApiByName(name)) {
-                    isc_throw(BadValue, "unknown command '" << name << "'");
+                const string& command = elem->stringValue();
+                if (!Api::getApiByName(command)) {
+                    isc_throw(BadValue, "unknown command '" << command << "'");
                 }
-                static_cast<void>(names.insert(name));
+                static_cast<void>(commands.insert(command));
             }
-            acl.reset(new NamesAcl(names));
+            acl.reset(new CommandsAcl(commands));
         } else if (entry.first == "access") {
             if (entry.second->getType() != Element::string) {
                 isc_throw(BadValue, "access access control list is not a "
                           << "string");
+            }
+            const string& access = entry.second->stringValue();
+            if (access.empty()) {
+                isc_throw(BadValue, "access control list access is empty");
             }
             acl.reset(new AccessAcl(entry.second->stringValue()));
         } else if (entry.first == "hook") {
@@ -91,14 +95,18 @@ Acl::parse(ConstElementPtr cfg) {
                 isc_throw(BadValue, "hook access control list is not a "
                           << "string");
             }
-            acl.reset(new HookAcl(entry.second->stringValue()));
+            const string& hook = entry.second->stringValue();
+            if (!hook.empty() && (apiHooks.count(hook) == 0)) {
+                isc_throw(BadValue, "unknown hook '" << hook << "'");
+            }
+            acl.reset(new HookAcl(hook));
         } else {
-            isc_throw(BadValue, "unknown access control keyword '"
+            isc_throw(BadValue, "unknown access control list keyword '"
                       << entry.first << "'");
         }
     }
     if (!acl) {
-        isc_throw(BadValue, "bad access control config " << cfg->str());
+        isc_throw(BadValue, "bad access control list " << cfg->str());
     }
     return (acl);
 }
@@ -106,7 +114,7 @@ Acl::parse(ConstElementPtr cfg) {
 AclList
 Acl::parseList(ConstElementPtr cfg) {
     if (!cfg) {
-        isc_throw(BadValue, "parse null list of access control list configs");
+        isc_throw(BadValue, "parse null list of access control lists");
     }
     if (cfg->getType() != Element::list) {
         isc_throw(BadValue, "list of access control lists is not a list");
@@ -119,20 +127,21 @@ Acl::parseList(ConstElementPtr cfg) {
 }
 
 void
-AliasAcl::parse(ConstElementPtr cfg) {
-    if (!cfg) {
-        isc_throw(BadValue, "null access control list config");
+AliasAcl::parse(ConstElementPtr def) {
+    if (!def) {
+        isc_throw(BadValue, "null access control list definition");
     }
-    if (cfg->getType() != Element::map) {
-        isc_throw(BadValue, "access control list config is not a map");
+    if (def->getType() != Element::map) {
+        isc_throw(BadValue, "access control list definition is not a map");
     }
-    if (cfg->size() != 1) {
-        isc_throw(BadValue, "access control list config must have one entry");
+    if (def->size() != 1) {
+        isc_throw(BadValue, "access control list definition must have "
+                  "one entry");
     }
-    for (auto entry : cfg->mapValue()) {
+    for (auto entry : def->mapValue()) {
         const string& name = entry.first;
         if (name.empty()) {
-            isc_throw(BadValue, "access control list config name is empty");
+            isc_throw(BadValue, "access control list definition name is empty");
         }
         if (aclTable.count(entry.first) != 0) {
             isc_throw(BadValue, "access control list '" << name

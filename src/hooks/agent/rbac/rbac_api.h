@@ -13,6 +13,7 @@
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/mem_fun.hpp>
+#include <set>
 #include <string>
 
 namespace isc {
@@ -137,6 +138,9 @@ typedef boost::multi_index_container<
 
 /// @brief The API command table.
 extern ApiTable apiTable;
+
+/// @brief The API hook list.
+extern std::set<std::string> apiHooks;
 
 } // end of namespace rbac
 } // end of namespace isc
