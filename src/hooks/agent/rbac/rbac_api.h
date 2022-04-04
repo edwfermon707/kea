@@ -139,6 +139,9 @@ typedef boost::multi_index_container<
 /// @brief The API command table.
 extern ApiTable apiTable;
 
+/// @brief The API access list (should be "read" and "write").
+extern std::set<std::string> apiAccesses;
+
 /// @brief The API hook list.
 extern std::set<std::string> apiHooks;
 

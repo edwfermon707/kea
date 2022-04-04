@@ -393,10 +393,14 @@ TEST_F(AclTest, parseAccess) {
     EXPECT_THROW_MSG(Acl::parse(cfg), BadValue, expected);
 
     cfg->set("access", Element::create(string()));
-    expected =  "access control list access is empty";
+    expected = "access control list access is empty";
     EXPECT_THROW_MSG(Acl::parse(cfg), BadValue, expected);
 
     cfg->set("access", Element::create(string("foobar")));
+    expected = "unknown access 'foobar'";
+    EXPECT_THROW_MSG(Acl::parse(cfg), BadValue, expected);
+
+    cfg->set("access", Element::create(string("read")));
     AclPtr acl;
     EXPECT_NO_THROW(acl = Acl::parse(cfg));
     ASSERT_TRUE(acl);
@@ -524,11 +528,12 @@ TEST_F(AclTest, parseDefinition) {
     def = Element::createMap();
     ElementPtr val = Element::createMap();
     def->set("foo", val);
-    val->set("access", Element::create(string("bar")));
+    val->set("access", Element::create(string("write")));
     EXPECT_NO_THROW(AliasAcl::parse(def));
     EXPECT_EQ(5, aclTable.size());
     EXPECT_EQ(1, aclTable.count("foo"));
 
+    val->set("access", Element::create(string("read")));
     expected = "access control list 'foo' is already defined";
     EXPECT_THROW_MSG(AliasAcl::parse(def), BadValue, expected);
 }

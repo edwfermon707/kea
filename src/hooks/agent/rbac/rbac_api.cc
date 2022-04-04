@@ -25,6 +25,8 @@ namespace rbac {
 
 ApiTable apiTable;
 
+set<string> apiAccesses;
+
 set<string> apiHooks;
 
 ApiPtr
@@ -57,14 +59,13 @@ Api::fillApiTable(const string& dirname) {
                 // too short: skip it.
                 continue;
             }
-            if ((filename[0] < 'a') ||
-                (filename[0] > 'z') ||
+            if ((filename[0] == '_') ||
                 (filename[len - 1] != 'n') ||
                 (filename[len - 2] != 'o') ||
                 (filename[len - 3] != 's') ||
                 (filename[len - 4] != 'j') ||
                 (filename[len - 5] != '.')) {
-                // not [a-z]*.json: skip it.
+                // not [^_]*.json: skip it.
                 continue;
             }
             filename = dirname + "/" + filename;
@@ -133,6 +134,7 @@ Api::parse(ConstElementPtr cfg, bool others) {
         isc_throw(BadValue, "command '" << name << "' is already defined");
     }
     static_cast<void>(apiTable.insert(ApiPtr(new Api(name, access, hook))));
+    static_cast<void>(apiAccesses.insert(access));
     if (!hook.empty()) {
         static_cast<void>(apiHooks.insert(hook));
     }
