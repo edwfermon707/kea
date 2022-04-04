@@ -69,7 +69,7 @@ private:
 };
 
 /// @brief The configuration.
-extern Config config;
+extern Config rbacConfig;
 
 } // end of namespace rbac
 } // end of namespace isc

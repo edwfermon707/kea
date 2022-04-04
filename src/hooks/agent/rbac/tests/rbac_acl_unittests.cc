@@ -22,6 +22,7 @@ public:
 
     /// @brief Constructor.
     AclTest() {
+        aclTable.clear();
         Acl::initTable();
         apiTable.clear();
     }

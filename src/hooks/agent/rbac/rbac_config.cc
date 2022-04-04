@@ -18,7 +18,7 @@ using namespace std;
 namespace isc {
 namespace rbac {
 
-Config config;
+Config rbacConfig;
 
 const SimpleKeywords Config::RBAC_PARAMETERS = {
     { "access-control-lists",  Element::list },
@@ -41,6 +41,7 @@ void
 Config::init() {
     api_files_ = ".../share/kea/api";
     require_tls_ = false;
+    Acl::initTable();
 }
 
 void
@@ -65,15 +66,15 @@ Config::parse(ConstElementPtr cfg) {
     // Require TLS flag.
     ConstElementPtr require_tls = cfg->get("require-tls");
     if (require_tls) {
-        config.setRequireTls(require_tls->boolValue());
+        rbacConfig.setRequireTls(require_tls->boolValue());
     } else if ((roleAssign->getName() == "subject") ||
                (roleAssign->getName() == "issuer")) {
-        config.setRequireTls(true);
+        rbacConfig.setRequireTls(true);
     }
 
     // API files directory.
     const string& api_files = cfg->get("api-files")->stringValue();
-    config.setApiFiles(api_files);
+    rbacConfig.setApiFiles(api_files);
     Api::fillApiTable(api_files);
 
     // Command definitions.
