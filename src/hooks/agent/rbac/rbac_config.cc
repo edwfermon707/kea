@@ -12,6 +12,7 @@
 
 using namespace isc;
 using namespace isc::data;
+using namespace isc::log;
 using namespace isc::rbac;
 using namespace std;
 
@@ -80,22 +81,31 @@ Config::parse(ConstElementPtr cfg) {
     // Command definitions.
     ConstElementPtr commands = cfg->get("commands");
     if (commands) {
+        size_t count(0);
         for (ConstElementPtr command : commands->listValue()) {
             Api::parse(command);
+            ++count;
         }
+        LOG_DEBUG(rbac_logger, DBGLVL_TRACE_BASIC, RBAC_CONFIGURED_COMMANDS)
+            .arg(count);
     }
 
     // ACL definitions.
     ConstElementPtr acls = cfg->get("access-control-lists");
     if (acls) {
+        size_t count(0);
         for (ConstElementPtr acl : acls->listValue()) {
             AliasAcl::parse(acl);
+            ++count;
         }
+        LOG_DEBUG(rbac_logger, DBGLVL_TRACE_BASIC, RBAC_CONFIGURED_ACLS)
+            .arg(count);
     }
 
     // Roles definitions.
     ConstElementPtr roles = cfg->get("roles");
     if (roles) {
+        size_t count(0);
         for (ConstElementPtr elem : roles->listValue()) {
             RoleConfigPtr role = RoleConfig::parse(elem);
             if (!role) {
@@ -108,7 +118,10 @@ Config::parse(ConstElementPtr cfg) {
                           << "' is already defined");
             }
             roleConfigTable[name] = role;
+            ++count;
         }
+        LOG_DEBUG(rbac_logger, DBGLVL_TRACE_BASIC, RBAC_CONFIGURED_ROLES)
+            .arg(count);
     }
 
     // Default role (use when role assignment returns the empty string).
