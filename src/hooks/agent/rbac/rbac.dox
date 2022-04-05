@@ -70,7 +70,7 @@ role assignment methods, all based on recorded fields in the request:
    remote IP address in textual form by the HTTP library.
  - cert-subjet - use the subjet which is filled by the first commonName
    of the subjectName of the client certificate.
- - cert-issuer - use the issuer which is filled	by the first commonName
+ - cert-issuer - use the issuer which is filled by the first commonName
    of the issuerName of the client certificate.
  - basic-authentication - use the basic_auth which is filled by the
    user ID of the basic HTTP authentication (note this value is security
@@ -107,7 +107,7 @@ Role configuration parameters are:
  - precedence - specifies what access list to check and apply first
    for commands matching both accept and reject lists.
  - response-filters - filters to apply to the response (not implemented).
-   
+
 File rbac.{h,cc}
 
 Type RoleConfig, global variables roleConfigTable, defaultRoleConfig and

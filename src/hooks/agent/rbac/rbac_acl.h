@@ -99,7 +99,7 @@ public:
 
     /// @brief Match the access control list.
     ///
-    /// @param command.
+    /// @param command The command.
     /// @return the negation of the acl matching.
     virtual bool match(const std::string& command) final {
         return (acl_->match(command));
@@ -119,7 +119,7 @@ public:
         return (acl_);
     }
 
-    /// @Parse an access control list definition.
+    /// @brief Parse an access control list definition.
     ///
     /// @param def Definition of an access control list.
     static void parse(data::ConstElementPtr def);
@@ -150,7 +150,7 @@ public:
 
     /// @brief Match the access control list.
     ///
-    /// @param command.
+    /// @param command The command.
     /// @return the negation of the acl matching.
     virtual bool match(const std::string& command) final {
         return (!acl_->match(command));
@@ -197,7 +197,7 @@ public:
 
     /// @brief Match the access control list.
     ///
-    /// @param command.
+    /// @param command The command.
     /// @return true when all members match, false otherwise.
     virtual bool match(const std::string& command) final {
         for (const AclPtr& acl : acls_) {
@@ -249,7 +249,7 @@ public:
 
     /// @brief Match the access control list.
     ///
-    /// @param command.
+    /// @param command The command.
     /// @return true when a member matches, false otherwise.
     virtual bool match(const std::string& command) final {
         for (const AclPtr& acl : acls_) {

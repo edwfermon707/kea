@@ -82,6 +82,11 @@ Api::fillApiTable(const string& dirname) {
                   << "' failed with " << ex.what());
     }
 
+    if (apiTable.empty()) {
+        isc_throw(BadValue, "can't fill API table from '" << dirname
+                  << "': got no command config?");
+    }
+
     LOG_INFO(rbac_logger, RBAC_READ_API_FILES)
       .arg(dirname)
       .arg(apiTable.size())

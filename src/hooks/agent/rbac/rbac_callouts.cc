@@ -62,6 +62,9 @@ load(LibraryHandle& handle) {
 /// @return always 0.
 int
 unload() {
+    if (roleAssign) {
+        roleAssign->setup(false);
+    }
     roleAssign.reset();
     roleConfigTable.clear();
     defaultRoleConfig.reset();

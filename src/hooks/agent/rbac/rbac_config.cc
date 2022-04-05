@@ -63,6 +63,7 @@ Config::parse(ConstElementPtr cfg) {
     if (!roleAssign) {
         isc_throw(Unexpected, "role assignment parsing failed");
     }
+    roleAssign->setup(true);
 
     // Require TLS flag.
     ConstElementPtr require_tls = cfg->get("require-tls");

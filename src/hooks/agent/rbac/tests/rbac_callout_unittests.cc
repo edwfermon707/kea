@@ -114,6 +114,9 @@ public:
 
     /// @brief Destructor.
     virtual ~CalloutTest() {
+        if (roleAssign) {
+            roleAssign->setup(false);
+        }
         roleAssign.reset();
         roleConfigTable.clear();
         defaultRoleConfig.reset();
