@@ -1,5 +1,13 @@
 # Copyright (C) 2022 Internet Systems Consortium, Inc. ("ISC")
 
+% RBAC_AUTH_ERROR Error in auth callout: %1.
+This error messages indicates that an error has been raised in auth callout
+by the RBAC hooks library. The argument details the error.
+
+% RBAC_AUTH_RESPONSE RBAC hooks library has returned response: %1.
+This info message indicates that the RBAC hooks library has returned
+a response in auth callout. The response is summarized.
+
 % RBAC_CONFIGURED_ACLS RBAC hooks library has configured %1 named ACLs.
 This debug message indicates that some named access control lists
 has been configured. The count is displayed.
@@ -24,6 +32,73 @@ been loaded successfully.
 This info message indicates that the RBAC hooks library has read API files
 from the configured directory. The name of the directory and some statistics
 are displayed.
+
+% RBAC_TRACE_AUTH_ACCEPT Role configuration '%1' for role '%2' has accepted command '%3'.
+The command was accepted in auth callout. The role configuration name, the
+role name and the command are displayed.
+
+% RBAC_TRACE_AUTH_BAD_BODY_TYPE Bad body type in JSON request in auth callout.
+The auth callout has been called with a bad body type in the JSON request.
+The RBAC hooks library immediately returns. This is an error condition.
+
+% RBAC_TRACE_AUTH_BAD_COMMAND_TYPE Bad command type in JSON request in auth callout.
+The auth callout has been called with a bad command type in the JSON request.
+The RBAC hooks library immediately returns. This is an error condition.
+
+% RBAC_TRACE_AUTH_COMMAND Command '%1' in auth callout.
+The auth callout has been called with the displayed command.
+
+% RBAC_TRACE_AUTH_DISABLED RBAC hooks library is disabled in auth callout.
+The auth callout has been called with the RBAC hooks library disabled
+i.e. with no role assigned.
+
+% RBAC_TRACE_AUTH_EMPTY_BODY Empty body in JSON request in auth callout.
+The auth callout has been called with an empty body in the JSON request.
+The RBAC hooks library immediately returns. This is an error condition.
+
+% RBAC_TRACE_AUTH_NO_COMMAND No command entry in JSON request in auth callout.
+The auth callout has been called without a command entry in the JSON request.
+The RBAC hooks library immediately returns. This is an error condition.
+
+% RBAC_TRACE_AUTH_NO_JSON No JSON request in auth callout.
+The auth callout has been called with a not JSON request. The RBAC hooks
+library immediately returns. This is an error condition.
+
+% RBAC_TRACE_AUTH_NO_REQUEST No request in auth callout.
+The auth callout has been called without a request. The RBAC hooks library
+immediately returns. This is an error condition.
+
+% RBAC_TRACE_AUTH_RESPONSE Response in auth callout: %1.
+The auth callout has been called with a response. The RBAC hooks library
+immediately returns. The response is summarized.
+
+% RBAC_TRACE_AUTH_ROLE Assigned role '%1' in auth callout.
+The displayed role has been assigned in the auth callout.
+
+% RBAC_TRACE_AUTH_REJECT Role configuration '%1' for role '%2' has rejected command '%3'.
+The command was rejected in auth callout. The role configuration name, the
+role name and the command are displayed.
+
+% RBAC_TRACE_RESPONSE_DISABLED RBAC hooks library is disabled in response callout.
+The response callout has been called with the RBAC hooks library disabled
+i.e. with no role assigned.
+
+% RBAC_TRACE_RESPONSE_NO_ARGUMENTS No request or response in response callout.
+The response callout has been called with request or response. The RBAC
+hooks library immediately returns. This is an error condition.
+
+% RBAC_TRACE_RESPONSE_BAD_BODY_TYPE Bad body type in JSON response in response callout.
+The response callout has been called with a bad body type in the JSON response
+which is likely an error response. The RBAC hooks library immediately returns.
+
+% RBAC_TRACE_RESPONSE_EMPTY_BODY Empty body in JSON response in response callout.
+The response callout has been called with an empty body in the JSON response.
+The RBAC hooks library immediately returns. This is an error condition.
+
+% RBAC_TRACE_RESPONSE_EMPTY_BODY_LIST Empty list in JSON response in response callout.
+The response callout has been called with an empty body list in the JSON
+response. The RBAC hooks library immediately returns. This is an error
+condition.
 
 % RBAC_UNLOAD_OK RBAC hooks library unloaded successfully.
 This info message indicates that the RBAC hooks library has been

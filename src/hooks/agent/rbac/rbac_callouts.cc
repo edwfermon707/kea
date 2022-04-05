@@ -83,7 +83,7 @@ unload() {
 int
 auth(CalloutHandle& handle) {
     if (!roleAssign) {
-        // The RBAC is disabled.
+        LOG_DEBUG(rbac_logger, DBGLVL_TRACE_BASIC, RBAC_TRACE_AUTH_DISABLED);
         return (0);
     }
 
@@ -94,7 +94,8 @@ auth(CalloutHandle& handle) {
     handle.getArgument("response", response);
 
     if (response) {
-        /// Response already set likely to an error.
+        LOG_DEBUG(rbac_logger, DBGLVL_TRACE_BASIC, RBAC_TRACE_AUTH_RESPONSE)
+            .arg(response->toBriefString());
         return (0);
     }
 
@@ -103,7 +104,8 @@ auth(CalloutHandle& handle) {
     try {
         // Most errors will be caught later.
         if (!request) {
-            // No request.
+            LOG_DEBUG(rbac_logger, DBGLVL_TRACE_BASIC,
+                      RBAC_TRACE_AUTH_NO_REQUEST);
             return (0);
         }
         // Check TLS.
@@ -115,39 +117,62 @@ auth(CalloutHandle& handle) {
         PostHttpRequestJsonPtr request_json =
             boost::dynamic_pointer_cast<PostHttpRequestJson>(request);
         if (!request_json) {
-            // Not a JSON POST request.
+            LOG_DEBUG(rbac_logger, DBGLVL_TRACE_BASIC,
+                      RBAC_TRACE_AUTH_NO_JSON);
             return (0);
         }
         ConstElementPtr body = request_json->getBodyAsJson();
         if (!body) {
-            // No JSON body.
+            LOG_DEBUG(rbac_logger, DBGLVL_TRACE_BASIC,
+                      RBAC_TRACE_AUTH_EMPTY_BODY);
             return (0);
         }
         if (body->getType() != Element::map) {
-            // Body is not a map.
+            LOG_DEBUG(rbac_logger, DBGLVL_TRACE_BASIC,
+                      RBAC_TRACE_AUTH_BAD_BODY_TYPE);
             return (0);
         }
         ConstElementPtr elem = body->get(CONTROL_COMMAND);
         if (!elem) {
-            // No command.
+            LOG_DEBUG(rbac_logger, DBGLVL_TRACE_BASIC,
+                      RBAC_TRACE_AUTH_NO_COMMAND);
             return (0);
         }
         if (elem->getType() != Element::string) {
-            // Command is not a string.
+            LOG_DEBUG(rbac_logger, DBGLVL_TRACE_BASIC,
+                      RBAC_TRACE_AUTH_BAD_COMMAND_TYPE);
             return (0);
         }
         const string& command = elem->stringValue();
+        LOG_DEBUG(rbac_logger, DBGLVL_TRACE_BASIC, RBAC_TRACE_AUTH_COMMAND)
+            .arg(command);
 
         // Assign role.
         const string& role = roleAssign->assign(request);
+        LOG_DEBUG(rbac_logger, DBGLVL_TRACE_BASIC, RBAC_TRACE_AUTH_ROLE)
+            .arg(role);
         RoleConfigPtr role_config = RoleConfig::getConfig(role);
+        if (!role_config) {
+            isc_throw(Unexpected, "can't find a role configuration");
+        }
 
         // filter command.
-        if (role_config && !role_config->match(command)) {
+        if (role_config->match(command)) {
+            LOG_DEBUG(rbac_logger, DBGLVL_TRACE_BASIC, RBAC_TRACE_AUTH_ACCEPT)
+                .arg(role_config->name_)
+                .arg(role)
+                .arg(command);
+        } else {
+            LOG_DEBUG(rbac_logger, DBGLVL_TRACE_BASIC, RBAC_TRACE_AUTH_REJECT)
+                .arg(role_config->name_)
+                .arg(role)
+                .arg(command);
             response = RoleConfig::createReject(request, status_code);
             updated = true;
         }
     } catch (const std::exception& ex) {
+        LOG_ERROR(rbac_logger, RBAC_AUTH_ERROR)
+            .arg(ex.what());
         status_code = HttpStatusCode::INTERNAL_SERVER_ERROR;
         response = RoleConfig::createReject(request, status_code);
         updated = true;
@@ -155,6 +180,8 @@ auth(CalloutHandle& handle) {
 
     // Set parameters.
     if (updated) {
+        LOG_INFO(rbac_logger, RBAC_AUTH_RESPONSE)
+            .arg(response->toBriefString());
         handle.setArgument("response", response);
     }
 
@@ -168,7 +195,8 @@ auth(CalloutHandle& handle) {
 int
 response(CalloutHandle& handle) {
     if (!roleAssign) {
-        // The RBAC is disabled.
+        LOG_DEBUG(rbac_logger, DBGLVL_TRACE_BASIC,
+                  RBAC_TRACE_RESPONSE_DISABLED);
         return (0);
     }
 
@@ -179,22 +207,27 @@ response(CalloutHandle& handle) {
     handle.getArgument("response", response);
 
     if (!request || !response) {
-        // Give up!
+        LOG_DEBUG(rbac_logger, DBGLVL_TRACE_BASIC,
+                  RBAC_TRACE_RESPONSE_NO_ARGUMENTS);
         return (0);
     }
 
     // Decode response.
     ConstElementPtr body = response->getBodyAsJson();
     if (!body) {
-        // No body to act on.
+        LOG_DEBUG(rbac_logger, DBGLVL_TRACE_BASIC,
+                  RBAC_TRACE_RESPONSE_EMPTY_BODY);
         return (0);
     }
     if (body->getType() != Element::list) {
         // Should be an error response, anyway nothing to filter.
+        LOG_DEBUG(rbac_logger, DBGLVL_TRACE_BASIC,
+                  RBAC_TRACE_RESPONSE_BAD_BODY_TYPE);
         return (0);
     }
     if (body->size() < 1) {
-        // Empty body.
+        LOG_DEBUG(rbac_logger, DBGLVL_TRACE_BASIC,
+                  RBAC_TRACE_RESPONSE_EMPTY_BODY_LIST);
         return (0);
     }
 
