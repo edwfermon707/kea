@@ -104,7 +104,7 @@ Role configuration parameters are:
  - other-commands - specifies what to do when a command does not match
    accept and reject lists. When true the command is accepted, when
    false (the default) the command is rejected.
- - precedence - specifies what access list to check and apply first
+ - preference - specifies what access list to check and apply first
    for commands matching both accept and reject lists.
  - response-filters - filters to apply to the response (not implemented).
 
@@ -149,8 +149,8 @@ for its value parameter(s).
 Predified named access list are:
  - ALL - matches everything
  - NONE - matches nothing
- - READ - matches commands with the read access
- - WRITE - matches commands with the write access
+ - READ - matches commands with the read access right
+ - WRITE - matches commands with the write access right
 
 Predified access list kinds are:
  - not - negates the access list specification it takes as parameter.

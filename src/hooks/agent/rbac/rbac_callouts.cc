@@ -46,6 +46,7 @@ load(LibraryHandle& handle) {
 
         // Load the configuration.
         ConstElementPtr config = handle.getParameters();
+        rbacConfig.init();
         Config::parse(config);
     } catch (const std::exception& ex) {
         LOG_ERROR(rbac_logger, RBAC_LOAD_FAILED)

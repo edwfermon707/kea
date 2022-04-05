@@ -3583,6 +3583,7 @@ both the command and the response.
 .. include:: hooks-lease-query.rst
 .. include:: hooks-run-script.rst
 .. include:: hooks-ddns-tuning.rst
+.. include:: hooks-rbac.rst
 
 .. _user-context-hooks:
 
