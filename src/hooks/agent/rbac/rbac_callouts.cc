@@ -99,7 +99,7 @@ auth(CalloutHandle& handle) {
         return (0);
     }
 
-    auto status_code = HttpStatusCode::UNAUTHORIZED;
+    auto status_code = HttpStatusCode::FORBIDDEN;
     bool updated = false;
     try {
         // Most errors will be caught later.
@@ -110,7 +110,12 @@ auth(CalloutHandle& handle) {
         }
         // Check TLS.
         if (rbacConfig.getRequireTls() && !Role::requireTls(request)) {
+            LOG_DEBUG(rbac_logger, DBGLVL_TRACE_BASIC,
+                      RBAC_TRACE_AUTH_NO_TLS_REJECT);
+            status_code = HttpStatusCode::UNAUTHORIZED;
             response = RoleConfig::createReject(request, status_code);
+            LOG_INFO(rbac_logger, RBAC_AUTH_RESPONSE)
+                .arg(response->toBriefString());
             handle.setArgument("response", response);
             return (0);
         }

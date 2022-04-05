@@ -99,12 +99,17 @@ public:
     /// @brief Filter a response.
     ///
     /// @param body The JSON response body.
-    void filter(data::ConstElementPtr body) {
+    /// @return whether the body was modified.
+    bool filter(data::ConstElementPtr body) {
+        bool modified = false;
         for (auto const& filter : response_filters_) {
             if (filter) {
-                filter->filter(name_, body);
+                if (filter->filter(name_, body)) {
+                    modified = true;
+                }
             }
         }
+        return (modified);
     }
 
     /// @brief Return the role config.

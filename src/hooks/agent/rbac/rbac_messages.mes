@@ -34,8 +34,8 @@ from the configured directory. The name of the directory and some statistics
 are displayed.
 
 % RBAC_TRACE_AUTH_ACCEPT Role configuration '%1' for role '%2' has accepted command '%3'.
-The command was accepted in auth callout. The role configuration name, the
-role name and the command are displayed.
+The command has been accepted in auth callout. The role configuration name,
+the role name and the command are displayed.
 
 % RBAC_TRACE_AUTH_BAD_BODY_TYPE Bad body type in JSON request in auth callout.
 The auth callout has been called with a bad body type in the JSON request.
@@ -76,8 +76,11 @@ immediately returns. The response is summarized.
 The displayed role has been assigned in the auth callout.
 
 % RBAC_TRACE_AUTH_REJECT Role configuration '%1' for role '%2' has rejected command '%3'.
-The command was rejected in auth callout. The role configuration name, the
-role name and the command are displayed.
+The command has been rejected in auth callout. The role configuration name,
+the role name and the command are displayed.
+
+% RBAC_TRACE_AUTH_NO_TLS_REJECT Not TLS request has been rejected.
+The not TLS request has been rejected in auth callout.
 
 % RBAC_TRACE_RESPONSE_DISABLED RBAC hooks library is disabled in response callout.
 The response callout has been called with the RBAC hooks library disabled

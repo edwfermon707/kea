@@ -54,7 +54,8 @@ public:
     ///
     /// @param role The role.
     /// @param body The JSON response body.
-    virtual void filter(const std::string& role,
+    /// @return whether the body was modified.
+    virtual bool filter(const std::string& role,
                         data::ConstElementPtr body) = 0;
 
     /// @brief Initialize the response filter table.
@@ -84,7 +85,8 @@ public:
     ///
     /// @param role The role.
     /// @param body The JSON response body.
-    virtual void filter(const std::string& role,
+    /// @return whether the body was modified.
+    virtual bool filter(const std::string& role,
                         data::ConstElementPtr body) final;
 };
 
@@ -101,7 +103,8 @@ public:
     /// @brief Filter a response with a config.
     ///
     /// @param body The JSON response body.
-    virtual void filter(const std::string&, data::ConstElementPtr body) final;
+    /// @return whether the body was modified.
+    virtual bool filter(const std::string&, data::ConstElementPtr body) final;
 };
 
 /// @brief The response filter table.

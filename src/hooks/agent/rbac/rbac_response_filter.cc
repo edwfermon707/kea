@@ -58,35 +58,35 @@ ResponseFilter::parse(ConstElementPtr cfg) {
     return (filters);
 }
 
-void
+bool
 ListCommandsResponseFilter::filter(const string& role, ConstElementPtr body) {
     if (!body || (body->getType() != Element::map)) {
-        return;
+        return (false);
     }
     ConstElementPtr command = body->get(CONTROL_COMMAND);
     if (!command || (command->getType() != Element::string)) {
-        return;
+        return (false);
     }
     if (command->stringValue() != "list-commands") {
         // Add a log here.
-        return;
+        return (false);
     }
     isc_throw(NotImplemented, "ListCommandsResponseFilter::filter("
               << body->str() << ")");
 }
 
-void
+bool
 ConfigResponseFilter::filter(const string&, ConstElementPtr body) {
     if (!body || (body->getType() != Element::map)) {
-        return;
+        return (false);
     }
     ConstElementPtr command = body->get(CONTROL_COMMAND);
     if (!command || (command->getType() != Element::string)) {
-        return;
+        return (false);
     }
     if (command->stringValue() != "config-get") {
         // Add a log here.
-        return;
+        return (false);
     }
     isc_throw(NotImplemented, "ConfigResponseFilter::filter("
               << body->str() << ")");
