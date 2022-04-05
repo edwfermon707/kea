@@ -59,6 +59,12 @@ TEST_F(RoleTest, subject) {
     request->setSubject("foo");
     ASSERT_NO_THROW(ret = role->assign(request));
     EXPECT_EQ("foo", ret);
+
+    EXPECT_FALSE(HttpRequest::recordSubject);
+    role->setup(true);
+    EXPECT_TRUE(HttpRequest::recordSubject);
+    role->setup(false);
+    EXPECT_FALSE(HttpRequest::recordSubject);
 }
 
 /// @brief This test verifies that role assignment by issuer name works
@@ -72,6 +78,12 @@ TEST_F(RoleTest, issuer) {
     request->setIssuer("foo");
     ASSERT_NO_THROW(ret = role->assign(request));
     EXPECT_EQ("foo", ret);
+
+    EXPECT_FALSE(HttpRequest::recordIssuer);
+    role->setup(true);
+    EXPECT_TRUE(HttpRequest::recordIssuer);
+    role->setup(false);
+    EXPECT_FALSE(HttpRequest::recordIssuer);
 }
 
 /// @brief This test verifies that role assignment by basic auth works
@@ -85,6 +97,12 @@ TEST_F(RoleTest, basicAuth) {
     request->setBasicAuth("foo");
     ASSERT_NO_THROW(ret = role->assign(request));
     EXPECT_EQ("foo", ret);
+
+    EXPECT_FALSE(HttpRequest::recordBasicAuth);
+    role->setup(true);
+    EXPECT_TRUE(HttpRequest::recordBasicAuth);
+    role->setup(false);
+    EXPECT_FALSE(HttpRequest::recordBasicAuth);
 }
 
 /// @brief This test verifies that role assignment by custom value works

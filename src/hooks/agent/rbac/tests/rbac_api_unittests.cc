@@ -147,6 +147,11 @@ TEST_F(ApiTest, fillApiTable) {
     expected += make + "': Not a directory";
     EXPECT_THROW_MSG(Api::fillApiTable(make), BadValue, expected);
 
+    string parent = string(API_DIR) + "/..";
+    expected = "can't fill API table from '";
+    expected += parent + "': got no command config?";
+    EXPECT_THROW_MSG(Api::fillApiTable(parent), BadValue, expected);
+
     EXPECT_TRUE(apiTable.empty());
     EXPECT_NO_THROW(Api::fillApiTable(string(API_DIR)));
 }

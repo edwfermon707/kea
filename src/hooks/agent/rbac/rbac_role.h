@@ -49,6 +49,11 @@ public:
     /// @return the assigned role.
     virtual std::string assign(const http::HttpRequestPtr& request) = 0;
 
+    /// @brief Setup HTTP library.
+    ///
+    /// @param load True if at load, false at unload.
+    virtual void setup(bool load) = 0;
+
     /// @brief Require TLS.
     ///
     /// @param request The HTTP request.
@@ -86,6 +91,10 @@ public:
             return ("");
         }
     }
+
+    /// @brief Setup HTTP library.
+    virtual void setup(bool) final {
+    }
 };
 
 /// @brief Role assignment using the subject.
@@ -106,6 +115,13 @@ public:
         } else {
             return ("");
         }
+    }
+
+    /// @brief Setup HTTP library.
+    ///
+    /// @param load True if at load, false at unload.
+    virtual void setup(bool load) final {
+        http::HttpRequest::recordSubject = load;
     }
 };
 
@@ -128,6 +144,13 @@ public:
             return ("");
         }
     }
+
+    /// @brief Setup HTTP library.
+    ///
+    /// @param load True if at load, false at unload.
+    virtual void setup(bool load) final {
+        http::HttpRequest::recordIssuer = load;
+    }
 };
 
 /// @brief Role assignment using the basic HTTP authentication.
@@ -149,6 +172,13 @@ public:
             return ("");
         }
     }
+
+    /// @brief Setup HTTP library.
+    ///
+    /// @param load True if at load, false at unload.
+    virtual void setup(bool load) final {
+        http::HttpRequest::recordBasicAuth = load;
+    }
 };
 
 /// @brief Role assignment using the custom value.
@@ -169,6 +199,10 @@ public:
         } else {
             return ("");
         }
+    }
+
+    /// @brief Setup HTTP library.
+    virtual void setup(bool) final {
     }
 };
 
@@ -192,6 +226,10 @@ public:
             } else {
             return ("");
         }
+    }
+
+    /// @brief Setup HTTP library.
+    virtual void setup(bool) final {
     }
 
     /// @brief Return the static role.

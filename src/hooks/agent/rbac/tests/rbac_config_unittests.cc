@@ -34,6 +34,9 @@ public:
 
     /// @brief Destructor.
     virtual ~ConfigTest() {
+        if (roleAssign) {
+            roleAssign->setup(false);
+        }
         roleAssign.reset();
         aclTable.clear();
         apiTable.clear();
@@ -44,6 +47,9 @@ public:
 
     /// @brief Reset (to be used between multiple calls to parse).
     void reset() {
+        if (roleAssign) {
+            roleAssign->setup(false);
+        }
         roleAssign.reset();
         aclTable.clear();
         apiTable.clear();
@@ -297,6 +303,15 @@ TEST_F(ConfigTest, parseRoles) {
     reset();
     roles = Element::createList();
     cfg->set("roles", roles);
+    ElementPtr bad = Element::createMap();
+    bad->set("name", Element::create(string()));
+    roles->add(bad);
+    string expected = "role config name is empty";
+    EXPECT_THROW_MSG(Config::parse(cfg), BadValue, expected);
+
+    reset();
+    roles = Element::createList();
+    cfg->set("roles", roles);
     ElementPtr foo = Element::createMap();
     foo->set("name", Element::create(string("foo")));
     // Leaving defaults so only the others value will matter.
@@ -307,7 +322,7 @@ TEST_F(ConfigTest, parseRoles) {
     reset();
     // Add twice will give an error.
     roles->add(foo);
-    string expected = "role 'foo' is already defined";
+    expected = "role 'foo' is already defined";
     EXPECT_THROW_MSG(Config::parse(cfg), BadValue, expected);
 }
 
