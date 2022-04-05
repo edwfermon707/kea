@@ -46,6 +46,7 @@ rbac_unittests_LDADD += $(top_builddir)/src/lib/http/libkea-http.la
 rbac_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 rbac_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 rbac_unittests_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
+rbac_unittests_LDADD += $(top_builddir)/src/lib/testutils/libkea-testutils.la
 rbac_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 rbac_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 rbac_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
