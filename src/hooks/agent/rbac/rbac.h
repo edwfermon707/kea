@@ -77,7 +77,7 @@ public:
     ///
     /// @param command The command.
     /// @return whether accept (true) or reject (false) the command.
-    bool match(const std::string& command) {
+    bool match(const std::string& command) const {
         if (preference_) {
             if (accept_ && accept_->match(command)) {
                 return (true);
@@ -98,13 +98,14 @@ public:
 
     /// @brief Filter a response.
     ///
+    /// @param command The command.
     /// @param body The JSON response body.
     /// @return whether the body was modified.
-    bool filter(data::ConstElementPtr body) {
+    bool filter(const std::string& command, data::ConstElementPtr body) const {
         bool modified = false;
         for (auto const& filter : response_filters_) {
             if (filter) {
-                if (filter->filter(name_, body)) {
+                if (filter->filter(command, *this, body)) {
                     modified = true;
                 }
             }

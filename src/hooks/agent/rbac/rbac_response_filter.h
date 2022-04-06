@@ -26,6 +26,9 @@ typedef std::list<ResponseFilterPtr> ResponseFilterList;
 /// @brief The type of the response filter table.
 typedef std::map<std::string, ResponseFilterPtr> ResponseFilterTable;
 
+/// @brief Forward declaration of RoleConfig.
+class RoleConfig;
+
 /// @brief Response filter base class.
 class ResponseFilter {
 public:
@@ -52,10 +55,12 @@ public:
 
     /// @brief Filter a response.
     ///
-    /// @param role The role.
+    /// @param command The role command.
+    /// @param role_config The role config.
     /// @param body The JSON response body.
     /// @return whether the body was modified.
-    virtual bool filter(const std::string& role,
+    virtual bool filter(const std::string& command,
+                        const RoleConfig& role_config,
                         data::ConstElementPtr body) = 0;
 
     /// @brief Initialize the response filter table.
@@ -71,6 +76,26 @@ protected:
     std::string name_;
 };
 
+/// @brief Noop response filter.
+///
+/// Removes not allowed commands from the response.
+class NoopResponseFilter : public ResponseFilter {
+public:
+
+    /// @brief Constructor.
+    NoopResponseFilter() : ResponseFilter("noop") {
+    }
+
+    /// @brief Filter a response (doing nothing).
+    ///
+    /// @return always false.
+    virtual bool filter(const std::string&,
+                        const RoleConfig&,
+                        data::ConstElementPtr) final {
+        return (false);
+    }
+};
+
 /// @brief Response filter for list-commands.
 ///
 /// Removes not allowed commands from the response.
@@ -83,28 +108,13 @@ public:
 
     /// @brief Filter a response from list-commands.
     ///
-    /// @param role The role.
+    /// @param command The role command.
+    /// @param role_config The role config.
     /// @param body The JSON response body.
     /// @return whether the body was modified.
     virtual bool filter(const std::string& role,
+                        const RoleConfig& role_config,
                         data::ConstElementPtr body) final;
-};
-
-/// @brief Response filter for config.
-///
-/// Removes config-control from a response with a config.
-class ConfigResponseFilter : public ResponseFilter {
-public:
-
-    /// @brief Constructor.
-    ConfigResponseFilter() : ResponseFilter("config") {
-    }
-
-    /// @brief Filter a response with a config.
-    ///
-    /// @param body The JSON response body.
-    /// @return whether the body was modified.
-    virtual bool filter(const std::string&, data::ConstElementPtr body) final;
 };
 
 /// @brief The response filter table.

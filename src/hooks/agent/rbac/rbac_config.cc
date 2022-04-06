@@ -43,6 +43,7 @@ Config::init() {
     api_files_ = ".../share/kea/api";
     require_tls_ = false;
     Acl::initTable();
+    ResponseFilter::initResponseFilterTable();
 }
 
 void

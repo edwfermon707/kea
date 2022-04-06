@@ -26,10 +26,10 @@ ResponseFilterTable responseFilterTable;
 void
 ResponseFilter::initResponseFilterTable() {
     responseFilterTable.clear();
+    responseFilterTable["noop"] =
+        ResponseFilterPtr(new NoopResponseFilter);
     responseFilterTable["list-commands"] =
         ResponseFilterPtr(new ListCommandsResponseFilter);
-    responseFilterTable["control-config"] =
-        ResponseFilterPtr(new ConfigResponseFilter);
 }
 
 ResponseFilterList
@@ -59,37 +59,39 @@ ResponseFilter::parse(ConstElementPtr cfg) {
 }
 
 bool
-ListCommandsResponseFilter::filter(const string& role, ConstElementPtr body) {
+ListCommandsResponseFilter::filter(const string& command,
+                                   const RoleConfig& role_config,
+                                   ConstElementPtr body) {
+    if (command  != "list-commands") {
+        return (false);
+    }
     if (!body || (body->getType() != Element::map)) {
         return (false);
     }
-    ConstElementPtr command = body->get(CONTROL_COMMAND);
-    if (!command || (command->getType() != Element::string)) {
+    ConstElementPtr args = body->get(CONTROL_ARGUMENTS);
+    if (!args || (args->getType() != Element::list)) {
         return (false);
     }
-    if (command->stringValue() != "list-commands") {
-        // Add a log here.
+    size_t modified = 0;
+    ElementPtr filtered = Element::createList();
+    for (auto const& elem : args->listValue()) {
+        if (!elem || (elem->getType() != Element::string)) {
+            ++modified;
+            continue;
+        }
+        const string& cmd = elem->stringValue();
+        if ((cmd == "list-commands") || role_config.match(cmd)) {
+            filtered->add(elem);
+        } else {
+            ++modified;
+        }
+    }
+    if (modified == 0) {
         return (false);
     }
-    isc_throw(NotImplemented, "ListCommandsResponseFilter::filter("
-              << body->str() << ")");
-}
-
-bool
-ConfigResponseFilter::filter(const string&, ConstElementPtr body) {
-    if (!body || (body->getType() != Element::map)) {
-        return (false);
-    }
-    ConstElementPtr command = body->get(CONTROL_COMMAND);
-    if (!command || (command->getType() != Element::string)) {
-        return (false);
-    }
-    if (command->stringValue() != "config-get") {
-        // Add a log here.
-        return (false);
-    }
-    isc_throw(NotImplemented, "ConfigResponseFilter::filter("
-              << body->str() << ")");
+    ElementPtr mutable_body = boost::const_pointer_cast<Element>(body);
+    mutable_body->set(CONTROL_ARGUMENTS, filtered);
+    return (true);
 }
 
 } // end of namespace rbac
