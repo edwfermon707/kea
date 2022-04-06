@@ -3,8 +3,10 @@
 Role Based Access Control
 =========================
 
-This hook library adds support Role Based Access Control to the
-Control Agent.
+.. _hooks-RBAC-overview:
+
+Role Based Access Control Overview
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Before the processing of commands in received HTTP requests, the hook
 takes some parameters e.g. the common name part of the client
@@ -12,8 +14,6 @@ certificate subject name to assign a role to the request.
 The configuration associated to this role is used to accept or reject
 the command. After the processing the response can be rewritten e.g.
 removing security sensitive parts.
-
-.. _hooks-RBAC-config:
 
 Summary of the request processing:
  - the HTTP library records some informations to be used later, e.g.
@@ -26,6 +26,14 @@ Summary of the request processing:
    a forbidden response) the command.
 
 The response processing is not yet implemented.
+
+.. _hooks-RBAC-config:
+
+Role Based Access Control Configuration
+---------------------------------------
+
+Role Assignment
+~~~~~~~~~~~~~~~
 
 The role assignment is governed by the configured role assignment method.
 
@@ -44,6 +52,9 @@ The role assignment is governed by the configured role assignment method.
    +----------------------+---------------------------------------------------------+
    | custom-value         | for extension                                           |
    +----------------------+---------------------------------------------------------+
+
+Role Configuration
+~~~~~~~~~~~~~~~~~~
 
 If the role assignment returns the empty role the configuration of the
 ``default`` role is used: by default the request is rejected.
@@ -73,6 +84,9 @@ the configuration of the ``unknown`` role is used.
    | response-filters | filters to apply to the response (not implemented) |
    +------------------+----------------------------------------------------+
 
+API Commands
+~~~~~~~~~~~~
+
 All commands of the REST API are described in files in a directory
 which can be found in sources in ``src/share/api`` or in installed Kea
 in ``.../share/kea/api``. The hook reads these files to take the name,
@@ -91,7 +105,11 @@ access right (i.e. ``read`` or ``write``) and the hook name.
    |        | commands of servers or agents)                          |
    +--------+---------------------------------------------------------+
 
-Access lists can be specified using a name (string) or a single entry map.
+Access control lists
+~~~~~~~~~~~~~~~~~~~~
+
+Access control lists can be specified using a name (string) or a
+single entry map.
 
 .. table::Predefined named access list
 
@@ -128,6 +146,9 @@ and parameter in the value.
    | hook    | by hook         | hook name (can be empty)             |
    +---------+-----------------+--------------------------------------+
 
+Global Parameters
+~~~~~~~~~~~~~~~~~
+
 Global parameters are:
 
 -  ``assign-role-method``: (mandatory) the name of the method
@@ -153,6 +174,9 @@ Global parameters are:
 
 -  ``unknown-role``: takes the configuration of the unknown role
    (used when the not empty assigned role has no configuration).
+
+Sample Configuration
+~~~~~~~~~~~~~~~~~~~~
 
 A sample configuration is available in ``doc/examples/agent/rbac.json``
 in the Kea source and is copied below.
@@ -252,6 +276,3 @@ in the Kea source and is copied below.
     }
     }
 
-This configuration file contains a number of extra elements.
-
-todo...
