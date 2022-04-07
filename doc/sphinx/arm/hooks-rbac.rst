@@ -13,7 +13,7 @@ takes some parameters e.g. the common name part of the client
 certificate subject name to assign a role to the request.
 The configuration associated to this role is used to accept or reject
 the command. After the processing the response can be rewritten e.g.
-removing security sensitive parts.
+removing parts.
 
 Summary of the request processing:
  - the HTTP library records some informations to be used later, e.g.
@@ -25,7 +25,10 @@ Summary of the request processing:
  - use the role to accept (i.e. pass through) or reject (i.e. send
    a forbidden response) the command.
 
-The response processing is not yet implemented.
+Summary of response processing:
+ - retrieve some informations attached to the request during the
+   request processing (when the request was accepted).
+ - applies request filters to the response.
 
 .. _hooks-RBAC-config:
 
@@ -81,7 +84,7 @@ the configuration of the ``unknown`` role is used.
    |                  | accept and reject list by giving the list to check |
    |                  | and apply first (default accept)                   |
    +------------------+----------------------------------------------------+
-   | response-filters | filters to apply to the response (not implemented) |
+   | response-filters | filters to apply to responses                      |
    +------------------+----------------------------------------------------+
 
 API Commands
@@ -111,7 +114,7 @@ Access control lists
 Access control lists can be specified using a name (string) or a
 single entry map.
 
-.. table::Predefined named access list
+.. table:: Predefined named access list
 
    +-------+----------------------------------------------+
    | Name  | Description                                  |
@@ -145,6 +148,22 @@ and parameter in the value.
    +---------+-----------------+--------------------------------------+
    | hook    | by hook         | hook name (can be empty)             |
    +---------+-----------------+--------------------------------------+
+
+Response Filters
+~~~~~~~~~~~~~~~~
+
+.. table:: Predefined response filters
+
+   +---------------+---------------------------------------+
+   | Name          | Description                           |
+   +---------------+---------------------------------------+
+   | list-commands | Removes not allowed commands from the |
+   |               | list-commands response                |
+   +---------------+---------------------------------------+
+
+Some other response filters were investigated for but none can't be
+implemented as stand alone hooks so remained only the ``list-commands``
+one which makes sense and requires the RBAC hook logic/code.
 
 Global Parameters
 ~~~~~~~~~~~~~~~~~
@@ -276,4 +295,31 @@ in the Kea source and is copied below.
 
     }
     }
+
+Accept/Reject Algorithm
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Here is the pseudo-code of the accept/reject algorithm which returns
+true i.e. accept or false i.e. reject.
+
+.. code-block::
+
+   bool match(command) {
+       if (preference == accept) {
+           if (accept_list && accept_list->match(command)) {
+               return (true);
+           }
+           if (reject_list && reject_list->match(command)) {
+               return (false);
+           }
+       } else {
+           if (reject_list && reject_list->match(command)) {
+               return (false);
+           }
+           if (accept_list && accept_list->match(command)) {
+               return (true);
+           }
+       }
+       return (others);
+   }
 
