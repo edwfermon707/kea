@@ -183,7 +183,7 @@ in the Kea source and is copied below.
 
 .. code-block:: javascript
    :linenos:
-   :emphasize-lines: 31-84
+   :emphasize-lines: 31-85
 
     {
     "Control-agent": {
@@ -247,7 +247,8 @@ in the Kea source and is copied below.
                     },
                     "reject-commands": "NONE",
                     "other-commands": false,
-                    "preference": "accept"
+                    "preference": "accept",
+                    "response-filters": [ "list-commands" ]
                 },{
                     "name": "admin",
                     "accept-commands": "ALL",

@@ -46,6 +46,8 @@ On the auth callout point process steps are:
    being accepted, reject means rejected, matching both follows the
    preference parameter (default accept), none follows the other-commands
    parameter: accept if true, reject if false (default false)
+ - when accepted and the role config has response filters put the command
+   and the role config in the request callout handle context
  - when rejected emits a forbidden response
  - if an exception is raised reject with an internal server error response
 
@@ -55,10 +57,12 @@ On the response callout point process steps are:
  - returns if there is no request or response (sanity check, note
    the response is a JSON response)
  - returns is the body is empty, is not a list or is an empty list.
- - assign the role
- - get the role configuration from the role (see the auth callout text
-   for details)
-to be finished
+ - retrieve the command and role config from the request callout handle
+   context (faster than decode again the request)
+ - check if the role config is not null and has response filters (sanity
+   check)
+ - apply to each answer from the body response filters
+ - if a response filter has modified something emits a debug log message
 
 File rbac_callout.cc
 
@@ -106,7 +110,7 @@ Role configuration parameters are:
    false (the default) the command is rejected.
  - preference - specifies what access list to check and apply first
    for commands matching both accept and reject lists.
- - response-filters - filters to apply to the response (not implemented).
+ - response-filters - filters to apply to the response.
 
 File rbac.{h,cc}
 
@@ -171,7 +175,15 @@ Type Acl (base), global variable aclTable.
 
 ## Response filters
 
-Note: not yet implemented.
+Predefined response filter is:
+ - noop: no operation.
+ - list-commands: remove from list-commands' answers no allowed (i.e. rejected)
+   commands.
+Two comments:
+ - if the list-commands is not allowed the list-commands response filter will
+   be never applied.
+ - other investigated response filters can be directly implemented in a
+   stand alone hook.
 
 File rbac_response_filter.{h,cc}
 
@@ -198,6 +210,7 @@ The Kea Role Based Access Control Hooks Library global configuration takes:
  - roles - takes the list of role configurations.
  - unknown-role - takes the configuration of the unknown role
    (used when the not empty assigned role has no configuration)
+ - response-filters - takes the list of response filters
 
 File rbac_config.{h,cc}
 
