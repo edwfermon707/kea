@@ -112,7 +112,7 @@ public:
     /// @param role_config The role config.
     /// @param body The JSON response body.
     /// @return whether the body was modified.
-    virtual bool filter(const std::string& role,
+    virtual bool filter(const std::string& command,
                         const RoleConfig& role_config,
                         data::ConstElementPtr body) final;
 };

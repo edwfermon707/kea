@@ -63,7 +63,8 @@
                     },
                     "reject-commands": "NONE",
                     "other-commands": false,
-                    "preference": "accept"
+                    "preference": "accept",
+                    "response-filters": [ "list-commands" ]
                 },{
                     "name": "admin",
                     "accept-commands": "ALL",
