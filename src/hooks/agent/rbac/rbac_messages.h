@@ -27,9 +27,11 @@ extern const isc::log::MessageID RBAC_TRACE_AUTH_REJECT;
 extern const isc::log::MessageID RBAC_TRACE_AUTH_RESPONSE;
 extern const isc::log::MessageID RBAC_TRACE_AUTH_ROLE;
 extern const isc::log::MessageID RBAC_TRACE_RESPONSE_BAD_BODY_TYPE;
+extern const isc::log::MessageID RBAC_TRACE_RESPONSE_CONTEXT;
 extern const isc::log::MessageID RBAC_TRACE_RESPONSE_DISABLED;
 extern const isc::log::MessageID RBAC_TRACE_RESPONSE_EMPTY_BODY;
 extern const isc::log::MessageID RBAC_TRACE_RESPONSE_EMPTY_BODY_LIST;
+extern const isc::log::MessageID RBAC_TRACE_RESPONSE_MODIFIED;
 extern const isc::log::MessageID RBAC_TRACE_RESPONSE_NO_ARGUMENTS;
 extern const isc::log::MessageID RBAC_UNLOAD_OK;
 

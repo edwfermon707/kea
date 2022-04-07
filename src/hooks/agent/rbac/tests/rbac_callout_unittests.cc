@@ -93,6 +93,31 @@ const char* CONFIGS[] = {
     "    ]\n"
     "}\n",
 
+    // configuration 3: now with the list-commands response filter.
+    "{\n"
+    "    \"assign-role-method\": \"remote-address\",\n"
+    "    \"roles\":\n"
+    "    [\n"
+    "        {\n"
+    "            \"name\": \"127.0.0.1\",\n"
+    "            \"accept-commands\":\n"
+    "            {\n"
+    "                \"commands\":\n"
+    "                [\n"
+    "                    \"list-commands\",\n"
+    "                    \"config-get\",\n"
+    "                    \"build-report\"\n"
+    "                ]\n"
+    "            },\n"
+    "            \"other-commands\": false,\n"
+    "            \"response-filters\":\n"
+    "            [\n"
+    "                \"list-commands\"\n"
+    "            ]\n"
+    "        }\n"
+    "    ]\n"
+    "}\n"
+
 };
 
 /// @brief Test fixture for check RBAC callouts.
@@ -110,6 +135,7 @@ public:
         apiAccesses.clear();
         apiHooks.clear();
         responseFilterTable.clear();
+        rbacConfig.init();
     }
 
     /// @brief Destructor.
@@ -163,6 +189,33 @@ public:
         handle.getArgument("response", response);
     }
 
+    /// @brief Test chained callouts.
+    ///
+    /// @param request The request.
+    /// @param http_response The response.
+    void calloutCalls(HttpRequestPtr request,
+                      HttpResponseJsonPtr http_response) {
+        // Get callout handle.
+        CalloutHandle handle(getCalloutManager());
+
+        handle.setArgument("request", request);
+        HttpResponseJsonPtr auth_response;
+        handle.setArgument("response", auth_response);
+
+        int ret;
+        ASSERT_NO_THROW(ret = auth(handle));
+        EXPECT_EQ(0, ret);
+
+        handle.getArgument("response", auth_response);
+        EXPECT_FALSE(auth_response);
+
+        // response requires a post processing response.
+        handle.setArgument("response", http_response);
+
+        ASSERT_NO_THROW(ret = response(handle));
+        EXPECT_EQ(0, ret);
+    }
+
     /// @brief Create HTTP Request.
     ///
     /// @param command The command name.
@@ -176,6 +229,18 @@ public:
         request->setBodyAsJson(body);
         request->finalize();
         return (request);
+    }
+
+    /// @brief Create HTTP Response.
+    ///
+    /// @param answer JSON answer.
+    HttpResponseJsonPtr createHttpResponse(ConstElementPtr answer) {
+        HttpResponseJsonPtr response(new HttpResponseJson(
+                HttpVersion::HTTP_11(),
+                HttpStatusCode::OK));
+        response->setBodyAsJson(answer);
+        response->finalize();
+        return (response);
     }
 
     /// @brief Callout manager accessed by this CalloutHandle.
@@ -242,7 +307,7 @@ TEST_F(CalloutTest, defaultRole) {
 /// @brief This test verifies that unknown role works as expected.
 TEST_F(CalloutTest, unknowntRole) {
     configure(CONFIGS[0]);
-    HttpRequestPtr request = createHttpRequest("list-commands", "dhcp6");
+    HttpRequestPtr request = createHttpRequest("list-commands", "dhcp4");
     request->setRemote("::1");
     HttpResponseJsonPtr response;
     authCalloutCall(request, response);
@@ -262,6 +327,38 @@ TEST_F(CalloutTest, requireTls) {
     authCalloutCall(request, response);
     EXPECT_TRUE(response);
     EXPECT_EQ(1, countFile("RBAC_TRACE_AUTH_NO_TLS_REJECT"));
+}
+
+/// @brief This test verifies that list-commands response filter works
+/// as expected.
+TEST_F(CalloutTest, listCommands) {
+    configure(CONFIGS[3]);
+    HttpRequestPtr request = createHttpRequest("list-commands", "dhcp4");
+    request->setRemote("127.0.0.1");
+
+    ElementPtr answer_list = Element::createList();
+    ElementPtr answer = Element::createMap();
+    answer_list->add(answer);
+    ElementPtr result = Element::create(CONTROL_RESULT_SUCCESS);
+    answer->set(CONTROL_RESULT, result);
+    ElementPtr args = Element::createList();
+    answer->set(CONTROL_ARGUMENTS, args);
+    args->add(Element::create(string("list-commands")));
+    args->add(Element::create(string("config-get")));
+    args->add(Element::create(string("build-report")));
+    string expected = answer_list->str();
+    args->add(Element::create(string("config-set")));
+    args->add(Element::create(string("shutdown")));
+    HttpResponseJsonPtr response = createHttpResponse(answer_list);
+
+    calloutCalls(request, response);
+    ConstElementPtr body = response->getBodyAsJson();
+    ASSERT_TRUE(body);
+    EXPECT_EQ(expected, body->str());
+
+    expected = "RBAC_TRACE_RESPONSE_MODIFIED The response has been modified ";
+    expected += "by a response filter in response callout.";
+    EXPECT_EQ(1, countFile(expected));
 }
 
 } // end of anonymous namespace

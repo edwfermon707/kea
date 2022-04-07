@@ -26,9 +26,11 @@ extern const isc::log::MessageID RBAC_TRACE_AUTH_REJECT = "RBAC_TRACE_AUTH_REJEC
 extern const isc::log::MessageID RBAC_TRACE_AUTH_RESPONSE = "RBAC_TRACE_AUTH_RESPONSE";
 extern const isc::log::MessageID RBAC_TRACE_AUTH_ROLE = "RBAC_TRACE_AUTH_ROLE";
 extern const isc::log::MessageID RBAC_TRACE_RESPONSE_BAD_BODY_TYPE = "RBAC_TRACE_RESPONSE_BAD_BODY_TYPE";
+extern const isc::log::MessageID RBAC_TRACE_RESPONSE_CONTEXT = "RBAC_TRACE_RESPONSE_CONTEXT";
 extern const isc::log::MessageID RBAC_TRACE_RESPONSE_DISABLED = "RBAC_TRACE_RESPONSE_DISABLED";
 extern const isc::log::MessageID RBAC_TRACE_RESPONSE_EMPTY_BODY = "RBAC_TRACE_RESPONSE_EMPTY_BODY";
 extern const isc::log::MessageID RBAC_TRACE_RESPONSE_EMPTY_BODY_LIST = "RBAC_TRACE_RESPONSE_EMPTY_BODY_LIST";
+extern const isc::log::MessageID RBAC_TRACE_RESPONSE_MODIFIED = "RBAC_TRACE_RESPONSE_MODIFIED";
 extern const isc::log::MessageID RBAC_TRACE_RESPONSE_NO_ARGUMENTS = "RBAC_TRACE_RESPONSE_NO_ARGUMENTS";
 extern const isc::log::MessageID RBAC_UNLOAD_OK = "RBAC_UNLOAD_OK";
 
@@ -57,9 +59,11 @@ const char* values[] = {
     "RBAC_TRACE_AUTH_RESPONSE", "Response in auth callout: %1.",
     "RBAC_TRACE_AUTH_ROLE", "Assigned role '%1' in auth callout.",
     "RBAC_TRACE_RESPONSE_BAD_BODY_TYPE", "Bad body type in JSON response in response callout.",
+    "RBAC_TRACE_RESPONSE_CONTEXT", "Retrieved command '%1' and role config '%2' in response callout.",
     "RBAC_TRACE_RESPONSE_DISABLED", "RBAC hooks library is disabled in response callout.",
     "RBAC_TRACE_RESPONSE_EMPTY_BODY", "Empty body in JSON response in response callout.",
     "RBAC_TRACE_RESPONSE_EMPTY_BODY_LIST", "Empty list in JSON response in response callout.",
+    "RBAC_TRACE_RESPONSE_MODIFIED", "The response has been modified by a response filter in response callout.",
     "RBAC_TRACE_RESPONSE_NO_ARGUMENTS", "No request or response in response callout.",
     "RBAC_UNLOAD_OK", "RBAC hooks library unloaded successfully.",
     NULL

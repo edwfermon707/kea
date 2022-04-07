@@ -87,16 +87,68 @@ TEST_F(ResponseFilterTest, listCommands) {
     args->add(Element::create(string("list-commands")));
     args->add(Element::create(string("foo")));
     args->add(Element::create(string("bar")));
-    ConstElementPtr expected = data::copy(answer);
+    string expected = answer->str();
     args->add(Element::create(string("abc")));
     args->add(Element::create(string("def")));
     ConstElementPtr answer1 = data::copy(answer);
 
     // Tests.
     EXPECT_FALSE(rf->filter("foo", *rc, ConstElementPtr()));
-    EXPECT_FALSE(rf->filter("foo", *rc, Element::createList()));
+    EXPECT_FALSE(rf->filter("list-commands", *rc, ConstElementPtr()));
+    EXPECT_FALSE(rf->filter("list-commands", *rc, Element::createList()));
     string arguments = "{ \"foo\": \"bar\" }";
-    EXPECT_FALSE(rf->filter("foo", *rc, Element::fromJSON(arguments)));
+    ConstElementPtr json = Element::fromJSON(arguments);
+    EXPECT_FALSE(rf->filter("list-commands", *rc, json));
+    arguments = "{ \"arguments\": { } }";
+    json = Element::fromJSON(arguments);
+    EXPECT_FALSE(rf->filter("list-commands", *rc, json));
+    arguments = "{ \"arguments\": [ ] }";
+    json = Element::fromJSON(arguments);
+    EXPECT_FALSE(rf->filter("list-commands", *rc, json));
+
+    EXPECT_TRUE(rf->filter("list-commands", *rc, answer));
+    EXPECT_EQ(expected, answer->str());
+    EXPECT_TRUE(rc->filter("list-commands", answer1));
+    EXPECT_EQ(expected, answer1->str());
+}
+
+/// @brief This test verifies that response filter parsing works as expected.
+TEST_F(ResponseFilterTest, parse) {
+    ElementPtr cfg;
+    string expected = "parse null response filter list";
+    EXPECT_THROW_MSG(ResponseFilter::parse(cfg), BadValue, expected);
+
+    cfg = Element::createMap();
+    expected = "response filter list is not a list";
+    EXPECT_THROW_MSG(ResponseFilter::parse(cfg), BadValue, expected);
+
+    cfg = Element::createList();
+    cfg->add(Element::create(1));
+    expected = "response filter name is not a string";
+    EXPECT_THROW_MSG(ResponseFilter::parse(cfg), BadValue, expected);
+
+    cfg = Element::createList();
+    cfg->add(Element::create(string()));
+    expected = "response filter name is empty";
+    EXPECT_THROW_MSG(ResponseFilter::parse(cfg), BadValue, expected);
+
+    cfg = Element::createList();
+    cfg->add(Element::create(string("foo")));
+    expected = "unknown response filter 'foo'";
+    EXPECT_THROW_MSG(ResponseFilter::parse(cfg), BadValue, expected);
+
+    cfg = Element::createList();
+    cfg->add(Element::create(string("noop")));
+    cfg->add(Element::create(string("list-commands")));
+    ResponseFilterList rfl;
+    EXPECT_NO_THROW(rfl = ResponseFilter::parse(cfg));
+    ASSERT_EQ(2, rfl.size());
+    ResponseFilterPtr rf = rfl.front();
+    ASSERT_TRUE(rf);
+    EXPECT_EQ("noop", rf->getName());
+    rf = rfl.back();
+    ASSERT_TRUE(rf);
+    EXPECT_EQ("list-commands", rf->getName());
 }
 
 } // end of anonymous namespace

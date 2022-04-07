@@ -45,7 +45,7 @@ ResponseFilter::parse(ConstElementPtr cfg) {
         if (elem->getType() != Element::string) {
             isc_throw(BadValue, "response filter name is not a string");
         }
-        const string& name = cfg->stringValue();
+        const string& name = elem->stringValue();
         if (name.empty()) {
             isc_throw(BadValue, "response filter name is empty");
         }
@@ -70,6 +70,9 @@ ListCommandsResponseFilter::filter(const string& command,
     }
     ConstElementPtr args = body->get(CONTROL_ARGUMENTS);
     if (!args || (args->getType() != Element::list)) {
+        return (false);
+    }
+    if (args->size() < 1) {
         return (false);
     }
     size_t modified = 0;

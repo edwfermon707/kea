@@ -152,7 +152,7 @@ auth(CalloutHandle& handle) {
                       RBAC_TRACE_AUTH_BAD_COMMAND_TYPE);
             return (0);
         }
-        const string& command = elem->stringValue();
+        string command = elem->stringValue();
         LOG_DEBUG(rbac_logger, DBGLVL_TRACE_BASIC, RBAC_TRACE_AUTH_COMMAND)
             .arg(command);
 
@@ -171,6 +171,10 @@ auth(CalloutHandle& handle) {
                 .arg(role_config->name_)
                 .arg(role)
                 .arg(command);
+            if (!role_config->response_filters_.empty()) {
+                handle.setContext("command", command);
+                handle.setContext("role_config", role_config);
+            }
         } else {
             LOG_DEBUG(rbac_logger, DBGLVL_TRACE_BASIC, RBAC_TRACE_AUTH_REJECT)
                 .arg(role_config->name_)
@@ -240,18 +244,30 @@ response(CalloutHandle& handle) {
         return (0);
     }
 
-    // Assign role.
-    const string& role = roleAssign->assign(request);
-    RoleConfigPtr role_config = RoleConfig::getConfig(role);
-    if (!role_config) {
+    // Recover command and role config;
+    string command;
+    RoleConfigPtr role_config;
+    handle.getContext("command", command);
+    handle.getContext("role_config", role_config);
+    if (!role_config || (role_config->response_filters_.empty())) {
         return (0);
     }
+    LOG_DEBUG(rbac_logger, DBGLVL_TRACE_BASIC, RBAC_TRACE_RESPONSE_CONTEXT)
+        .arg(command)
+        .arg(role_config->name_);
 
     // Apply filters on each list item.
-    response->setBodyAsJson(body);
+    bool modified = false;
+    for (ConstElementPtr answer : body->listValue()) {
+        if (role_config->filter(command, answer)) {
+            modified = true;
+        }
+    }
+    if (modified) {
+        LOG_DEBUG(rbac_logger, DBGLVL_TRACE_BASIC,
+                  RBAC_TRACE_RESPONSE_MODIFIED);
+    }
 
-    // Set parameters.
-    handle.setArgument("response", response);
     return (0);
 }
 
