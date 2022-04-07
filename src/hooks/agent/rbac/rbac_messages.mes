@@ -82,9 +82,16 @@ the role name and the command are displayed.
 % RBAC_TRACE_AUTH_NO_TLS_REJECT Not TLS request has been rejected.
 The not TLS request has been rejected in auth callout.
 
+% RBAC_TRACE_RESPONSE_CONTEXT Retrieved command '%1' and role config '%2' in response callout.
+The command and the role config has been retrieved from the request context.
+They are displayed.
+
 % RBAC_TRACE_RESPONSE_DISABLED RBAC hooks library is disabled in response callout.
 The response callout has been called with the RBAC hooks library disabled
 i.e. with no role assigned.
+
+% RBAC_TRACE_RESPONSE_MODIFIED The response has been modified by a response filter in response callout.
+A response filter has modifed the HTTP response in response callout.
 
 % RBAC_TRACE_RESPONSE_NO_ARGUMENTS No request or response in response callout.
 The response callout has been called with request or response. The RBAC
