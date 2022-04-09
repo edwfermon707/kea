@@ -601,8 +601,7 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
 
             // Skip the address that already has a bound socket. It allows
             // for preventing bind errors or re-opening sockets.
-            if (!skip_opened || !IfaceMgr::hasOpenSocket(addr.get()) ||
-                !iface->getSockets().size()) {
+            if (!skip_opened || !IfaceMgr::hasOpenSocket(addr.get())) {
                 try {
                     // We haven't open any broadcast sockets yet, so we can
                     // open at least one more or
@@ -724,13 +723,10 @@ IfaceMgr::openSockets6(const uint16_t port,
 
             // Skip the address that already has a bound socket. It allows
             // for preventing bind errors or re-opening sockets.
-<<<<<<< HEAD
             // The @ref IfaceMgr::hasOpenSocket(addr) does match the "::"
             // address on BSD and Solaris on any interface, so we make sure that
             // the interface actually has opened sockets by checking the numner
             // of sockets to be non zero.
-=======
->>>>>>> [#1716] add support for retry for multicast group on BSD and Solaris
             if (!skip_opened || !IfaceMgr::hasOpenSocket(addr) ||
                 !iface->getSockets().size()) {
                 try {
