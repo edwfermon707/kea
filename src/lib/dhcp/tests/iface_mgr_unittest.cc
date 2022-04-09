@@ -385,21 +385,14 @@ public:
                 << iface.getName();
             return;
         }
-#if defined OS_LINUX
-        // On Linux, for each link-local address there may be an
-        // additional socket opened and bound to ff02::1:2. This socket
-        // is only opened if the interface is multicast-capable.
+
+        // For each link-local address there may be an additional socket opened
+        // and bound to ff02::1:2. This socket is only opened if the interface
+        // is multicast-capable.
         ASSERT_EQ(unicast_num + (iface.flag_multicast_ ? link_local_num : 0)
                   + link_local_num, iface.getSockets().size())
             << "invalid number of sockets on interface "
             << iface.getName();
-#else
-        // On non-Linux, there is no additional socket.
-        ASSERT_EQ(unicast_num + link_local_num, iface.getSockets().size())
-            << "invalid number of sockets on interface "
-            << iface.getName();
-
-#endif
     }
 
     // Get the number of IPv4 or IPv6 sockets on the loopback interface

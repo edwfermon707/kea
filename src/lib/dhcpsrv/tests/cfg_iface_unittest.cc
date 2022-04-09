@@ -894,18 +894,12 @@ TEST_F(CfgIfaceTest, retryOpenServiceSockets6OmitBound) {
     cfg6.setServiceSocketsMaxRetries(RETRIES);
     cfg6.setServiceSocketsRetryWaitTime(WAIT_TIME);
 
-#if defined OS_LINUX
-    const uint32_t opened_by_eth0 = 3;
-#else
-    const uint32_t opened_by_eth0 = 2;
-#endif
-
     // Set the callback to count calls and check wait time
     size_t total_calls = 0;
     auto last_call_time = std::chrono::system_clock::time_point::min();
     auto open_callback = [&total_calls, &last_call_time, WAIT_TIME](uint16_t) {
         auto now = std::chrono::system_clock::now();
-        bool is_eth0 = total_calls < opened_by_eth0;
+        bool is_eth0 = total_calls < 3;
 
         // Skip the wait time check for the socket when two sockets are
         // binding in a single attempt.
@@ -913,10 +907,9 @@ TEST_F(CfgIfaceTest, retryOpenServiceSockets6OmitBound) {
         // Don't check the waiting time for initial calls.
         // iface: eth0 addr: 2001:db8:1::1 port: 547 multicast: 0
         // iface: eth0 addr: fe80::3a60:77ff:fed5:cdef port: 547 multicast: 1
-        // iface: eth0 addr: ff02::1:2 port: 547 multicast: 0 --- only on Linux systems
+        // iface: eth0 addr: ff02::1:2 port: 547 multicast: 0
         // iface: eth1 addr: fe80::3a60:77ff:fed5:abcd port: 547 multicast: 1 - fails
-
-        if (total_calls > (opened_by_eth0 + 1)) {
+        if (total_calls > 4) {
             auto interval = now - last_call_time;
             auto interval_ms =
                 std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -951,9 +944,9 @@ TEST_F(CfgIfaceTest, retryOpenServiceSockets6OmitBound) {
     // Wait for a finish sockets binding (with a safe margin).
     doWait(RETRIES * WAIT_TIME * 2);
 
-    // For eth0 interface perform only 3 (on Linux Systems or 2 otherwise) init open,
+    // For eth0 interface perform only 3 init open,
     // for eth1 interface perform 1 init open and a few retries.
-    EXPECT_EQ((RETRIES + 1) + opened_by_eth0, total_calls);
+    EXPECT_EQ((RETRIES + 1) + 3, total_calls);
 }
 
 // Test that only one reopen timer is active simultaneously. If a new opening

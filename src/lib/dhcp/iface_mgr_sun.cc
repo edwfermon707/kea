@@ -151,10 +151,13 @@ IfaceMgr::openMulticastSocket(Iface& iface,
                               const isc::asiolink::IOAddress& addr,
                               const uint16_t port,
                               IfaceMgrErrorMsgCallback error_handler) {
+    // This variable will hold a descriptor of the socket bound to
+    // link-local address. It may be required for us to close this
+    // socket if an attempt to open and bind a socket to multicast
+    // address fails.
+    int sock;
     try {
-        // This should open a socket, bind it to link-local address
-        // and join multicast group.
-        openSocket(iface.getName(), addr, port, iface.flag_multicast_);
+        sock = openSocket(iface.getName(), addr, port, iface.flag_multicast_);
 
     } catch (const Exception& ex) {
         IFACEMGR_ERROR(SocketConfigError, error_handler,
@@ -164,6 +167,35 @@ IfaceMgr::openMulticastSocket(Iface& iface,
         return (false);
 
     }
+
+    // In order to receive multicast traffic another socket is opened
+    // and bound to the multicast address.
+
+    /// @todo The DHCPv6 requires multicast so we may want to think
+    /// whether we want to open the socket on a multicast-incapable
+    /// interface or not. For now, we prefer to be liberal and allow
+    /// it for some odd use cases which may utilize non-multicast
+    /// interfaces. Perhaps a warning should be emitted if the
+    /// interface is not a multicast one.
+    if (iface.flag_multicast_) {
+        try {
+            openSocket(iface.getName(),
+                       IOAddress(ALL_DHCP_RELAY_AGENTS_AND_SERVERS),
+                       port);
+        } catch (const Exception& ex) {
+            // An attempt to open and bind a socket to multicast address
+            // has failed. We have to close the socket we previously
+            // bound to link-local address - this is everything or
+            // nothing strategy.
+            iface.delSocket(sock);
+            IFACEMGR_ERROR(SocketConfigError, error_handler,
+                           "Failed to open multicast socket on"
+                           " interface " << iface.getName()
+                           << ", reason: " << ex.what());
+            return (false);
+        }
+    }
+    // Both sockets have opened successfully.
     return (true);
 }
 
