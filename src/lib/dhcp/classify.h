@@ -7,6 +7,8 @@
 #ifndef CLASSIFY_H
 #define CLASSIFY_H
 
+#include <exceptions/exceptions.h>
+
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/identity.hpp>
@@ -142,6 +144,15 @@ namespace dhcp {
         /// @brief Clears containers.
         void clear() {
             container_.clear();
+        }
+
+        bool operator<(ClientClasses const& other) const {
+            for (ClientClass i : container_) {
+                if (!other.contains(i)) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         /// @brief Returns all class names as text

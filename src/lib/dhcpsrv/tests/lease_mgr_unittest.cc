@@ -297,6 +297,14 @@ public:
                   " implemented");
     }
 
+    Lease4Collection getValidLeases4ByClientClass(ClientClass const& /* client_class */) const override {
+        isc_throw(NotImplemented, "");
+    }
+
+    Lease6Collection getValidLeases6ByClientClass(ClientClass const& /* client_class */) const override {
+        isc_throw(NotImplemented, "");
+    }
+
     /// @brief Updates IPv4 lease.
     ///
     /// @param lease4 The lease to be updated.

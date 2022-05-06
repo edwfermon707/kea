@@ -13,8 +13,9 @@
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/csv_lease_file4.h>
 #include <dhcpsrv/csv_lease_file6.h>
-#include <dhcpsrv/memfile_lease_storage.h>
 #include <dhcpsrv/lease_mgr.h>
+#include <dhcpsrv/memfile_lease_storage.h>
+#include <util/multi_threading_mgr.h>
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
@@ -395,6 +396,91 @@ public:
     /// value is set to 0, all expired (but not reclaimed) leases are returned.
     virtual void getExpiredLeases6(Lease6Collection& expired_leases,
                                    const size_t max_leases) const;
+
+    Lease4Collection getValidLeases4ByClientClass(ClientClass const& client_class) const override {
+        std::unique_lock<std::mutex> lock(*mutex_, std::defer_lock);
+        if (isc::util::MultiThreadingMgr::instance().getMode()) {
+             lock.lock();
+        }
+
+        auto comparison_tuple(boost::make_tuple(ClientClasses(client_class), false, time(NULL)));
+
+        Lease4StorageClientClassIndex::const_iterator lower_bound(
+            storage4_.get<ClientClassIndexTag>().lower_bound(comparison_tuple));
+
+        Lease4StorageClientClassIndex::const_iterator upper_bound(
+            storage4_.get<ClientClassIndexTag>().upper_bound(comparison_tuple));
+
+        return Lease4Collection(lower_bound, upper_bound);
+    }
+
+    Lease6Collection getValidLeases6ByClientClass(ClientClass const& client_class) const override {
+        std::unique_lock<std::mutex> lock(*mutex_, std::defer_lock);
+        if (isc::util::MultiThreadingMgr::instance().getMode()) {
+             lock.lock();
+        }
+
+        auto comparison_tuple(boost::make_tuple(ClientClasses(client_class)));
+
+        Lease6StorageClientClassIndex::const_iterator lower_bound(
+            storage6_.get<ClientClassIndexTag>().lower_bound(comparison_tuple));
+
+        Lease6StorageClientClassIndex::const_iterator upper_bound(
+            storage6_.get<ClientClassIndexTag>().upper_bound(comparison_tuple));
+
+        auto& index(storage6_.get<ClientClassIndexTag>());
+
+        std::cout << "all" << std::endl;
+        for (auto it = index.begin(); it != index.end(); ++it) {
+            std::cout << (*it)->addr_ << " " << (*it)->client_classes_.toText() << " " <<
+                (*it)->valid_lft_ << " " << (*it)->getExpirationTime() << " " << time(NULL) <<
+                std::endl;
+        }
+
+        std::cout << "lower" << std::endl;
+        for (auto it = index.begin(); it != lower_bound; ++it) {
+            std::cout << (*it)->addr_ << " " << (*it)->client_classes_.toText() << " " <<
+                (*it)->valid_lft_ << " " << (*it)->getExpirationTime() << " " << time(NULL) <<
+                std::endl;
+        }
+
+        std::cout << "lower 2" << std::endl;
+        for (auto it = lower_bound; it != index.end(); ++it) {
+            std::cout << (*it)->addr_ << " " << (*it)->client_classes_.toText() << " " <<
+                (*it)->valid_lft_ << " " << (*it)->getExpirationTime() << " " << time(NULL) <<
+                std::endl;
+        }
+
+        std::cout << "upper" << std::endl;
+        for (auto it = index.begin(); it != upper_bound; ++it) {
+            std::cout << (*it)->addr_ << " " << (*it)->client_classes_.toText() << " " <<
+                (*it)->valid_lft_ << " " << (*it)->getExpirationTime() << " " << time(NULL) <<
+                std::endl;
+        }
+
+        std::cout << "upper 2" << std::endl;
+        for (auto it = upper_bound; it != index.end(); ++it) {
+            std::cout << (*it)->addr_ << " " << (*it)->client_classes_.toText() << " " <<
+                (*it)->valid_lft_ << " " << (*it)->getExpirationTime() << " " << time(NULL) <<
+                std::endl;
+        }
+
+        std::cout << "lower - upper" << std::endl;
+        for (auto it = lower_bound; it != index.end(); ++it) {
+            std::cout << (*it)->addr_ << " " << (*it)->client_classes_.toText() << " " <<
+                (*it)->valid_lft_ << " " << (*it)->getExpirationTime() << " " << time(NULL) <<
+                std::endl;
+        }
+
+        std::cout << "upper - lower" << std::endl;
+        for (auto it = upper_bound; it != lower_bound; ++it) {
+            std::cout << (*it)->addr_ << " " << (*it)->client_classes_.toText() << " " <<
+                (*it)->valid_lft_ << " " << (*it)->getExpirationTime() << " " << time(NULL) <<
+                std::endl;
+        }
+
+        return Lease6Collection(upper_bound, lower_bound);
+    }
 
     /// @brief Updates IPv4 lease.
     ///

@@ -47,6 +47,9 @@ struct DuidIndexTag { };
 /// @brief Tag for index using hostname.
 struct HostnameIndexTag { };
 
+/// @brief Tag for index by client class
+struct ClientClassIndexTag { };
+
 /// @name Multi index containers holding DHCPv4 and DHCPv6 leases.
 ///
 //@{
@@ -97,7 +100,7 @@ typedef boost::multi_index_container<
             boost::multi_index::tag<ExpirationIndexTag>,
             // This is a composite index that will be used to search for
             // the expired leases. Depending on the value of the first component
-            // of the search key, the reclaimed or not reclaimed leases will can
+            // of the search key, the reclaimed or not reclaimed leases can
             // be searched.
             boost::multi_index::composite_key<
                 Lease6,
@@ -132,6 +135,21 @@ typedef boost::multi_index_container<
         boost::multi_index::ordered_non_unique<
             boost::multi_index::tag<HostnameIndexTag>,
             boost::multi_index::member<Lease, std::string, &Lease::hostname_>
+        >,
+
+        // Specification of the eigth index starts here.
+        boost::multi_index::ordered_non_unique<boost::multi_index::tag<ClientClassIndexTag>,
+            // This is a composite index that will be used to search for non-expired leases that
+            // have a given client class.
+            boost::multi_index::composite_key<
+                Lease6,
+                // Client classes
+                boost::multi_index::member<Lease, ClientClasses, &Lease::client_classes_>,
+                // The boolean value specifying if lease is reclaimed or not
+                boost::multi_index::const_mem_fun<Lease, bool, &Lease::stateExpiredReclaimed>,
+                // Lease expiration time
+                boost::multi_index::const_mem_fun<Lease, int64_t, &Lease::getExpirationTime>
+            >
         >
     >
 > Lease6Storage; // Specify the type name of this container.
@@ -205,7 +223,7 @@ typedef boost::multi_index_container<
             boost::multi_index::tag<ExpirationIndexTag>,
             // This is a composite index that will be used to search for
             // the expired leases. Depending on the value of the first component
-            // of the search key, the reclaimed or not reclaimed leases will can
+            // of the search key, the reclaimed or not reclaimed leases can
             // be searched.
             boost::multi_index::composite_key<
                 Lease4,
@@ -225,11 +243,26 @@ typedef boost::multi_index_container<
             boost::multi_index::member<Lease, isc::dhcp::SubnetID, &Lease::subnet_id_>
         >,
 
-        // Specification of the seventh index starts here
+        // Specification of the seventh index starts here.
         // This index is used to retrieve leases for matching hostname.
         boost::multi_index::ordered_non_unique<
             boost::multi_index::tag<HostnameIndexTag>,
             boost::multi_index::member<Lease, std::string, &Lease::hostname_>
+        >,
+
+        // Specification of the eigth index starts here.
+        boost::multi_index::ordered_non_unique<boost::multi_index::tag<ClientClassIndexTag>,
+            // This is a composite index that will be used to search for non-expired leases that
+            // have a given client class.
+            boost::multi_index::composite_key<
+                Lease4,
+                // Client classes
+                boost::multi_index::member<Lease, ClientClasses, &Lease::client_classes_>,
+                // The boolean value specifying if lease is reclaimed or not
+                boost::multi_index::const_mem_fun<Lease, bool, &Lease::stateExpiredReclaimed>,
+                // Lease expiration time
+                boost::multi_index::const_mem_fun<Lease, int64_t, &Lease::getExpirationTime>
+            >
         >
     >
 > Lease4Storage; // Specify the type name for this container.
@@ -258,11 +291,17 @@ typedef Lease6Storage::index<DuidIndexTag>::type Lease6StorageDuidIndex;
 /// @brief DHCPv6 lease storage index by hostname.
 typedef Lease6Storage::index<HostnameIndexTag>::type Lease6StorageHostnameIndex;
 
+/// @brief DHCPv4 lease storage index by expiration time and client class.
+typedef Lease6Storage::index<ClientClassIndexTag>::type Lease6StorageClientClassIndex;
+
 /// @brief DHCPv4 lease storage index by address.
 typedef Lease4Storage::index<AddressIndexTag>::type Lease4StorageAddressIndex;
 
 /// @brief DHCPv4 lease storage index by expiration time.
 typedef Lease4Storage::index<ExpirationIndexTag>::type Lease4StorageExpirationIndex;
+
+/// @brief DHCPv4 lease storage index by expiration time and client class.
+typedef Lease4Storage::index<ClientClassIndexTag>::type Lease4StorageClientClassIndex;
 
 /// @brief DHCPv4 lease storage index by HW address and subnet identifier.
 typedef Lease4Storage::index<HWAddressSubnetIdIndexTag>::type

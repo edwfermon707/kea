@@ -91,7 +91,7 @@ struct LeaseStatsRow {
     }
 
     /// @brief Less-than operator
-    bool operator< (const LeaseStatsRow &rhs) const {
+    bool operator<(const LeaseStatsRow &rhs) const {
         if (subnet_id_ < rhs.subnet_id_) {
             return (true);
         }
@@ -516,6 +516,12 @@ public:
     /// value is set to 0, all expired (but not reclaimed) leases are returned.
     virtual void getExpiredLeases6(Lease6Collection& expired_leases,
                                    const size_t max_leases) const = 0;
+
+    virtual Lease4Collection
+    getValidLeases4ByClientClass(ClientClass const& client_class) const = 0;
+
+    virtual Lease6Collection
+    getValidLeases6ByClientClass(ClientClass const& client_class) const = 0;
 
     /// @brief Updates IPv4 lease.
     ///

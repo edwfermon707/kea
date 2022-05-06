@@ -247,8 +247,8 @@ IOFetch::operator()(boost::system::error_code ec, size_t length) {
             }
         }
 
-        // If we timeout, we stop, which will can cancel outstanding I/Os and
-        // shutdown everything.
+        // If we timeout, we stop, which cancels outstanding I/O operations and
+        // shuts down everything.
         if (data_->timeout != -1) {
             data_->timer.expires_from_now(boost::posix_time::milliseconds(
                 data_->timeout));

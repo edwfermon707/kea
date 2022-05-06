@@ -210,7 +210,7 @@ public:
         try {
             LeaseMgrFactory::create(getConfigString(u));
         } catch (...) {
-            std::cerr << "*** ERROR: unable to create instance of the Memfile\n"
+            std::cerr << "*** ERROR: unable to create instance of the Memfile"
                 " lease database backend.\n";
             throw;
         }
@@ -2580,6 +2580,47 @@ TEST_F(MemfileLeaseMgrTest, testHWAddr) {
             ++i;
         }
     }
+}
+
+/// @brief Checks that retrieval by client class returns only valid leases that
+/// contain given client class.
+TEST_F(MemfileLeaseMgrTest, retrieveByClientClass) {
+    // Add some leases to the CSV file.
+    LeaseFileIO io(getLeaseFilePath("leasefile6_0.csv"));
+    std::stringstream contents;
+    contents << "address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+                "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
+                "hwaddr,state,user_context,hwtype,hwaddr_source,client_classes\n";
+
+    // Create combinations with all valid values except for 255 which is an
+    // unused value for both hwtype and hwaddr_source, but lease construction
+    // doesn't complain in that case either.
+    std::vector<uint16_t> const hwtypes{0, 1, 6, 8, 255};
+    std::vector<uint32_t> const hwsources{
+        0xffffffff, 0x00000000, 0x00000001, 0x00000002, 0x00000004, 0x00000008,
+        0x00000010, 0x00000020, 0x00000040, 0x00000080, 0x000000ff};
+    int i = 0;
+    for (uint16_t hwtype : hwtypes) {
+        for (uint32_t hwsource : hwsources) {
+            std::stringstream hex;
+            hex << std::hex << std::setw(2) << std::setfill('0') << i;
+            contents << std::dec << "2001:db8:1::" << hex.str()
+                     << ",00:00:00:00:00:" << hex.str() << "," <<
+                     ((i % 2 == 0) ? "1" : "7200") << "," <<
+                     ((i % 4 == 0) ? "1936982495" : "1") <<
+                     ",1,3600,0,1,128,0,0,,ff:ff:ff:ff:ff:"
+                     << hex.str() << ",1,," << hwtype << "," << hwsource << "," <<
+                     ((i % 3 == 0) ? "" : (i % 3 == 1) ? "gold&#x2csilver" : "gold") << "\n";
+            ++i;
+        }
+    }
+
+    io.writeFile(contents.str());
+    startBackend(V6);
+
+    // Check leases.
+    Lease6Collection leases(lmptr_->getValidLeases6ByClientClass("gold"));
+    EXPECT_EQ(leases.size(), 31);
 }
 
 }  // namespace

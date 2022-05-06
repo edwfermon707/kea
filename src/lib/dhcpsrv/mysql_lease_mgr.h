@@ -895,6 +895,10 @@ private:
                            MYSQL_BIND* bind,
                            const LeasePtr& lease);
 
+    Lease4Collection getValidLeases4ByClientClass(ClientClass const& client_class) const override;
+
+    Lease6Collection getValidLeases6ByClientClass(ClientClass const& client_class) const override;
+
     /// @brief Delete lease common code
     ///
     /// Holds the common code for deleting a lease.  It binds the parameters
