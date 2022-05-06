@@ -69,7 +69,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT address, hwaddr, client_id, "
         "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
         "fqdn_fwd, fqdn_rev, hostname, "
-        "state, user_context "
+        "state, user_context, client_classes "
       "FROM lease4"},
 
     // GET_LEASE4_ADDR
@@ -78,7 +78,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT address, hwaddr, client_id, "
         "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
         "fqdn_fwd, fqdn_rev, hostname, "
-        "state, user_context "
+        "state, user_context, client_classes "
       "FROM lease4 "
       "WHERE address = $1"},
 
@@ -88,7 +88,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT address, hwaddr, client_id, "
         "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
         "fqdn_fwd, fqdn_rev, hostname, "
-        "state, user_context "
+        "state, user_context, client_classes "
       "FROM lease4 "
       "WHERE client_id = $1"},
 
@@ -98,7 +98,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT address, hwaddr, client_id, "
         "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
         "fqdn_fwd, fqdn_rev, hostname, "
-        "state, user_context "
+        "state, user_context, client_classes "
       "FROM lease4 "
       "WHERE client_id = $1 AND subnet_id = $2"},
 
@@ -108,7 +108,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT address, hwaddr, client_id, "
         "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
         "fqdn_fwd, fqdn_rev, hostname, "
-        "state, user_context "
+        "state, user_context, client_classes "
       "FROM lease4 "
       "WHERE hwaddr = $1"},
 
@@ -118,7 +118,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT address, hwaddr, client_id, "
         "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
         "fqdn_fwd, fqdn_rev, hostname, "
-        "state, user_context "
+        "state, user_context, client_classes "
       "FROM lease4 "
       "WHERE hwaddr = $1 AND subnet_id = $2"},
 
@@ -128,7 +128,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT address, hwaddr, client_id, "
         "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
         "fqdn_fwd, fqdn_rev, hostname, "
-        "state, user_context "
+        "state, user_context, client_classes "
       "FROM lease4 "
       "WHERE address > $1 "
       "ORDER BY address "
@@ -140,7 +140,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT address, hwaddr, client_id, "
         "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
         "fqdn_fwd, fqdn_rev, hostname, "
-      "state, user_context "
+      "state, user_context, client_classes "
       "FROM lease4 "
       "WHERE subnet_id = $1"},
 
@@ -150,7 +150,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT address, hwaddr, client_id, "
         "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
         "fqdn_fwd, fqdn_rev, hostname, "
-      "state, user_context "
+      "state, user_context, client_classes "
       "FROM lease4 "
       "WHERE lower(hostname) = $1"},
 
@@ -160,7 +160,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT address, hwaddr, client_id, "
         "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
         "fqdn_fwd, fqdn_rev, hostname, "
-        "state, user_context "
+        "state, user_context, client_classes "
       "FROM lease4 "
       "WHERE state != $1 AND valid_lifetime != 4294967295 AND expire < $2 "
       "ORDER BY expire "
@@ -173,7 +173,7 @@ PgSqlTaggedStatement tagged_statements[] = {
         "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
         "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
         "hwaddr, hwtype, hwaddr_source, "
-        "state, user_context "
+        "state, user_context, client_classes "
       "FROM lease6"},
 
     // GET_LEASE6_ADDR
@@ -183,7 +183,7 @@ PgSqlTaggedStatement tagged_statements[] = {
         "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
         "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
         "hwaddr, hwtype, hwaddr_source, "
-        "state, user_context "
+        "state, user_context, client_classes "
       "FROM lease6 "
       "WHERE address = $1 AND lease_type = $2"},
 
@@ -194,7 +194,7 @@ PgSqlTaggedStatement tagged_statements[] = {
         "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
         "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
         "hwaddr, hwtype, hwaddr_source, "
-        "state, user_context "
+        "state, user_context, client_classes "
       "FROM lease6 "
       "WHERE duid = $1 AND iaid = $2 AND lease_type = $3"},
 
@@ -205,7 +205,7 @@ PgSqlTaggedStatement tagged_statements[] = {
         "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
         "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
         "hwaddr, hwtype, hwaddr_source, "
-        "state, user_context "
+        "state, user_context, client_classes "
       "FROM lease6 "
       "WHERE lease_type = $1 "
         "AND duid = $2 AND iaid = $3 AND subnet_id = $4"},
@@ -217,7 +217,7 @@ PgSqlTaggedStatement tagged_statements[] = {
         "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
         "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
         "hwaddr, hwtype, hwaddr_source, "
-        "state, user_context "
+        "state, user_context, client_classes "
       "FROM lease6 "
       "WHERE address > $1 "
       "ORDER BY address "
@@ -230,7 +230,7 @@ PgSqlTaggedStatement tagged_statements[] = {
         "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
         "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
         "hwaddr, hwtype, hwaddr_source, "
-        "state, user_context "
+        "state, user_context, client_classes "
       "FROM lease6 "
       "WHERE subnet_id = $1"},
 
@@ -241,7 +241,7 @@ PgSqlTaggedStatement tagged_statements[] = {
         "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
         "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
         "hwaddr, hwtype, hwaddr_source, "
-        "state, user_context "
+        "state, user_context, client_classes "
       "FROM lease6 "
       "WHERE duid = $1"},
 
@@ -252,7 +252,7 @@ PgSqlTaggedStatement tagged_statements[] = {
         "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
         "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
         "hwaddr, hwtype, hwaddr_source, "
-        "state, user_context "
+        "state, user_context, client_classes "
       "FROM lease6 "
       "WHERE lower(hostname) = $1"},
 
@@ -264,7 +264,7 @@ PgSqlTaggedStatement tagged_statements[] = {
         "lease_type, iaid, prefix_len, "
         "fqdn_fwd, fqdn_rev, hostname, "
         "hwaddr, hwtype, hwaddr_source, "
-        "state, user_context "
+        "state, user_context, client_classes "
       "FROM lease6 "
       "WHERE state != $1 AND valid_lifetime != 4294967295 AND expire < $2 "
       "ORDER BY expire "
@@ -276,8 +276,8 @@ PgSqlTaggedStatement tagged_statements[] = {
       "insert_lease4",
       "INSERT INTO lease4(address, hwaddr, client_id, "
         "valid_lifetime, expire, subnet_id, fqdn_fwd, fqdn_rev, hostname, "
-        "state, user_context) "
-      "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)"},
+        "state, user_context, client_classes) "
+      "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)"},
 
     // INSERT_LEASE6
     { 17, { OID_VARCHAR, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8,
@@ -288,8 +288,8 @@ PgSqlTaggedStatement tagged_statements[] = {
         "expire, subnet_id, pref_lifetime, "
         "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
         "hwaddr, hwtype, hwaddr_source, "
-        "state, user_context) "
-      "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)"},
+        "state, user_context, client_classes) "
+      "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)"},
 
     // UPDATE_LEASE4
     { 13, { OID_INT8, OID_BYTEA, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8,
@@ -298,8 +298,8 @@ PgSqlTaggedStatement tagged_statements[] = {
       "UPDATE lease4 SET address = $1, hwaddr = $2, "
         "client_id = $3, valid_lifetime = $4, expire = $5, "
         "subnet_id = $6, fqdn_fwd = $7, fqdn_rev = $8, hostname = $9, "
-        "state = $10, user_context = $11 "
-      "WHERE address = $12 AND expire = $13"},
+        "state = $10, user_context = $11, client_classes = $12 "
+      "WHERE address = $13 AND expire = $14"},
 
     // UPDATE_LEASE6
     { 19, { OID_VARCHAR, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8, OID_INT8,
@@ -312,8 +312,8 @@ PgSqlTaggedStatement tagged_statements[] = {
         "pref_lifetime = $6, lease_type = $7, iaid = $8, "
         "prefix_len = $9, fqdn_fwd = $10, fqdn_rev = $11, hostname = $12, "
         "hwaddr = $13, hwtype = $14, hwaddr_source = $15, "
-        "state = $16, user_context = $17 "
-      "WHERE address = $18 AND expire = $19"},
+        "state = $16, user_context = $17, client_classes = $18 "
+      "WHERE address = $19 AND expire = $20"},
 
     // ALL_LEASE4_STATS
     { 0, { OID_NONE },
@@ -2035,6 +2035,16 @@ PgSqlLeaseMgr::getExpiredLeasesCommon(LeaseCollection& expired_leases,
 
     // Retrieve leases from the database.
     getLeaseCollection(ctx, statement_index, bind_array, expired_leases);
+}
+
+Lease4Collection
+PgSqlLeaseMgr::getValidLeases4ByClientClass(ClientClass const& /* client_class */) const {
+    isc_throw(NotImplemented, "");
+}
+
+Lease6Collection
+PgSqlLeaseMgr::getValidLeases6ByClientClass(ClientClass const& /* client_class */) const {
+    isc_throw(NotImplemented, "");
 }
 
 template<typename LeasePtr>

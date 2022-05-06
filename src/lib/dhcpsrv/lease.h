@@ -8,6 +8,7 @@
 #define LEASE_H
 
 #include <asiolink/io_address.h>
+#include <dhcp/classify.h>
 #include <dhcp/duid.h>
 #include <dhcp/option.h>
 #include <dhcp/hwaddr.h>
@@ -177,6 +178,8 @@ struct Lease : public isc::data::UserContext, public isc::data::CfgToElement {
     /// The defined states are represented by the "STATE_*" constants
     /// belonging to this class.
     uint32_t state_;
+
+    ClientClasses client_classes_;
 
     /// @brief Convert Lease to Printable Form
     ///

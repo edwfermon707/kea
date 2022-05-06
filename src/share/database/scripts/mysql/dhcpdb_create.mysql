@@ -4076,6 +4076,10 @@ ALTER TABLE dhcp6_options
 UPDATE schema_version
     SET version = '12', minor = '0';
 
+-- This line concludes schema upgrade to version 12.
+
+-- This starts schema upgrade to version 13.
+
 -- Create a function that separates a contiguous hexadecimal string
 -- into groups of two hexadecimals separated by colons.
 DROP FUNCTION IF EXISTS colonSeparatedHex;
@@ -4284,7 +4288,199 @@ DELIMITER ;
 UPDATE schema_version
     SET version = '13', minor = '0';
 
--- This line concludes database upgrade to version 13.
+-- This line concludes schema upgrade to version 13.
+
+-- This starts schema upgrade to version 14.
+-- It adds the client_classes column used in lease limiting to lease tables and to procedures that
+-- act on the lease tables.
+
+ALTER TABLE lease4
+    ADD COLUMN client_classes TEXT;
+
+ALTER TABLE lease6
+    ADD COLUMN client_classes TEXT;
+
+DROP PROCEDURE IF EXISTS lease4DumpHeader;
+DELIMITER $$
+CREATE PROCEDURE lease4DumpHeader()
+BEGIN
+    SELECT 'address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context,client_classes';
+END  $$
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS lease4DumpData;
+DELIMITER $$
+CREATE PROCEDURE lease4DumpData()
+BEGIN
+    SELECT
+        INET_NTOA(address),
+        IFNULL(colonSeparatedHex(HEX(hwaddr)), ''),
+        IFNULL(colonSeparatedHex(HEX(client_id)), ''),
+        valid_lifetime,
+        UNIX_TIMESTAMP(expire),
+        subnet_id,
+        fqdn_fwd,
+        fqdn_rev,
+        REPLACE(hostname, ',', '&#x2c'),
+        state,
+        REPLACE(IFNULL(user_context, ''), ',', '&#x2c'),
+        REPLACE(IFNULL(client_classes, ''), ',', '&#x2c')
+    FROM lease4
+    ORDER BY address;
+END $$
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS lease6DumpHeader;
+DELIMITER $$
+CREATE PROCEDURE lease6DumpHeader()
+BEGIN
+    SELECT 'address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,state,user_context,hwtype,hwaddr_source,client_classes';
+END  $$
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS lease6DumpData;
+DELIMITER $$
+CREATE PROCEDURE lease6DumpData()
+BEGIN
+    SELECT
+        address,
+        IFNULL(colonSeparatedHex(HEX(duid)), ''),
+        valid_lifetime,
+        UNIX_TIMESTAMP(expire),
+        subnet_id,
+        pref_lifetime,
+        lease_type,
+        iaid,
+        prefix_len,
+        fqdn_fwd,
+        fqdn_rev,
+        REPLACE(hostname, ',', '&#x2c'),
+        IFNULL(colonSeparatedHex(HEX(hwaddr)), ''),
+        state,
+        REPLACE(IFNULL(user_context, ''), ',', '&#x2c'),
+        hwtype,
+        hwaddr_source,
+        REPLACE(IFNULL(client_classes, ''), ',', '&#x2c')
+    FROM lease6
+    ORDER BY address;
+END $$
+DELIMITER ;
+
+DELIMITER $$
+CREATE PROCEDURE lease4Upload(
+    IN address VARCHAR(15),
+    IN hwaddr VARCHAR(20),
+    IN client_id VARCHAR(128),
+    IN valid_lifetime INT UNSIGNED,
+    IN expire BIGINT UNSIGNED,
+    IN subnet_id INT UNSIGNED,
+    IN fqdn_fwd TINYINT,
+    IN fqdn_rev TINYINT,
+    IN hostname VARCHAR(255),
+    IN state INT UNSIGNED,
+    IN user_context TEXT,
+    IN client_classes TEXT
+)
+BEGIN
+    INSERT INTO lease4 (
+        address,
+        hwaddr,
+        client_id,
+        valid_lifetime,
+        expire,
+        subnet_id,
+        fqdn_fwd,
+        fqdn_rev,
+        hostname,
+        state,
+        user_context,
+        client_classes
+    ) VALUES (
+        INET_ATON(address),
+        UNHEX(REPLACE(hwaddr, ':', '')),
+        UNHEX(REPLACE(client_id, ':', '')),
+        valid_lifetime,
+        FROM_UNIXTIME(expire),
+        subnet_id,
+        fqdn_fwd,
+        fqdn_rev,
+        REPLACE(hostname, '&#x2c', ','),
+        state,
+        REPLACE(user_context, '&#x2c', ','),
+        REPLACE(client_classes, '&#x2c', ',')
+    );
+END $$
+DELIMITER ;
+
+DELIMITER $$
+CREATE PROCEDURE lease6Upload(
+    IN address VARCHAR(39),
+    IN duid VARCHAR(128),
+    IN valid_lifetime INT UNSIGNED,
+    IN expire BIGINT UNSIGNED,
+    IN subnet_id INT UNSIGNED,
+    IN pref_lifetime INT UNSIGNED,
+    IN lease_type TINYINT,
+    IN iaid INT UNSIGNED,
+    IN prefix_len TINYINT UNSIGNED,
+    IN fqdn_fwd TINYINT,
+    IN fqdn_rev TINYINT,
+    IN hostname VARCHAR(255),
+    IN hwaddr VARCHAR(64),
+    IN state INT UNSIGNED,
+    IN user_context TEXT,
+    IN hwtype SMALLINT,
+    IN hwaddr_source INT UNSIGNED,
+    IN client_classes TEXT
+)
+BEGIN
+    INSERT INTO lease6 (
+        address,
+        duid,
+        valid_lifetime,
+        expire,
+        subnet_id,
+        pref_lifetime,
+        lease_type,
+        iaid,
+        prefix_len,
+        fqdn_fwd,
+        fqdn_rev,
+        hostname,
+        hwaddr,
+        state,
+        user_context,
+        hwtype,
+        hwaddr_source,
+        client_classes
+    ) VALUES (
+        address,
+        UNHEX(REPLACE(duid, ':', '')),
+        valid_lifetime,
+        FROM_UNIXTIME(expire),
+        subnet_id,
+        pref_lifetime,
+        lease_type,
+        iaid,
+        prefix_len,
+        fqdn_fwd,
+        fqdn_rev,
+        REPLACE(hostname, '&#x2c', ','),
+        UNHEX(REPLACE(hwaddr, ':', '')),
+        state,
+        REPLACE(user_context, '&#x2c', ','),
+        hwtype,
+        hwaddr_source,
+        REPLACE(client_classes, '&#x2c', ',')
+    );
+END $$
+DELIMITER ;
+
+-- Update the schema version number.
+UPDATE schema_version
+    SET version = '14', minor = '0';
+
+-- This line concludes schema upgrade to version 14.
 
 # Notes:
 #

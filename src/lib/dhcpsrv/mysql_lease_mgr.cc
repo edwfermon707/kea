@@ -113,7 +113,7 @@ tagged_statements = { {
                     "SELECT address, hwaddr, client_id, "
                         "valid_lifetime, expire, subnet_id, "
                         "fqdn_fwd, fqdn_rev, hostname, "
-                        "state, user_context "
+                        "state, user_context, client_classes "
                             "FROM lease4"},
     {MySqlLeaseMgr::GET_LEASE4_ADDR,
                     "SELECT address, hwaddr, client_id, "
@@ -126,35 +126,35 @@ tagged_statements = { {
                     "SELECT address, hwaddr, client_id, "
                         "valid_lifetime, expire, subnet_id, "
                         "fqdn_fwd, fqdn_rev, hostname, "
-                        "state, user_context "
+                        "state, user_context, client_classes "
                             "FROM lease4 "
                             "WHERE client_id = ?"},
     {MySqlLeaseMgr::GET_LEASE4_CLIENTID_SUBID,
                     "SELECT address, hwaddr, client_id, "
                         "valid_lifetime, expire, subnet_id, "
                         "fqdn_fwd, fqdn_rev, hostname, "
-                        "state, user_context "
+                        "state, user_context, client_classes "
                             "FROM lease4 "
                             "WHERE client_id = ? AND subnet_id = ?"},
     {MySqlLeaseMgr::GET_LEASE4_HWADDR,
                     "SELECT address, hwaddr, client_id, "
                         "valid_lifetime, expire, subnet_id, "
                         "fqdn_fwd, fqdn_rev, hostname, "
-                        "state, user_context "
+                        "state, user_context, client_classes "
                             "FROM lease4 "
                             "WHERE hwaddr = ?"},
     {MySqlLeaseMgr::GET_LEASE4_HWADDR_SUBID,
                     "SELECT address, hwaddr, client_id, "
                         "valid_lifetime, expire, subnet_id, "
                         "fqdn_fwd, fqdn_rev, hostname, "
-                        "state, user_context "
+                        "state, user_context, client_classes "
                             "FROM lease4 "
                             "WHERE hwaddr = ? AND subnet_id = ?"},
     {MySqlLeaseMgr::GET_LEASE4_PAGE,
                     "SELECT address, hwaddr, client_id, "
                         "valid_lifetime, expire, subnet_id, "
                         "fqdn_fwd, fqdn_rev, hostname, "
-                        "state, user_context "
+                        "state, user_context, client_classes "
                             "FROM lease4 "
                             "WHERE address > ? "
                             "ORDER BY address "
@@ -163,21 +163,21 @@ tagged_statements = { {
                     "SELECT address, hwaddr, client_id, "
                         "valid_lifetime, expire, subnet_id, "
                         "fqdn_fwd, fqdn_rev, hostname, "
-                        "state, user_context "
+                        "state, user_context, client_classes "
                             "FROM lease4 "
                             "WHERE subnet_id = ?"},
     {MySqlLeaseMgr::GET_LEASE4_HOSTNAME,
                     "SELECT address, hwaddr, client_id, "
                         "valid_lifetime, expire, subnet_id, "
                         "fqdn_fwd, fqdn_rev, hostname, "
-                        "state, user_context "
+                        "state, user_context, client_classes "
                             "FROM lease4 "
                             "WHERE hostname = ?"},
     {MySqlLeaseMgr::GET_LEASE4_EXPIRE,
                     "SELECT address, hwaddr, client_id, "
                         "valid_lifetime, expire, subnet_id, "
                         "fqdn_fwd, fqdn_rev, hostname, "
-                        "state, user_context "
+                        "state, user_context, client_classes "
                             "FROM lease4 "
                             "WHERE state != ? "
                             "AND valid_lifetime != 4294967295 "
@@ -190,7 +190,7 @@ tagged_statements = { {
                         "lease_type, iaid, prefix_len, "
                         "fqdn_fwd, fqdn_rev, hostname, "
                         "hwaddr, hwtype, hwaddr_source, "
-                        "state, user_context "
+                        "state, user_context, client_classes "
                             "FROM lease6"},
     {MySqlLeaseMgr::GET_LEASE6_ADDR,
                     "SELECT address, duid, valid_lifetime, "
@@ -198,7 +198,7 @@ tagged_statements = { {
                         "lease_type, iaid, prefix_len, "
                         "fqdn_fwd, fqdn_rev, hostname, "
                         "hwaddr, hwtype, hwaddr_source, "
-                        "state, user_context "
+                        "state, user_context, client_classes "
                             "FROM lease6 "
                             "WHERE address = ? AND lease_type = ?"},
     {MySqlLeaseMgr::GET_LEASE6_DUID_IAID,
@@ -207,7 +207,7 @@ tagged_statements = { {
                         "lease_type, iaid, prefix_len, "
                         "fqdn_fwd, fqdn_rev, hostname, "
                         "hwaddr, hwtype, hwaddr_source, "
-                        "state, user_context "
+                        "state, user_context, client_classes "
                             "FROM lease6 "
                             "WHERE duid = ? AND iaid = ? AND lease_type = ?"},
     {MySqlLeaseMgr::GET_LEASE6_DUID_IAID_SUBID,
@@ -216,7 +216,7 @@ tagged_statements = { {
                         "lease_type, iaid, prefix_len, "
                         "fqdn_fwd, fqdn_rev, hostname, "
                         "hwaddr, hwtype, hwaddr_source, "
-                        "state, user_context "
+                        "state, user_context, client_classes "
                             "FROM lease6 "
                             "WHERE duid = ? AND iaid = ? AND subnet_id = ? "
                             "AND lease_type = ?"},
@@ -226,7 +226,7 @@ tagged_statements = { {
                         "lease_type, iaid, prefix_len, "
                         "fqdn_fwd, fqdn_rev, hostname, "
                         "hwaddr, hwtype, hwaddr_source, "
-                        "state, user_context "
+                        "state, user_context, client_classes "
                             "FROM lease6 "
                             "WHERE address > ? "
                             "ORDER BY address "
@@ -237,7 +237,7 @@ tagged_statements = { {
                         "lease_type, iaid, prefix_len, "
                         "fqdn_fwd, fqdn_rev, hostname, "
                         "hwaddr, hwtype, hwaddr_source, "
-                        "state, user_context "
+                        "state, user_context, client_classes "
                             "FROM lease6 "
                             "WHERE subnet_id = ?"},
     {MySqlLeaseMgr::GET_LEASE6_DUID,
@@ -246,7 +246,7 @@ tagged_statements = { {
                         "lease_type, iaid, prefix_len, "
                         "fqdn_fwd, fqdn_rev, hostname, "
                         "hwaddr, hwtype, hwaddr_source, "
-                        "state, user_context "
+                        "state, user_context, client_classes "
                             "FROM lease6 "
                             "WHERE duid = ?"},
     {MySqlLeaseMgr::GET_LEASE6_HOSTNAME,
@@ -255,7 +255,7 @@ tagged_statements = { {
                         "lease_type, iaid, prefix_len, "
                         "fqdn_fwd, fqdn_rev, hostname, "
                         "hwaddr, hwtype, hwaddr_source, "
-                        "state, user_context "
+                        "state, user_context, client_classes "
                             "FROM lease6 "
                             "WHERE hostname = ?"},
     {MySqlLeaseMgr::GET_LEASE6_EXPIRE,
@@ -264,7 +264,7 @@ tagged_statements = { {
                         "lease_type, iaid, prefix_len, "
                         "fqdn_fwd, fqdn_rev, hostname, "
                         "hwaddr, hwtype, hwaddr_source, "
-                        "state, user_context "
+                        "state, user_context, client_classes "
                             "FROM lease6 "
                             "WHERE state != ? "
                             "AND valid_lifetime != 4294967295 "
@@ -275,22 +275,22 @@ tagged_statements = { {
                     "INSERT INTO lease4(address, hwaddr, client_id, "
                         "valid_lifetime, expire, subnet_id, "
                         "fqdn_fwd, fqdn_rev, hostname, "
-                        "state, user_context) "
-                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"},
+                        "state, user_context, client_classes) "
+                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"},
     {MySqlLeaseMgr::INSERT_LEASE6,
                     "INSERT INTO lease6(address, duid, valid_lifetime, "
                         "expire, subnet_id, pref_lifetime, "
                         "lease_type, iaid, prefix_len, "
                         "fqdn_fwd, fqdn_rev, hostname, "
                         "hwaddr, hwtype, hwaddr_source, "
-                        "state, user_context) "
-                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"},
+                        "state, user_context, client_classes) "
+                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"},
     {MySqlLeaseMgr::UPDATE_LEASE4,
                     "UPDATE lease4 SET address = ?, hwaddr = ?, "
                         "client_id = ?, valid_lifetime = ?, expire = ?, "
                         "subnet_id = ?, fqdn_fwd = ?, fqdn_rev = ?, "
                         "hostname = ?, "
-                        "state = ?, user_context = ? "
+                        "state = ?, user_context = ?, client_classes = ? "
                             "WHERE address = ? AND expire = ?"},
     {MySqlLeaseMgr::UPDATE_LEASE6,
                     "UPDATE lease6 SET address = ?, duid = ?, "
@@ -298,7 +298,7 @@ tagged_statements = { {
                         "pref_lifetime = ?, lease_type = ?, iaid = ?, "
                         "prefix_len = ?, fqdn_fwd = ?, fqdn_rev = ?, "
                         "hostname = ?, hwaddr = ?, hwtype = ?, hwaddr_source = ?, "
-                        "state = ?, user_context = ? "
+                        "state = ?, user_context = ?, client_classes = ? "
                             "WHERE address = ? AND expire = ?"},
     {MySqlLeaseMgr::ALL_LEASE4_STATS,
                     "SELECT subnet_id, state, leases as state_count "
@@ -2782,6 +2782,16 @@ MySqlLeaseMgr::getExpiredLeasesCommon(LeaseCollection& expired_leases,
 
     // Get the data
     getLeaseCollection(ctx, statement_index, inbind, expired_leases);
+}
+
+Lease4Collection
+MySqlLeaseMgr::getValidLeases4ByClientClass(ClientClass const& /* client_class */) const {
+    isc_throw(NotImplemented, "");
+}
+
+Lease6Collection
+MySqlLeaseMgr::getValidLeases6ByClientClass(ClientClass const& /* client_class */) const {
+    isc_throw(NotImplemented, "");
 }
 
 // Update lease methods.  These comprise common code that handles the actual

@@ -106,6 +106,7 @@ private:
     /// - user_context
     /// - hwtype
     /// - hwaddr_source
+    /// - client_classes
     void initColumns();
 
     ///
@@ -196,6 +197,8 @@ private:
     /// @return the integer value of the hardware address type that was read
     /// or an unspecified Optional if it is not specified in the CSV
     isc::util::Optional<uint16_t> readHWType(const util::CSVRow& row);
+
+    std::string readClientClasses(const util::CSVRow& row);
 
     /// @brief Reads hardware address source from the CSV file row.
     ///

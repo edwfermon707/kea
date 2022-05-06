@@ -69,6 +69,7 @@ CSVLeaseFile6::append(const Lease6& lease) {
     if (lease.getContext()) {
         row.writeAtEscaped(getColumnIndex("user_context"), lease.getContext()->str());
     }
+    row.writeAt(getColumnIndex("client_classes"), lease.client_classes_.toText());
     try {
         VersionedCSVFile::append(row);
     } catch (const std::exception&) {
@@ -120,6 +121,7 @@ CSVLeaseFile6::next(Lease6Ptr& lease) {
         if (ctx) {
             lease->setContext(ctx);
         }
+        lease->client_classes_ = readClientClasses(row);
     } catch (const std::exception& ex) {
         // bump the read error count
         ++read_errs_;
@@ -161,6 +163,8 @@ CSVLeaseFile6::initColumns() {
     // hwaddr_source will have value "0" meaning HWADDR_SOURCE_UNKNOWN.
     addColumn("hwtype", "4.0");
     addColumn("hwaddr_source", "4.0");
+
+    addColumn("client_classes", "5.0");
 
     // Any file with less than hostname is invalid
     setMinimumValidColumns("hostname");
@@ -308,6 +312,12 @@ CSVLeaseFile6::readHWAddrSource(const CSVRow& row) {
         return Optional<uint16_t>();
     }
     return row.readAndConvertAt<uint32_t>(index);
+}
+
+std::string
+CSVLeaseFile6::readClientClasses(const util::CSVRow& row) {
+    std::string const client_classes(row.readAtEscaped(getColumnIndex("client_classes")));
+    return client_classes;
 }
 
 } // end of namespace isc::dhcp

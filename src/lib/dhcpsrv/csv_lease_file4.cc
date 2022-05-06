@@ -70,6 +70,7 @@ CSVLeaseFile4::append(const Lease4& lease) {
     if (lease.getContext()) {
         row.writeAtEscaped(getColumnIndex("user_context"), lease.getContext()->str());
     }
+    row.writeAt(getColumnIndex("client_classes"), lease.client_classes_.toText());
 
     try {
         VersionedCSVFile::append(row);
@@ -130,6 +131,9 @@ CSVLeaseFile4::next(Lease4Ptr& lease) {
         // Get the user context (can be NULL).
         ConstElementPtr ctx = readContext(row);
 
+        // Get the user context (can be NULL).
+        std::string client_classes = readClientClasses(row);
+
         lease.reset(new Lease4(addr,
                                HWAddrPtr(new HWAddr(hwaddr)),
                                client_id_vec.empty() ? NULL : &client_id_vec[0],
@@ -145,6 +149,8 @@ CSVLeaseFile4::next(Lease4Ptr& lease) {
         if (ctx) {
             lease->setContext(ctx);
         }
+
+        lease->client_classes_ = client_classes;
 
     } catch (const std::exception& ex) {
         // bump the read error count
@@ -176,6 +182,7 @@ CSVLeaseFile4::initColumns() {
     addColumn("hostname", "1.0");
     addColumn("state", "2.0", "0");
     addColumn("user_context", "2.1");
+    addColumn("client_classes", "3.0");
     // Any file with less than hostname is invalid
     setMinimumValidColumns("hostname");
 }
@@ -261,6 +268,12 @@ CSVLeaseFile4::readContext(const util::CSVRow& row) {
                   << "' is not a JSON map");
     }
     return (ctx);
+}
+
+std::string
+CSVLeaseFile4::readClientClasses(const util::CSVRow& row) {
+    std::string const client_classes(row.readAtEscaped(getColumnIndex("client_classes")));
+    return client_classes;
 }
 
 } // end of namespace isc::dhcp

@@ -689,9 +689,9 @@ lease_upload() {
     # errors in the MySQL client. These are columns which are VARCHARs or need
     # to be further processed by a procedure.
     if test "${dhcp_version}" = '4'; then
-        string_columns='address hwaddr client_id hostname user_context'
+        string_columns='address hwaddr client_id hostname user_context client_classes'
     elif test "${dhcp_version}" = '6'; then
-        string_columns='address duid hostname hwaddr user_context'
+        string_columns='address duid hostname hwaddr user_context client_classes'
     else
         log_error "lease-upload: lease type -4 or -6 needs to be specified"
         usage

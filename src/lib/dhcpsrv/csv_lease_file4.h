@@ -101,6 +101,7 @@ private:
     /// - hostname
     /// - state
     /// - user_context
+    /// - client_classes
     void initColumns();
 
     ///
@@ -157,6 +158,8 @@ private:
     ///
     /// @param row CSV file row holding lease information.
     uint32_t readState(const util::CSVRow& row);
+
+    std::string readClientClasses(const util::CSVRow& row);
 
     /// @brief Reads lease user context from the CSV file row.
     ///
