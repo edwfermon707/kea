@@ -48,9 +48,9 @@ ALTER TABLE lease6
 
 DROP FUNCTION IF EXISTS lease4DumpHeader();
 CREATE OR REPLACE FUNCTION lease4DumpHeader()
-RETURNS TEXT AS  $$
+RETURNS TEXT AS  \$\$
     SELECT CAST('address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state,client_classes' AS TEXT) AS result;
-$$ LANGUAGE SQL;
+\$\$ LANGUAGE SQL;
 
 DROP FUNCTION IF EXISTS lease4DumpData();
 CREATE OR REPLACE FUNCTION lease4DumpData()
@@ -67,7 +67,7 @@ RETURNS TABLE (
     state INT8,
     user_context VARCHAR,
     client_classes VARCHAR
-) AS $$
+) AS \$\$
     SELECT
         ('0.0.0.0'::inet + address),
         colonSeparatedHex(encode(hwaddr, 'hex')),
@@ -83,13 +83,13 @@ RETURNS TABLE (
         replace(client_classes, ',', '&#x2c')
     FROM lease4
     ORDER BY address;
-$$ LANGUAGE SQL;
+\$\$ LANGUAGE SQL;
 
 DROP FUNCTION IF EXISTS lease6DumpHeader();
 CREATE OR REPLACE FUNCTION lease6DumpHeader()
-RETURNS TEXT AS $$
+RETURNS TEXT AS \$\$
     SELECT CAST('address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,state,user_context,hwtype,hwaddr_source,client_classes' AS TEXT) AS result;
-$$ LANGUAGE SQL;
+\$\$ LANGUAGE SQL;
 
 DROP FUNCTION IF EXISTS lease6DumpData();
 CREATE OR REPLACE FUNCTION lease6DumpData()
@@ -112,7 +112,7 @@ RETURNS TABLE (
     hwtype SMALLINT,
     hwaddr_source SMALLINT,
     client_classes VARCHAR
-) AS $$
+) AS \$\$
     SELECT
         address,
         colonSeparatedHex(encode(duid, 'hex')),
@@ -134,7 +134,7 @@ RETURNS TABLE (
         replace(client_classes, ',', '&#x2c')
     FROM lease6
     ORDER BY address;
-$$ LANGUAGE SQL;
+\$\$ LANGUAGE SQL;
 
 -- Create a procedure that inserts a v4 lease from memfile data.
 -- Some columns that are SMALLINT in the lease4 table have their type promoted
@@ -153,7 +153,7 @@ CREATE OR REPLACE FUNCTION lease4Upload(
     IN state INT8,
     IN user_context VARCHAR,
     IN client_classes VARCHAR
-) RETURNS VOID AS $$
+) RETURNS VOID AS \$\$
 BEGIN
     INSERT INTO lease4 (
         address,
@@ -183,7 +183,7 @@ BEGIN
         replace(client_classes, '&#x2c', ',')
     );
 END
-$$ LANGUAGE plpgsql;
+\$\$ LANGUAGE plpgsql;
 
 -- Create a procedure that inserts a v6 lease from memfile data.
 -- Some columns that are SMALLINT in the lease6 table have their type promoted
@@ -208,7 +208,7 @@ CREATE OR REPLACE FUNCTION lease6Upload(
     IN hwtype INT,
     IN hwaddr_source INT,
     IN client_classes VARCHAR
-) RETURNS VOID AS $$
+) RETURNS VOID AS \$\$
 BEGIN
     INSERT INTO lease6 (
         address,
@@ -250,7 +250,7 @@ BEGIN
         client_classes
     );
 END
-$$ LANGUAGE plpgsql;
+\$\$ LANGUAGE plpgsql;
 
 -- Update the schema version number.
 UPDATE schema_version
