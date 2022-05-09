@@ -5023,10 +5023,7 @@ RETURNS TABLE (
     ORDER BY address;
 $$ LANGUAGE SQL;
 
--- Create a procedure that inserts a v4 lease from memfile data.
--- Some columns that are SMALLINT in the lease4 table have their type promoted
--- to INT in the declaration of this function for backwards compatibility with
--- PostgreSQL versions.
+DROP FUNCTION IF EXISTS lease4Upload();
 CREATE OR REPLACE FUNCTION lease4Upload(
     IN address VARCHAR,
     IN hwaddr VARCHAR,
@@ -5072,10 +5069,7 @@ BEGIN
 END
 $$ LANGUAGE plpgsql;
 
--- Create a procedure that inserts a v6 lease from memfile data.
--- Some columns that are SMALLINT in the lease6 table have their type promoted
--- to INT in the declaration of this function for backwards compatibility with
--- PostgreSQL versions.
+DROP FUNCTION IF EXISTS lease6Upload();
 CREATE OR REPLACE FUNCTION lease6Upload(
     IN address VARCHAR,
     IN duid VARCHAR,

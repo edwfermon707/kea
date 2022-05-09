@@ -272,7 +272,7 @@ PgSqlTaggedStatement tagged_statements[] = {
 
     // INSERT_LEASE4
     { 11, { OID_INT8, OID_BYTEA, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8,
-            OID_BOOL, OID_BOOL, OID_VARCHAR, OID_INT8, OID_TEXT },
+            OID_BOOL, OID_BOOL, OID_VARCHAR, OID_INT8, OID_TEXT, OID_VARCHAR },
       "insert_lease4",
       "INSERT INTO lease4(address, hwaddr, client_id, "
         "valid_lifetime, expire, subnet_id, fqdn_fwd, fqdn_rev, hostname, "
@@ -282,7 +282,8 @@ PgSqlTaggedStatement tagged_statements[] = {
     // INSERT_LEASE6
     { 17, { OID_VARCHAR, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8,
             OID_INT8, OID_INT2, OID_INT8, OID_INT2, OID_BOOL, OID_BOOL,
-            OID_VARCHAR, OID_BYTEA, OID_INT2, OID_INT2, OID_INT8, OID_TEXT },
+            OID_VARCHAR, OID_BYTEA, OID_INT2, OID_INT2, OID_INT8, OID_TEXT,
+            OID_VARCHAR },
       "insert_lease6",
       "INSERT INTO lease6(address, duid, valid_lifetime, "
         "expire, subnet_id, pref_lifetime, "
@@ -293,7 +294,8 @@ PgSqlTaggedStatement tagged_statements[] = {
 
     // UPDATE_LEASE4
     { 13, { OID_INT8, OID_BYTEA, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8,
-            OID_BOOL, OID_BOOL, OID_VARCHAR, OID_INT8, OID_TEXT, OID_INT8, OID_TIMESTAMP },
+            OID_BOOL, OID_BOOL, OID_VARCHAR, OID_INT8, OID_TEXT, OID_VARCHAR,
+            OID_INT8, OID_TIMESTAMP },
       "update_lease4",
       "UPDATE lease4 SET address = $1, hwaddr = $2, "
         "client_id = $3, valid_lifetime = $4, expire = $5, "
@@ -305,7 +307,7 @@ PgSqlTaggedStatement tagged_statements[] = {
     { 19, { OID_VARCHAR, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8, OID_INT8,
             OID_INT2, OID_INT8, OID_INT2, OID_BOOL, OID_BOOL, OID_VARCHAR,
             OID_BYTEA, OID_INT2, OID_INT2,
-            OID_INT8, OID_TEXT, OID_VARCHAR, OID_TIMESTAMP },
+            OID_INT8, OID_TEXT, OID_VARCHAR, OID_VARCHAR, OID_TIMESTAMP },
       "update_lease6",
       "UPDATE lease6 SET address = $1, duid = $2, "
         "valid_lifetime = $3, expire = $4, subnet_id = $5, "
@@ -358,6 +360,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "  FROM lease6_stat "
       "  WHERE subnet_id >= $1 and subnet_id <= $2 "
       "  ORDER BY subnet_id, lease_type, state" },
+
     // End of list sentinel
     { 0,  { 0 }, NULL, NULL}
 };
@@ -405,6 +408,7 @@ protected:
     std::string          hostname_;
     std::string          state_str_;
     std::string          user_context_;
+    std::string          client_classes_;
     //@}
 };
 
@@ -427,8 +431,9 @@ private:
     static const size_t HOSTNAME_COL = 8;
     static const size_t STATE_COL = 9;
     static const size_t USER_CONTEXT_COL = 10;
+    static const size_t CLIENT_CLASSES_COL = 11;
     /// @brief Number of columns in the table holding DHCPv4 leases.
-    static const size_t LEASE_COLUMNS = 11;
+    static const size_t LEASE_COLUMNS = 12;
 
 public:
 
@@ -453,6 +458,7 @@ public:
         columns_.push_back("hostname");
         columns_.push_back("state");
         columns_.push_back("user_context");
+        columns_.push_back("client_classes");
     }
 
     /// @brief Creates the bind array for sending Lease4 data to the database.
@@ -535,6 +541,9 @@ public:
                 user_context_ = "";
             }
             bind_array.add(user_context_);
+
+            client_classes_ = lease->client_classes_.toText();
+            bind_array.add(client_classes_);
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
                       "Could not create bind array from Lease4: "
@@ -609,6 +618,8 @@ public:
                 result->setContext(ctx);
             }
 
+            result->client_classes_ = ClientClasses(getRawColumnValue(r, row, CLIENT_CLASSES_COL));
+
             return (result);
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
@@ -656,9 +667,10 @@ private:
     static const int HWADDR_SOURCE_COL = 14;
     static const int STATE_COL = 15;
     static const size_t USER_CONTEXT_COL = 16;
+    static const size_t CLIENT_CLASSES_COL = 17;
     //@}
     /// @brief Number of columns in the table holding DHCPv6 leases.
-    static const size_t LEASE_COLUMNS = 17;
+    static const size_t LEASE_COLUMNS = 18;
 
 public:
 
@@ -715,6 +727,7 @@ public:
         columns_.push_back("hwaddr_source");
         columns_.push_back("state");
         columns_.push_back("user_context");
+        columns_.push_back("client_classes");
     }
 
     /// @brief Creates the bind array for sending Lease6 data to the database.
@@ -829,6 +842,9 @@ public:
                 user_context_ = "";
             }
             bind_array.add(user_context_);
+
+            client_classes_ = lease->client_classes_.toText();
+            bind_array.add(client_classes_);
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
                       "Could not create bind array from Lease6: "
@@ -934,6 +950,8 @@ public:
             if (ctx) {
                 result->setContext(ctx);
             }
+
+            result->client_classes_ = ClientClasses(getRawColumnValue(r, row, CLIENT_CLASSES_COL));
 
             return (result);
         } catch (const std::exception& ex) {

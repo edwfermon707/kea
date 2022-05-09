@@ -97,6 +97,9 @@ const size_t ADDRESS6_TEXT_MAX_LEN = 39;
 /// @brief Maximum length of user context.
 const size_t USER_CONTEXT_MAX_LEN = 8192;
 
+/// @brief Maximum length of client classes.
+const size_t CLIENT_CLASSES_MAX_LEN = 1024;
+
 boost::array<TaggedStatement, MySqlLeaseMgr::NUM_STATEMENTS>
 tagged_statements = { {
     {MySqlLeaseMgr::DELETE_LEASE4,
@@ -413,7 +416,7 @@ public:
 
 class MySqlLease4Exchange : public MySqlLeaseExchange {
     /// @brief Set number of database columns for this lease structure
-    static const size_t LEASE_COLUMNS = 11;
+    static const size_t LEASE_COLUMNS = 12;
 
 public:
 
@@ -445,7 +448,8 @@ public:
         columns_[8] = "hostname";
         columns_[9] = "state";
         columns_[10] = "user_context";
-        BOOST_STATIC_ASSERT(10 < LEASE_COLUMNS);
+        columns_[11] = "client_classes";
+        BOOST_STATIC_ASSERT(11 < LEASE_COLUMNS);
     }
 
     /// @brief Create MYSQL_BIND objects for Lease4 Pointer
@@ -626,11 +630,21 @@ public:
                 bind_[10].buffer_type = MYSQL_TYPE_NULL;
             }
 
+            // client_classes: text
+            std::string const client_classes(lease->client_classes_.toText());
+            bind_[11].buffer_type = MYSQL_TYPE_STRING;
+            strncpy(client_classes_, client_classes.c_str(), CLIENT_CLASSES_MAX_LEN);
+            bind_[11].buffer = client_classes_;
+            bind_[11].buffer_length = client_classes.length();
+            // bind_[11].is_null = &MLM_FALSE; // commented out for performance
+                                               // reasons, see memset() above
+
+
             // Add the error flags
             setErrorIndicators(bind_, error_, LEASE_COLUMNS);
 
             // .. and check that we have the numbers correct at compile time.
-            BOOST_STATIC_ASSERT(10 < LEASE_COLUMNS);
+            BOOST_STATIC_ASSERT(11 < LEASE_COLUMNS);
 
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
@@ -746,11 +760,20 @@ public:
         bind_[10].length = &user_context_length_;
         bind_[10].is_null = &user_context_null_;
 
+        // client_classes: text
+        client_classes_null_ = MLM_FALSE;
+        client_classes_length_ = sizeof(client_classes_);
+        bind_[11].buffer_type = MYSQL_TYPE_STRING;
+        bind_[11].buffer = reinterpret_cast<char*>(client_classes_);
+        bind_[11].buffer_length = client_classes_length_;
+        bind_[11].length = &client_classes_length_;
+        bind_[11].is_null = &client_classes_null_;
+
         // Add the error flags
         setErrorIndicators(bind_, error_, LEASE_COLUMNS);
 
         // .. and check that we have the numbers correct at compile time.
-        BOOST_STATIC_ASSERT(10 < LEASE_COLUMNS);
+        BOOST_STATIC_ASSERT(11 < LEASE_COLUMNS);
 
         // Add the data to the vector.  Note the end element is one after the
         // end of the array.
@@ -870,6 +893,13 @@ private:
     char                 user_context_[USER_CONTEXT_MAX_LEN];            ///< User context
     unsigned long        user_context_length_;                           ///< Length of user context
     my_bool              user_context_null_;                             ///< Used when user context is null
+
+    /// @brief Client classes data
+    /// @{
+    char client_classes_[CLIENT_CLASSES_MAX_LEN];
+    unsigned long client_classes_length_;
+    my_bool client_classes_null_;
+    /// @}
 };
 
 /// @brief Exchange MySQL and Lease6 Data
@@ -887,7 +917,7 @@ private:
 
 class MySqlLease6Exchange : public MySqlLeaseExchange {
     /// @brief Set number of database columns for this lease structure
-    static const size_t LEASE_COLUMNS = 17;
+    static const size_t LEASE_COLUMNS = 18;
 
 public:
 
@@ -928,7 +958,8 @@ public:
         columns_[14] = "hwaddr_source";
         columns_[15] = "state";
         columns_[16] = "user_context";
-        BOOST_STATIC_ASSERT(16 < LEASE_COLUMNS);
+        columns_[17] = "client_classes";
+        BOOST_STATIC_ASSERT(17 < LEASE_COLUMNS);
     }
 
     /// @brief Create MYSQL_BIND objects for Lease6 Pointer
@@ -1171,11 +1202,20 @@ public:
                 bind_[16].buffer_type = MYSQL_TYPE_NULL;
             }
 
+            // client_classes: text
+            std::string const client_classes(lease->client_classes_.toText());
+            bind_[17].buffer_type = MYSQL_TYPE_STRING;
+            strncpy(client_classes_, client_classes.c_str(), CLIENT_CLASSES_MAX_LEN);
+            bind_[17].buffer = client_classes_;
+            bind_[17].buffer_length = client_classes.length();
+            // bind_[17].is_null = &MLM_FALSE; // commented out for performance
+                                               // reasons, see memset() above
+
             // Add the error flags
             setErrorIndicators(bind_, error_, LEASE_COLUMNS);
 
             // .. and check that we have the numbers correct at compile time.
-            BOOST_STATIC_ASSERT(16 < LEASE_COLUMNS);
+            BOOST_STATIC_ASSERT(17 < LEASE_COLUMNS);
 
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
@@ -1333,11 +1373,20 @@ public:
         bind_[16].length = &user_context_length_;
         bind_[16].is_null = &user_context_null_;
 
+        // client_classes: text
+        client_classes_null_ = MLM_FALSE;
+        client_classes_length_ = sizeof(client_classes_);
+        bind_[17].buffer_type = MYSQL_TYPE_STRING;
+        bind_[17].buffer = reinterpret_cast<char*>(client_classes_);
+        bind_[17].buffer_length = client_classes_length_;
+        bind_[17].length = &client_classes_length_;
+        bind_[17].is_null = &client_classes_null_;
+
         // Add the error flags
         setErrorIndicators(bind_, error_, LEASE_COLUMNS);
 
         // .. and check that we have the numbers correct at compile time.
-        BOOST_STATIC_ASSERT(16 < LEASE_COLUMNS);
+        BOOST_STATIC_ASSERT(17 < LEASE_COLUMNS);
 
         // Add the data to the vector.  Note the end element is one after the
         // end of the array.
@@ -1496,6 +1545,13 @@ private:
     char                 user_context_[USER_CONTEXT_MAX_LEN];      ///< User context
     unsigned long        user_context_length_;                     ///< Length of user context
     my_bool              user_context_null_;                       ///< Used when user context is null
+
+    /// @brief Client classes data
+    /// @{
+    char client_classes_[CLIENT_CLASSES_MAX_LEN];
+    unsigned long client_classes_length_;
+    my_bool client_classes_null_;
+    /// @}
 };
 
 /// @brief MySql derivation of the statistical lease data query
