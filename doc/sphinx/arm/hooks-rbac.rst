@@ -61,7 +61,7 @@ Role Configuration
 
 If the role assignment returns the empty role the configuration of the
 ``default`` role is used: by default the request is rejected.
-If the role assignment returns a not empty role with a configuration
+If the role assignment returns a not empty role without a configuration,
 the configuration of the ``unknown`` role is used.
 
 .. table:: Role configuration parameters
@@ -161,9 +161,6 @@ Response Filters
    |               | list-commands response                |
    +---------------+---------------------------------------+
 
-Some other response filters were investigated for but none can't be
-implemented as stand alone hooks so remained only the ``list-commands``
-one which makes sense and requires the RBAC hook logic/code.
 
 Global Parameters
 ~~~~~~~~~~~~~~~~~
@@ -302,7 +299,7 @@ Accept/Reject Algorithm
 Here is the pseudo-code of the accept/reject algorithm which returns
 true i.e. accept or false i.e. reject.
 
-.. code-block::
+.. code-block:: c
 
    bool match(command) {
        if (preference == accept) {
