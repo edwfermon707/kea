@@ -84,7 +84,7 @@ public:
 
     /// @brief Fill the API command table.
     ///
-    /// @param dirname The API directy name.
+    /// @param dirname The API directory name.
     static void fillApiTable(const std::string& dirname);
 
     /// @brief Parse a command config.
@@ -105,7 +105,7 @@ protected:
 };
 
 /// @brief A tag for accessing name index.
-struct ApiNameIndexTag { };
+struct ApiNameIndexTag {};
 
 /// @brief A tag for accessing access index.
 struct ApiAccessIndexTag {};

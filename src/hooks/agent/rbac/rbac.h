@@ -38,7 +38,7 @@ public:
     /// @brief Constructor.
     ///
     /// @param name Role name.
-    /// @param accept Accept commands access .
+    /// @param accept Accept commands access.
     /// @param reject Reject commands filter.
     /// @param others Action for other commands.
     /// @param preference Action for matching both commands.
@@ -103,9 +103,9 @@ public:
     /// @return whether the body was modified.
     bool filter(const std::string& command, data::ConstElementPtr body) const {
         bool modified = false;
-        for (auto const& filter : response_filters_) {
-            if (filter) {
-                if (filter->filter(command, *this, body)) {
+        for (auto const& response_filter : response_filters_) {
+            if (response_filter) {
+                if (response_filter->filter(command, *this, body)) {
                     modified = true;
                 }
             }

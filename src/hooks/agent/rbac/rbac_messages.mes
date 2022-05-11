@@ -94,7 +94,7 @@ i.e. with no role assigned.
 A response filter has modifed the HTTP response in response callout.
 
 % RBAC_TRACE_RESPONSE_NO_ARGUMENTS No request or response in response callout.
-The response callout has been called with request or response. The RBAC
+The response callout has been called without request or response. The RBAC
 hooks library immediately returns. This is an error condition.
 
 % RBAC_TRACE_RESPONSE_BAD_BODY_TYPE Bad body type in JSON response in response callout.

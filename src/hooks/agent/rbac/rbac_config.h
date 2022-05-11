@@ -32,7 +32,7 @@ public:
 
     /// @brief Get the directory where to find API files.
     ///
-    /// @brief the directory where to find API files.
+    /// @return the directory where to find API files.
     const std::string& getApiFiles() const {
         return (api_files_);
     }

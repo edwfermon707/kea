@@ -41,7 +41,7 @@ Api::getApiByName(const string& name) {
 
 void
 Api::fillApiTable(const string& dirname) {
-    DIR* dir;
+    DIR* dir = 0;
     try {
         dir = opendir(dirname.c_str());
         if (!dir) {

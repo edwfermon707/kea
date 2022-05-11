@@ -16,7 +16,7 @@ the command. After the processing the response can be rewritten e.g.
 removing parts.
 
 Summary of the request processing:
- - the HTTP library records some informations to be used later, e.g.
+ - the HTTP library records some information to be used later, e.g.
    the remote address.
  - when TLS is required but the request was not protected by TLS,
    reject the request by sending an unauthorized response.
@@ -26,7 +26,7 @@ Summary of the request processing:
    a forbidden response) the command.
 
 Summary of response processing:
- - retrieve some informations attached to the request during the
+ - retrieve some information attached to the request during the
    request processing (when the request was accepted).
  - applies request filters to the response.
 
@@ -187,7 +187,7 @@ Global parameters are:
 
 -  ``access-control-lists``: named access control list definitions
    (each definition is a single entry map: the name of the entry is
-   the name of the access list, the value the specification).
+   the name of the access list, the value is the specification).
 
 -  ``roles``: role configurations.
 

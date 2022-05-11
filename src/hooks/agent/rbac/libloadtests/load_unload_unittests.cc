@@ -124,7 +124,7 @@ TEST_F(LibLoadTest, unknownParameterLoad) {
 }
 
 // Verifies that a bad type parameter in an otherwise valid configuration
-// Set proc name.
+// is detected.
 TEST_F(LibLoadTest, badTypeParameterLoad) {
     // Set proc name.
     Daemon::setProcName("kea-ctrl-agent");

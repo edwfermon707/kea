@@ -226,7 +226,7 @@ public:
 
     /// @brief Constructor.
     ///
-    /// @param acls Acls to disjunct..
+    /// @param acls Acls to disjunct.
     /// @throw Unexpected when an acl is null.
     OrAcl(const AclList& acls) : Acl("or"), acls_(acls) {
         for (const AclPtr& acl : acls) {

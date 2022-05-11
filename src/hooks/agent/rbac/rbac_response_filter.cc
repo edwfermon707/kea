@@ -62,7 +62,7 @@ bool
 ListCommandsResponseFilter::filter(const string& command,
                                    const RoleConfig& role_config,
                                    ConstElementPtr body) {
-    if (command  != "list-commands") {
+    if (command != "list-commands") {
         return (false);
     }
     if (!body || (body->getType() != Element::map)) {
