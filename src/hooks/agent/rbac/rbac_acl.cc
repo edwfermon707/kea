@@ -45,7 +45,7 @@ Acl::parse(ConstElementPtr cfg) {
         return (it->second);
     }
     if (cfg->getType() != Element::map) {
-      isc_throw(BadValue, "access control list is not a string or a map");
+        isc_throw(BadValue, "access control list is not a string or a map");
     }
     AclPtr acl;
     for (auto entry : cfg->mapValue()) {

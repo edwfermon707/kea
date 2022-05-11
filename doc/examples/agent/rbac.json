@@ -1,5 +1,5 @@
 // This is an example of a configuration for Control-Agent (CA) using
-// the Role Based Access List (RBAC) hook library.
+// the Role Based Access Control (RBAC) hook library.
 {
     "Control-agent":
     {

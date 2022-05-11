@@ -149,7 +149,7 @@ TEST_F(ConfigTest, parseRoleAssign) {
     ElementPtr cfg = Element::createMap();
     cfg->set("api-files", Element::create(string(API_DIR)));
     cfg->set("assign-role-method", Element::create(string("foobar")));
-    string expected = "unknown role assigment keyword 'foobar'";
+    string expected = "unknown role assignment keyword 'foobar'";
     EXPECT_THROW_MSG(Config::parse(cfg), BadValue, expected);
 
     cfg->set("assign-role-method", Element::create(string("cert-subject")));

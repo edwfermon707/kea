@@ -65,6 +65,7 @@ public:
     /// @brief Parse a role assignment value.
     ///
     /// @param cfg Configuration of a role assignment.
+    /// @return The role as specified by the configuration.
     static RolePtr parse(data::ConstElementPtr cfg);
 
 protected:
@@ -223,7 +224,7 @@ public:
     virtual std::string assign(const http::HttpRequestPtr& request) final {
         if (request) {
             return (role_);
-            } else {
+        } else {
             return ("");
         }
     }

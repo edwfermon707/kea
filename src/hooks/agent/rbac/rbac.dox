@@ -56,9 +56,9 @@ On the response callout point process steps are:
    way to disable the hook)
  - returns if there is no request or response (sanity check, note
    the response is a JSON response)
- - returns is the body is empty, is not a list or is an empty list.
+ - returns if the body is empty, is not a list or is an empty list.
  - retrieve the command and role config from the request callout handle
-   context (faster than decode again the request)
+   context (faster than decode the request again)
  - check if the role config is not null and has response filters (sanity
    check)
  - apply to each answer from the body response filters
@@ -121,7 +121,7 @@ unknownRoleConfig.
 
 Kea API commands for servers, agents and hooks are described in
 API files located in the src/share/api in sources and .../share/kea/api
-in installations directories.
+in installation directory.
 
 There is a file per command defining the command name, access right
 (read or write) and when registered by a hook the hook name.
@@ -162,7 +162,7 @@ Predified access list kinds are:
    it takes as parameter.
  - or - makes the logical or on the list of access list specifications
    it takes as parameter.
- - commands - matches the members of the list of of command names it takes
+ - commands - matches the members of the list or of command names it takes
    as parameter (implemented as a set).
  - access - matches commands which have the access right it takes as
    parameter (i.e. strings read or write).
@@ -177,7 +177,7 @@ Type Acl (base), global variable aclTable.
 
 Predefined response filter is:
  - noop: no operation.
- - list-commands: remove from list-commands' answers no allowed (i.e. rejected)
+ - list-commands: remove from list-commands' answers not allowed (i.e. rejected)
    commands.
 Two comments:
  - if the list-commands is not allowed the list-commands response filter will
@@ -210,7 +210,7 @@ The Kea Role Based Access Control Hooks Library global configuration takes:
  - roles - takes the list of role configurations.
  - unknown-role - takes the configuration of the unknown role
    (used when the not empty assigned role has no configuration)
- - response-filters - takes the list of response filters
+ - response-filters - takes the list of response filters.
 
 File rbac_config.{h,cc}
 

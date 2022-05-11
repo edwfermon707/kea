@@ -29,6 +29,8 @@ public:
     virtual ~RoleTest() = default;
 
     /// @brief Create HTTP Request.
+    ///
+    /// @return The HTTP request.
     HttpRequestPtr createHttpRequest() {
         HttpRequestPtr request(new HttpRequest);
         return (request);
@@ -123,7 +125,8 @@ TEST_F(RoleTest, staticValue) {
     RolePtr role(new StaticRole("foo"));
     HttpRequestPtr request = createHttpRequest();
     string ret;
-    ASSERT_NO_THROW(ret = role->assign(request));EXPECT_EQ("foo", ret);
+    ASSERT_NO_THROW(ret = role->assign(request));
+    EXPECT_EQ("foo", ret);
 
     boost::shared_ptr<StaticRole> srole =
         boost::dynamic_pointer_cast<StaticRole>(role);
@@ -179,15 +182,15 @@ TEST_F(RoleTest, nullRequest) {
 /// @brief This test verifies that role assignment parsing works as expected.
 TEST_F(RoleTest, parse) {
     ConstElementPtr cfg;
-    string expected = "parse null role assigment config";
+    string expected = "parse null role assignment config";
     EXPECT_THROW_MSG(Role::parse(cfg), BadValue, expected);
 
     cfg = Element::createMap();
-    expected = "role assigment config is not a string";
+    expected = "role assignment config is not a string";
     EXPECT_THROW_MSG(Role::parse(cfg), BadValue, expected);
 
     cfg = Element::create(string("foobar"));
-    expected = "unknown role assigment keyword 'foobar'";
+    expected = "unknown role assignment keyword 'foobar'";
     EXPECT_THROW_MSG(Role::parse(cfg), BadValue, expected);
 
     cfg = Element::create(string("remote-address"));

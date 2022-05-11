@@ -219,7 +219,9 @@ public:
     /// @brief Create HTTP Request.
     ///
     /// @param command The command name.
-    /// @param service  The service (can be empty).
+    /// @param service The service (can be empty).
+    ///
+    /// @return The HTTP request.
     HttpRequestPtr createHttpRequest(const string& command,
                                      const string& service) {
         PostHttpRequestJsonPtr request(new PostHttpRequestJson(
@@ -234,6 +236,8 @@ public:
     /// @brief Create HTTP Response.
     ///
     /// @param answer JSON answer.
+    ///
+    /// @return The HTTP response.
     HttpResponseJsonPtr createHttpResponse(ConstElementPtr answer) {
         HttpResponseJsonPtr response(new HttpResponseJson(
                 HttpVersion::HTTP_11(),

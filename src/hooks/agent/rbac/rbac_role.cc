@@ -21,10 +21,10 @@ namespace rbac {
 RolePtr
 Role::parse(ConstElementPtr cfg) {
     if (!cfg) {
-        isc_throw(BadValue, "parse null role assigment config");
+        isc_throw(BadValue, "parse null role assignment config");
     }
     if (cfg->getType() != Element::string) {
-        isc_throw(BadValue, "role assigment config is not a string");
+        isc_throw(BadValue, "role assignment config is not a string");
     }
     const string& role = cfg->stringValue();
     if (role == "remote-address") {
@@ -38,7 +38,7 @@ Role::parse(ConstElementPtr cfg) {
     } else if (role == "custom-value") {
         return (RolePtr(new CustomRole));
     } else {
-        isc_throw(BadValue, "unknown role assigment keyword '" << role << "'");
+        isc_throw(BadValue, "unknown role assignment keyword '" << role << "'");
     }
 }
 
