@@ -121,7 +121,7 @@ public:
     ///
     /// @param load True if at load, false at unload.
     virtual void setup(bool load) final {
-        http::HttpRequest::recordSubject = load;
+        http::HttpRequest::recordSubject_ = load;
     }
 };
 
@@ -149,7 +149,7 @@ public:
     ///
     /// @param load True if at load, false at unload.
     virtual void setup(bool load) final {
-        http::HttpRequest::recordIssuer = load;
+        http::HttpRequest::recordIssuer_ = load;
     }
 };
 
@@ -177,7 +177,7 @@ public:
     ///
     /// @param load True if at load, false at unload.
     virtual void setup(bool load) final {
-        http::HttpRequest::recordBasicAuth = load;
+        http::HttpRequest::recordBasicAuth_ = load;
     }
 };
 
