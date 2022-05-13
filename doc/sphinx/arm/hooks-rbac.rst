@@ -301,7 +301,7 @@ in the Kea source and is copied below.
 Accept/Reject Algorithm
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Here is the pseudo-code of the accept/reject algorithm which returns
+Here is the pseudo-code of the accept/reject decision algorithm which returns
 true i.e. accept or false i.e. reject.
 
 .. code-block:: c
