@@ -63,7 +63,7 @@
                     },
                     "reject-commands": "NONE",
                     "other-commands": "reject",
-                    "preference": "accept",
+                    "list-match-first": "accept",
                     "response-filters": [ "list-commands" ]
                 },{
                     "name": "admin",
@@ -72,7 +72,7 @@
                     {
                         "hook": "cb_cmds"
                     },
-                    "preference": "reject"
+                    "list-match-first": "reject"
                 } ],
                 "default-role":
                 {

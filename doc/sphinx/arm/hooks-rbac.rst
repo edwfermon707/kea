@@ -79,7 +79,7 @@ the configuration of the ``unknown`` role is used.
    | other-commands   | specifies what to do for commands not matching     |
    |                  | accept and reject lists (default reject)           |
    +------------------+----------------------------------------------------+
-   | preference       | specifies what to do for commands matching both    |
+   | list-match-first | specifies what to do for commands matching both    |
    |                  | accept and reject list by giving the list to check |
    |                  | and apply first (default accept)                   |
    +------------------+----------------------------------------------------+
@@ -268,7 +268,7 @@ in the Kea source and is copied below.
                     },
                     "reject-commands": "NONE",
                     "other-commands": "reject",
-                    "preference": "accept",
+                    "list-match-first": "accept",
                     "response-filters": [ "list-commands" ]
                 },{
                     "name": "admin",
@@ -277,7 +277,7 @@ in the Kea source and is copied below.
                     {
                         "hook": "cb_cmds"
                     },
-                    "preference": "reject"
+                    "list-match-first": "reject"
                 } ],
                 "default-role":
                 {
@@ -307,7 +307,7 @@ true i.e. accept or false i.e. reject.
 .. code-block:: c
 
    bool match(command) {
-       if (preference == accept) {
+       if (list-match-first == accept) {
            if (accept_list && accept_list->match(command)) {
                return (true);
            }

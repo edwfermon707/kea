@@ -32,7 +32,7 @@ const SimpleKeywords RoleConfig::ROLE_PARAMETERS = {
     { "accept-commands",   Element::any },
     { "reject-commands",   Element::any },
     { "other-commands",    Element::string },
-    { "preference",        Element::string },
+    { "list-match-first",  Element::string },
     { "response-filters",  Element::list },
     { "comment",           Element::string }
 };
@@ -104,11 +104,11 @@ RoleConfig::parse(ConstElementPtr cfg, string name) {
 
     // Preference.
     bool preference = true;
-    ConstElementPtr pref_elem = cfg->get("preference");
+    ConstElementPtr pref_elem = cfg->get("list-match-first");
     if (pref_elem) {
         const string& pref = pref_elem->stringValue();
         if ((pref != "accept") && (pref != "reject")) {
-            isc_throw(BadValue, "role preference '" << pref
+            isc_throw(BadValue, "list-match-first '" << pref
                       << "' is not 'accept' or 'reject'");
         }
         preference = (pref == "accept");

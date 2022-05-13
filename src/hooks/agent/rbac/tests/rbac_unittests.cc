@@ -138,11 +138,11 @@ TEST_F(RoleConfigTest, parse) {
     EXPECT_THROW_MSG(RoleConfig::parse(cfg), DhcpConfigError, expected);
 
     cfg->remove("other-commands");
-    cfg->set("preference", Element::create(true));
-    expected = "'preference' parameter is not a string";
+    cfg->set("list-match-first", Element::create(true));
+    expected = "'list-match-first' parameter is not a string";
     EXPECT_THROW_MSG(RoleConfig::parse(cfg), DhcpConfigError, expected);
 
-    cfg->remove("preference");
+    cfg->remove("list-match-first");
     cfg->set("response-filters", Element::create(0.));
     expected = "'response-filters' parameter is not a list";
     EXPECT_THROW_MSG(RoleConfig::parse(cfg), DhcpConfigError, expected);
@@ -203,16 +203,16 @@ TEST_F(RoleConfigTest, parse) {
     EXPECT_FALSE(rc->others_);
 
     // Preference.
-    cfg->set("preference", Element::create(string("foobar")));
-    expected = "role preference 'foobar' is not 'accept' or 'reject'";
+    cfg->set("list-match-first", Element::create(string("foobar")));
+    expected = "list-match-first 'foobar' is not 'accept' or 'reject'";
     EXPECT_THROW_MSG(RoleConfig::parse(cfg), BadValue, expected);
 
-    cfg->set("preference", Element::create(string("accept")));
+    cfg->set("list-match-first", Element::create(string("accept")));
     EXPECT_NO_THROW(rc = RoleConfig::parse(cfg));
     ASSERT_TRUE(rc);
     EXPECT_TRUE(rc->preference_);
 
-    cfg->set("preference", Element::create(string("reject")));
+    cfg->set("list-match-first", Element::create(string("reject")));
     EXPECT_NO_THROW(rc = RoleConfig::parse(cfg));
     ASSERT_TRUE(rc);
     EXPECT_FALSE(rc->preference_);

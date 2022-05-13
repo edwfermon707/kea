@@ -340,7 +340,7 @@ TEST_F(ConfigTest, parseDefaultRole) {
 
     reset();
     ElementPtr role = Element::createMap();
-    role->set("preference", Element::create(string("reject")));
+    role->set("list-match-first", Element::create(string("reject")));
     cfg->set("default-role", role);
     EXPECT_NO_THROW(Config::parse(cfg));
     ASSERT_TRUE(defaultRoleConfig);
@@ -362,7 +362,7 @@ TEST_F(ConfigTest, parseUnknownRole) {
 
     reset();
     ElementPtr role = Element::createMap();
-    role->set("preference", Element::create(string("reject")));
+    role->set("list-match-first", Element::create(string("reject")));
     cfg->set("unknown-role", role);
     EXPECT_NO_THROW(Config::parse(cfg));
     ASSERT_TRUE(unknownRoleConfig);
