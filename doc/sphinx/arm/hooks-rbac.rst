@@ -108,6 +108,12 @@ access right (i.e. ``read`` or ``write``) and the hook name.
    |        | commands of servers or agents)                          |
    +--------+---------------------------------------------------------+
 
+.. note::
+
+   These command description files are security sensitive e.g. with
+   too permissive access rights a local attacker may modify them and
+   defeat the RBAC goal.
+
 Access control lists
 ~~~~~~~~~~~~~~~~~~~~
 

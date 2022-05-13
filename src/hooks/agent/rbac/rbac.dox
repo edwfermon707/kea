@@ -162,7 +162,7 @@ Predified access list kinds are:
    it takes as parameter.
  - or - makes the logical or on the list of access list specifications
    it takes as parameter.
- - commands - matches the members of the list of of command names it takes
+ - commands - matches the members of the list of command names it takes
    as parameter (implemented as a set).
  - access - matches commands which have the access right it takes as
    parameter (i.e. strings read or write).

@@ -94,13 +94,13 @@ public:
     static void parse(data::ConstElementPtr cfg, bool others = false);
 
 protected:
-    /// @brief The command name (may not be set).
+    /// @brief The command name.
     std::string name_;
 
     /// @brief The command access (read or write).
     std::string access_;
 
-    /// @brief The name of the hook which registers the command.
+    /// @brief The name of the hook which registers the command (may not be set).
     std::string hook_;
 };
 

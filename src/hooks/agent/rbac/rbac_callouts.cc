@@ -80,6 +80,13 @@ unload() {
     return (0);
 }
 
+/// @brief This function is called to retrieve the multi-threading compatibility.
+///
+/// @return 1 which means compatible with multi-threading.
+int multi_threading_compatible() {
+    return (1);
+}
+
 /// @brief This callout is called at the "auth" hook.
 ///
 /// @param handle CalloutHandle.
