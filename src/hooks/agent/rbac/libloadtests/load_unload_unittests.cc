@@ -146,9 +146,9 @@ TEST_F(LibLoadTest, badParameterLoad) {
     // Set proc name.
     Daemon::setProcName("kea-ctrl-agent");
 
-    /// Add unknown element "foo" to valid config.
+    /// Add unknown value "foo" to valid config.
     ElementPtr cfg = createValidJsonConfiguration();
-    cfg->set("preference", Element::create("foo"));
+    cfg->set("list-match-first", Element::create("foo"));
 
     // Add library with invalid configuration.
     addLib(RBAC_LIB_SO, cfg);
