@@ -82,6 +82,7 @@ protected:
 };
 
 /// @brief Alias of an access control list.
+/// @note: not used at the exception of its parse class method.
 class AliasAcl : public Acl {
 public:
 
