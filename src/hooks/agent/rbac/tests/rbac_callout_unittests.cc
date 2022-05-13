@@ -49,12 +49,12 @@ const char* CONFIGS[] = {
     "                    \"list-commands\"\n"
     "                ]\n"
     "            },\n"
-    "            \"other-commands\": false\n"
+    "            \"other-commands\": \"reject\"\n"
     "        }\n"
     "    ]\n"
     "}\n",
 
-    // configuration 1: same with other-commands to true.
+    // configuration 1: same with other-commands to accept.
     "{\n"
     "    \"assign-role-method\": \"remote-address\",\n"
     "    \"roles\":\n"
@@ -68,7 +68,7 @@ const char* CONFIGS[] = {
     "                    \"list-commands\"\n"
     "                ]\n"
     "            },\n"
-    "            \"other-commands\": true\n"
+    "            \"other-commands\": \"accept\"\n"
     "        }\n"
     "    ]\n"
     "}\n",
@@ -88,7 +88,7 @@ const char* CONFIGS[] = {
     "                    \"list-commands\"\n"
     "                ]\n"
     "            },\n"
-    "            \"other-commands\": false\n"
+    "            \"other-commands\": \"reject\"\n"
     "        }\n"
     "    ]\n"
     "}\n",
@@ -109,7 +109,7 @@ const char* CONFIGS[] = {
     "                    \"build-report\"\n"
     "                ]\n"
     "            },\n"
-    "            \"other-commands\": false,\n"
+    "            \"other-commands\": \"reject\",\n"
     "            \"response-filters\":\n"
     "            [\n"
     "                \"list-commands\"\n"

@@ -133,11 +133,11 @@ TEST_F(RoleConfigTest, parse) {
     EXPECT_THROW_MSG(RoleConfig::parse(cfg), BadValue, expected);
 
     cfg->set("reject-commands", Element::create(string("NONE")));
-    cfg->set("other-commands", Element::create(0));
-    expected = "'other-commands' parameter is not a boolean";
+    cfg->set("other-commands", Element::create(false));
+    expected = "'other-commands' parameter is not a string";
     EXPECT_THROW_MSG(RoleConfig::parse(cfg), DhcpConfigError, expected);
 
-    cfg->set("other-commands", Element::create(false));
+    cfg->remove("other-commands");
     cfg->set("preference", Element::create(true));
     expected = "'preference' parameter is not a string";
     EXPECT_THROW_MSG(RoleConfig::parse(cfg), DhcpConfigError, expected);
@@ -176,7 +176,6 @@ TEST_F(RoleConfigTest, parse) {
     cfg->set("name", Element::create(string("foo")));
     cfg->set("accept-commands", Element::create(string("ALL")));
     cfg->set("reject-commands", Element::create(string("NONE")));
-    cfg->set("other-commands", Element::create(false));
     rc.reset();
     EXPECT_NO_THROW(rc = RoleConfig::parse(cfg));
     ASSERT_TRUE(rc);
@@ -187,6 +186,21 @@ TEST_F(RoleConfigTest, parse) {
     EXPECT_EQ("none", rc->reject_->getClassName());
     EXPECT_FALSE(rc->others_);
     EXPECT_TRUE(rc->preference_);
+
+    // Other commands.
+    cfg->set("other-commands", Element::create(string("foobar")));
+    expected = "other-commands 'foobar' is not 'accept' or 'reject'";
+    EXPECT_THROW_MSG(RoleConfig::parse(cfg), BadValue, expected);
+
+    cfg->set("other-commands", Element::create(string("accept")));
+    EXPECT_NO_THROW(rc = RoleConfig::parse(cfg));
+    ASSERT_TRUE(rc);
+    EXPECT_TRUE(rc->others_);
+
+    cfg->set("other-commands", Element::create(string("reject")));
+    EXPECT_NO_THROW(rc = RoleConfig::parse(cfg));
+    ASSERT_TRUE(rc);
+    EXPECT_FALSE(rc->others_);
 
     // Preference.
     cfg->set("preference", Element::create(string("foobar")));

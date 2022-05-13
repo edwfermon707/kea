@@ -31,7 +31,7 @@ const SimpleKeywords RoleConfig::ROLE_PARAMETERS = {
     { "name",              Element::string },
     { "accept-commands",   Element::any },
     { "reject-commands",   Element::any },
-    { "other-commands",    Element::boolean },
+    { "other-commands",    Element::string },
     { "preference",        Element::string },
     { "response-filters",  Element::list },
     { "comment",           Element::string }
@@ -94,7 +94,12 @@ RoleConfig::parse(ConstElementPtr cfg, string name) {
     bool others = false;
     ConstElementPtr others_elem = cfg->get("other-commands");
     if (others_elem) {
-        others = others_elem->boolValue();
+        const string& action = others_elem->stringValue();
+        if ((action!= "accept") && (action != "reject")) {
+            isc_throw(BadValue, "other-commands '" << action
+                      << "' is not 'accept' or 'reject'");
+        }
+        others = (action == "accept");
     }
 
     // Preference.

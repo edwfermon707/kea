@@ -77,8 +77,7 @@ the configuration of the ``unknown`` role is used.
    | reject-commands  | the reject access list                             |
    +------------------+----------------------------------------------------+
    | other-commands   | specifies what to do for commands not matching     |
-   |                  | accept and reject lists: true for accept, false    |
-   |                  | (default) for reject                               |
+   |                  | accept and reject lists (default reject)           |
    +------------------+----------------------------------------------------+
    | preference       | specifies what to do for commands matching both    |
    |                  | accept and reject list by giving the list to check |
@@ -268,7 +267,7 @@ in the Kea source and is copied below.
                         "commands": [ "list-commands", "status-get" ]
                     },
                     "reject-commands": "NONE",
-                    "other-commands": false,
+                    "other-commands": "reject",
                     "preference": "accept",
                     "response-filters": [ "list-commands" ]
                 },{
@@ -323,6 +322,10 @@ true i.e. accept or false i.e. reject.
                return (true);
            }
        }
-       return (others);
+       if (others == reject) {
+          return (false);
+       } else {
+          return (true);
+       }
    }
 

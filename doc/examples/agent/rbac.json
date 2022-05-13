@@ -62,7 +62,7 @@
                         "commands": [ "list-commands", "status-get" ]
                     },
                     "reject-commands": "NONE",
-                    "other-commands": false,
+                    "other-commands": "reject",
                     "preference": "accept",
                     "response-filters": [ "list-commands" ]
                 },{

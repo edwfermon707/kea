@@ -45,7 +45,7 @@ On the auth callout point process steps are:
  - match the command with the accept and reject lists: match accept means
    being accepted, reject means rejected, matching both follows the
    preference parameter (default accept), none follows the other-commands
-   parameter: accept if true, reject if false (default false)
+   parameter (default reject)
  - when accepted and the role config has response filters put the command
    and the role config in the request callout handle context
  - when rejected emits a forbidden response
@@ -106,8 +106,7 @@ Role configuration parameters are:
  - reject-commands - takes an access list specification: all commands
    matching the list are rejected.
  - other-commands - specifies what to do when a command does not match
-   accept and reject lists. When true the command is accepted, when
-   false (the default) the command is rejected.
+   accept and reject lists.
  - preference - specifies what access list to check and apply first
    for commands matching both accept and reject lists.
  - response-filters - filters to apply to the response.
