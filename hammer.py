@@ -1549,6 +1549,9 @@ def prepare_system_local(features, check_times):
             # --with-boost-include=/usr/include/boost169 --with-boost-lib-dir=/usr/lib64/boost169
             packages.append('boost169-devel')
 
+        if 'docs' in features:
+            packages.extend(['python3-sphinx', 'texlive', 'texlive-collection-latexextra'])
+
         if 'native-pkg' in features:
             packages.extend(['python3-devel', 'rpm-build'])
 
