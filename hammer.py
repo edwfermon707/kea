@@ -2192,7 +2192,7 @@ def _build_deb(system, revision, features, tarball_path, env, check_times, dry_r
     execute("echo 'deb %s kea main' | sudo tee /etc/apt/sources.list.d/isc.list" % repo_url)
     key_url = "%s/repository/repo-keys/repo-key.gpg" % repository_url
     execute('wget -qO- %s | sudo apt-key add -' % key_url,
-            env=env, check_times=check_times)
+            env=env, check_times=check_times, raise_error=False)
     # try apt update for up to 10 times if there is an error
     for _ in range(10):
         _, out = _apt_update(system, revision, capture=True)
