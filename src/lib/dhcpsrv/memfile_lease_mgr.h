@@ -466,7 +466,7 @@ public:
         }
 
         std::cout << "lower - upper" << std::endl;
-        for (auto it = lower_bound; it != index.end(); ++it) {
+        for (auto it = lower_bound; it != upper_bound; ++it) {
             std::cout << (*it)->addr_ << " " << (*it)->client_classes_.toText() << " " <<
                 (*it)->valid_lft_ << " " << (*it)->getExpirationTime() << " " << time(NULL) <<
                 std::endl;
