@@ -9,6 +9,7 @@
 
 #include <exceptions/exceptions.h>
 #include <stdint.h>
+#include <limits>
 #include <typeinfo>
 
 namespace isc {

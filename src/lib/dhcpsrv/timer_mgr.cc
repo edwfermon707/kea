@@ -12,6 +12,7 @@
 #include <exceptions/exceptions.h>
 
 #include <functional>
+#include <map>
 #include <utility>
 
 using namespace isc;
