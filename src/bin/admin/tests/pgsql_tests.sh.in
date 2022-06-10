@@ -139,7 +139,7 @@ pgsql_db_version_test() {
         "${kea_admin}" db-init pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
     assert_eq 0 "${EXIT_CODE}" "cannot initialize the database, expected exit code: %d, actual: %d"
 
-    # Verify that kea-admin db-version returns the correct version
+    # Verify that kea-admin db-version returns the latest version.
     run_command \
         "${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}"
     version="${OUTPUT}"
@@ -498,7 +498,7 @@ pgsql_upgrade_test() {
         "${kea_admin}" db-upgrade pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
     assert_eq 0 "${EXIT_CODE}" "db-upgrade failed, expected exit code: %d, actual: %d"
 
-    # Verify upgraded schema reports version 12.0.
+    # Verify that the upgraded schema reports the latest version.
     version=$("${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
     assert_str_eq "12.0" "${version}" 'Expected kea-admin to return %s, returned value was %s'
 

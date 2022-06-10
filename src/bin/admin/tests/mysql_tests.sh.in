@@ -364,13 +364,13 @@ mysql_upgrade_12_to_13_test() {
 
     # Check lease4Upload().
     run_command \
-        mysql_execute "CALL lease4Upload('192.0.0.0','ff0102030405','01ff0102030405',7200,1234567890,1,0,0,'',0,'');"
+        mysql_execute "CALL lease4Upload('192.0.0.0','ff0102030405','01ff0102030405',7200,1234567890,1,0,0,'',0,'{}');"
     assert_eq 0 "${EXIT_CODE}" 'lease4Upload() failed, expected exit code %d, actual %d'
     assert_str_eq '' "${OUTPUT}"
 
     # Check lease6Upload().
     run_command \
-        mysql_execute "CALL lease6Upload('2001:db8::','000100012955cb80ff0102030407',7200,1234567890,1,3600,0,1,128,0,0,'','ff0102030407',0,'',90,16);"
+        mysql_execute "CALL lease6Upload('2001:db8::','000100012955cb80ff0102030407',7200,1234567890,1,3600,0,1,128,0,0,'','ff0102030407',0,'{}',90,16);"
     assert_eq 0 "${EXIT_CODE}" 'lease6Upload() failed, expected exit code %d, actual %d'
     assert_str_eq '' "${OUTPUT}"
 }
@@ -393,6 +393,134 @@ mysql_upgrade_13_to_14_test() {
 
     count=$(echo "${OUTPUT}" | grep -Eci 'UPDATE dhcp6_subnet SET shared_network_name = NULL') || true
     assert_eq 1 "${count}" "function func_dhcp6_shared_network_BDEL() is missing changed line. (expected count %d, returned %d)"
+
+    run_command \
+        mysql_execute 'DELETE FROM lease4; DELETE FROM lease6;'
+    assert_eq 0 "${EXIT_CODE}" 'DELETE FROM lease'
+
+    run_command \
+        mysql_execute "
+            INSERT INTO lease4 (address, subnet_id, state, user_context) VALUES (111,1,0,
+                '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"],
+                            \"limits\": {\"client-classes\": {\"foo\": 2, \"bar\": 4},
+                                         \"subnet-ids\": {\"1\": 2}}}}');
+            INSERT INTO lease4 (address, subnet_id, state, user_context) VALUES (222,1,1,
+                '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"],
+                            \"limits\": {\"client-classes\": {\"foo\": 2, \"bar\": 4},
+                                         \"subnet-ids\": {\"1\": 2}}}}');
+            INSERT INTO lease4 (address, subnet_id, state, user_context) VALUES (333,1,2,
+                '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"],
+                            \"limits\": {\"client-classes\": {\"foo\": 2, \"bar\": 4},
+                                         \"subnet-ids\": {\"1\": 2}}}}');
+            INSERT INTO lease4 (address, subnet_id, state, user_context) VALUES (444,1,0,
+                '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"],
+                            \"limits\": {\"client-classes\": {\"foo\": 2, \"bar\": 4},
+                                         \"subnet-ids\": {\"1\": 2}}}}');
+            INSERT INTO lease4 (address, subnet_id, state, user_context) VALUES (555,1,1,
+                '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"],
+                            \"limits\": {\"client-classes\": {\"foo\": 2, \"bar\": 4},
+                                         \"subnet-ids\": {\"1\": 2}}}}');
+            INSERT INTO lease6 (address, lease_type, subnet_id, state, user_context) VALUES (111,0,1,0,
+                '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"],
+                            \"limits\": {\"client-classes\": {\"foo\": 2, \"bar\": 4},
+                                         \"subnet-ids\": {\"1\": 2}}}}');
+            INSERT INTO lease6 (address, lease_type, subnet_id, state, user_context) VALUES (222,0,1,1,
+                '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"],
+                            \"limits\": {\"client-classes\": {\"foo\": 2, \"bar\": 4},
+                                         \"subnet-ids\": {\"1\": 2}}}}');
+            INSERT INTO lease6 (address, lease_type, subnet_id, state, user_context) VALUES (333,1,1,2,
+                '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"],
+                            \"limits\": {\"client-classes\": {\"foo\": 2, \"bar\": 4},
+                                         \"subnet-ids\": {\"1\": 2}}}}');
+            INSERT INTO lease6 (address, lease_type, subnet_id, state, user_context) VALUES (444,1,1,0,
+                '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"],
+                            \"limits\": {\"client-classes\": {\"foo\": 2, \"bar\": 4},
+                                         \"subnet-ids\": {\"1\": 2}}}}');
+            INSERT INTO lease6 (address, lease_type, subnet_id, state, user_context) VALUES (555,1,1,1,
+                '{\"ISC\": {\"client-classes\": [\"ALL\", \"KNOWN\", \"bar\", \"foo\"],
+                            \"limits\": {\"client-classes\": {\"foo\": 2, \"bar\": 4},
+                                         \"subnet-ids\": {\"1\": 2}}}}');
+        "
+    assert_eq 0 "${EXIT_CODE}" 'INSERT INTO leases when upgrading from 13 to 14'
+
+    for v in 4 6; do
+        query="SELECT SUM(leases) FROM lease${v}_stat WHERE subnet_id = 1 AND state = 0;"
+        run_command \
+            mysql_execute "${query}"
+        assert_eq 0 "${EXIT_CODE}" "${query}"
+        assert_str_eq 2 "${OUTPUT}" "${query}"
+
+        query="SELECT SUM(leases) FROM lease${v}_client_class_stat WHERE client_class = 'foo' AND state = 0;"
+        run_command \
+            mysql_execute "${query}"
+        assert_eq 0 "${EXIT_CODE}" "${query}"
+        assert_str_eq 2 "${OUTPUT}" "${query}"
+
+        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"client-classes\": { \"foo\": 1 } } } }');"
+        run_command \
+            mysql_execute "${query}"
+        assert_eq 0 "${EXIT_CODE}" "${query}"
+        assert_str_eq 0 "${OUTPUT}" "${query}"
+
+        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"subnet-ids\": { \"1\": 1 } } } }');"
+        run_command \
+            mysql_execute "${query}"
+        assert_eq 0 "${EXIT_CODE}" "${query}"
+        assert_str_eq 0 "${OUTPUT}" "${query}"
+
+        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"client-classes\": { \"foo\": 2 } } } }');"
+        run_command \
+            mysql_execute "${query}"
+        assert_eq 0 "${EXIT_CODE}" "${query}"
+        assert_str_eq 0 "${OUTPUT}" "${query}"
+
+        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"subnet-ids\": { \"1\": 2 } } } }');"
+        run_command \
+            mysql_execute "${query}"
+        assert_eq 0 "${EXIT_CODE}" "${query}"
+        assert_str_eq 0 "${OUTPUT}" "${query}"
+
+        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"client-classes\": { \"foo\": 4 } } } }');"
+        run_command \
+            mysql_execute "${query}"
+        assert_eq 0 "${EXIT_CODE}" "${query}"
+        assert_str_eq 1 "${OUTPUT}" "${query}"
+
+        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"subnet-ids\": { \"1\": 4 } } } }');"
+        run_command \
+            mysql_execute "${query}"
+        assert_eq 0 "${EXIT_CODE}" "${query}"
+        assert_str_eq 1 "${OUTPUT}" "${query}"
+
+        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"client-classes\": { \"foo\": 1, \"bar\": 1 }, \"subnet-ids\": { \"1\": 1 } } } }');"
+        run_command \
+            mysql_execute "${query}"
+        assert_eq 0 "${EXIT_CODE}" "${query}"
+        assert_str_eq 0 "${OUTPUT}" "${query}"
+
+        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"client-classes\": { \"foo\": 2, \"bar\": 4 }, \"subnet-ids\": { \"1\": 4 } } } }');"
+        run_command \
+            mysql_execute "${query}"
+        assert_eq 0 "${EXIT_CODE}" "${query}"
+        assert_str_eq 0 "${OUTPUT}" "${query}"
+
+        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"client-classes\": { \"foo\": 4, \"bar\": 4 }, \"subnet-ids\": { \"1\": 2 } } } }');"
+        run_command \
+            mysql_execute "${query}"
+        assert_eq 0 "${EXIT_CODE}" "${query}"
+        assert_str_eq 0 "${OUTPUT}" "${query}"
+
+        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"client-classes\": { \"foo\": 4, \"bar\": 4 }, \"subnet-ids\": { \"1\": 4 } } } }');"
+        run_command \
+            mysql_execute "${query}"
+        assert_eq 0 "${EXIT_CODE}" "${query}"
+        assert_str_eq 1 "${OUTPUT}" "${query}"
+    done
+
+    query='DELETE FROM lease4; DELETE FROM lease6;'
+    run_command \
+        mysql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}"
 }
 
 mysql_upgrade_test() {
@@ -409,12 +537,12 @@ mysql_upgrade_test() {
     version=$("${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
     assert_str_eq "1.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
-    # Ok, we have a 1.0 database. Let's upgrade it to 14.0.
+    # Ok, we have a 1.0 database. Let's upgrade it to the latest version.
     run_command \
         "${kea_admin}" db-upgrade mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
     assert_eq 0 "${EXIT_CODE}" "kea-admin db-upgrade mysql failed, expected %d, returned non-zero status code %d\n"
 
-    # Verify upgraded schema reports version 14.0.
+    # Verify that the upgraded schema reports the latest version.
     version=$("${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
     assert_str_eq "14.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 

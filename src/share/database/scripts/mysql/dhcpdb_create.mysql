@@ -4076,6 +4076,10 @@ ALTER TABLE dhcp6_options
 UPDATE schema_version
     SET version = '12', minor = '0';
 
+-- This line concludes the schema upgrade to version 12.
+
+-- This line starts the schema upgrade to version 13.
+
 -- Create a function that separates a contiguous hexadecimal string
 -- into groups of two hexadecimals separated by colons.
 DROP FUNCTION IF EXISTS colonSeparatedHex;
@@ -4284,9 +4288,9 @@ DELIMITER ;
 UPDATE schema_version
     SET version = '13', minor = '0';
 
--- This line concludes database upgrade to version 13.
+-- This line concludes the schema upgrade to version 13.
 
--- This line starts the database upgrade to version 14.
+-- This line starts the schema upgrade to version 14.
 
 -- Modify shared-network-name foreign key constraint on dhcp4_subnet to not perform
 -- the update when the network is deleted the cascaded update will not execute
@@ -4344,11 +4348,386 @@ CREATE TRIGGER dhcp6_shared_network_BDEL BEFORE DELETE ON dhcp6_shared_network
     END $$
 DELIMITER ;
 
+-- Schema changes related to lease limiting starts here. --
+
+-- Create tables that contain the number of leases. --
+
+CREATE TABLE lease4_client_class_stat (
+    client_class VARCHAR(128) NOT NULL,
+    state INT UNSIGNED NOT NULL,
+    leases BIGINT UNSIGNED NOT NULL,
+    PRIMARY KEY (client_class, state)
+) ENGINE = InnoDB;
+
+CREATE TABLE lease6_client_class_stat (
+    client_class VARCHAR(128) NOT NULL,
+    lease_type INT UNSIGNED NOT NULL,
+    state INT UNSIGNED NOT NULL,
+    leases BIGINT UNSIGNED NOT NULL,
+    PRIMARY KEY (client_class, lease_type, state)
+) ENGINE = InnoDB;
+
+-- Create after-event triggers for INSERT, UPDATE and DELETE on lease tables. --
+
+DELIMITER $$
+CREATE TRIGGER trigger_lease4_client_class_stat_ains AFTER INSERT ON lease4 FOR EACH ROW BEGIN
+    -- Declarations
+    DECLARE client_classes VARCHAR(1024);
+    DECLARE class VARCHAR(128);
+    DECLARE length INT;
+    DECLARE i INT;
+
+    -- Only state 0 is needed for lease limiting. But check both states to be consistent with lease4_stat.
+    IF NEW.state = 0 OR NEW.state = 1 THEN
+        -- Dive into client classes.
+        SET client_classes = JSON_EXTRACT(NEW.user_context, '$.ISC.client-classes');
+        SET length = JSON_LENGTH(client_classes);
+
+        -- Iterate through all the client classes and increment the lease count for each.
+        SET i = 0;
+        label: WHILE i < length DO
+            SET class = JSON_UNQUOTE(JSON_EXTRACT(client_classes, CONCAT('\$[', i, ']')));
+
+            -- Upsert to increment the lease count.
+            UPDATE lease4_client_class_stat SET leases = leases + 1
+                WHERE client_class = class AND state = NEW.state;
+            IF ROW_COUNT() = 0 THEN
+                INSERT INTO lease4_client_class_stat VALUES (class, NEW.state, 1);
+            END IF;
+
+            SET i = i + 1;
+        END WHILE label;
+    END IF;
+END $$
+DELIMITER ;
+
+DELIMITER $$
+CREATE TRIGGER trigger_lease4_client_class_stat_aupd AFTER UPDATE ON lease4 FOR EACH ROW BEGIN
+    -- Declarations
+    DECLARE client_classes VARCHAR(1024);
+    DECLARE new_client_classes VARCHAR(1024);
+    DECLARE class VARCHAR(128);
+    DECLARE length INT;
+    DECLARE i INT;
+
+    -- TODO: check for client class changes as well.
+    IF OLD.state != NEW.state THEN
+        -- Check if it's moving away from a counted state.
+        IF OLD.state = 0 OR OLD.state = 1 THEN
+            -- Dive into client classes.
+            SET client_classes = JSON_EXTRACT(OLD.user_context, '$.ISC.client-classes');
+            SET length = JSON_LENGTH(client_classes);
+
+            SET i = 0;
+            label: WHILE i < length DO
+                SET class = JSON_UNQUOTE(JSON_EXTRACT(client_classes, CONCAT('\$[', i, ']')));
+
+                -- Decrement the lease count if the record exists.
+                UPDATE lease4_client_class_stat SET leases = leases - 1
+                    WHERE client_class = class AND state = OLD.state;
+
+                SET i = i + 1;
+            END WHILE label;
+        END IF;
+
+        -- Check if it's moving into a counted state.
+        IF NEW.state = 0 OR NEW.state = 1 THEN
+            -- Dive into client classes.
+            SET client_classes = JSON_EXTRACT(NEW.user_context, '$.ISC.client-classes');
+            SET length = JSON_LENGTH(client_classes);
+
+            SET i = 0;
+            label: WHILE i < length DO
+                SET class = JSON_UNQUOTE(JSON_EXTRACT(client_classes, CONCAT('\$[', i, ']')));
+
+                -- Upsert to increment the lease count.
+                UPDATE lease4_client_class_stat SET leases = leases + 1
+                    WHERE client_class = class AND state = NEW.state;
+                IF ROW_COUNT() <= 0 THEN
+                    INSERT INTO lease4_client_class_stat VALUES (class, NEW.state, 1);
+                END IF;
+
+                SET i = i + 1;
+            END WHILE label;
+        END IF;
+    END IF;
+END $$
+DELIMITER ;
+
+DELIMITER $$
+CREATE TRIGGER trigger_lease4_client_class_stat_adel AFTER DELETE ON lease4 FOR EACH ROW BEGIN
+    -- Declarations
+    DECLARE client_classes VARCHAR(1024);
+    DECLARE class VARCHAR(128);
+    DECLARE length INT;
+    DECLARE i INT;
+
+    -- Only state 0 is accounted for in lease limiting. But check both states to be consistent with lease4_stat.
+    IF OLD.state = 0 OR OLD.state = 1 THEN
+        -- Dive into client classes.
+        SET client_classes = JSON_EXTRACT(OLD.user_context, '$.ISC.client-classes');
+        SET length = JSON_LENGTH(client_classes);
+
+        SET i = 0;
+        label: WHILE i < length DO
+            SET class = JSON_UNQUOTE(JSON_EXTRACT(client_classes, CONCAT('\$[', i, ']')));
+
+            -- Decrement the lease count if the record exists.
+            UPDATE lease4_client_class_stat SET leases = leases - 1
+                WHERE client_class = class AND state = OLD.state;
+
+            SET i = i + 1;
+        END WHILE label;
+    END IF;
+END $$
+DELIMITER ;
+
+DELIMITER $$
+CREATE TRIGGER trigger_lease6_client_class_stat_ains AFTER INSERT ON lease6 FOR EACH ROW BEGIN
+    -- Declarations
+    DECLARE client_classes VARCHAR(1024);
+    DECLARE class VARCHAR(128);
+    DECLARE length INT;
+    DECLARE i INT;
+
+    -- Only state 0 is needed for lease limiting. But check both states to be consistent with lease4_stat.
+    IF NEW.state = 0 OR NEW.state = 1 THEN
+        -- Dive into client classes.
+        SET client_classes = JSON_EXTRACT(NEW.user_context, '$.ISC.client-classes');
+        SET length = JSON_LENGTH(client_classes);
+
+        SET i = 0;
+        label: WHILE i < length DO
+            SET class = JSON_UNQUOTE(JSON_EXTRACT(client_classes, CONCAT('\$[', i, ']')));
+
+            -- Upsert to increment the lease count.
+            UPDATE lease6_client_class_stat SET leases = leases + 1
+                WHERE client_class = class AND lease_type = NEW.lease_type AND state = NEW.state;
+            IF ROW_COUNT() <= 0 THEN
+                INSERT INTO lease6_client_class_stat VALUES (class, NEW.lease_type, NEW.state, 1);
+            END IF;
+
+            SET i = i + 1;
+        END WHILE label;
+    END IF;
+END $$
+DELIMITER ;
+
+-- The update trigger for v6. Same as the insert trigger except we only update the lease counts if
+-- state has changed and we also have to account for changes in subnet IDs and client classes.
+DELIMITER $$
+CREATE TRIGGER trigger_lease6_client_class_stat_aupd AFTER UPDATE ON lease6 FOR EACH ROW BEGIN
+    -- Declarations
+    DECLARE client_classes VARCHAR(1024);
+    DECLARE new_client_classes VARCHAR(1024);
+    DECLARE class VARCHAR(128);
+    DECLARE length INT;
+    DECLARE i INT;
+
+    -- TODO: check for client class changes as well.
+    IF OLD.state != NEW.state THEN
+        -- Check if it's moving away from a counted state.
+        IF OLD.state = 0 OR OLD.state = 1 THEN
+            -- Dive into client classes.
+            SET client_classes = JSON_EXTRACT(OLD.user_context, '$.ISC.client-classes');
+            SET length = JSON_LENGTH(client_classes);
+
+            SET i = 0;
+            label: WHILE i < length DO
+                SET class = JSON_UNQUOTE(JSON_EXTRACT(client_classes, CONCAT('\$[', i, ']')));
+
+                -- Decrement the lease count if the record exists.
+                UPDATE lease6_client_class_stat SET leases = leases - 1
+                    WHERE client_class = class AND state = OLD.state;
+
+                SET i = i + 1;
+            END WHILE label;
+        END IF;
+
+        -- Check if it's moving into a counted state.
+        IF NEW.state = 0 OR NEW.state = 1 THEN
+            -- Dive into client classes.
+            SET client_classes = JSON_EXTRACT(NEW.user_context, '$.ISC.client-classes');
+            SET length = JSON_LENGTH(client_classes);
+
+            SET i = 0;
+            label: WHILE i < length DO
+                SET class = JSON_UNQUOTE(JSON_EXTRACT(client_classes, CONCAT('\$[', i, ']')));
+
+                -- Upsert to increment the lease count.
+                UPDATE lease6_client_class_stat SET leases = leases + 1
+                    WHERE client_class = class AND lease_type = NEW.lease_type AND state = NEW.state;
+                IF ROW_COUNT() <= 0 THEN
+                    INSERT INTO lease6_client_class_stat VALUES (class, NEW.lease_type, NEW.state, 1);
+                END IF;
+
+                SET i = i + 1;
+            END WHILE label;
+        END IF;
+    END IF;
+END $$
+DELIMITER ;
+
+-- The delete trigger for v6.
+DELIMITER $$
+CREATE TRIGGER trigger_lease6_client_class_stat_adel AFTER DELETE ON lease6 FOR EACH ROW BEGIN
+    -- Declarations
+    DECLARE client_classes VARCHAR(1024);
+    DECLARE class VARCHAR(128);
+    DECLARE length INT;
+    DECLARE i INT;
+
+    -- Only state 0 is accounted for in lease limiting. But check both states to be consistent with lease6_stat.
+    IF OLD.state = 0 OR OLD.state = 1 THEN
+        -- Dive into client classes.
+        SET client_classes = JSON_EXTRACT(OLD.user_context, '$.ISC.client-classes');
+        SET length = JSON_LENGTH(client_classes);
+
+        SET i = 0;
+        label: WHILE i < length DO
+            SET class = JSON_UNQUOTE(JSON_EXTRACT(client_classes, CONCAT('\$[', i, ']')));
+
+            -- Decrement the lease count if the record exists.
+            UPDATE lease6_client_class_stat SET leases = leases - 1
+                WHERE client_class = class AND lease_type = OLD.lease_type AND state = OLD.state;
+
+            SET i = i + 1;
+        END WHILE label;
+    END IF;
+END $$
+DELIMITER ;
+
+DROP FUNCTION IF EXISTS checkLease4Limits;
+DELIMITER $$
+CREATE FUNCTION checkLease4Limits(user_context VARCHAR(1024))
+RETURNS BOOL
+BEGIN
+    -- Declarations
+    DECLARE map VARCHAR(1024);
+    DECLARE map_keys VARCHAR(1024);
+    DECLARE length INT;
+    DECLARE class VARCHAR(128);
+    DECLARE i INT;
+    DECLARE lease_limit INT;
+    DECLARE lease_count INT;
+    DECLARE s INT;
+
+    -- Dive into client class limits.
+    SET map = JSON_EXTRACT(user_context, '$.ISC.limits.client-classes');
+    SET map_keys = JSON_KEYS(map);
+    SET length = JSON_LENGTH(map_keys);
+
+    SET i = 0;
+    label: WHILE i < length DO
+        -- Get the lease limit for this client class.
+        SET class = JSON_UNQUOTE(JSON_EXTRACT(map_keys, CONCAT('\$[', i, ']')));
+        SET lease_limit = JSON_EXTRACT(map, CONCAT('$.', class));
+
+        -- Get the lease count for this client class.
+        SET lease_count = (SELECT leases FROM lease4_client_class_stat WHERE client_class = class AND state = 0);
+
+        -- Compare. Return immediately if the limit is surpassed.
+        IF lease_limit <= lease_count THEN
+            RETURN false;
+        END IF;
+
+        SET i = i + 1;
+    END WHILE label;
+
+    -- Dive into subnet limits.
+    SET map = JSON_EXTRACT(user_context, '$.ISC.limits.subnet-ids');
+    SET map_keys = JSON_KEYS(map);
+    SET length = JSON_LENGTH(map_keys);
+
+    SET i = 0;
+    label: WHILE i < length DO
+        -- Get the lease limit for this subnet.
+        SET s = CAST(JSON_UNQUOTE(JSON_EXTRACT(map_keys, CONCAT('\$[', i, ']'))) AS INT);
+        SET lease_limit = JSON_EXTRACT(map, CONCAT('$.', s));
+
+        -- Get the lease count for this client class.
+        SET lease_count = (SELECT leases FROM lease4_stat WHERE subnet_id = s AND state = 0);
+
+        -- Compare. Return immediately if the limit is surpassed.
+        IF lease_limit <= lease_count THEN
+            RETURN false;
+        END IF;
+
+        SET i = i + 1;
+    END WHILE label;
+
+    RETURN true;
+END $$
+DELIMITER ;
+
+DROP FUNCTION IF EXISTS checkLease6Limits;
+DELIMITER $$
+CREATE FUNCTION checkLease6Limits(user_context VARCHAR(1024))
+RETURNS BOOL
+BEGIN
+    -- Declarations
+    DECLARE map VARCHAR(1024);
+    DECLARE map_keys VARCHAR(1024);
+    DECLARE length INT;
+    DECLARE class VARCHAR(128);
+    DECLARE i INT;
+    DECLARE lease_limit INT;
+    DECLARE lease_count INT;
+    DECLARE s INT;
+
+    -- Dive into client class limits.
+    SET map = JSON_EXTRACT(user_context, '$.ISC.limits.client-classes');
+    SET map_keys = JSON_KEYS(map);
+    SET length = JSON_LENGTH(map_keys);
+
+    SET i = 0;
+    label: WHILE i < length DO
+        -- Get the lease limit for this client class.
+        SET class = JSON_UNQUOTE(JSON_EXTRACT(map_keys, CONCAT('\$[', i, ']')));
+        SET lease_limit = JSON_EXTRACT(map, CONCAT('$.', class));
+
+        -- Get the lease count for this client class.
+        SET lease_count = (SELECT SUM(leases) FROM lease6_client_class_stat WHERE client_class = class AND state = 0);
+
+        -- Compare. Return immediately if the limit is surpassed.
+        IF lease_limit <= lease_count THEN
+            RETURN false;
+        END IF;
+
+        SET i = i + 1;
+    END WHILE label;
+
+    -- Dive into subnet limits.
+    SET map = JSON_EXTRACT(user_context, '$.ISC.limits.subnet-ids');
+    SET map_keys = JSON_KEYS(map);
+    SET length = JSON_LENGTH(map_keys);
+
+    SET i = 0;
+    label: WHILE i < length DO
+        -- Get the lease limit for this subnet.
+        SET s = CAST(JSON_UNQUOTE(JSON_EXTRACT(map_keys, CONCAT('\$[', i, ']'))) AS INT);
+        SET lease_limit = JSON_EXTRACT(map, CONCAT('$.', s));
+
+        -- Get the lease count for this client class.
+        SET lease_count = (SELECT SUM(leases) FROM lease6_stat WHERE subnet_id = s AND state = 0);
+
+        -- Compare. Return immediately if the limit is surpassed.
+        IF lease_limit <= lease_count THEN
+            RETURN false;
+        END IF;
+
+        SET i = i + 1;
+    END WHILE label;
+
+    RETURN true;
+END $$
+DELIMITER ;
+
 -- Update the schema version number.
 UPDATE schema_version
     SET version = '14', minor = '0';
 
--- This line concludes database upgrade to version 14.
+-- This line concludes the schema upgrade to version 14.
 
 # Notes:
 #
