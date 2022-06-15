@@ -217,7 +217,7 @@ client begins the renewal and rebind processes.
    for more details on generating T1 and T2.
 
 The ``interfaces-config`` map specifies the
-network interfaces on which the server should listen to
+network interfaces on which the server should listen for
 DHCP messages. The ``interfaces`` parameter specifies a list of
 network interfaces on which the server should listen. Lists are opened
 and closed with square brackets, with elements separated by commas. To
