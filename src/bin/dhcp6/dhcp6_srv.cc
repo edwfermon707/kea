@@ -1197,6 +1197,15 @@ Dhcpv6Srv::sendResponseNoThrow(hooks::CalloutHandlePtr& callout_handle,
 void
 Dhcpv6Srv::processPacketPktSend(hooks::CalloutHandlePtr& callout_handle,
                                 Pkt6Ptr& query, Pkt6Ptr& rsp) {
+    // Use the RAII wrapper to make sure that the callout handle state is
+    // reset when this object goes out of scope. All hook points must do
+    // it to prevent possible circular dependency between the callout
+    // handle and its arguments.
+    // This must be done before checking the response because resetting the
+    // pointer happens in another ScopedCalloutHandleState which could still
+    // have the lock on the CalloutHandle.
+    ScopedCalloutHandleState callout_handle_state(callout_handle);
+
     if (!rsp) {
         return;
     }
@@ -1209,13 +1218,6 @@ Dhcpv6Srv::processPacketPktSend(hooks::CalloutHandlePtr& callout_handle,
     // output wire data has not been prepared yet.
     // Execute all callouts registered for packet6_send
     if (HooksManager::calloutsPresent(Hooks.hook_index_pkt6_send_)) {
-
-        // Use the RAII wrapper to make sure that the callout handle state is
-        // reset when this object goes out of scope. All hook points must do
-        // it to prevent possible circular dependency between the callout
-        // handle and its arguments.
-        ScopedCalloutHandleState callout_handle_state(callout_handle);
-
         // Enable copying options from the packets within hook library.
         ScopedEnableOptionsCopy<Pkt6> query_resp_options_copy(query, rsp);
 

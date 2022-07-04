@@ -1547,6 +1547,15 @@ Dhcpv4Srv::sendResponseNoThrow(hooks::CalloutHandlePtr& callout_handle,
 void
 Dhcpv4Srv::processPacketPktSend(hooks::CalloutHandlePtr& callout_handle,
                                 Pkt4Ptr& query, Pkt4Ptr& rsp) {
+    // Use the RAII wrapper to make sure that the callout handle state is
+    // reset when this object goes out of scope. All hook points must do
+    // it to prevent possible circular dependency between the callout
+    // handle and its arguments.
+    // This must be done before checking the response because resetting the
+    // pointer happens in another ScopedCalloutHandleState which could still
+    // have the lock on the CalloutHandle.
+    ScopedCalloutHandleState callout_handle_state(callout_handle);
+
     if (!rsp) {
         return;
     }
@@ -1556,12 +1565,6 @@ Dhcpv4Srv::processPacketPktSend(hooks::CalloutHandlePtr& callout_handle,
 
     // Execute all callouts registered for pkt4_send
     if (HooksManager::calloutsPresent(Hooks.hook_index_pkt4_send_)) {
-
-        // Use the RAII wrapper to make sure that the callout handle state is
-        // reset when this object goes out of scope. All hook points must do
-        // it to prevent possible circular dependency between the callout
-        // handle and its arguments.
-        ScopedCalloutHandleState callout_handle_state(callout_handle);
 
         // Enable copying options from the query and response packets within
         // hook library.

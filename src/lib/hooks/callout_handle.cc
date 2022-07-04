@@ -144,6 +144,7 @@ ScopedCalloutHandleState(const CalloutHandlePtr& callout_handle)
         isc_throw(BadValue, "callout_handle argument must not be null");
     }
 
+    lock_ = make_shared<std::unique_lock<std::mutex>>(callout_handle_->mutex_);
     resetState();
 }
 

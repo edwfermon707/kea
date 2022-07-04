@@ -16,6 +16,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <map>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -356,6 +357,9 @@ public:
         current_hook_ = hook_index;
     }
 
+    /// @brief Mutex to protect the internal state.
+    std::mutex mutex_;
+
 private:
 
     /// @brief Check index
@@ -500,6 +504,9 @@ private:
 
     /// @brief Holds pointer to the wrapped callout handle.
     CalloutHandlePtr callout_handle_;
+
+    /// @brief Holds the lock on the callout handle.
+    std::shared_ptr<std::unique_lock<std::mutex>> lock_;
 };
 
 } // namespace hooks
