@@ -1,4 +1,5 @@
 // Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2022 SmartShare Systems
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -40,61 +41,36 @@ using namespace isc::dhcp;
 /// Each instruction is preceded with the comments giving the instruction
 /// number within a BPF program, in the following format: #123.
 ///
-/// @todo We may want to extend the filter to receive packets sent
-/// to the particular IP address assigned to the interface or
-/// broadcast address.
+/// Most packets are not DHCP packets.  By designing the filter to detect
+/// non-DHCP packets as early as possible, we reduce the kernel's BPF
+/// processing workload.
 struct sock_filter dhcp_sock_filter [] = {
-    // Make sure this is an IP packet: check the half-word (two bytes)
-    // at offset 12 in the packet (the Ethernet packet type).  If it
-    // is, advance to the next instruction.  If not, advance 11
-    // instructions (which takes execution to the last instruction in
-    // the sequence: "drop it").
-    // #0
-    BPF_STMT(BPF_LD + BPF_H + BPF_ABS, ETHERNET_PACKET_TYPE_OFFSET),
-    // #1
-    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, ETHERTYPE_IP, 0, 11),
-
-    // Make sure it's a UDP packet.  The IP protocol is at offset
-    // 9 in the IP header so, adding the Ethernet packet header size
-    // of 14 bytes gives an absolute byte offset in the packet of 23.
-    // #2
-    BPF_STMT(BPF_LD + BPF_B + BPF_ABS,
-             ETHERNET_HEADER_LEN + IP_PROTO_TYPE_OFFSET),
-    // #3
-    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, IPPROTO_UDP, 0, 9),
-
-    // Make sure this isn't a fragment by checking that the fragment
-    // offset field in the IP header is zero.  This field is the
-    // least-significant 13 bits in the bytes at offsets 6 and 7 in
-    // the IP header, so the half-word at offset 20 (6 + size of
-    // Ethernet header) is loaded and an appropriate mask applied.
-    // #4
-    BPF_STMT(BPF_LD + BPF_H + BPF_ABS, ETHERNET_HEADER_LEN + IP_FLAGS_OFFSET),
-    // #5
-    BPF_JUMP(BPF_JMP + BPF_JSET + BPF_K, 0x1fff, 7, 0),
-
     // Check the packet's destination address. The program will only
     // allow the packets sent to the broadcast address or unicast
     // to the specific address on the interface. By default, this
     // address is set to 0 and must be set to the specific value
     // when the raw socket is created and the program is attached
     // to it. The caller must assign the address to the
-    // prog.bf_insns[8].k in the network byte order.
-    // #6
+    // prog.bf_insns[2].k in the network byte order.
+    // #0
     BPF_STMT(BPF_LD + BPF_W + BPF_ABS,
              ETHERNET_HEADER_LEN + IP_DEST_ADDR_OFFSET),
     // If this is a broadcast address, skip the next check.
-    // #7
+    // #1
     BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, 0xffffffff, 1, 0),
     // If this is not broadcast address, compare it with the unicast
     // address specified for the interface.
-    // #8
-    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, 0x00000000, 0, 4),
+    // The address is actually set in PktFilterBPF::openSocket().
+    // N.B. The code in that method assumes that this instruction is at
+    // offset 2 in the program.  If this is changed, openSocket() must be
+    // updated.
+    // #2 - Will be modified by PktFilterBPF::openSocket().
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, 0x00000000, 0, 9),
 
     // Get the IP header length.  This is achieved by the following
     // (special) instruction that, given the offset of the start
     // of the IP header (offset 14) loads the IP header length.
-    // #9
+    // #3
     BPF_STMT(BPF_LDX + BPF_B + BPF_MSH, ETHERNET_HEADER_LEN),
 
     // Make sure it's to the right port.  The following instruction
@@ -102,22 +78,65 @@ struct sock_filter dhcp_sock_filter [] = {
     // offset to locate the correct byte.  The given offset of 16
     // comprises the length of the Ethernet header (14) plus the offset
     // of the UDP destination port (2) within the UDP header.
-    // #10
+    // #4
     BPF_STMT(BPF_LD + BPF_H + BPF_IND, ETHERNET_HEADER_LEN + UDP_DEST_PORT),
     // The following instruction tests against the default DHCP server port,
     // but the action port is actually set in PktFilterBPF::openSocket().
     // N.B. The code in that method assumes that this instruction is at
-    // offset 11 in the program.  If this is changed, openSocket() must be
+    // offset 5 in the program.  If this is changed, openSocket() must be
     // updated.
+    // #5 - Will be modified by PktFilterBPF::openSocket().
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, DHCP4_SERVER_PORT, 0, 6),
+
+    // Make sure this is an IP packet: check the half-word (two bytes)
+    // at offset 12 in the packet (the Ethernet packet type).
+    // #6
+    BPF_STMT(BPF_LD + BPF_H + BPF_ABS, ETHERNET_PACKET_TYPE_OFFSET),
+    // #7
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, ETHERTYPE_IP, 0, 4),
+
+    // Make sure it's a UDP packet.  The IP protocol is at offset
+    // 9 in the IP header so, adding the Ethernet packet header size
+    // of 14 bytes gives an absolute byte offset in the packet of 23.
+    // #8
+    BPF_STMT(BPF_LD + BPF_B + BPF_ABS,
+             ETHERNET_HEADER_LEN + IP_PROTO_TYPE_OFFSET),
+    // #9
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, IPPROTO_UDP, 0, 2),
+
+    // Make sure this isn't a fragment by checking that the more fragments
+    // bit and the fragment offset field in the IP header are zero.
+    // These fields are the least-significant 14 bits in the bytes at offsets
+    // 6 and 7 in the IP header, so the half-word at offset 20 (6 + size of
+    // Ethernet header) is loaded and an appropriate mask applied.
+    // #10
+    BPF_STMT(BPF_LD + BPF_H + BPF_ABS, ETHERNET_HEADER_LEN + IP_FLAGS_OFFSET),
+    // If any of the bits are set, proceed to drop the packet; otherwise, skip
+    // to proceed.
     // #11
-    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, DHCP4_SERVER_PORT, 0, 1),
+    BPF_JUMP(BPF_JMP + BPF_JSET + BPF_K, 0x3fff, 0, 1),
+
+    // We failed one of the tests above, so drop the packet.
+    // #12
+    BPF_STMT(BPF_RET + BPF_K, 0),
+
+    // We passed the tests above, so proceed.
+#if defined(SKF_AD_VLAN_TAG_PRESENT)
+    // Make sure the packet is not VLAN tagged.
+    // #13
+    BPF_STMT(BPF_LD + BPF_B + BPF_ABS,
+             SKF_AD_OFF + SKF_AD_VLAN_TAG_PRESENT),
+    // If no VLAN tag is present, proceed; otherwise, skip to drop the packet.
+    // #14
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, 0, 0, 1),
+#endif
 
     // If we passed all the tests, ask for the whole packet.
-    // #12
+    // #15 / #13
     BPF_STMT(BPF_RET + BPF_K, (u_int)-1),
 
     // Otherwise, drop it.
-    // #13
+    // #16 / #14
     BPF_STMT(BPF_RET + BPF_K, 0),
 };
 
@@ -133,6 +152,8 @@ PktFilterLPF::openSocket(Iface& iface,
                          const isc::asiolink::IOAddress& addr,
                          const uint16_t port, const bool,
                          const bool) {
+    uint8_t raw_buf[IfaceMgr::RCVBUFSIZE];
+    int datalen;
 
     // Open fallback socket first. If it fails, it will give us an indication
     // that there is another service (perhaps DHCP server) running.
@@ -167,10 +188,10 @@ PktFilterLPF::openSocket(Iface& iface,
     // Configure the filter program to receive unicast packets sent to the
     // specified address. The program will also allow packets sent to the
     // 255.255.255.255 broadcast address.
-    dhcp_sock_filter[8].k = addr.toUint32();
+    dhcp_sock_filter[2].k = addr.toUint32();
 
     // Override the default port value.
-    dhcp_sock_filter[11].k = port;
+    dhcp_sock_filter[5].k = port;
     // Apply the filter.
     if (setsockopt(sock, SOL_SOCKET, SO_ATTACH_FILTER, &filter_program,
                    sizeof(filter_program)) < 0) {
@@ -208,6 +229,12 @@ PktFilterLPF::openSocket(Iface& iface,
                   " LPF socket '" << sock << "' to interface '"
                   << iface.getName() << "', reason: " << errmsg);
     }
+
+    // Non-DHCP packets may have been received before the filter was attached,
+    // so drain the socket.
+    do {
+        datalen = recv(sock, raw_buf, sizeof(raw_buf), 0);
+    } while (datalen > 0);
 
     return (SocketInfo(addr, port, sock, fallback));
 
