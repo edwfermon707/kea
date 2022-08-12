@@ -1,0 +1,131 @@
+// Copyright (C) 2022 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+/**
+
+@page libdhcp_pre_process Kea Pre Process Hooks Library
+
+@section libdhcp_pre_processIntro Introduction
+
+Welcome to Kea Pre Process Hooks Library. This documentation is
+addressed to developers who are interested in the internal operation
+of the Pre Process library. This file provides information needed
+to understand and perhaps extend this library.
+
+This documentation is stand-alone: you should have read and understood
+the <a href="https://reports.kea.isc.org/dev_guide/">Kea
+Developer's Guide</a> and in particular its section about hooks.
+
+@section libdhcp_pre_processUser Now To Use libdhcp_pre_process
+## Introduction
+libdhcp_pre_process is a hooks library which customize the option value
+setting mechanism by introducing values from expression evaluation.
+Instead of relying on static configured values, it allows user to define
+expressions and use values of that expressions computed for options
+received from query packets.
+
+## Configuring the DHCP Modules
+
+It must be configured as a hook library for the desired DHCP server
+modules. Note that the pre_process library is installed alongside the
+Kea libraries in "<install-dir>/lib" where <install-dir> is determined
+by the --prefix option of the configure script.  It defaults to
+"/usr/local". Assuming the default value then, configuring kea-dhcp4
+to load the pre_process library could be done with the following Kea4
+configuration:
+
+@code
+"Dhcp4": {
+    "hooks-libraries": [
+        {   "library": "/usr/local/lib/libdhcp_pre_process.so",
+            "parameters": {
+                "options": [
+                    {
+                        "code": 100,
+                        "add": "concat(relay4[2].hex, 'abc')",
+                        "csv-format": false
+                    }
+                ]
+            }
+        },
+        ...
+    ]
+}
+@endcode
+
+To configure it for kea-dhcp6, the commands are simply as shown below:
+
+@code
+"Dhcp6": {
+    "hooks-libraries": [
+        {   "library": "/usr/local/lib/libdhcp_pre_process.so",
+            "parameters": {
+                "options": [
+                    {
+                        "code": 100,
+                        "add": "concat(relay6[0].option[37].hex, 'abc')",
+                        "csv-format": false
+                    }
+                ]
+            }
+        },
+        ...
+    ]
+}
+@endcode
+
+The sole parameter is a options list of options with:
+ - @b code - Specifies the option code.
+ - @b name - Specifies the option name, at least the option code or name
+   must be given.
+ - @b add -  Specifies the add action: it takes a string expression.
+   If the option does not already exist in the query packet and
+   the expression evaluates to a not empty value, the option
+   with the value is added.
+ - @b supersede - Specifies the supersede action: it takes a string expression
+   If the expression evaluates to a not empty value, the option
+   with the value is added. If it already exists it is overwritten.
+ - @b remove - Specifies the remove action: it takes a boolean expression
+   If the expression evaluates to true and the option already exists
+   the option is removed. Only one action can be specified.
+ - @b csv-format - Specifies the option format used for input. If not
+   specified, it will default to false (raw data). When enabled, the option
+   data will be parsed using csv format and packed according to the option
+   definition.
+
+Note for the rare options which can be empty this mechanism does not work.
+
+The sub-option support is similar to the option one with in addition:
+ - @b container-add - Specifies if the container option should be created
+   when it does not exist (default behavior) in add and supersede actions.
+ - @b container-remove - Specifies if the container option should be
+   removed when the sub-option removal left it empty (default behavior)
+   in remove action.
+Sub-option configuration is a list in a @b sub-option entry of the container
+option configuration.
+
+## Internal operation
+
+The first function called in @ref load() located in the
+pre_process_callouts.cc. It checks if the necessary parameter is passed and
+decodes the option configurations. @ref unload() free the configuration.
+
+Kea engine checks if the library has functions that match known hook point
+names. This library has two such functions: @ref pkt4_receive and
+@ref pkt6_receive, all located in pre_process_callouts.cc.
+
+kea-dhcp4 server calls @ref pkt4_receive (and kea-dhcp6 @ref pkt6_receive)
+with the query packet. For each configured option and sub-option
+the action is applied by the template @c process located in pre_process.h.
+
+In case any other library sets the SKIP and DROP flag before pkt4_receive
+or pkt6_receive, the library directly returns.
+
+@section libdhcp_pre_processMTCompatibility Multi-Threading Compatibility
+
+The libdhcp_pre_process hooks library is compatible with multi-threading.
+
+*/

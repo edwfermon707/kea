@@ -169,6 +169,7 @@ of the libraries can be verified with this command:
    /usr/local/lib/kea/hooks/libdhcp_host_cmds.so
    /usr/local/lib/kea/hooks/libdhcp_lease_cmds.so
    /usr/local/lib/kea/hooks/libdhcp_legal_log.so
+   /usr/local/lib/kea/hooks/libdhcp_pre_process.so
    /usr/local/lib/kea/hooks/libdhcp_subnet_cmds.so
 
 The exact list returned depends on the packages installed. If the
@@ -536,6 +537,11 @@ loaded by the correct process per the table below.
    |                                                           |              | information. Kea servers use this library to fetch their     |
    |                                                           |              | configurations.                                              |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
+   | :ref:`Pre Processing <hooks-pre-process>`                 | Kea open     | This library provides hooks that patches option values       |
+   |                                                           | source       | in a received query packer. An expression is evaluated.      |
+   |                                                           |              | Defined add, supersede, and remove actions are applied on    |
+   |                                                           |              | on the received query packet after it was decoded.           |
+   +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
    | :ref:`RADIUS <hooks-radius>`                              | ISC support  | The RADIUS hook library allows Kea to interact with          |
    |                                                           | customers    | RADIUS servers using access and accounting mechanisms. The   |
    |                                                           |              | access mechanism may be used for access control, assigning   |
@@ -611,6 +617,7 @@ sections.
 .. include:: hooks-limits.rst
 .. include:: hooks-cb-mysql.rst
 .. include:: hooks-cb-pgsql.rst
+.. include:: hooks-pre-process.rst
 .. include:: hooks-radius.rst
 .. include:: hooks-rbac.rst
 .. include:: hooks-run-script.rst

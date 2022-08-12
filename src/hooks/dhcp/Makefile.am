@@ -8,4 +8,4 @@ if HAVE_PGSQL
 SUBDIRS += pgsql_cb
 endif
 
-SUBDIRS += run_script stat_cmds user_chk
+SUBDIRS += pre_process run_script stat_cmds user_chk

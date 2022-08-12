@@ -3,6 +3,7 @@ mes_files += $(top_srcdir)/src/hooks/dhcp/bootp/bootp_messages.mes
 mes_files += $(top_srcdir)/src/hooks/dhcp/mysql_cb/mysql_cb_messages.mes
 mes_files += $(top_srcdir)/src/hooks/dhcp/lease_cmds/lease_cmds_messages.mes
 mes_files += $(top_srcdir)/src/hooks/dhcp/high_availability/ha_messages.mes
+mes_files += $(top_srcdir)/src/hooks/dhcp/pre_process/pre_process_messages.mes
 mes_files += $(top_srcdir)/src/hooks/dhcp/stat_cmds/stat_cmds_messages.mes
 mes_files += $(top_srcdir)/src/hooks/dhcp/user_chk/user_chk_messages.mes
 mes_files += $(top_srcdir)/src/lib/config/config_messages.mes

@@ -116,6 +116,7 @@ exclude_patterns = [
     'arm/hooks-cb-mysql.rst',
     'arm/hooks-cb-pgsql.rst',
     'arm/hooks-limits.rst',
+    'arm/hooks-pre-process.rst',
     'arm/hooks-rbac.rst',
     'arm/hooks-run-script.rst',
     'arm/hooks-subnet-cmds.rst',
