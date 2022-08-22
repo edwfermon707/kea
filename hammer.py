@@ -1448,11 +1448,16 @@ def prepare_system_local(features, check_times):
     system, revision = get_system_revision()
     log.info('Preparing deps for %s %s', system, revision)
 
+    packages = []
+
+    # Globally available packages
+    if 'forge' in features:
+        packages.append('tcpdump')
 
     # prepare fedora
     if system == 'fedora':
-        packages = ['make', 'autoconf', 'automake', 'libtool', 'gcc-c++', 'openssl-devel',
-                    'log4cplus-devel', 'boost-devel', 'libpcap-devel', 'python3-virtualenv']
+        packages.extend(['make', 'autoconf', 'automake', 'libtool', 'gcc-c++', 'openssl-devel',
+                         'log4cplus-devel', 'boost-devel', 'libpcap-devel', 'python3-virtualenv'])
 
         if 'native-pkg' in features:
             packages.extend(['rpm-build', 'python3-devel'])
@@ -1506,9 +1511,9 @@ def prepare_system_local(features, check_times):
     elif system == 'centos':
         install_pkgs('epel-release', env=env, check_times=check_times)
 
-        packages = ['autoconf', 'automake', 'boost-devel', 'gcc-c++',
-                    'libtool', 'log4cplus-devel', 'make',
-                    'openssl-devel', 'postgresql-devel']
+        packages.extend(['autoconf', 'automake', 'boost-devel', 'gcc-c++',
+                         'libtool', 'log4cplus-devel', 'make',
+                         'openssl-devel', 'postgresql-devel'])
 
         if revision == '7':
             # Install newer version of Boost in case users want to opt-in with:
@@ -1577,9 +1582,9 @@ def prepare_system_local(features, check_times):
 
     # prepare rhel
     elif system == 'rhel':
-        packages = ['autoconf', 'automake', 'boost-devel', 'gcc-c++',
-                    'libtool', 'log4cplus-devel', 'make',
-                    'openssl-devel', 'postgresql-devel']
+        packages.extend(['autoconf', 'automake', 'boost-devel', 'gcc-c++',
+                         'libtool', 'log4cplus-devel', 'make',
+                         'openssl-devel', 'postgresql-devel'])
 
         if revision in ['7', '8']:
             # Install newer version of Boost in case users want to opt-in with:
@@ -1646,8 +1651,8 @@ def prepare_system_local(features, check_times):
     elif system == 'ubuntu':
         _apt_update(system, revision, env=env, check_times=check_times, attempts=3, sleep_time_after_attempt=10)
 
-        packages = ['gcc', 'g++', 'make', 'autoconf', 'automake', 'libtool', 'libssl-dev', 'liblog4cplus-dev',
-                    'libboost-system-dev', 'gnupg', 'libpcap-dev', 'python3-venv']
+        packages.extend(['gcc', 'g++', 'make', 'autoconf', 'automake', 'libtool', 'libssl-dev', 'liblog4cplus-dev',
+                         'libboost-system-dev', 'gnupg', 'libpcap-dev', 'python3-venv'])
 
         if 'unittest' in features:
             if revision.startswith('16.'):
@@ -1705,8 +1710,8 @@ def prepare_system_local(features, check_times):
     elif system == 'debian':
         _apt_update(system, revision, env=env, check_times=check_times, attempts=3, sleep_time_after_attempt=10)
 
-        packages = ['gcc', 'g++', 'make', 'autoconf', 'automake', 'libtool', 'libssl-dev',
-                    'liblog4cplus-dev', 'libboost-system-dev', 'gnupg']
+        packages.extend(['gcc', 'g++', 'make', 'autoconf', 'automake', 'libtool', 'libssl-dev',
+                         'liblog4cplus-dev', 'libboost-system-dev', 'gnupg'])
 
         if 'unittest' in features:
             if revision == '8':
@@ -1775,7 +1780,7 @@ def prepare_system_local(features, check_times):
 
     # prepare freebsd
     elif system == 'freebsd':
-        packages = ['autoconf', 'automake', 'libtool', 'openssl', 'log4cplus', 'boost-libs', 'wget']
+        packages.extend(['autoconf', 'automake', 'libtool', 'openssl', 'log4cplus', 'boost-libs', 'wget'])
 
         if 'docs' in features:
             if float(revision.split('.')[0]) < 12.0:
@@ -1831,9 +1836,9 @@ def prepare_system_local(features, check_times):
     # prepare alpine
     elif system == 'alpine':
 
-        packages = ['gcc', 'g++', 'make', 'autoconf', 'automake', 'libtool', 'openssl-dev',
-                    'boost-libs', 'boost-dev', 'procps', 'tar', 'log4cplus', 'log4cplus-dev',
-                    'gzip']
+        packages.extend(['gcc', 'g++', 'make', 'autoconf', 'automake', 'libtool', 'openssl-dev',
+                         'boost-libs', 'boost-dev', 'procps', 'tar', 'log4cplus', 'log4cplus-dev',
+                         'gzip'])
 
         if 'docs' in features:
             if revision == '3.10':
