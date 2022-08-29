@@ -1530,7 +1530,7 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
             OptionVendorClassPtr vendor_class;
             vendor_class = boost::dynamic_pointer_cast<OptionVendorClass>(opt.second);
             if (vendor_class) {
-                int32_t vendor_id = vendor_class->getVendorId();
+                uint32_t vendor_id = vendor_class->getVendorId();
                 static_cast<void>(vendor_ids.insert(vendor_id));
             }
         }
@@ -1565,7 +1565,7 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
             OptionVendorPtr vendor_opts;
             vendor_opts = boost::dynamic_pointer_cast<OptionVendor>(opt.second);
             if (vendor_opts) {
-                int32_t vendor_id = vendor_opts->getVendorId();
+                uint32_t vendor_id = vendor_opts->getVendorId();
                 static_cast<void>(vendor_ids.insert(vendor_id));
             }
         }
@@ -3985,7 +3985,7 @@ void Dhcpv6Srv::classifyByVendor(const Pkt6Ptr& pkt, std::string& classes) {
 
         } else {
             pkt->addClass(VENDOR_CLASS_PREFIX + vclass->getTuple(0).getText());
-            classes + VENDOR_CLASS_PREFIX + vclass->getTuple(0).getText() + " ";
+            classes += VENDOR_CLASS_PREFIX + vclass->getTuple(0).getText() + " ";
         }
     }
 }
