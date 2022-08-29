@@ -33,6 +33,10 @@
 	"vendor-class" (code 16) and "vendor-opts" (code 17)
 	options: specifying multiple options with different
 	enterprise numbers is now supported by Kea.
+	In addition, fixed a bug in kea-dhcp6 where classification would
+	not happen for options other than those added by known DOCSIS
+	vendors.
+	(Gitlab #2517)
 
 2046.	[doc]		andrei
 	Disabled smart quotes in Sphinx configuration to leave quotes
