@@ -11,6 +11,7 @@
 from __future__ import print_function
 
 import os
+import random
 import re
 import sys
 import glob
@@ -328,6 +329,7 @@ def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False
                              used for e.g. SSH
     :param int attempts: number of attempts to run the command if it fails
     :param int sleep_time_after_attempt: number of seconds to sleep before taking next attempt
+    :param bool super_quiet: if True, set quiet to True and don't log command
     """
     if super_quiet:
         quiet = True
@@ -363,7 +365,7 @@ def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False
                 if line:
                     line_decoded = line.decode(encoding='ascii', errors='ignore').rstrip() + '\r'
                     if not quiet:
-                        print(line_decoded)
+                        log.info(line_decoded)
                     if capture:
                         output += line_decoded
                     if log_file_path:
@@ -497,11 +499,9 @@ def install_pkgs(pkgs, timeout=60, env=None, check_times=False, pkg_cache=None):
         log.info('all packages already installed')
         return
 
-    if system in ['centos', 'rhel'] and revision == '7':
-        # skip_missing_names_on_install used to detect case when one packet is not found and no error is returned
-        # but we want an error
-        cmd = 'sudo yum install -y --setopt=skip_missing_names_on_install=False'
-    elif system in ['centos', 'fedora', 'rhel']:
+    if system in ['centos', 'fedora', 'rhel']:
+        if system in ['centos', 'rhel'] and revision == '7':
+            execute('sudo yum install -y dnf')
         cmd = 'sudo dnf -y install'
     elif system in ['debian', 'ubuntu']:
         # prepare the command for ubuntu/debian
@@ -993,6 +993,13 @@ class VagrantEnv(object):
                 self.execute("sudo subscription-manager repos --enable rhel-8-for-x86_64-baseos-beta-rpms")
                 self.execute("sudo dnf install -y python36")
 
+        # RPM-based distributions install libraries in /usr/local/lib64, but they
+        # tend to not look there at runtime without explicit mention in ld.so.conf.d.
+        if self.system in ['centos', 'fedora', 'rhel']:
+            self.execute('sudo echo /usr/local/lib64 > /etc/ld.so.conf.d/kea.conf')
+            # ldconfig only in case the change above was not there before system startup
+            self.execute('sudo ldconfig')
+
         # upload Hammer to Vagrant system
         hmr_py_path = os.path.join(self.repo_dir, 'hammer.py')
         self.upload(hmr_py_path)
@@ -1050,20 +1057,27 @@ class VagrantEnv(object):
 def _install_gtest_sources():
     """Install gtest sources."""
     # download gtest sources only if it is not present as native package
-    if not os.path.exists('/usr/src/googletest-release-1.10.0/googletest'):
-        cmd = 'wget --no-verbose -O /tmp/gtest.tar.gz '
-        cmd += 'https://github.com/google/googletest/archive/release-1.10.0.tar.gz'
-        execute(cmd)
-        execute('sudo mkdir -p /usr/src')
-        execute('sudo tar -C /usr/src -zxf /tmp/gtest.tar.gz')
-        execute('sudo ln -sf /usr/src/googletest-release-1.10.0 /usr/src/googletest')
-        os.unlink('/tmp/gtest.tar.gz')
+    gtest_version = '1.10.0'
+    gtest_path = f'/usr/src/googletest-release-{gtest_version}/googletest'
+    if os.path.exists(gtest_path):
+            log.info(f'gtest is already installed in {gtest_path}.')
+            return
+
+    cmd = 'wget --no-verbose -O /tmp/gtest.tar.gz '
+    cmd += f'https://github.com/google/googletest/archive/release-{gtest_version}.tar.gz'
+    execute(cmd)
+    execute('sudo mkdir -p /usr/src')
+    execute('sudo tar -C /usr/src -zxf /tmp/gtest.tar.gz')
+    execute(f'sudo ln -sf /usr/src/googletest-release-{gtest_version} /usr/src/googletest')
+    os.unlink('/tmp/gtest.tar.gz')
 
 
 def _install_libyang_from_sources():
     """Install libyang from sources."""
     for prefix in ['/usr', '/usr/local']:
-        if os.path.exists('%s/include/libyang/libyang.h' % prefix):
+        libyang_path = f'{prefix}/include/libyang/libyang.h'
+        if os.path.exists(libyang_path):
+            log.info(f'libyang is already installed in {libyang_path}.')
             return
 
     execute('rm -rf /tmp/libyang')
@@ -1081,7 +1095,9 @@ def _install_libyang_from_sources():
 def _install_sysrepo_from_sources():
     """Install sysrepo from sources."""
     for prefix in ['/usr', '/usr/local']:
-        if os.path.exists('%s/include/sysrepo.h' % prefix):
+        sysrepo_path = f'{prefix}/include/sysrepo.h'
+        if os.path.exists(sysrepo_path):
+            log.info(f'sysrepo is already installed in {sysrepo_path}.')
             return
 
     # sysrepo is picky about the libyang version it uses. If the wrong version
@@ -1285,9 +1301,14 @@ def _enable_postgresql(system, revision):
         execute('sudo rc-update add postgresql')
     elif system == 'freebsd':
         execute('sudo sysrc postgresql_enable="yes"')
-    elif system == 'rhel' and revision == '9':
-        execute('sudo systemctl enable postgresql-14.service')
     else:
+        # Disable all PostgreSQL services first to avoid conflicts.
+        # raise_error=False for when there are no matches
+        _, output = execute("systemctl list-unit-files | grep postgres | grep -Fv '@.service' | cut -d ' ' -f 1",
+                            capture=True, raise_error=False)
+        for service in output.split():
+            execute(f'sudo systemctl disable {service}')
+
         execute('sudo systemctl enable postgresql.service')
 
 
@@ -1298,10 +1319,25 @@ def _restart_postgresql(system, revision):
         execute('sudo service postgresql restart > /dev/null')
     elif system == 'alpine':
         execute('sudo /etc/init.d/postgresql restart')
-    elif system == 'rhel' and revision == '9':
-        execute('sudo systemctl restart postgresql-14.service')
     else:
-        execute('sudo systemctl restart postgresql.service')
+        # Stop all PostgreSQL services first to avoid conflicts.
+        # raise_error=False for when there are no matches
+        _, output = execute("systemctl list-unit-files | grep postgres | grep -Fv '@.service' | cut -d ' ' -f 1",
+                            capture=True, raise_error=False)
+        for service in output.split():
+            execute(f'sudo systemctl stop {service}')
+
+        exit_code = execute('sudo systemctl restart postgresql.service', raise_error=False)
+        if exit_code != 0:
+            log.error('Command "sudo systemctl restart postgresql.service" failed. Here is the journal:')
+            _, output = execute('sudo journalctl -xu postgresql.service', capture=True)
+            log.error(output)
+            log.error('And here are logs:')
+            _, output = execute("sudo -u postgres psql -A -t -c 'SELECT pg_current_logfile()'", capture=True)
+            logfile = os.path.basename(output.strip())
+            _, output = execute(f'sudo find /var -type f -name "{logfile}" -exec cat {{}} \;', capture=True, raise_error=False)
+            log.error(output)
+            sys.exit(exit_code)
 
 
 # Change authentication type for given connection type. Usual inputs for
@@ -1326,8 +1362,6 @@ def _configure_pgsql(system, features, revision):
         if exitcode != 0:
             if system == 'centos':
                 execute('sudo postgresql-setup initdb')
-            elif system == 'rhel' and revision == '9':
-                execute('sudo postgresql-14-setup initdb')
             else:
                 execute('sudo postgresql-setup --initdb --unit postgresql')
     elif system == 'freebsd':
@@ -1414,7 +1448,7 @@ def _apt_update(system, revision, env=None, check_times=False, attempts=1, sleep
 def _install_freeradius_client(system, revision, features, env, check_times):
     """Install FreeRADIUS-client with necessary patches from Francis Dupont."""
     # check if it is already installed
-    if (os.path.exists('/usr/local/lib/libfreeradius-client.so.2.0.0') and
+    if (os.path.exists('/usr/local/lib/libfreeradius-client.so') and
         os.path.exists('/usr/local/include/freeradius-client.h')):
         log.info('freeradius-client is already installed.')
         return
@@ -1436,8 +1470,6 @@ def _install_freeradius_client(system, revision, features, env, check_times):
     execute('./configure --with-nettle', cwd='freeradius-client', env=env, check_times=check_times)
     execute('make', cwd='freeradius-client', env=env, check_times=check_times)
     execute('sudo make install', cwd='freeradius-client', env=env, check_times=check_times)
-    if system != 'alpine':
-        execute('sudo ldconfig', env=env)  # TODO: this shouldn't be needed
     execute('rm -rf freeradius-client')
     log.info('freeradius-client successfully installed.')
 
@@ -1457,7 +1489,7 @@ def prepare_system_local(features, check_times):
     # prepare fedora
     if system == 'fedora':
         packages = ['make', 'autoconf', 'automake', 'libtool', 'gcc-c++', 'openssl-devel',
-                    'log4cplus-devel', 'boost-devel', 'libpcap-devel', 'python3-virtualenv']
+                    'log4cplus-devel', 'boost-devel', 'libpcap-devel']
 
         if 'native-pkg' in features:
             packages.extend(['rpm-build', 'python3-devel'])
@@ -1513,18 +1545,15 @@ def prepare_system_local(features, check_times):
 
         packages = ['autoconf', 'automake', 'boost-devel', 'gcc-c++',
                     'libtool', 'log4cplus-devel', 'make',
-                    'openssl-devel', 'postgresql-devel']
+                    'openssl-devel']
 
-        if revision == '7':
+        if revision in ['7', '8']:
             # Install newer version of Boost in case users want to opt-in with:
             # --with-boost-include=/usr/include/boost169 --with-boost-lib-dir=/usr/lib64/boost169
             packages.append('boost169-devel')
 
         if 'native-pkg' in features:
-            packages.extend(['bison', 'flex', 'rpm-build', 'python3-devel'])
-
-        if 'docs' in features:
-            packages.extend(['python3-pip'])
+            packages.extend(['bison', 'flex', 'python3-devel', 'rpm-build'])
 
         if 'mysql' in features:
             packages.extend(['mariadb', 'mariadb-server'])
@@ -1534,17 +1563,13 @@ def prepare_system_local(features, check_times):
                 packages.extend(['mariadb-connector-c-devel'])
 
         if 'pgsql' in features:
-            packages.extend(['libpq-devel', 'postgresql', 'postgresql-server'])
-            if revision == '7':
-                packages.extend(['postgresql-devel'])
-            elif revision == '8':
-                packages.extend(['postgresql-server-devel'])
+            packages.extend(['postgresql', 'postgresql-server'])
+            if revision == '9':
+                packages.append('postgresql13-devel')
+                if not os.path.exists('/usr/bin/pg_config'):
+                    execute('sudo ln -s /usr/pgsql-13/bin/pg_config /usr/bin/pg_config')
             else:
-                execute('sudo dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x86_64/pgdg-redhat-repo-latest.noarch.rpm',
-                        env=env, timeout=60, check_times=check_times)
-                execute('sudo dnf -qy module info postgresql 2>/dev/null && sudo dnf -qy module disable postgresql',
-                        env=env, timeout=60, check_times=check_times)
-                packages.extend(['libpq-devel', 'postgresql14-devel', 'postgresql14-server'])
+                packages.append('postgresql-devel')
 
         if 'radius' in features:
             packages.extend(['freeradius', 'git'])
@@ -1573,8 +1598,6 @@ def prepare_system_local(features, check_times):
         install_pkgs(packages, env=env, check_times=check_times)
 
         if 'docs' in features:
-            execute('pip install virtualenv',
-                    env=env, timeout=120, check_times=check_times)
             execute('python3 -m venv ~/venv',
                     env=env, timeout=60, check_times=check_times)
             execute('~/venv/bin/pip install sphinx sphinx-rtd-theme',
@@ -1584,7 +1607,7 @@ def prepare_system_local(features, check_times):
     elif system == 'rhel':
         packages = ['autoconf', 'automake', 'boost-devel', 'gcc-c++',
                     'libtool', 'log4cplus-devel', 'make',
-                    'openssl-devel', 'postgresql-devel']
+                    'openssl-devel']
 
         if revision in ['7', '8']:
             # Install newer version of Boost in case users want to opt-in with:
@@ -1592,10 +1615,7 @@ def prepare_system_local(features, check_times):
             packages.append('boost169-devel')
 
         if 'native-pkg' in features:
-            packages.extend(['python3-devel', 'rpm-build'])
-
-        if 'docs' in features and int(revision) < 9:
-            packages.extend(['python3-virtualenv'])
+            packages.extend(['bison', 'flex', 'python3-devel', 'rpm-build'])
 
         if 'mysql' in features:
             packages.extend(['mariadb', 'mariadb-server'])
@@ -1605,15 +1625,13 @@ def prepare_system_local(features, check_times):
                 packages.extend(['mariadb-connector-c-devel'])
 
         if 'pgsql' in features:
-            packages.extend(['postgresql', 'libpq-devel'])
-            if int(revision) < 9:
-                packages.extend(['postgresql-server-devel', 'postgresql-server'])
+            packages.extend(['postgresql', 'postgresql-server'])
+            if revision == '9':
+                packages.append('postgresql13-devel')
+                if not os.path.exists('/usr/bin/pg_config'):
+                    execute('sudo ln -s /usr/pgsql-13/bin/pg_config /usr/bin/pg_config')
             else:
-                execute('sudo dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x86_64/pgdg-redhat-repo-latest.noarch.rpm',
-                        env=env, timeout=60, check_times=check_times)
-                execute('sudo dnf -qy module info postgresql 2>/dev/null && sudo dnf -qy module disable postgresql',
-                        env=env, timeout=60, check_times=check_times)
-                packages.extend(['postgresql14-devel', 'postgresql14-server'])
+                packages.append('postgresql-devel')
 
         if 'radius' in features:
             packages.extend(['freeradius', 'git'])
@@ -1772,18 +1790,26 @@ def prepare_system_local(features, check_times):
 
         install_pkgs(packages, env=env, timeout=240, check_times=check_times)
 
-        if 'docs' in features and revision == '8':
-            execute('virtualenv -p /usr/bin/python3 ~/venv',
-                    env=env, timeout=60, check_times=check_times)
-            execute('~/venv/bin/pip install sphinx sphinx-rtd-theme',
-                    env=env, timeout=120, check_times=check_times)
+        if 'docs' in features:
+            if revision == '8':
+                execute('python3 -m venv ~/venv',
+                        env=env, timeout=60, check_times=check_times)
+                execute('~/venv/bin/pip install sphinx sphinx-rtd-theme',
+                        env=env, timeout=120, check_times=check_times)
 
     # prepare freebsd
     elif system == 'freebsd':
+        # Packages are already upgraded by default when installing a package,
+        # so to avoid mismatching dependency versions, inaccurate dynamic
+        # version fetching and other troubles, clean up local cache and
+        # install an arbitrary package to fetch remote first.
+        execute('sudo pkg clean -a -y')
+        execute('sudo pkg install -y pkg')
+
         packages = ['autoconf', 'automake', 'libtool', 'openssl', 'log4cplus', 'boost-libs', 'wget']
 
         if 'docs' in features:
-            # Get the python version from the remote repositories.
+            # Get the installed python version.
             _, output = execute("pkg search python | grep -Eo '^python-[0-9]+\.[0-9]+' | cut -d '-' -f 2 | tr -d '.'",
                                 capture=True)
             pyv = output.strip()
@@ -1807,6 +1833,9 @@ def prepare_system_local(features, check_times):
 
         if 'gssapi' in features:
             packages.extend(['krb5', 'krb5-devel'])
+            # FreeBSD comes with a Heimdal krb5-config by default. Make sure
+            # it's deleted so that Kea uses the MIT packages added just above.
+            execute('sudo rm -f /usr/bin/krb5-config')
 
         if 'ccache' in features:
             packages.extend(['ccache'])
@@ -1847,10 +1876,10 @@ def prepare_system_local(features, check_times):
                 packages.extend(['py-sphinx', 'py-sphinx_rtd_theme'])
             elif revision == '3.11':
                 packages.extend(['py3-sphinx'])
-            elif revision == '3.16':
-                packages.extend(['py3-pip'])
-            else:
+            elif float(revision) < 3.16:
                 packages.extend(['py3-sphinx', 'py3-sphinx_rtd_theme'])
+            else:
+                packages.extend(['py3-pip'])
 
         if 'unittest' in features:
             _install_gtest_sources()
@@ -1885,8 +1914,9 @@ def prepare_system_local(features, check_times):
         install_pkgs(packages, env=env, timeout=6 * 60, check_times=check_times)
 
         # work around outdated sphinx packages on alpine 3.16
-        if 'docs' in features and revision == '3.16':
-            execute('sudo pip3 install -U sphinx sphinx_rtd_theme')
+        if 'docs' in features:
+            if float(revision) >= 3.16:
+                execute('sudo pip3 install -U sphinx sphinx_rtd_theme')
 
         # check for existence of 'vagrant' user and 'abuild' group before adding him to the group
         try:
@@ -1926,7 +1956,7 @@ def prepare_system_local(features, check_times):
     if 'pgsql' in features:
         _configure_pgsql(system, features, revision)
 
-    if 'radius' in features and 'native-pkg' not in features:
+    if 'radius' in features:
         _install_freeradius_client(system, revision, features, env, check_times)
 
     #execute('sudo rm -rf /usr/share/doc')
@@ -2124,8 +2154,6 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
     if 'install' in features:
         execute('sudo make install', timeout=2 * 60,
                 cwd=src_path, env=env, check_times=check_times, dry_run=dry_run)
-        if system != 'alpine':
-            execute('sudo ldconfig', dry_run=dry_run)  # TODO: this shouldn't be needed
 
         if 'forge' in features:
             if 'mysql' in features:
@@ -2660,6 +2688,8 @@ def parse_args():
     hlp = hlp % ", ".join(ALL_FEATURES)
     parent_parser2.add_argument('-x', '--without', metavar='FEATURE', nargs='+', default=set(),
                                 action=CollectCommaSeparatedArgsAction, help=hlp)
+    parent_parser2.add_argument('--with-randomly', metavar='FEATURE', nargs='+', default=set(),
+                                action=CollectCommaSeparatedArgsAction, help=hlp)
     parent_parser2.add_argument('-l', '--leave-system', action='store_true',
                                 help='At the end of the command do not destroy vagrant system. Default behavior is '
                                 'destroying the system.')
@@ -2776,27 +2806,18 @@ def destroy_system(path):
     execute('vagrant destroy', cwd=path, interactive=True)
 
 
+def _coin_toss():
+    if random.randint(0, 65535) % 2 == 0:
+        return True
+    return False
+
+
 def _get_features(args):
     features = set(vars(args)['with'])
 
     # establish initial set of features
     if 'all' in features:
-        # special case 'all' but some of features needs to be removed
-        # as they are not compatible with others
         features = set(ALL_FEATURES)
-        features.discard('all')
-        features.discard('distcheck')
-        features.discard('native-pkg')
-        features.discard('ccache')
-    elif 'distcheck' not in features:
-        # distcheck is not compatible with defaults so do not add defaults
-        features = features.union(DEFAULT_FEATURES)
-
-    nofeatures = set(args.without)
-    features = features.difference(nofeatures)
-
-    if hasattr(args, 'ccache_dir') and args.ccache_dir:
-        features.add('ccache')
 
     # if we build native packages then some features are required and some not
     if 'native-pkg' in features:
@@ -2811,6 +2832,20 @@ def _get_features(args):
         # be run as they are not built
         if args.command == 'build':
             features.discard('unittest')
+
+    nofeatures = set(args.without)
+    features = features.difference(nofeatures)
+
+    for i in args.with_randomly:
+        if _coin_toss():
+            features.add(i)
+            log.info(f'Feature enabled through coin toss: {i}')
+        else:
+            features.discard(i)
+            log.info(f'Feature disabled through coin toss: {i}')
+
+    if hasattr(args, 'ccache_dir') and args.ccache_dir:
+        features.add('ccache')
 
     return sorted(features)
 
