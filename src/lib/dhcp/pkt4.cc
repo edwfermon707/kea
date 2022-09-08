@@ -279,6 +279,26 @@ void Pkt4::setType(uint8_t dhcp_type) {
     }
 }
 
+isc::dhcp::OptionCollection
+Pkt4::getOptions(const uint8_t opt_type) {
+    OptionCollection options_copy;
+
+    std::pair<OptionCollection::iterator,
+              OptionCollection::iterator> range = options_.equal_range(opt_type);
+    // If options should be copied on retrieval, we should now iterate over
+    // matching options, copy them and replace the original ones with new
+    // instances.
+    if (copy_retrieved_options_) {
+        for (OptionCollection::iterator opt_it = range.first;
+             opt_it != range.second; ++opt_it) {
+            OptionPtr option_copy = opt_it->second->clone();
+            opt_it->second = option_copy;
+        }
+    }
+    // Finally, return updated options. This can also be empty in some cases.
+    return (OptionCollection(range.first, range.second));
+}
+
 const char*
 Pkt4::getName(const uint8_t type) {
     static const char* DHCPDISCOVER_NAME = "DHCPDISCOVER";
@@ -585,9 +605,13 @@ Pkt4::getHlen() const {
 void
 Pkt4::addOption(const OptionPtr& opt) {
     // Check for uniqueness (DHCPv4 options must be unique)
-    if (getNonCopiedOption(opt->getType())) {
-        isc_throw(BadValue, "Option " << opt->getType()
-                  << " already present in this message.");
+    auto code = opt->getType();
+    // Allow multiple instances of VIVCO and VIVSO options, the client should hopefully properly
+    // concatenate and process these. This kind of feels like a hack.
+    if (code != DHO_VIVCO_SUBOPTIONS && code != DHO_VIVSO_SUBOPTIONS) {
+        if (getNonCopiedOption(code)) {
+            isc_throw(BadValue, "Option " << code << " already present in this message.");
+        }
     }
 
     Pkt::addOption(opt);

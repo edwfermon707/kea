@@ -37,6 +37,14 @@ namespace dhcp {
 class Pkt4 : public Pkt {
 public:
 
+    /// @brief Returns all instances of specified type.
+    ///
+    /// Returns all instances of options of the specified type.
+    ///
+    /// @param type option type we are looking for
+    /// @return instance of option collection with requested options
+    isc::dhcp::OptionCollection getOptions(const uint8_t type);
+
     /// length of the CHADDR field in DHCPv4 message
     const static size_t MAX_CHADDR_LEN = 16;
 

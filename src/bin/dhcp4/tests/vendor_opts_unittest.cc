@@ -30,6 +30,7 @@
 #include <dhcp/option_int.h>
 #include <dhcp/option_string.h>
 #include <dhcp/option_vendor.h>
+#include <dhcp/option_vendor_class.h>
 #include <dhcp/tests/pkt_captures.h>
 #include <dhcp/docsis3_option_defs.h>
 #include <dhcp/dhcp4.h>
@@ -549,6 +550,323 @@ TEST_F(VendorOptsTest, vivsoInResponseOnly) {
     string txt(subopt2bin.begin(), subopt2bin.end());
     EXPECT_EQ("tftp://192.0.2.1/genexis/HMC1000.v1.3.0-R.img", txt);
 }
+
+// Checks if it's possible to have 2 vendor-class options and 2 vendor-opts
+// options with different vendor IDs.
+TEST_F(VendorOptsTest, twoVendors) {
+    Dhcp4Client client;
+
+    // The config defines 2 vendors with for each a vendor-class option,
+    // a vendor-opts option and a custom vendor suboption, all having
+    // the always send flag set to true.
+    // The encoding for the option-class option is a bit hairy: first is
+    // the vendor id (uint32) and the remaining is a binary which stands
+    // for tuples so length (uint8) x value.
+    string config =
+        "{"
+        "    \"interfaces-config\": {"
+        "        \"interfaces\": [ ]"
+        "    },"
+        "    \"option-def\": ["
+        "        {"
+        "            \"name\": \"foo\","
+        "            \"code\": 123,"
+        "            \"space\": \"vendor-1234\","
+        "            \"type\": \"string\""
+        "        },"
+        "        {"
+        "            \"name\": \"bar\","
+        "            \"code\": 243,"
+        "            \"space\": \"vendor-5678\","
+        "            \"type\": \"string\""
+        "        }"
+        "    ],"
+        "    \"option-data\": ["
+        "        {"
+        "            \"code\": 124,"
+        "            \"name\": \"vivco-suboptions\","
+        "            \"always-send\": true,"
+        "            \"data\": \"1234, 03666F6F\""
+        "        },"
+        "        {"
+        "            \"code\": 124,"
+        "            \"name\": \"vivco-suboptions\","
+        "            \"always-send\": true,"
+        "            \"data\": \"5678, 03626172\""
+        "        },"
+        "        {"
+        "            \"code\": 125,"
+        "            \"name\": \"vivso-suboptions\","
+        "            \"always-send\": true,"
+        "            \"data\": \"1234\""
+        "        },"
+        "        {"
+        "            \"code\": 125,"
+        "            \"name\": \"vivso-suboptions\","
+        "            \"always-send\": true,"
+        "            \"data\": \"5678\""
+        "        },"
+        "        {"
+        "            \"code\": 123,"
+        "            \"name\": \"foo\","
+        "            \"always-send\": true,"
+        "            \"space\": \"vendor-1234\","
+        "            \"data\": \"foo\""
+        "        },"
+        "        {"
+        "            \"code\": 243,"
+        "            \"name\": \"bar\","
+        "            \"always-send\": true,"
+        "            \"space\": \"vendor-5678\","
+        "            \"data\": \"bar\""
+        "        }"
+        "    ],"
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.0/25\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\","
+        "    \"interface\": \"eth0\""
+        " } ]"
+        "}";
+
+    //EXPECT_TRUE(false) << config;
+
+    EXPECT_NO_THROW(configure(config, *client.getServer()));
+
+    // Let's check whether the server is not able to process this packet.
+    EXPECT_NO_THROW(client.doDiscover());
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check whether there are vendor-class options.
+    const auto classes =
+        client.getContext().response_->getOption(DHO_VIVCO_SUBOPTIONS);
+    ASSERT_EQ(1, classes);
+    OptionVendorClassPtr opt_class1234;
+    OptionVendorClassPtr opt_class5678;
+    for (auto opt : classes) {
+        ASSERT_EQ(DHO_VIVCO_SUBOPTIONS, opt.first);
+        OptionVendorClassPtr opt_class =
+            boost::dynamic_pointer_cast<OptionVendorClass>(opt.second);
+        ASSERT_TRUE(opt_class);
+        uint32_t vendor_id = opt_class->getVendorId();
+        if (vendor_id == 1234) {
+            ASSERT_FALSE(opt_class1234);
+            opt_class1234 = opt_class;
+            continue;
+        }
+        ASSERT_EQ(5678, vendor_id);
+        ASSERT_FALSE(opt_class5678);
+        opt_class5678 = opt_class;
+    }
+
+    // Verify first vendor-class option.
+    ASSERT_TRUE(opt_class1234);
+    ASSERT_EQ(1, opt_class1234->getTuplesNum());
+    EXPECT_EQ("foo", opt_class1234->getTuple(0).getText());
+
+    // Verify second vendor-class option.
+    ASSERT_TRUE(opt_class5678);
+    ASSERT_EQ(1, opt_class5678->getTuplesNum());
+    EXPECT_EQ("bar", opt_class5678->getTuple(0).getText());
+
+    // Check whether there are vendor-opts options.
+    const OptionCollection& options =
+        client.getContext().response_->getOptions(DHO_VIVSO_SUBOPTIONS);
+    ASSERT_EQ(2, options.size());
+    OptionVendorPtr opt_opts1234;
+    OptionVendorPtr opt_opts5678;
+    for (auto opt : options) {
+        ASSERT_EQ(DHO_VIVSO_SUBOPTIONS, opt.first);
+        OptionVendorPtr opt_opts =
+            boost::dynamic_pointer_cast<OptionVendor>(opt.second);
+        ASSERT_TRUE(opt_opts);
+        uint32_t vendor_id = opt_opts->getVendorId();
+        if (vendor_id == 1234) {
+            ASSERT_FALSE(opt_opts1234);
+            opt_opts1234 = opt_opts;
+            continue;
+        }
+        ASSERT_EQ(5678, vendor_id);
+        ASSERT_FALSE(opt_opts5678);
+        opt_opts5678 = opt_opts;
+    }
+
+    // Verify first vendor-opts option.
+    ASSERT_TRUE(opt_opts1234);
+    OptionCollection subs1234 = opt_opts1234->getOptions();
+    ASSERT_EQ(1, subs1234.size());
+    OptionPtr sub1234 = subs1234.begin()->second;
+    ASSERT_TRUE(sub1234);
+    EXPECT_EQ(123, sub1234->getType());
+    OptionStringPtr opt_foo =
+        boost::dynamic_pointer_cast<OptionString>(sub1234);
+    ASSERT_TRUE(opt_foo);
+    EXPECT_EQ("foo", opt_foo->getValue());
+
+    // Verify second vendor-opts option.
+    ASSERT_TRUE(opt_opts5678);
+    OptionCollection subs5678 = opt_opts5678->getOptions();
+    ASSERT_EQ(1, subs5678.size());
+    OptionPtr sub5678 = subs5678.begin()->second;
+    ASSERT_TRUE(sub5678);
+    EXPECT_EQ(243, sub5678->getType());
+    OptionStringPtr opt_bar =
+        boost::dynamic_pointer_cast<OptionString>(sub5678);
+    ASSERT_TRUE(opt_bar);
+    EXPECT_EQ("bar", opt_bar->getValue());
+}
+
+// Checks if it's possible to have 3 vendor-opts options with
+// different vendor IDs selected using the 3 ways (vendor-opts in
+// response, vendor-opts in query and vendor-class in query).
+TEST_F(VendorOptsTest, threeVendors) {
+    Dhcp4Client client;
+
+    // The config defines 2 vendors with for each a vendor-opts option
+    // and a custom vendor suboption, and a suboption for DOCSIS.
+    string config =
+        "{"
+        "    \"interfaces-config\": {"
+        "        \"interfaces\": [ ]"
+        "    },"
+        "    \"option-def\": ["
+        "        {"
+        "            \"name\": \"foo\","
+        "            \"code\": 123,"
+        "            \"space\": \"vendor-1234\","
+        "            \"type\": \"string\""
+        "        },"
+        "        {"
+        "            \"name\": \"bar\","
+        "            \"code\": 243,"
+        "            \"space\": \"vendor-5678\","
+        "            \"type\": \"string\""
+        "        }"
+        "    ],"
+        "    \"option-data\": ["
+        "        {"
+        "            \"code\": 124,"
+        "            \"name\": \"vivco-suboptions\","
+        "            \"always-send\": true,"
+        "            \"data\": \"1234\""
+        "        },"
+        "        {"
+        "            \"code\": 124,"
+        "            \"name\": \"vivco-suboptions\","
+        "            \"data\": \"5678\""
+        "        },"
+        "        {"
+        "            \"code\": 123,"
+        "            \"name\": \"foo\","
+        "            \"always-send\": true,"
+        "            \"space\": \"vendor-1234\","
+        "            \"data\": \"foo\""
+        "        },"
+        "        {"
+        "            \"code\": 243,"
+        "            \"name\": \"bar\","
+        "            \"always-send\": true,"
+        "            \"space\": \"vendor-5678\","
+        "            \"data\": \"bar\""
+        "        },"
+        "        {"
+        "            \"code\": 2,"
+        "            \"csv-format\": true,"
+        "            \"data\": \"192.0.2.1, 192.0.2.2\","
+        "            \"name\": \"tftp-servers\","
+        "            \"space\": \"vendor-4491\""
+        "        }"
+        "    ],"
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.0/25\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\", "
+        "    \"interface\": \"eth0\" "
+        " } ]"
+        "}";
+
+    EXPECT_NO_THROW(configure(config, *client.getServer()));
+
+    // Add a vendor-class for vendor id 5678.
+    OptionVendorClassPtr cclass(new OptionVendorClass(Option::V4, 5678));
+    OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_1_BYTE);
+    tuple = "bar";
+    cclass->addTuple(tuple);
+    client.addExtraOption(cclass);
+
+    // Add a DOCSIS vendor-opts with an ORO.
+    OptionUint16ArrayPtr oro(new OptionUint16Array(Option::V4, DOCSIS3_V4_ORO));
+    oro->addValue(DOCSIS3_V4_TFTP_SERVERS); // Request option 2.
+    OptionPtr vendor(new OptionVendor(Option::V4, 4491));
+    vendor->addOption(oro);
+    client.addExtraOption(vendor);
+
+    // Let's check whether the server is not able to process this packet.
+    EXPECT_NO_THROW(client.doDiscover());
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check whether there are vendor-opts options.
+    const OptionCollection& options =
+        client.getContext().response_->getOptions(DHO_VIVSO_SUBOPTIONS);
+    ASSERT_EQ(3, options.size());
+    OptionVendorPtr opt_opts1234;
+    OptionVendorPtr opt_docsis;
+    OptionVendorPtr opt_opts5678;
+    for (auto opt : options) {
+        ASSERT_EQ(DHO_VIVSO_SUBOPTIONS, opt.first);
+        OptionVendorPtr opt_opts =
+            boost::dynamic_pointer_cast<OptionVendor>(opt.second);
+        ASSERT_TRUE(opt_opts);
+        uint32_t vendor_id = opt_opts->getVendorId();
+        if (vendor_id == 1234) {
+            ASSERT_FALSE(opt_opts1234);
+            opt_opts1234 = opt_opts;
+            continue;
+        }
+        if (vendor_id == 4491) {
+            ASSERT_FALSE(opt_docsis);
+            opt_docsis = opt_opts;
+            continue;
+        }
+        ASSERT_EQ(5678, vendor_id);
+        ASSERT_FALSE(opt_opts5678);
+        opt_opts5678 = opt_opts;
+    }
+
+    // Verify first vendor-opts option.
+    ASSERT_TRUE(opt_opts1234);
+    OptionCollection subs1234 = opt_opts1234->getOptions();
+    ASSERT_EQ(1, subs1234.size());
+    OptionPtr sub1234 = subs1234.begin()->second;
+    ASSERT_TRUE(sub1234);
+    EXPECT_EQ(123, sub1234->getType());
+    OptionStringPtr opt_foo =
+        boost::dynamic_pointer_cast<OptionString>(sub1234);
+    ASSERT_TRUE(opt_foo);
+    EXPECT_EQ("foo", opt_foo->getValue());
+
+    // Verify DOCSIS vendor-opts option.
+    OptionPtr docsis2 = opt_docsis->getOption(DOCSIS3_V4_TFTP_SERVERS);
+    ASSERT_TRUE(docsis2);
+    Option4AddrLstPtr tftp_srvs = boost::dynamic_pointer_cast<Option4AddrLst>(docsis2);
+    ASSERT_TRUE(tftp_srvs);
+    Option4AddrLst::AddressContainer addrs = tftp_srvs->getAddresses();
+    ASSERT_EQ(2, addrs.size());
+    EXPECT_EQ("192.0.2.1", addrs[0].toText());
+    EXPECT_EQ("192.0.2.2", addrs[1].toText());
+
+
+    // Verify last vendor-opts option.
+    ASSERT_TRUE(opt_opts5678);
+    OptionCollection subs5678 = opt_opts5678->getOptions();
+    ASSERT_EQ(1, subs5678.size());
+    OptionPtr sub5678 = subs5678.begin()->second;
+    ASSERT_TRUE(sub5678);
+    EXPECT_EQ(243, sub5678->getType());
+    OptionStringPtr opt_bar =
+        boost::dynamic_pointer_cast<OptionString>(sub5678);
+    ASSERT_TRUE(opt_bar);
+    EXPECT_EQ("bar", opt_bar->getValue());
+}
+
 
 // Verifies last resort option 43 is backward compatible
 TEST_F(VendorOptsTest, option43LastResort) {
