@@ -569,6 +569,10 @@ Dhcpv6Srv::initContext(const Pkt6Ptr& pkt,
     // Perform second pass of classification.
     evaluateClasses(pkt, true);
 
+    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASS_ASSIGNED)
+        .arg(pkt->getLabel())
+        .arg(pkt->getClasses().toText());
+
     // Check the DROP special class.
     if (pkt->inClass("DROP")) {
         LOG_DEBUG(packet6_logger, DBGLVL_PKT_HANDLING, DHCP6_PACKET_DROP_DROP_CLASS2)
