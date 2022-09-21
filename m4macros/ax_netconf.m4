@@ -8,9 +8,9 @@ AC_DEFUN([AX_SYSREPO], [
 
   AC_ARG_WITH([libyang-cpp],
     [AS_HELP_STRING([--with-libyang-cpp[[=PATH]]], [optional path to the libyang installation directory])],
-    [with_libyang_cpp="${withval}"])
+    [with_libyangcpp="${withval}"])
 
-    DISTCHECK_LIBYANG_CPP_CONFIGURE_FLAG="--with-libyang-cpp=$with_libyang_cpp"
+    DISTCHECK_LIBYANGCPP_CONFIGURE_FLAG="--with-libyang-cpp=$with_libyangcpp"
 
   AC_ARG_WITH([sysrepo],
     [AS_HELP_STRING([--with-sysrepo[[=PATH]]], [optional path to the sysrepo installation directory])],
@@ -20,24 +20,12 @@ AC_DEFUN([AX_SYSREPO], [
 
   AC_ARG_WITH([sysrepo-cpp],
     [AS_HELP_STRING([--with-sysrepo-cpp[[=PATH]]], [optional path to the sysrepo installation directory])],
-    [with_sysrepo_cpp="${withval}"])
+    [with_sysrepocpp="${withval}"])
 
-    DISTCHECK_SYSREPO_CONFIGURE_FLAG="--with-sysrepo-cpp=$with_sysrepo_cpp"
-
-  # If --with-libyang was omitted, assume it was passed and give it the value
-  # from --with-sysrepo.
-  if test -z "${with_libyang}"; then
-    with_libyang="${with_sysrepo}"
-  fi
-  if test -z "${with_libyang_cpp}"; then
-    with_libyang_cpp="${with_sysrepo}"
-  fi
-  if test -z "${with_sysrepo_cpp}"; then
-    with_sysrepo_cpp="${with_sysrepo}"
-  fi
+    DISTCHECK_SYSREPOCPP_CONFIGURE_FLAG="--with-sysrepo-cpp=$with_sysrepocpp"
 
   AC_MSG_CHECKING([libyang])
-  AX_FIND_LIBRARY([libyang], ["${with_libyang}"], [libyang/libyang.h], [libyang.so], [LIBYANG_SOVERSION])
+  AX_FIND_LIBRARY([libyang], ["${with_libyang}"], [libyang/libyang.h], [libyang.so], [])
   if "${LIBRARY_FOUND}"; then
     LIBYANG_CPPFLAGS="${LIBRARY_CPPFLAGS}"
     LIBYANG_INCLUDEDIR="${LIBRARY_INCLUDEDIR}"
@@ -45,16 +33,52 @@ AC_DEFUN([AX_SYSREPO], [
     LIBYANG_VERSION="${LIBRARY_VERSION}"
     LIBYANG_PREFIX="${LIBRARY_PREFIX}"
 
-    libyang_found=true
-    AC_MSG_RESULT([yes])
+    # Save flags.
+    CPPFLAGS_SAVED="${CPPFLAGS}"
+    LIBS_SAVED="${LIBS}"
+
+    # Provide Sysrepo flags temporarily.
+    CPPFLAGS="${CPPFLAGS} ${LIBYANG_INCLUDEDIR} ${LIBYANG_CPPFLAGS}"
+    LIBS="${LIBS} ${LIBYANG_LIBS}"
+
+    # Check that a simple program using libyang C API can compile and link.
+    AC_LINK_IFELSE(
+      [AC_LANG_PROGRAM(
+        [#include <libyang/libyang.h>],
+        [struct lyd_node* node;
+         lyd_free_all(node);]
+      )],
+      [],
+      [AC_MSG_RESULT([no])
+       AX_DISPLAY_LIBRARY_WARNINGS()
+       AC_MSG_ERROR([libyang program failed to compile:
+
+$(cat conftest.cpp)
+
+$(cat conftest.err)])]
+)
+
+    # Restore flags.
+    CPPFLAGS="${CPPFLAGS_SAVED}"
+    LIBS="${LIBS_SAVED}"
+
+    AC_SUBST(LIBYANG_CPPFLAGS)
+    AC_SUBST(LIBYANG_INCLUDEDIR)
+    AC_SUBST(LIBYANG_LIBS)
+    AC_SUBST(LIBYANG_VERSION)
+
+    AC_DEFINE([LIBYANG_VERSION], ["${LIBYANG_VERSION}"], [libyang version])
+    AC_MSG_RESULT([${LIBYANG_VERSION}])
   else
-    libyang_found=false
     AC_MSG_RESULT([no])
     AX_DISPLAY_LIBRARY_WARNINGS()
+    if test -n "${with_libyang}"; then
+      AC_MSG_ERROR([Could not find libyang.])
+    fi
   fi
 
   AC_MSG_CHECKING([libyang-cpp])
-  AX_FIND_LIBRARY([libyang-cpp], ["${with_libyang_cpp}"], [libyang/Libyang.hpp], [libyang-cpp.so], [], ["${LIBYANG_PREFIX}/lib/pkgconfig"])
+  AX_FIND_LIBRARY([libyang-cpp], ["${with_libyangcpp}"], [libyang/Libyang.hpp], [libyang-cpp.so], [], ["${LIBYANG_PREFIX}/lib/pkgconfig"])
   if "${LIBRARY_FOUND}"; then
 
     LIBYANGCPP_CPPFLAGS="${LIBRARY_CPPFLAGS}"
@@ -63,26 +87,47 @@ AC_DEFUN([AX_SYSREPO], [
     LIBYANGCPP_VERSION="${LIBRARY_VERSION}"
     LIBYANGCPP_PREFIX="${LIBRARY_PREFIX}"
 
-    # If include paths are equal, there's no need to include both. But if
-    # they're different, we need both.
-    if test "${LIBYANG_INCLUDEDIR}" != "${LIBYANGCPP_INCLUDEDIR}"; then
-       LIBYANG_INCLUDEDIR="${LIBYANG_INCLUDEDIR} ${LIBYANGCPP_INCLUDEDIR}"
-    fi
+    # Save flags.
+    CPPFLAGS_SAVED="${CPPFLAGS}"
+    LIBS_SAVED="${LIBS}"
 
-    if test "${LIBYANG_CPPFLAGS}" != "${LIBYANGCPP_CPPFLAGS}"; then
-       LIBYANG_CPPFLAGS="${LIBYANG_CPPFLAGS} ${LIBYANGCPP_CPPFLAGS}"
-    fi
+    # Provide Sysrepo flags temporarily.
+    CPPFLAGS="${CPPFLAGS} ${LIBYANGCPP_INCLUDEDIR} ${LIBYANGCPP_CPPFLAGS}"
+    LIBS="${LIBS} ${LIBYANGCPP_LIBS}"
 
-    if test "${LIBYANG_LIBS}" != "${LIBYANGCPP_LIBS}"; then
-       LIBYANG_LIBS="${LIBYANG_LIBS} ${LIBYANGCPP_LIBS}"
-    fi
+    # Check that a simple program using libyang C++ API can compile and link.
+    AC_LINK_IFELSE(
+      [AC_LANG_PROGRAM(
+        [#include <libyang-cpp/DataNode.hpp>],
+        [libyang::DataNode *node;
+         node->findPath("/path");]
+      )],
+      [],
+      [AC_MSG_RESULT([no])
+       AX_DISPLAY_LIBRARY_WARNINGS()
+       AC_MSG_ERROR([libyang-cpp program failed to compile:
 
-    libyang_cpp_found=true
-    AC_MSG_RESULT([yes])
+$(cat conftest.cpp)
+
+$(cat conftest.err)])]
+)
+
+    # Restore flags.
+    CPPFLAGS="${CPPFLAGS_SAVED}"
+    LIBS="${LIBS_SAVED}"
+
+    AC_SUBST(LIBYANGCPP_CPPFLAGS)
+    AC_SUBST(LIBYANGCPP_INCLUDEDIR)
+    AC_SUBST(LIBYANGCPP_LIBS)
+    AC_SUBST(LIBYANGCPP_VERSION)
+
+    AC_MSG_RESULT([${LIBYANGCPP_VERSION}])
   else
-    libyang_cpp_found=false
     AC_MSG_RESULT([no])
     AX_DISPLAY_LIBRARY_WARNINGS()
+    if test -n "${with_libyangcpp}"; then
+      AC_MSG_ERROR([Could not find libyang-cpp.])
+    fi
   fi
 
   AC_MSG_CHECKING([sysrepo])
@@ -94,16 +139,6 @@ AC_DEFUN([AX_SYSREPO], [
     SYSREPO_VERSION="${LIBRARY_VERSION}"
     SYSREPO_PREFIX="${LIBRARY_PREFIX}"
 
-    sysrepo_found=true
-  else
-    sysrepo_found=false
-  fi
-
-  if "${sysrepo_found}"; then
-    AC_SUBST(SYSREPO_CPPFLAGS)
-    AC_SUBST(SYSREPO_INCLUDEDIR)
-    AC_SUBST(SYSREPO_LIBS)
-
     # Save flags.
     CPPFLAGS_SAVED="${CPPFLAGS}"
     LIBS_SAVED="${LIBS}"
@@ -112,141 +147,108 @@ AC_DEFUN([AX_SYSREPO], [
     CPPFLAGS="${CPPFLAGS} ${SYSREPO_INCLUDEDIR} ${SYSREPO_CPPFLAGS}"
     LIBS="${LIBS} ${SYSREPO_LIBS}"
 
-    # Check that a simple program using Sysrepo C API can compile and link.
+    # Check that a simple program using sysrepo C API can compile and link.
     AC_LINK_IFELSE(
       [AC_LANG_PROGRAM(
-        [extern "C" {
-           #include <sysrepo.h>
-         }],
-        [sr_conn_ctx_t *connection;
-         sr_session_ctx_t *session;
-         sr_disconnect(connection);])],
-      [AC_MSG_RESULT([yes])],
+        [#include <sysrepo.h>],
+        [sr_conn_ctx_t* connection;
+         sr_disconnect(connection);]
+      )],
+      [],
       [AC_MSG_RESULT([no])
        AX_DISPLAY_LIBRARY_WARNINGS()
-       AC_MSG_ERROR([Cannot integrate with Sysrepo's C API. Make sure that the sysrepo.h header and the libsysrepo.so library can be found.])]
-    )
+       AC_MSG_ERROR([sysrepo program failed to compile:
+
+$(cat conftest.cpp)
+
+$(cat conftest.err)])]
+)
 
     # Restore flags.
     CPPFLAGS="${CPPFLAGS_SAVED}"
     LIBS="${LIBS_SAVED}"
+
+    AC_SUBST(SYSREPO_CPPFLAGS)
+    AC_SUBST(SYSREPO_INCLUDEDIR)
+    AC_SUBST(SYSREPO_LIBS)
+    AC_SUBST(SYSREPO_VERSION)
+
+    AC_SUBST(SR_REPO_PATH)
+    AC_SUBST(SR_PLUGINS_PATH)
+    AC_SUBST(SRPD_PLUGINS_PATH)
+
+    AC_DEFINE([SYSREPO_VERSION], ["${SYSREPO_VERSION}"], [sysrepo version])
+    AC_MSG_RESULT([${SYSREPO_VERSION}])
   else
     AC_MSG_RESULT([no])
     AX_DISPLAY_LIBRARY_WARNINGS()
+    if test -n "${with_sysrepo}"; then
+      AC_MSG_ERROR([Could not find sysrepo.])
+    fi
   fi
 
   AC_MSG_CHECKING([sysrepo-cpp])
-  AX_FIND_LIBRARY([sysrepo-cpp], ["${with_sysrepo_cpp}"], [sysrepo-cpp/Session.hpp], [libsysrepo-cpp.so], [], ["${LIBYANG_PREFIX}/lib/pkgconfig:${LIBYANGCPP_PREFIX}/lib/pkgconfig:${SYSREPO_PREFIX}/lib/pkgconfig"])
+  AX_FIND_LIBRARY([sysrepo-cpp], ["${with_sysrepocpp}"], [sysrepo-cpp/Session.hpp], [libsysrepo-cpp.so], [], ["${LIBYANG_PREFIX}/lib/pkgconfig:${LIBYANGCPP_PREFIX}/lib/pkgconfig:${SYSREPO_PREFIX}/lib/pkgconfig"])
   if "${LIBRARY_FOUND}"; then
     SYSREPOCPP_CPPFLAGS="${LIBRARY_CPPFLAGS}"
     SYSREPOCPP_INCLUDEDIR="${LIBRARY_INCLUDEDIR}"
     SYSREPOCPP_LIBS="${LIBRARY_LIBS}"
     SYSREPOCPP_VERSION="${LIBRARY_VERSION}"
 
-    sysrepo_cpp_found=true
-  else
-    sysrepo_cpp_found=false
-  fi
-
-  if "${sysrepo_cpp_found}"; then
-    # If include paths are equal, there's no need to include both. But if
-    # they're different, we need both.
-    if test "${SYSREPO_INCLUDEDIR}" != "${SYSREPOCPP_INCLUDEDIR}"; then
-       SYSREPO_INCLUDEDIR="${SYSREPO_INCLUDEDIR} ${SYSREPOCPP_INCLUDEDIR}"
-    fi
-
-    if test "${SYSREPO_CPPFLAGS}" != "${SYSREPOCPP_CPPFLAGS}"; then
-       SYSREPO_CPPFLAGS="${SYSREPO_CPPFLAGS} ${SYSREPOCPP_CPPFLAGS}"
-    fi
-
-    if test "${SYSREPO_LIBS}" != "${SYSREPOCPP_LIBS}"; then
-       SYSREPO_LIBS="${SYSREPO_LIBS} ${SYSREPOCPP_LIBS}"
-    fi
-
-    AC_SUBST(SYSREPO_INCLUDEDIR)
-    AC_SUBST(SYSREPO_CPPFLAGS)
-    AC_SUBST(SYSREPO_LIBS)
-
     # Save flags.
     CPPFLAGS_SAVED="${CPPFLAGS}"
     LIBS_SAVED="${LIBS}"
 
     # Provide Sysrepo flags temporarily.
-    CPPFLAGS="${CPPFLAGS} ${SYSREPO_INCLUDEDIR} ${SYSREPO_CPPFLAGS}"
-    LIBS="${LIBS} ${SYSREPO_LIBS}"
+    CPPFLAGS="${CPPFLAGS} ${SYSREPOCPP_INCLUDEDIR} ${SYSREPOCPP_CPPFLAGS}"
+    LIBS="${LIBS} ${SYSREPOCPP_LIBS}"
 
-    # Check that a simple program using Sysrepo C++ bindings can compile and link.
+    # Check that a simple program using sysrepo C++ API can compile and link.
     AC_LINK_IFELSE(
       [AC_LANG_PROGRAM(
-        [#include <sysrepo-cpp/Session.hpp>],
-        [])],
-
-      [AC_LINK_IFELSE(
-        [AC_LANG_PROGRAM(
-          [#include <sysrepo-cpp/Connection.hpp>],
-          [sysrepo::Connection();]
-        )],
-
-        [AC_MSG_RESULT([v2.x])
-        AX_DISPLAY_LIBRARY_WARNINGS()
-        AC_DEFINE([HAVE_SYSREPO_V2], [true], [Using sysrepo 2.x])],
-
-        [AC_LINK_IFELSE(
-          [AC_LANG_PROGRAM(
-            [#include <sysrepo-cpp/Session.hpp>],
-            [sysrepo::Connection();]
-          )],
-
-          [AC_MSG_RESULT([v1.x])
-          AX_DISPLAY_LIBRARY_WARNINGS()
-          AC_DEFINE([HAVE_SYSREPO_V1], [true], [Using sysrepo 1.x])],
-
-          [AC_LINK_IFELSE(
-            [AC_LANG_PROGRAM(
-              [#include <sysrepo-cpp/Session.hpp>],
-              [sysrepo::S_Val value;
-              value->empty();]
-            )],
-
-            [AC_MSG_RESULT([>= v0.7.7])
-            AX_DISPLAY_LIBRARY_WARNINGS()
-            AC_MSG_ERROR([Using legacy sysrepo >= 0.7.7 which is no longer supported. Upgrade to the latest version with C++ bindings: 1.4.140.])],
-
-            [AC_LINK_IFELSE(
-              [AC_LANG_PROGRAM(
-                [#include <sysrepo-cpp/Session.h>],
-                [Connection("conn-name");]
-              )],
-
-              [AC_MSG_RESULT([<= v0.7.6])
-              AX_DISPLAY_LIBRARY_WARNINGS()
-              AC_MSG_ERROR([Using sysrepo <= 0.7.6 which is no longer supported. Upgrade to the latest version with C++ bindings: 1.4.140.])],
-
-              [AC_MSG_RESULT([no])
-              AX_DISPLAY_LIBRARY_WARNINGS()
-              AC_MSG_ERROR([Found Sysrepo C++ bindings, but could not identify their version. If you think Kea should support this version of sysrepo, please contact ISC.])]
-            )]
-          )]
-        )]
+        [#include <sysrepo-cpp/Connection.hpp>],
+        [sysrepo::Connection connection;
+         connection.sessionStart();]
       )],
+      [],
       [AC_MSG_RESULT([no])
        AX_DISPLAY_LIBRARY_WARNINGS()
-       AC_MSG_ERROR([Could not integrate with Sysrepo C++ bindings. Make sure that the sysrepo-cpp/Session.hpp header and the libsysrepo-cpp.so library can be found.])]
-    )
+       AC_MSG_ERROR([sysrepo-cpp program failed to compile:
+
+$(cat conftest.cpp)
+
+$(cat conftest.err)])]
+)
 
     # Restore flags.
     CPPFLAGS="${CPPFLAGS_SAVED}"
     LIBS="${LIBS_SAVED}"
+
+    AC_SUBST(SYSREPOCPP_CPPFLAGS)
+    AC_SUBST(SYSREPOCPP_INCLUDEDIR)
+    AC_SUBST(SYSREPOCPP_LIBS)
+    AC_SUBST(SYSREPOCPP_VERSION)
+
+    AC_MSG_RESULT([${SYSREPOCPP_VERSION}])
   else
     AC_MSG_RESULT([no])
     AX_DISPLAY_LIBRARY_WARNINGS()
+    if test -n "${with_sysrepocpp}"; then
+      AC_MSG_ERROR([Could not find sysrepo-cpp.])
+    fi
   fi
 
-  if "${libyang_found}" && "${libyang_cpp_found}" && "${sysrepo_found}" && "${sysrepo_cpp_found}"; then
-    HAVE_SYSREPO=true
+  if test -n "${LIBYANG_VERSION}" && \
+    test -n "${LIBYANGCPP_VERSION}" && \
+    test -n "${SYSREPO_VERSION}" && \
+    test -n "${SYSREPOCPP_VERSION}"; then
+    HAVE_NETCONF=yes
   else
-    HAVE_SYSREPO=false
+    HAVE_NETCONF=no
   fi
+  AM_CONDITIONAL(HAVE_NETCONF, test "${HAVE_NETCONF}" = 'yes')
+  AM_COND_IF([HAVE_NETCONF], AC_DEFINE([HAVE_NETCONF], [true], [NETCONF capabilities enabled]))
+  AC_SUBST(HAVE_NETCONF)
 
   # Report error if sysrepo was requested but not enabled.
   if test -n "${with_sysrepo}" && test "${with_sysrepo}" != 'no' && ! "${HAVE_SYSREPO}"; then
@@ -265,6 +267,9 @@ AC_DEFUN([AX_SYSREPO], [
   AC_SUBST(SRPD_PLUGINS_PATH)
   AC_SUBST(SYSREPO_VERSION)
   AC_SUBST(SYSREPOCPP_VERSION)
+
   AC_SUBST(DISTCHECK_LIBYANG_CONFIGURE_FLAG)
+  AC_SUBST(DISTCHECK_LIBYANGCPP_CONFIGURE_FLAG)
   AC_SUBST(DISTCHECK_SYSREPO_CONFIGURE_FLAG)
+  AC_SUBST(DISTCHECK_SYSREPOCPP_CONFIGURE_FLAG)
 ])
