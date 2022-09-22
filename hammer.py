@@ -2291,7 +2291,7 @@ def _build_deb(system, revision, features, tarball_path, env, check_times, dry_r
     execute('sed -i -e s/{ISC_VERSION}/%s/ changelog' % pkg_isc_version, cwd='kea-src/kea-%s/debian' % pkg_version, check_times=check_times, dry_run=dry_run)
     execute('sed -i -e s/{FREERADIUS_CLIENT_VERSION}/%s/g control' % frc_version, cwd='kea-src/kea-%s/debian' % pkg_version, check_times=check_times, dry_run=dry_run)
 
-    services_list = ['isc-kea-dhcp4-server.service', 'isc-kea-dhcp6-server.service', 'isc-kea-dhcp-ddns-server.service', 'isc-kea-ctrl-agent.service']
+    services_list = ['isc-kea-dhcp4.service', 'isc-kea-dhcp6.service', 'isc-kea-dhcp-ddns.service', 'isc-kea-ctrl-agent.service']
 
     # debian 9 does not support some fields in systemd unit files so they need to be commented out
     if system == 'debian' and revision == '9':
