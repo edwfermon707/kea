@@ -376,17 +376,11 @@ const YRTree subnetOptionsTreeKeaDhcp4 = YangRepr::buildTreeFromVector({
       "option-data[code='100'][space='dns']/always-send",
       "false", SR_BOOL_T, true },
     { "/kea-dhcp4-server:config/subnet4[id='111']/"
-      "pool[start-address='10.0.1.0'][end-address='10.0.1.255']",
-      "", SR_LIST_T, false },
+      "pools[prefix='\"10.0.1.0/24\"']",
+      "", false },
     { "/kea-dhcp4-server:config/subnet4[id='111']/"
-      "pool[start-address='10.0.1.0'][end-address='10.0.1.255']/start-address",
-      "10.0.1.0", SR_STRING_T, false },
-    { "/kea-dhcp4-server:config/subnet4[id='111']/"
-      "pool[start-address='10.0.1.0'][end-address='10.0.1.255']/end-address",
-      "10.0.1.255", SR_STRING_T, false },
-    { "/kea-dhcp4-server:config/subnet4[id='111']/"
-      "pool[start-address='10.0.1.0'][end-address='10.0.1.255']/prefix",
-      "10.0.1.0/24", SR_STRING_T, true },
+      "pools[prefix='\"10.0.1.0/24\"']/prefix",
+      "10.0.1.0/24", true },
     { "/kea-dhcp4-server:config/subnet4[id='111']/subnet",
       "10.0.0.0/8", SR_STRING_T, true },
     { "/kea-dhcp4-server:config/expired-leases-processing",
@@ -417,39 +411,39 @@ const YRTree subnetOptionsTreeKeaDhcp6 = YangRepr::buildTreeFromVector({
     { "/kea-dhcp6-server:config/subnet6[id='111']/id",
       "111", SR_UINT32_T, false },
     { "/kea-dhcp6-server:config/subnet6[id='111']/"
-      "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']",
-      "", SR_LIST_T, false },
+      "pools[prefix='\"2001:db8::1:0/112\"']",
+      "", false },
     { "/kea-dhcp6-server:config/subnet6[id='111']/"
-      "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
-      "start-address", "2001:db8::1:0", SR_STRING_T, false },
+      "pools[prefix='\"2001:db8::1:0/112\"']/"
+      "start-address", "2001:db8::1:0", false },
     { "/kea-dhcp6-server:config/subnet6[id='111']/"
-      "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
-      "end-address", "2001:db8::1:ffff", SR_STRING_T, false },
+      "pools[prefix='\"2001:db8::1:0/112\"']/"
+      "end-address", "2001:db8::1:ffff", false },
     { "/kea-dhcp6-server:config/subnet6[id='111']/"
-      "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
-      "prefix", "2001:db8::1:0/112", SR_STRING_T, true },
+      "pools[prefix='\"2001:db8::1:0/112\"']/"
+      "prefix", "2001:db8::1:0/112", true },
     { "/kea-dhcp6-server:config/subnet6[id='111']/"
-      "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
+      "pools[prefix='\"2001:db8::1:0/112\"']/"
       "option-data[code='100'][space='dns']",
       "", SR_LIST_T, false },
     { "/kea-dhcp6-server:config/subnet6[id='111']/"
-      "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
+      "pools[prefix='\"2001:db8::1:0/112\"']/"
       "option-data[code='100'][space='dns']/code",
       "100", SR_UINT16_T, false },
     { "/kea-dhcp6-server:config/subnet6[id='111']/"
-      "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
+      "pools[prefix='\"2001:db8::1:0/112\"']/"
       "option-data[code='100'][space='dns']/space",
       "dns", SR_STRING_T, false },
     { "/kea-dhcp6-server:config/subnet6[id='111']/"
-      "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
+      "pools[prefix='\"2001:db8::1:0/112\"']/"
       "option-data[code='100'][space='dns']/data",
       "12121212", SR_STRING_T, true },
     { "/kea-dhcp6-server:config/subnet6[id='111']/"
-      "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
+      "pools[prefix='\"2001:db8::1:0/112\"']/"
       "option-data[code='100'][space='dns']/csv-format",
       "false", SR_BOOL_T, true },
     { "/kea-dhcp6-server:config/subnet6[id='111']/"
-      "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
+      "pools[prefix='\"2001:db8::1:0/112\"']/"
       "option-data[code='100'][space='dns']/always-send",
       "false", SR_BOOL_T, true },
     { "/kea-dhcp6-server:config/subnet6[id='111']/subnet",

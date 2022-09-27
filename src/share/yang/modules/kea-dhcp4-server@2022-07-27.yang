@@ -178,24 +178,14 @@ module kea-dhcp4-server {
       uses dhcp:t1-percent;
       uses dhcp:t2-percent;
       uses option-data-list;
-      list pool {
-        key "start-address end-address";
+      list pools {
+        key "prefix";
         ordered-by user;
         description "Pool list.";
         leaf prefix {
           type inet:ipv4-prefix;
           description "Defines a pool of dynamic IPv4 addresses to be managed
                        by the server.";
-        }
-        leaf start-address {
-          type inet:ipv4-address;
-          mandatory true;
-          description "First IPv4 address in a pool.";
-        }
-        leaf end-address {
-          type inet:ipv4-address;
-          mandatory true;
-          description "Last IPv4 address in a pool.";
         }
         uses option-data-list;
         uses dhcp:pool-client-class;
@@ -260,7 +250,7 @@ module kea-dhcp4-server {
 
   grouping client-classes {
     description "Client class grouping.";
-    list client-class {
+    list client-classes {
       key name;
       ordered-by user;
       description "List of client classes.";

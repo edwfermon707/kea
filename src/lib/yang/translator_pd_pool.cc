@@ -297,9 +297,10 @@ TranslatorPdPools::~TranslatorPdPools() {
 ElementPtr
 TranslatorPdPools::getPdPools(const string& xpath) {
     try {
-        if ((model_ == IETF_DHCPV6_SERVER) ||
-            (model_ == KEA_DHCP6_SERVER)) {
-            return (getPdPoolsCommon(xpath));
+        if (model_ == IETF_DHCPV6_SERVER) {
+            return (getPdPoolsCommon(xpath + "/pd-pool"));
+        } else if (model_ == KEA_DHCP6_SERVER) {
+            return (getPdPoolsCommon(xpath + "/pd-pools"));
         }
     } catch (const sysrepo_exception& ex) {
         isc_throw(SysrepoError,
@@ -312,7 +313,7 @@ TranslatorPdPools::getPdPools(const string& xpath) {
 
 ElementPtr
 TranslatorPdPools::getPdPoolsCommon(const string& xpath) {
-    return getList<TranslatorPdPool>(xpath + "/pd-pool", *this,
+    return getList<TranslatorPdPool>(xpath, *this,
                                      &TranslatorPdPool::getPdPool);
 }
 
@@ -354,7 +355,7 @@ TranslatorPdPools::setPdPoolsPrefix(const string& xpath,
                       << pool->str());
         }
         ostringstream prefix;
-        prefix << xpath << "/pd-pool[prefix='"
+        prefix << xpath << "/pd-pools[prefix='"
                << pool->get("prefix")->stringValue() << "/"
                << pool->get("prefix-len")->intValue() << "']";
         setPdPool(prefix.str(), pool);

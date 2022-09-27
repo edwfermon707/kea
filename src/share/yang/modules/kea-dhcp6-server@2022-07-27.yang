@@ -184,30 +184,20 @@ module kea-dhcp6-server {
       uses dhcp:t1-percent;
       uses dhcp:t2-percent;
       uses option-data-list;
-      list pool {
-        key "start-address end-address";
+      list pools {
+        key "prefix";
         ordered-by user;
         description "Pool list.";
         leaf prefix {
           type inet:ipv6-prefix;
           description "Pool prefix.";
         }
-        leaf start-address {
-          type inet:ipv6-address;
-          mandatory true;
-          description "First IPv6 address in a pool.";
-        }
-        leaf end-address {
-          type inet:ipv6-address;
-          mandatory true;
-          description "Last IPv6 address in a pool.";
-        }
         uses option-data-list;
         uses dhcp:pool-client-class;
         uses dhcp:pool-require-client-classes;
         uses dhcp:pool-user-context;
       }
-      list pd-pool {
+      list pd-pools {
         key prefix;
         ordered-by user;
         description "Prefix delegation pool list.";

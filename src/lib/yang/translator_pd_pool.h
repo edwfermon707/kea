@@ -101,11 +101,11 @@ namespace yang {
 ///  /kea-dhcp6-server:config/subnet6[id='111']/id = 111
 ///  /kea-dhcp6-server:config/subnet6[id='111']/subnet = 2001:db8::/48
 ///  /kea-dhcp6-server:config/subnet6[id='111']/
-///     pd-pool[prefix='2001:db8:0:1000::/56' (list instance)
+///     pd-pool[prefix='"2001:db8:0:1000::/56"' (list instance)
 ///  /kea-dhcp6-server:config/subnet6[id='111']/
-///     pd-pool[prefix='2001:db8:0:1000::/56'/prefix = 2001:db8:0:1000::/56
+///     pd-pool[prefix='"2001:db8:0:1000::/56"'/prefix = 2001:db8:0:1000::/56
 ///  /kea-dhcp6-server:config/subnet6[id='111']/
-///     pd-pool[prefix='2001:db8:0:1000::/56'/delegated-len = 64
+///     pd-pool[prefix='"2001:db8:0:1000::/56"'/delegated-len = 64
 /// @endcode
 
 /// @brief A translator class for converting a pd-pool between

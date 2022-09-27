@@ -60,7 +60,7 @@ TEST_F(TranslatorClassesTestv4, getEmpty) {
 TEST_F(TranslatorClassesTestv6, get) {
     // Create the client class.
     const string& xpath = "/kea-dhcp6-server:config";
-    const string& xclass = xpath + "/client-class[name='foo']";
+    const string& xclass = xpath + "/client-classes[name='foo']";
     const string& xtest = xclass + "/test";
     S_Val v_test(new Val("not member('ALL')", SR_STRING_T));
     EXPECT_NO_THROW(sess_->set_item(xtest.c_str(), v_test));

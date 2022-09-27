@@ -101,7 +101,7 @@ TranslatorLogger::getOutputOption(const string& xpath) {
 
 ElementPtr
 TranslatorLogger::getOutputOptions(const string& xpath) {
-    return getList(xpath + "/output-option", *this,
+    return getList(xpath + "/output_options", *this,
                    &TranslatorLogger::getOutputOption);
 }
 
@@ -182,12 +182,12 @@ TranslatorLogger::setOutputOptions(const string& xpath, ConstElementPtr elem) {
     for (size_t i = 0; i < elem->size(); ++i) {
         ConstElementPtr option = elem->get(i);
         if (!option->contains("output")) {
-            isc_throw(BadValue, "output-option without output: "
+            isc_throw(BadValue, "output_options without output: "
                       << option->str());
         }
         string output = option->get("output")->stringValue();
         ostringstream key;
-        key << xpath << "/output-option[output='" << output << "']";
+        key << xpath << "/output_options[output='" << output << "']";
         setOutputOption(key.str(), option);
     }
 }
@@ -220,7 +220,7 @@ TranslatorLoggers::getLoggers(const string& xpath) {
 
 ElementPtr
 TranslatorLoggers::getLoggersKea(const string& xpath) {
-    return getList<TranslatorLogger>(xpath + "/logger", *this,
+    return getList<TranslatorLogger>(xpath + "/loggers", *this,
                                      &TranslatorLogger::getLogger);
 }
 
@@ -252,7 +252,7 @@ TranslatorLoggers::setLoggersKea(const string& xpath, ConstElementPtr elem) {
         }
         string name = logger->get("name")->stringValue();
         ostringstream key;
-        key << xpath << "/logger[name='" << name << "']";
+        key << xpath << "/loggers[name='" << name << "']";
         setLogger(key.str(), logger);
     }
 }
