@@ -18,7 +18,7 @@ using namespace sysrepo;
 namespace isc {
 namespace yang {
 
-TranslatorOptionDef::TranslatorOptionDef(S_Session session,
+TranslatorOptionDef::TranslatorOptionDef(Session session,
                                          const string& model)
     : TranslatorBasic(session, model) {
 }
@@ -33,7 +33,7 @@ TranslatorOptionDef::getOptionDef(const string& xpath) {
             (model_ == KEA_DHCP6_SERVER)) {
             return (getOptionDefKea(xpath));
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (const libyang::ErrorWithCode& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error getting option definition at '" << xpath
                   << "': " << ex.what());
@@ -92,7 +92,7 @@ TranslatorOptionDef::setOptionDef(const string& xpath, ConstElementPtr elem) {
                       "setOptionDef not implemented for the model: "
                       << model_);
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (const libyang::ErrorWithCode& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error setting option definition '" << elem->str()
                   << "' at '" << xpath << "': " << ex.what());
@@ -107,32 +107,31 @@ TranslatorOptionDef::setOptionDefKea(const string& xpath,
     if (!name) {
         isc_throw(BadValue, "option definition with name: " << elem->str());
     }
-    setItem(xpath + "/name", name, SR_STRING_T);
+    setItem(xpath + "/name", name);
     ConstElementPtr type = elem->get("type");
     if (!type) {
         isc_throw(BadValue, "option definition with type: " << elem->str());
     }
-    setItem(xpath + "/type", type, SR_STRING_T);
+    setItem(xpath + "/type", type);
     ConstElementPtr record = elem->get("record-types");
     if (record) {
-        setItem(xpath + "/record-types", record, SR_STRING_T);
+        setItem(xpath + "/record-types", record);
     }
     ConstElementPtr array = elem->get("array");
     if (array) {
-        setItem(xpath + "/array", array, SR_BOOL_T);
+        setItem(xpath + "/array", array);
     }
     ConstElementPtr encapsulate = elem->get("encapsulate");
     if (encapsulate) {
-        setItem(xpath + "/encapsulate", encapsulate, SR_STRING_T);
+        setItem(xpath + "/encapsulate", encapsulate);
     }
     ConstElementPtr context = Adaptor::getContext(elem);
     if (context) {
-        setItem(xpath + "/user-context", Element::create(context->str()),
-                SR_STRING_T);
+        setItem(xpath + "/user-context", Element::create(context->str()));
     }
 }
 
-TranslatorOptionDefList::TranslatorOptionDefList(S_Session session,
+TranslatorOptionDefList::TranslatorOptionDefList(Session session,
                                                  const string& model)
     : TranslatorBasic(session, model),
       TranslatorOptionDef(session, model) {
@@ -148,7 +147,7 @@ TranslatorOptionDefList::getOptionDefList(const string& xpath) {
             (model_ == KEA_DHCP6_SERVER)) {
             return (getOptionDefListKea(xpath));
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (const libyang::ErrorWithCode& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error getting option definition list at '" << xpath
                   << "': " << ex.what());
@@ -175,7 +174,7 @@ TranslatorOptionDefList::setOptionDefList(const string& xpath,
                       "setOptionDefList not implemented for the model: "
                       << model_);
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (const libyang::ErrorWithCode& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error setting option definition list '"
                   << elem->str() << "' at '" << xpath << "': " << ex.what());

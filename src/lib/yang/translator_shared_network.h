@@ -170,7 +170,7 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
-    TranslatorSharedNetwork(sysrepo::S_Session session,
+    TranslatorSharedNetwork(sysrepo::Session session,
                             const std::string& model);
 
     /// @brief Destructor.
@@ -224,7 +224,7 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
-    TranslatorSharedNetworks(sysrepo::S_Session session,
+    TranslatorSharedNetworks(sysrepo::Session session,
                              const std::string& model);
 
     /// @brief Destructor.

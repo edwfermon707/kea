@@ -15,26 +15,26 @@
 namespace isc {
 namespace yang {
 
-/// @brief Between YANG and JSON translator class for basic values.
+using DataNodes = libyang::DataNode;
+
+/// @brief DataNode - ElementPtr translator
 class TranslatorBasic {
 public:
     /// @brief Constructor.
     ///
-    /// @param session Sysrepo session.
-    /// @param model Model name (used and shared by derived classes).
-    TranslatorBasic(sysrepo::S_Session session, const std::string& model);
+    /// @param session sysrepo session
+    /// @param model module name
+    TranslatorBasic(sysrepo::Session session, const std::string& module);
 
-    /// @brief Destructor.
-    virtual ~TranslatorBasic();
-
-    /// @brief Translate basic value from YANG to JSON.
+    /// @brief Translate a DataNode to ElementPtr.
     ///
-    /// @note Please don't use this outside tests.
-    ///
-    /// @param s_val The value.
+    /// @param data_node YANG node retrieved
     /// @return The Element representing the sysrepo value.
-    /// @throw NotImplemented when the value type is not supported.
-    static isc::data::ElementPtr value(sysrepo::S_Val s_val);
+    static isc::data::ElementPtr translate(std::optional<libyang::DataNode> const& data_node);
+
+    static isc::data::ElementPtr leaf(std::optional<libyang::DataNode> const& data_node);
+
+    void set(std::string const& xpath, isc::data::ElementPtr const& element);
 
     /// @brief Get and translate basic value from YANG to JSON.
     ///
@@ -46,13 +46,6 @@ public:
     /// @throw SysrepoError when sysrepo raises an error.
     /// @throw NotImplemented when the value type is not supported.
     isc::data::ElementPtr getItem(const std::string& xpath);
-
-    /// @brief Get and translate a list of basic values from YANG to JSON.
-    ///
-    /// @param xpath The xpath of the list of basic values.
-    /// @return The ListElement representing the leaf-list at xpath or
-    /// null when not found.
-    isc::data::ElementPtr getItems(const std::string& xpath);
 
     /// @brief Retrieves an item and stores it in the specified storage.
     ///
@@ -66,31 +59,11 @@ public:
                          const std::string& xpath,
                          const std::string& name);
 
-    /// @brief Get the values of all siblings at a certain xpath.
-    ///
-    /// @param xpath the xpath to the element to be retrieved from, usually a
-    /// list
-    ///
-    /// @return all the entries populated with values
-    sysrepo::S_Vals getValuesFromItems(std::string const& xpath);
-
-    /// @brief Translate basic value from JSON to YANG.
-    ///
-    /// @note Please don't use this outside tests.
-    ///
-    /// @param elem The JSON element.
-    /// @param type The sysrepo type.
-    static sysrepo::S_Val value(isc::data::ConstElementPtr elem,
-                                sr_type_t type);
-
     /// @brief Translate and set basic value from JSON to YANG.
     ///
     /// @param xpath The xpath of the basic value.
     /// @param elem The JSON element.
-    /// @param type The sysrepo type.
-    void setItem(const std::string& xpath, isc::data::ConstElementPtr elem,
-                 sr_type_t type);
-
+    void setItem(const std::string& xpath, isc::data::ConstElementPtr elem);
 
     /// @brief Get an element from given ElementPtr node and set it in sysrepo
     /// at given xpath.
@@ -102,9 +75,7 @@ public:
     /// @param type the sysrepo node type
     void checkAndSetLeaf(isc::data::ConstElementPtr const& from,
                          std::string const& xpath,
-                         std::string const& name,
-                         sr_type_t const type);
-
+                         std::string const& name);
 
     /// @brief Delete basic value from YANG.
     ///
@@ -120,14 +91,12 @@ public:
     /// descendant
     template <typename functor_t>
     void forAll(std::string const& xpath, functor_t f) {
-        libyang::S_Data_Node data_node(session_->get_data(xpath.c_str()));
-        if (!data_node) {
-            return;
-        }
-
-        for (libyang::S_Data_Node& root : data_node->tree_for()) {
-            for (libyang::S_Data_Node const& n : root->tree_dfs()) {
-                f(n);
+        std::optional<libyang::DataNode> data_node(session_.getData(xpath));
+        if (data_node) {
+            for (libyang::DataNode const& sibling : data_node->siblings()) {
+                for (libyang::DataNode const& n : sibling.childrenDfs()) {
+                    f(n);
+                }
             }
         }
     }
@@ -147,25 +116,12 @@ public:
     isc::data::ElementPtr getList(std::string const& xpath,
                                   T& t,
                                   isc::data::ElementPtr (T::*f)(std::string const& xpath)) {
-        isc::data::ElementPtr result;
-        sysrepo::S_Vals values(getValuesFromItems(xpath));
-        if (values) {
-            for (size_t i(0); i < values->val_cnt(); ++i) {
-                isc::data::ElementPtr x((t.*f)(values->val(i)->xpath()));
-                if (x) {
-                    if (!result) {
-                        result = isc::data::Element::createList();
-                    }
-                    result->add(x);
-                }
-            }
-        }
-        return result;
+        return getItem(xpath);
     }
 
 protected:
     /// @brief The sysrepo session.
-    sysrepo::S_Session session_;
+    sysrepo::Session session_;
 
     /// @brief The model.
     std::string model_;

@@ -18,7 +18,7 @@ using namespace sysrepo;
 namespace isc {
 namespace yang {
 
-TranslatorClass::TranslatorClass(S_Session session, const string& model)
+TranslatorClass::TranslatorClass(Session session, const string& model)
     : TranslatorBasic(session, model),
       TranslatorOptionData(session, model),
       TranslatorOptionDataList(session, model),
@@ -36,7 +36,7 @@ TranslatorClass::getClass(const string& xpath) {
             (model_ == KEA_DHCP6_SERVER)) {
             return (getClassKea(xpath));
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (const libyang::ErrorWithCode& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error getting client class at '" << xpath
                   << "': " << ex.what());
@@ -108,7 +108,7 @@ TranslatorClass::setClass(const string& xpath, ConstElementPtr elem) {
             isc_throw(NotImplemented,
                       "setClass not implemented for the model: " << model_);
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (const libyang::ErrorWithCode& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error setting client class '" << elem->str()
                   << "' at '" << xpath << "': " << ex.what());
@@ -121,12 +121,12 @@ TranslatorClass::setClassKea(const string& xpath, ConstElementPtr elem) {
     // Skip key name.
     ConstElementPtr test = elem->get("test");
     if (test) {
-        setItem(xpath + "/test", test, SR_STRING_T);
+        setItem(xpath + "/test", test);
         created = true;
     }
     ConstElementPtr required = elem->get("only-if-required");
     if (required) {
-        setItem(xpath + "/only-if-required", required, SR_BOOL_T);
+        setItem(xpath + "/only-if-required", required);
         created = true;
     }
     ConstElementPtr options = elem->get("option-data");
@@ -134,9 +134,9 @@ TranslatorClass::setClassKea(const string& xpath, ConstElementPtr elem) {
         setOptionDataList(xpath, options);
         created = true;
     }
-    checkAndSetLeaf(elem, xpath, "valid-lifetime", SR_UINT32_T);
-    checkAndSetLeaf(elem, xpath, "min-valid-lifetime", SR_UINT32_T);
-    checkAndSetLeaf(elem, xpath, "max-valid-lifetime", SR_UINT32_T);
+    checkAndSetLeaf(elem, xpath, "valid-lifetime");
+    checkAndSetLeaf(elem, xpath, "min-valid-lifetime");
+    checkAndSetLeaf(elem, xpath, "max-valid-lifetime");
     if (model_ == KEA_DHCP4_SERVER) {
         ConstElementPtr defs = elem->get("option-def");
         if (defs) {
@@ -145,38 +145,37 @@ TranslatorClass::setClassKea(const string& xpath, ConstElementPtr elem) {
         }
         ConstElementPtr next = elem->get("next-server");
         if (next) {
-            setItem(xpath + "/next-server", next, SR_STRING_T);
+            setItem(xpath + "/next-server", next);
             created = true;
         }
         ConstElementPtr hostname = elem->get("server-hostname");
         if (hostname) {
-            setItem(xpath + "/server-hostname", hostname, SR_STRING_T);
+            setItem(xpath + "/server-hostname", hostname);
             created = true;
         }
         ConstElementPtr boot = elem->get("boot-file-name");
         if (boot) {
-            setItem(xpath + "/boot-file-name", boot, SR_STRING_T);
+            setItem(xpath + "/boot-file-name", boot);
             created = true;
         }
     } else if (model_ == KEA_DHCP6_SERVER) {
-        checkAndSetLeaf(elem, xpath, "preferred-lifetime", SR_UINT32_T);
-        checkAndSetLeaf(elem, xpath, "min-preferred-lifetime", SR_UINT32_T);
-        checkAndSetLeaf(elem, xpath, "max-preferred-lifetime", SR_UINT32_T);
+        checkAndSetLeaf(elem, xpath, "preferred-lifetime");
+        checkAndSetLeaf(elem, xpath, "min-preferred-lifetime");
+        checkAndSetLeaf(elem, xpath, "max-preferred-lifetime");
     }
     ConstElementPtr context = Adaptor::getContext(elem);
     if (context) {
-        setItem(xpath + "/user-context", Element::create(context->str()),
-                SR_STRING_T);
+        setItem(xpath + "/user-context", Element::create(context->str()));
         created = true;
     }
     // There is no mandatory fields outside the key so force creation.
     if (!created) {
         ConstElementPtr list = Element::createList();
-        setItem(xpath, list, SR_LIST_T);
+        setItem(xpath, list);
     }
 }
 
-TranslatorClasses::TranslatorClasses(S_Session session, const string& model)
+TranslatorClasses::TranslatorClasses(Session session, const string& model)
     : TranslatorBasic(session, model),
       TranslatorOptionData(session, model),
       TranslatorOptionDataList(session, model),
@@ -195,7 +194,7 @@ TranslatorClasses::getClasses(const string& xpath) {
             (model_ == KEA_DHCP6_SERVER)) {
             return (getClassesKea(xpath));
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (const libyang::ErrorWithCode& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error getting client classes at '" << xpath
                   << "': " << ex.what());
@@ -220,7 +219,7 @@ TranslatorClasses::setClasses(const string& xpath, ConstElementPtr elem) {
             isc_throw(NotImplemented,
                       "setClasses not implemented for the model: " << model_);
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (const libyang::ErrorWithCode& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error setting client classes '" << elem->str()
                   << "' at '" << xpath << "': " << ex.what());

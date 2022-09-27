@@ -9,6 +9,7 @@
 #include <yang/translator_logger.h>
 #include <yang/adaptor.h>
 #include <yang/yang_models.h>
+
 #include <sstream>
 
 using namespace std;
@@ -18,7 +19,7 @@ using namespace sysrepo;
 namespace isc {
 namespace yang {
 
-TranslatorLogger::TranslatorLogger(S_Session session, const string& model)
+TranslatorLogger::TranslatorLogger(Session session, const string& model)
     : TranslatorBasic(session, model) {
 }
 
@@ -34,7 +35,7 @@ TranslatorLogger::getLogger(const string& xpath) {
             (model_ == KEA_CTRL_AGENT)) {
             return (getLoggerKea(xpath));
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (const libyang::ErrorWithCode& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error getting logger at '" << xpath
                   << "': " << ex.what());
@@ -117,7 +118,7 @@ TranslatorLogger::setLogger(const string& xpath, ConstElementPtr elem) {
             isc_throw(NotImplemented,
                       "setLogger not implemented for the model: " << model_);
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (const libyang::ErrorWithCode& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error setting logger '" << elem->str()
                   << "' at '" << xpath << "': " << ex.what());
@@ -133,16 +134,15 @@ TranslatorLogger::setLoggerKea(const string& xpath, ConstElementPtr elem) {
     }
     ConstElementPtr debuglevel = elem->get("debuglevel");
     if (debuglevel) {
-        setItem(xpath + "/debuglevel", debuglevel, SR_UINT8_T);
+        setItem(xpath + "/debuglevel", debuglevel);
     }
     ConstElementPtr severity = elem->get("severity");
     if (severity) {
-        setItem(xpath + "/severity", severity, SR_ENUM_T);
+        setItem(xpath + "/severity", severity);
     }
     ConstElementPtr context = Adaptor::getContext(elem);
     if (context) {
-        setItem(xpath + "/user-context", Element::create(context->str()),
-                SR_STRING_T);
+        setItem(xpath + "/user-context", Element::create(context->str()));
     }
 }
 
@@ -152,28 +152,28 @@ TranslatorLogger::setOutputOption(const string& xpath, ConstElementPtr elem) {
     // Skip output as it is the key.
     ConstElementPtr maxver = elem->get("maxver");
     if (maxver) {
-        setItem(xpath + "/maxver", maxver, SR_UINT32_T);
+        setItem(xpath + "/maxver", maxver);
         created = true;
     }
     ConstElementPtr maxsize = elem->get("maxsize");
     if (maxsize) {
-        setItem(xpath + "/maxsize", maxsize, SR_UINT32_T);
+        setItem(xpath + "/maxsize", maxsize);
         created = true;
     }
     ConstElementPtr flush = elem->get("flush");
     if (flush) {
-        setItem(xpath + "/flush", flush, SR_BOOL_T);
+        setItem(xpath + "/flush", flush);
         created = true;
     }
     ConstElementPtr pattern = elem->get("pattern");
     if (pattern) {
-        setItem(xpath + "/pattern", pattern, SR_STRING_T);
+        setItem(xpath + "/pattern", pattern);
         created = true;
     }
     // There is no mandatory fields outside the key so force creation.
     if (!created) {
         ConstElementPtr list = Element::createList();
-        setItem(xpath, list, SR_LIST_T);
+        setItem(xpath, list);
     }
 }
 
@@ -192,7 +192,7 @@ TranslatorLogger::setOutputOptions(const string& xpath, ConstElementPtr elem) {
     }
 }
 
-TranslatorLoggers::TranslatorLoggers(S_Session session, const string& model)
+TranslatorLoggers::TranslatorLoggers(Session session, const string& model)
     : TranslatorBasic(session, model),
       TranslatorLogger(session, model) {
 }
@@ -209,7 +209,7 @@ TranslatorLoggers::getLoggers(const string& xpath) {
             (model_ == KEA_CTRL_AGENT)) {
             return (getLoggersKea(xpath));
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (const libyang::ErrorWithCode& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error getting loggeres at '" << xpath
                   << "': " << ex.what());
@@ -236,7 +236,7 @@ TranslatorLoggers::setLoggers(const string& xpath, ConstElementPtr elem) {
             isc_throw(NotImplemented,
                       "setLoggers not implemented for the model: " << model_);
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (const libyang::ErrorWithCode& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error setting loggeres '" << elem->str()
                   << "' at '" << xpath << "': " << ex.what());

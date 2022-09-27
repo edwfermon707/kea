@@ -37,9 +37,8 @@ public:
         /// @param value The textual value.
         /// @param type The type of the value.
         /// @param settable The settable flag.
-        YangReprItem(std::string xpath, std::string value,
-                     sr_type_t type, bool settable)
-            : xpath_(xpath), value_(value), type_(type), settable_(settable) {
+        YangReprItem(std::string xpath, std::string value, bool settable)
+            : xpath_(xpath), value_(value), settable_(settable) {
         }
 
         /// @brief Retrieves configuration parameter from sysrepo.
@@ -48,7 +47,7 @@ public:
         /// @param session Sysrepo session.
         /// @return YangReprItem instance representing configuration parameter.
         static YangReprItem get(const std::string& xpath,
-                                sysrepo::S_Session session);
+                                sysrepo::Session session);
 
         /// @brief The xpath.
         std::string xpath_;
@@ -57,7 +56,7 @@ public:
         std::string value_;
 
         /// @brief The type of the value.
-        sr_type_t type_;
+        // sr_type_t type_;
 
         /// @brief The settable flag.
         bool settable_;
@@ -68,8 +67,7 @@ public:
         /// @return true if equal.
         bool operator==(const YangReprItem& other) const {
             return ((xpath_ == other.xpath_) &&
-                    (value_ == other.value_) &&
-                    (type_ == other.type_));
+                    (value_ == other.value_));
         }
 
         /// @brief The unequal operator ignoring settable.
@@ -92,7 +90,7 @@ public:
     /// @brief Get tree from session.
     ///
     /// @param session Sysrepo session.
-    Tree get(sysrepo::S_Session session) const;
+    Tree get(sysrepo::Session session) const;
 
     /// @brief Verifies a tree.
     ///
@@ -101,7 +99,7 @@ public:
     /// @param errs Error stream.
     /// @return true if verification succeeds, false with errors displayed.
     /// on errs if it fails.
-    bool verify(const Tree& expected, sysrepo::S_Session session,
+    bool verify(const Tree& expected, sysrepo::Session session,
                 std::ostream& errs) const;
 
     /// @brief Sets specified tree in a sysrepo.
@@ -110,15 +108,7 @@ public:
     ///
     /// @param tree The tree to install.
     /// @param session Sysrepo session.
-    void set(const Tree& tree, sysrepo::S_Session session) const;
-
-    /// @brief Validate.
-    ///
-    /// @param session Sysrepo session.
-    /// @param errs Error stream.
-    /// @return True if validation succeeds, false with errors displayed
-    /// on errs if it fails.
-    bool validate(sysrepo::S_Session session, std::ostream& errs) const;
+    void set(const Tree& tree, sysrepo::Session session) const;
 
     /// @brief Convenience function that indexes a collection of items by xpath.
     ///
@@ -142,9 +132,6 @@ typedef YangRepr::YangReprItem YRItem;
 
 /// @brief Alias for Trees.
 typedef YangRepr::Tree YRTree;
-
-/// @brief Overrides standard output operator for sr_type_t.
-std::ostream& operator<<(std::ostream& os, sr_type_t type);
 
 /// @brief Overrides standard output operator for @c YangReprItem object.
 std::ostream& operator<<(std::ostream& os, const YRItem& item);

@@ -73,7 +73,7 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
-    TranslatorControlSocket(sysrepo::S_Session session,
+    TranslatorControlSocket(sysrepo::Session session,
                             const std::string& model);
 
     /// @brief Destructor.

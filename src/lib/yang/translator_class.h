@@ -81,7 +81,7 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
-    TranslatorClass(sysrepo::S_Session session, const std::string& model);
+    TranslatorClass(sysrepo::Session session, const std::string& model);
 
     /// @brief Destructor.
     virtual ~TranslatorClass();
@@ -127,7 +127,7 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
-    TranslatorClasses(sysrepo::S_Session session, const std::string& model);
+    TranslatorClasses(sysrepo::Session session, const std::string& model);
 
     /// @brief Destructor.
     virtual ~TranslatorClasses();

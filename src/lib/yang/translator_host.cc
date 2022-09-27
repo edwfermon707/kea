@@ -18,7 +18,7 @@ using namespace sysrepo;
 namespace isc {
 namespace yang {
 
-TranslatorHost::TranslatorHost(S_Session session, const string& model)
+TranslatorHost::TranslatorHost(Session session, const string& model)
     : TranslatorBasic(session, model),
       TranslatorOptionData(session, model),
       TranslatorOptionDataList(session, model) {
@@ -34,7 +34,7 @@ ElementPtr
             (model_ == KEA_DHCP6_SERVER)) {
             return (getHostKea(xpath));
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (const libyang::ErrorWithCode& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error getting host reservation at '" << xpath
                   << "': " << ex.what());
@@ -63,11 +63,11 @@ TranslatorHost::getHostKea(const string& xpath) {
             result->set("ip-address", address);
         }
     } else {
-        ConstElementPtr addresses = getItems(xpath + "/ip-addresses");
+        ConstElementPtr addresses = getItem(xpath + "/ip-addresses");
         if (addresses && (addresses->size() > 0)) {
             result->set("ip-addresses", addresses);
         }
-        ConstElementPtr prefixes = getItems(xpath + "/prefixes");
+        ConstElementPtr prefixes = getItem(xpath + "/prefixes");
         if (prefixes && (prefixes->size() > 0)) {
             result->set("prefixes", prefixes);
         }
@@ -76,7 +76,7 @@ TranslatorHost::getHostKea(const string& xpath) {
     if (options && (options->size() > 0)) {
         result->set("option-data", options);
     }
-    ConstElementPtr classes = getItems(xpath + "/client-classes");
+    ConstElementPtr classes = getItem(xpath + "/client-classes");
     if (classes) {
         result->set("client-classes", classes);
     }
@@ -85,9 +85,9 @@ TranslatorHost::getHostKea(const string& xpath) {
         if (next) {
             result->set("next-server", next);
         }
-        ConstElementPtr hostname = getItem(xpath + "/server-hostname");
-        if (hostname) {
-            result->set("server-hostname", hostname);
+        ConstElementPtr server_hostname = getItem(xpath + "/server-hostname");
+        if (server_hostname) {
+            result->set("server-hostname", server_hostname);
         }
         ConstElementPtr boot = getItem(xpath + "/boot-file-name");
         if (boot) {
@@ -111,7 +111,7 @@ TranslatorHost::setHost(const string& xpath, ConstElementPtr elem) {
             isc_throw(NotImplemented,
                       "setHost not implemented for the model: " << model_);
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (const libyang::ErrorWithCode& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error setting host reservation '" << elem->str()
                   << "' at '" << xpath << "': " << ex.what());
@@ -123,24 +123,24 @@ TranslatorHost::setHostKea(const string& xpath, ConstElementPtr elem) {
     ConstElementPtr hostname = elem->get("hostname");
     // Skip identifier and identifier type as they are keys.
     if (hostname) {
-        setItem(xpath + "/hostname", hostname, SR_STRING_T);
+        setItem(xpath + "/hostname", hostname);
     }
     if (model_ == KEA_DHCP4_SERVER) {
         ConstElementPtr address = elem->get("ip-address");
         if (address) {
-            setItem(xpath + "/ip-address", address, SR_STRING_T);
+            setItem(xpath + "/ip-address", address);
         }
     } else {
         ConstElementPtr addresses = elem->get("ip-addresses");
         if (addresses && (addresses->size() > 0)) {
             for (ConstElementPtr address : addresses->listValue()) {
-                setItem(xpath + "/ip-addresses", address, SR_STRING_T);
+                setItem(xpath + "/ip-addresses", address);
             }
         }
         ConstElementPtr prefixes = elem->get("prefixes");
         if (prefixes && (prefixes->size() > 0)) {
             for (ConstElementPtr prefix : prefixes->listValue()) {
-                setItem(xpath + "/prefixes", prefix, SR_STRING_T);
+                setItem(xpath + "/prefixes", prefix);
             }
         }
     }
@@ -151,7 +151,7 @@ TranslatorHost::setHostKea(const string& xpath, ConstElementPtr elem) {
     ConstElementPtr classes = elem->get("client-classes");
     if (classes && (classes->size() > 0)) {
         for (ConstElementPtr cclass : classes->listValue()) {
-            setItem(xpath + "/client-classes", cclass, SR_STRING_T);
+            setItem(xpath + "/client-classes", cclass);
         }
     }
 
@@ -159,27 +159,26 @@ TranslatorHost::setHostKea(const string& xpath, ConstElementPtr elem) {
     if (model_ == KEA_DHCP4_SERVER) {
         ConstElementPtr next = elem->get("next-server");
         if (next) {
-            setItem(xpath + "/next-server", next, SR_STRING_T);
+            setItem(xpath + "/next-server", next);
         }
-        ConstElementPtr hostname = elem->get("server-hostname");
-        if (hostname) {
-            setItem(xpath + "/server-hostname", hostname, SR_STRING_T);
+        ConstElementPtr server_hostname = elem->get("server-hostname");
+        if (server_hostname) {
+            setItem(xpath + "/server-hostname", server_hostname);
         }
         ConstElementPtr boot = elem->get("boot-file-name");
         if (boot) {
-            setItem(xpath + "/boot-file-name", boot, SR_STRING_T);
+            setItem(xpath + "/boot-file-name", boot);
         }
     }
 
     // User context is supported in both kea-dhcp4-server and kea-dhcp6-server.
     ConstElementPtr context = Adaptor::getContext(elem);
     if (context) {
-        setItem(xpath + "/user-context", Element::create(context->str()),
-                SR_STRING_T);
+        setItem(xpath + "/user-context", Element::create(context->str()));
     }
 }
 
-TranslatorHosts::TranslatorHosts(S_Session session, const string& model)
+TranslatorHosts::TranslatorHosts(Session session, const string& model)
     : TranslatorBasic(session, model),
       TranslatorOptionData(session, model),
       TranslatorOptionDataList(session, model),
@@ -205,7 +204,7 @@ TranslatorHosts::setHosts(const string& xpath, ConstElementPtr elem) {
             isc_throw(NotImplemented,
                       "setHosts not implemented for the model: " << model_);
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (const libyang::ErrorWithCode& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error setting host reservations '" << elem->str()
                   << "' at '" << xpath << "': " << ex.what());

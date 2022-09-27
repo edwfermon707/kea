@@ -9,6 +9,7 @@
 #include <yang/translator_control_socket.h>
 #include <yang/adaptor.h>
 #include <yang/yang_models.h>
+
 #include <sstream>
 
 using namespace std;
@@ -18,7 +19,7 @@ using namespace sysrepo;
 namespace isc {
 namespace yang {
 
-TranslatorControlSocket::TranslatorControlSocket(S_Session session,
+TranslatorControlSocket::TranslatorControlSocket(Session session,
                                                  const string& model)
     : TranslatorBasic(session, model) {
 }
@@ -35,7 +36,7 @@ TranslatorControlSocket::getControlSocket(const string& xpath) {
             (model_ == KEA_CTRL_AGENT)) {
             return (getControlSocketKea(xpath));
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (const libyang::ErrorWithCode& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error getting control socket at '" << xpath
                   << "': " << ex.what());
@@ -76,7 +77,7 @@ TranslatorControlSocket::setControlSocket(const string& xpath,
                     "setControlSocket not implemented for the model: "
                     << model_);
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (const libyang::ErrorWithCode& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error setting control socket '" << elem->str()
                   << "' at '" << xpath << "': " << ex.what());
@@ -98,12 +99,11 @@ TranslatorControlSocket::setControlSocketKea(const string& xpath,
     if (!type) {
         isc_throw(BadValue, "setControlSocket missing socket type");
     }
-    setItem(xpath + "/socket-name", name, SR_STRING_T);
-    setItem(xpath + "/socket-type", type, SR_ENUM_T);
+    setItem(xpath + "/socket-name", name);
+    setItem(xpath + "/socket-type", type);
     ConstElementPtr context = Adaptor::getContext(elem);
     if (context) {
-        setItem(xpath + "/user-context", Element::create(context->str()),
-                SR_STRING_T);
+        setItem(xpath + "/user-context", Element::create(context->str()));
     }
 }
 

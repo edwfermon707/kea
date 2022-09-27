@@ -13,6 +13,8 @@
 #include <yang/translator.h>
 #include <yang/yang_models.h>
 
+#include <sysrepo-cpp/Connection.hpp>
+
 #include <gtest/gtest.h>
 
 namespace isc {
@@ -59,8 +61,8 @@ public:
 
     void SetUp() override {
         SysrepoSetup::cleanSharedMemory();
-        conn_.reset(new sysrepo::Connection());
-        sess_.reset(new sysrepo::Session(conn_, SR_DS_CANDIDATE));
+        sess_ = sysrepo::Connection{}.sessionStart();
+        sess_.switchDatastore(sysrepo::Datastore::Candidate);
         t_obj_.reset(new translator_t(sess_, model_));
         cleanModelData();
     }
@@ -68,8 +70,6 @@ public:
     void TearDown() override {
         cleanModelData();
         t_obj_.reset();
-        sess_.reset();
-        conn_.reset();
         SysrepoSetup::cleanSharedMemory();
     }
 
@@ -81,11 +81,8 @@ public:
         t_obj_->delItem("/" + model_ + ":" + toplevel_node);
     }
 
-    /// @brief Sysrepo connection.
-    sysrepo::S_Connection conn_;
-
     /// @brief Sysrepo session.
-    sysrepo::S_Session sess_;
+    sysrepo::Session sess_;
 
     /// @brief Shared pointer to the transaction object.
     boost::shared_ptr<translator_t> t_obj_;

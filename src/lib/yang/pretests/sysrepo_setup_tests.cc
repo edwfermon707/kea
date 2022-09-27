@@ -9,8 +9,10 @@
 #define KEATEST_MODULE
 #include <yang/yang_revisions.h>
 
+#include <sysrepo-cpp/Connection.hpp>
 #include <sysrepo-cpp/Session.hpp>
 
+#include <iostream>
 #include <unordered_map>
 #include <sstream>
 
@@ -18,8 +20,8 @@ using namespace std;
 using namespace sysrepo;
 using namespace isc::yang;
 
-using libyang::S_Context;
-using libyang::S_Module;
+using libyang::Context;
+using libyang::Module;
 
 const string REPOSITORY = SYSREPO_REPO;
 
@@ -66,45 +68,33 @@ string badRevisionModuleText(const string& name, const string& expected,
 ///  - Kea modules.
 ///  - daemon required
 int main() {
-    S_Connection conn;
-    try {
-        conn = std::make_shared<Connection>();
-    } catch (const sysrepo_exception& ex) {
-        cerr << "ERROR: Can't initialize sysrepo: " << ex.what() << endl;
-        cerr << "ERROR: Make sure you have the right permissions to the sysrepo repository." << endl;
-        return (1);
-    }
+    Session session(sysrepo::Connection{}.sessionStart());
 
-    S_Session sess;
     try {
-        sess.reset(new Session(conn, SR_DS_CANDIDATE));
-    } catch (const sysrepo_exception& ex) {
+        session.switchDatastore(sysrepo::Datastore::Candidate);
+    } catch (const libyang::ErrorWithCode& ex) {
         cerr << "ERROR: Can't establish a sysrepo session: "
              << ex.what() << endl;
         return (2);
     }
 
-    vector<S_Module> modules;
+    vector<Module> modules;
     try {
-        S_Context context(sess->get_context());
-        modules = context->get_module_iter();
-    } catch (const sysrepo_exception& ex) {
+        Context context(session.getContext());
+        modules = context.modules();
+    } catch (const libyang::ErrorWithCode& ex) {
         cerr << "ERROR: Can't retrieve available modules: " << ex.what() << endl;
         return (3);
     }
 
     std::unordered_map<std::string, std::string> installed_modules;
-    for (S_Module const& module : modules) {
-        if (!module->name()) {
-            cerr << "ERROR: module name is mangled" << endl;
-            return (4);
-        }
-        string const name(module->name());
-        if (!module->rev() || !module->rev()->date()) {
-            cerr << "ERROR: module revision is mangled" << endl;
+    for (Module const& module : modules) {
+        string const name(module.name());
+        if (!module.revision()) {
+            cerr << "ERROR: module " << name << " has no revision" << endl;
             return (5);
         }
-        string const revision(module->rev()->date());
+        string const revision(*module.revision());
         installed_modules.emplace(name, revision);
     }
 

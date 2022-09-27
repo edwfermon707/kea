@@ -121,7 +121,7 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
-    TranslatorPdPool(sysrepo::S_Session session, const std::string& model);
+    TranslatorPdPool(sysrepo::Session session, const std::string& model);
 
     /// @brief Destructor.
     virtual ~TranslatorPdPool();
@@ -184,7 +184,7 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
-    TranslatorPdPools(sysrepo::S_Session session, const std::string& model);
+    TranslatorPdPools(sysrepo::Session session, const std::string& model);
 
     /// @brief Destructor.
     virtual ~TranslatorPdPools();

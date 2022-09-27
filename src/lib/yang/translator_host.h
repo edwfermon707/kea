@@ -118,7 +118,7 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
-    TranslatorHost(sysrepo::S_Session session, const std::string& model);
+    TranslatorHost(sysrepo::Session session, const std::string& model);
 
     /// @brief Destructor.
     virtual ~TranslatorHost();
@@ -165,7 +165,7 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
-    TranslatorHosts(sysrepo::S_Session session, const std::string& model);
+    TranslatorHosts(sysrepo::Session session, const std::string& model);
 
     /// @brief Destructor.
     virtual ~TranslatorHosts();

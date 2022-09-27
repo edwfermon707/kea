@@ -16,8 +16,6 @@ namespace test {
 /// @brief Empty DHCPv4 config.
 const std::string emptyJson4 =
     "{\n"
-    "  \"Dhcp4\": {\n"
-    "  }\n"
     "}";
 
 /// @brief A DHCPv4 config with one subnet with two pools.
@@ -67,7 +65,6 @@ const std::string subnetTimersJson6 =
 /// @brief A DHCPv4 subnet with one pool and option data lists.
 const std::string subnetOptionsJson4 =
     "{\n"
-    "  \"Dhcp4\": {\n"
     "    \"subnet4\": [\n"
     "      {\n"
     "        \"id\": 111,\n"
@@ -88,20 +85,16 @@ const std::string subnetOptionsJson4 =
     "        \"subnet\": \"10.0.0.0/8\"\n"
     "      }\n"
     "    ]\n"
-    "  }\n"
     "}";
 
 /// @brief Empty DHCPv6 config.
 const std::string emptyJson6 =
     "{\n"
-    "  \"Dhcp6\": {\n"
-    "  }\n"
     "}";
 
 /// @brief A DHCPv6 config with one subnet with one pool and option data lists.
 const std::string subnetOptionsJson6 =
     "{\n"
-    "  \"Dhcp6\": {\n"
     "    \"subnet6\": [\n"
     "      {\n"
     "        \"id\": 111,\n"
@@ -122,13 +115,11 @@ const std::string subnetOptionsJson6 =
     "        \"subnet\": \"2001:db8::/48\"\n"
     "      }\n"
     "    ]\n"
-    "  }\n"
     "}";
 
 /// @brief A DHCPv6 config with one subnet with two pools.
 const std::string subnetTwoPoolsJson6 =
     "{\n"
-    "  \"Dhcp6\": {\n"
     "    \"subnet6\": [\n"
     "      {\n"
     "        \"id\": 111,\n"
@@ -143,13 +134,11 @@ const std::string subnetTwoPoolsJson6 =
     "        \"subnet\": \"2001:db8::/48\"\n"
     "      }\n"
     "    ]\n"
-    "  }\n"
     "}";
 
 /// @brief Example from the design document.
 const std::string designExampleJson =
     "{\n"
-    "  \"Dhcp6\": {\n"
     "    \"subnet6\": [\n"
     "      {\n"
     "        \"id\": 1,\n"
@@ -164,7 +153,6 @@ const std::string designExampleJson =
     "        ]\n"
     "      }\n"
     "    ]\n"
-    "  }\n"
     "}";
 
 }  // namespace test

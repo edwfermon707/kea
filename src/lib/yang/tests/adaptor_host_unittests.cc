@@ -32,7 +32,7 @@ TEST(AdaptorHostTest, notFlexId) {
     EXPECT_TRUE(copied->equals(*json));
 }
 
-// Verifies that quoteIdentifier does not touch a  flex-id identifier
+// Verifies that quoteIdentifier does not touch a flex-id identifier
 // without quotes.
 TEST(AdaptorHostTest, noQuote) {
     string config = "{\n"

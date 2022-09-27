@@ -7,273 +7,273 @@
 #include <config.h>
 
 #include <yang/translator.h>
-#include <util/encode/base64.h>
-#include <cstring>
 
 using namespace std;
 using namespace isc::data;
-using namespace isc::util::encode;
+using namespace libyang;
 using namespace sysrepo;
-
-namespace {
-
-string encode64(const string& input) {
-    vector<uint8_t> binary;
-    binary.resize(input.size());
-    memmove(&binary[0], input.c_str(), binary.size());
-    return (encodeBase64(binary));
-}
-
-string decode64(const string& input) {
-    vector<uint8_t> binary;
-    decodeBase64(input, binary);
-    string result;
-    result.resize(binary.size());
-    memmove(&result[0], &binary[0], result.size());
-    return (result);
-}
-
-} // end of anonymous namespace
 
 namespace isc {
 namespace yang {
 
-TranslatorBasic::TranslatorBasic(S_Session session, const string& model)
+TranslatorBasic::TranslatorBasic(Session session, const string& model)
     : session_(session), model_(model) {
 }
 
-TranslatorBasic::~TranslatorBasic() {
+ElementPtr
+TranslatorBasic::leaf(optional<DataNode> const& data_node) {
+    DataNodeTerm const& leaf(data_node->asTerm());
+    Value const& value(leaf.value());
+    if (holds_alternative<string>(value)) {
+        // Should be a string. Call create(). Should be slightly faster
+        // than wrapping value in double quotes and calling fromJSON().
+        return Element::create(string(leaf.valueStr()));
+    } else {
+        // This can be various types so defer to fromJSON().
+        return Element::fromJSON(string(leaf.valueStr()));
+    }
 }
 
 ElementPtr
-TranslatorBasic::value(sysrepo::S_Val s_val) {
-    if (!s_val) {
-        isc_throw(BadValue, "value called with null");
+TranslatorBasic::translate(optional<DataNode> const& data_node) {
+    if (!data_node) {
+        return ElementPtr();
     }
-    switch (s_val->type()) {
-    case SR_CONTAINER_T:
-    case SR_CONTAINER_PRESENCE_T:
-        // Internal node.
-        return (ElementPtr());
 
-    case SR_LIST_T:
-        return (Element::createList());
+    NodeType const node_type(data_node->schema().nodeType());
+    ElementPtr result;
+    if (node_type == NodeType::Container) {
+        for (DataNode const& child : data_node->immediateChildren()) {
+            // Recurse.
+            ElementPtr const& element(translate(child));
 
-    case SR_STRING_T:
-        return (Element::create(string(s_val->data()->get_string())));
+            // If we have a non-null element, set it in a map.
+            if (element) {
+                // Create a map now and not earlier to make sure that we don't
+                // end up with an empty map in case there are no elements.
+                if (!result) {
+                    result = Element::createMap();
+                }
 
-    case SR_BOOL_T:
-        return (Element::create(s_val->data()->get_bool() ? true : false));
+                SchemaNode const& child_schema(child.schema());
+                string const key(child_schema.name());
+                result->set(key, element);
+            }
+        }
+    } else if (node_type == NodeType::List) {
+        SchemaNode const& schema(data_node->schema());
+        List const& list(schema.asList());
+        std::vector<Leaf> const& list_keys(list.keys());
 
-    case SR_UINT8_T:
-        return (Element::create(static_cast<long long>(s_val->data()->get_uint8())));
+        // Children of the list type are always maps. It would have been a
+        // leaf list if they weren't. We rely on the guarantee that
+        // insertion order is kept. If we have elements, it is sufficient to
+        // check if the latest element contains the keys to see if {child}
+        // belongs to it or to a new element.
+        ElementPtr underlying_map;
+        if (result && !result->empty()) {
+            underlying_map = result->getNonConst(result->size() - 1);
+            for (Leaf l : list_keys) {
+                string const leaf_name(l.name());
+                optional<DataNode> key_child(data_node->findPath(leaf_name));
 
-    case SR_UINT16_T:
-        return (Element::create(static_cast<long long>(s_val->data()->get_uint16())));
+                if (!key_child) {
+                    isc_throw(SysrepoError, "sysrepo data node does not contain key form schema");
+                }
 
-    case SR_UINT32_T:
-        return (Element::create(static_cast<long long>(s_val->data()->get_uint32())));
+                if (!underlying_map->get(leaf_name) ||
+                    underlying_map->get(leaf_name)->str() != key_child->asTerm().valueStr()) {
+                    // At least a key doesn't exist or match so break.
+                    // A new map should be created outside the loop.
+                    break;
+                }
+            }
+        }
 
-    case SR_INT8_T:
-        return (Element::create(static_cast<long long>(s_val->data()->get_int8())));
+        for (DataNode child : data_node->immediateChildren()) {
+            // Recurse.
+            ElementPtr element(translate(child));
 
-    case SR_INT16_T:
-        return (Element::create(static_cast<long long>(s_val->data()->get_int16())));
+            // If we have a non-null element, set it in a list.
+            if (element) {
+                if (!underlying_map) {
+                    underlying_map = Element::createMap();
 
-    case SR_INT32_T:
-        return (Element::create(static_cast<long long>(s_val->data()->get_int32())));
+                    // Set all the siblings that are keys. This is done only once.
+                    // The second time, the map should be matched in the loop above.
+                    // This step is needed especially for lists with multiple keys.
+                    // If there were a single key, it's probable that it is {child}.
+                    for (Leaf l : list_keys) {
+                        string const leaf_name(l.name());
+                        optional<DataNode> key_child(data_node->findPath(leaf_name));
 
-    case SR_DECIMAL64_T:
-        return (Element::create(s_val->data()->get_decimal64()));
+                        if (!key_child) {
+                            isc_throw(SysrepoError, "sysrepo data node does not contain key form schema");
+                        }
 
-    case SR_IDENTITYREF_T:
-        return (Element::create(string(s_val->data()->get_identityref())));
+                        underlying_map->set(leaf_name, leaf(key_child));
+                    }
+                    if (!result) {
+                        result = Element::createList();
+                        result->add(underlying_map);
+                    }
+                }
 
-    case SR_ENUM_T:
-        return (Element::create(string(s_val->data()->get_enum())));
+                SchemaNode const& child_schema(child.schema());
+                string const key(child_schema.name());
+                underlying_map->set(key, element);
+            }
+        }
+    } else if (node_type == NodeType::Leaf) {
+        result = leaf(data_node);
+    } else if (node_type == NodeType::Unknown) {
+        isc_throw(SysrepoError, "Unhandled node type: Unknown");
+    } else if (node_type == NodeType::Choice) {
+        isc_throw(SysrepoError, "Unhandled node type: Choice");
+    } else if (node_type == NodeType::Leaflist) {
+        isc_throw(SysrepoError, "Unhandled node type: Leaflist");
+    } else if (node_type == NodeType::AnyXML) {
+        isc_throw(SysrepoError, "Unhandled node type: AnyXML");
+    } else if (node_type == NodeType::AnyData) {
+        isc_throw(SysrepoError, "Unhandled node type: AnyData");
+    } else if (node_type == NodeType::Case) {
+        isc_throw(SysrepoError, "Unhandled node type: Case");
+    } else if (node_type == NodeType::RPC) {
+        isc_throw(SysrepoError, "Unhandled node type: RPC");
+    } else if (node_type == NodeType::Action) {
+        isc_throw(SysrepoError, "Unhandled node type: Action");
+    } else if (node_type == NodeType::Notification) {
+        isc_throw(SysrepoError, "Unhandled node type: Notification");
+    } else if (node_type == NodeType::Uses) {
+        isc_throw(SysrepoError, "Unhandled node type: Uses");
+    } else if (node_type == NodeType::Input) {
+        isc_throw(SysrepoError, "Unhandled node type: Input");
+    } else if (node_type == NodeType::Output) {
+        isc_throw(SysrepoError, "Unhandled node type: Output");
+    } else if (node_type == NodeType::Grouping) {
+        isc_throw(SysrepoError, "Unhandled node type: Grouping");
+    } else if (node_type == NodeType::Augment) {
+        isc_throw(SysrepoError, "Unhandled node type: Augment");
+    } else {
+        isc_throw(SysrepoError, "Unhandled node type: " << node_type);
+    }
+    return result;
+}
 
-    case SR_BINARY_T:
-        return (Element::create(decode64(s_val->data()->get_binary())));
+void
+TranslatorBasic::set(string const& xpath, ElementPtr const& element) {
+    std::cout << xpath << std::endl;
+    Context const& context(session_.getContext());
+    SchemaNode const& schema(context.findPath(xpath));
+    NodeType const node_type(schema.nodeType());
 
-    default:
-        isc_throw(NotImplemented,
-                  "value called with unsupported type: " << s_val->type());
+    if (node_type == NodeType::Container) {
+        for (auto kv : element->mapValue()) {
+            stringstream child_xpath;
+            child_xpath << xpath << "/" << kv.first;
+            set(child_xpath.str(), boost::const_pointer_cast<Element>(kv.second));
+        }
+    } else if (node_type == NodeType::List) {
+        List const& list(schema.asList());
+        std::vector<Leaf> const& list_keys(list.keys());
+        stringstream child_xpath;
+        child_xpath << xpath;
+        for (Leaf const& l : list_keys) {
+            string const leaf_name(l.name());
+            ElementPtr child_element(element->getNonConst(leaf_name));
+            child_xpath << "[" << leaf_name << "="
+                        << "'" << child_element->str() << "']";
+        }
+        for (ElementPtr i : element->listValue()) {
+            set(child_xpath.str(), i);
+        }
+    } else if (node_type == NodeType::Leaf) {
+        setItem(xpath, element);
+    } else if (node_type == NodeType::Leaflist) {
+        for (ElementPtr i : element->listValue()) {
+            set(xpath, i);
+        }
+    } else if (node_type == NodeType::Unknown) {
+        isc_throw(SysrepoError, "Unhandled node type: Unknown");
+    } else if (node_type == NodeType::Choice) {
+        isc_throw(SysrepoError, "Unhandled node type: Choice");
+    } else if (node_type == NodeType::AnyXML) {
+        isc_throw(SysrepoError, "Unhandled node type: AnyXML");
+    } else if (node_type == NodeType::AnyData) {
+        isc_throw(SysrepoError, "Unhandled node type: AnyData");
+    } else if (node_type == NodeType::Case) {
+        isc_throw(SysrepoError, "Unhandled node type: Case");
+    } else if (node_type == NodeType::RPC) {
+        isc_throw(SysrepoError, "Unhandled node type: RPC");
+    } else if (node_type == NodeType::Action) {
+        isc_throw(SysrepoError, "Unhandled node type: Action");
+    } else if (node_type == NodeType::Notification) {
+        isc_throw(SysrepoError, "Unhandled node type: Notification");
+    } else if (node_type == NodeType::Uses) {
+        isc_throw(SysrepoError, "Unhandled node type: Uses");
+    } else if (node_type == NodeType::Input) {
+        isc_throw(SysrepoError, "Unhandled node type: Input");
+    } else if (node_type == NodeType::Output) {
+        isc_throw(SysrepoError, "Unhandled node type: Output");
+    } else if (node_type == NodeType::Grouping) {
+        isc_throw(SysrepoError, "Unhandled node type: Grouping");
+    } else if (node_type == NodeType::Augment) {
+        isc_throw(SysrepoError, "Unhandled node type: Augment");
+    } else {
+        isc_throw(SysrepoError, "Unhandled node type: " << node_type);
     }
 }
 
 ElementPtr
 TranslatorBasic::getItem(const string& xpath) {
-    S_Val s_val;
+    ElementPtr item;
     try {
-        s_val = session_->get_item(xpath.c_str());
-    } catch (const sysrepo_exception& ex) {
-        if (std::string(ex.what()).find("Item not found") != string::npos) {
-            // The YANG configuration node was not there.
-            return nullptr;
-        }
-        isc_throw(SysrepoError, "sysrepo error getting item at '" << xpath
-                  << "': " << ex.what());
-    }
-    if (!s_val) {
-        return (ElementPtr());
-    }
-    return (value(s_val));
-}
-
-ElementPtr
-TranslatorBasic::getItems(const string& xpath) {
-    S_Vals s_vals(getValuesFromItems(xpath));
-    if (!s_vals) {
-        return (ElementPtr());
-    }
-    ElementPtr result(Element::createList());
-    try {
-        for (size_t i = 0; i < s_vals->val_cnt(); ++i) {
-            S_Val s_val = s_vals->val(i);
-            result->add(value(s_val));
-        }
-    } catch (const sysrepo_exception& ex) {
-        isc_throw(SysrepoError, "sysrepo error getting item at '"
-                                    << xpath << "': " << ex.what());
-    }
-    return (result);
-}
-
-S_Val
-TranslatorBasic::value(ConstElementPtr elem, sr_type_t type) {
-    if (!elem) {
-        isc_throw(BadValue, "value called with null");
-    }
-    S_Val s_val;
-    switch (type) {
-    case SR_CONTAINER_T:
-    case SR_CONTAINER_PRESENCE_T:
-        isc_throw(NotImplemented, "value called for a container");
-
-    case SR_LIST_T:
-        if (elem->getType() != Element::list) {
-            isc_throw(BadValue, "value for a list called with not a list: "
-                      << elem->str());
-        }
-        // Return null.
-        break;
-
-    case SR_STRING_T:
-    case SR_IDENTITYREF_T:
-    case SR_ENUM_T:
-        if (elem->getType() != Element::string) {
-            isc_throw(BadValue,
-                      "value for a string called with not a string: "
-                      << elem->str());
-        }
-        s_val.reset(new Val(elem->stringValue().c_str(), type));
-        break;
-
-    case SR_BOOL_T:
-        if (elem->getType() != Element::boolean) {
-            isc_throw(BadValue,
-                      "value for a boolean called with not a boolean: "
-                      << elem->str());
-        }
-        s_val.reset(new Val(elem->boolValue(), type));
-        break;
-
-    case SR_UINT8_T:
-        if (elem->getType() != Element::integer) {
-            isc_throw(BadValue,
-                      "value for an integer called with not an integer: "
-                      << elem->str());
-        }
-        s_val.reset(new Val(elem->intValue(), type));
-        break;
-
-    case SR_UINT16_T:
-        if (elem->getType() != Element::integer) {
-            isc_throw(BadValue,
-                      "value for an integer called with not an integer: "
-                      << elem->str());
-        }
-        s_val.reset(new Val(elem->intValue(), type));
-        break;
-
-    case SR_UINT32_T:
-        if (elem->getType() != Element::integer) {
-            isc_throw(BadValue,
-                      "value for an integer called with not an integer: "
-                      << elem->str());
-        }
-        s_val.reset(new Val(elem->intValue(), type));
-        break;
-
-    case SR_INT8_T:
-        if (elem->getType() != Element::integer) {
-            isc_throw(BadValue,
-                      "value for an integer called with not an integer: "
-                      << elem->str());
-        }
-        s_val.reset(new Val(elem->intValue(), type));
-        break;
-
-    case SR_INT16_T:
-        if (elem->getType() != Element::integer) {
-            isc_throw(BadValue,
-                      "value for an integer called with not an integer: "
-                      << elem->str());
-        }
-        s_val.reset(new Val(elem->intValue(), type));
-        break;
-
-    case SR_INT32_T:
-        if (elem->getType() != Element::integer) {
-            isc_throw(BadValue,
-                      "value for an integer called with not an integer: "
-                      << elem->str());
-        }
-        s_val.reset(new Val(elem->intValue(), type));
-        break;
-
-    case SR_DECIMAL64_T:
-        if (elem->getType() != Element::real) {
-            isc_throw(BadValue, "value for a real called with not a real");
-        }
-        s_val.reset(new Val(elem->doubleValue()));
-        break;
-
-    case SR_BINARY_T:
-        if (elem->getType() != Element::string) {
-            isc_throw(BadValue,
-                      "value for a base64 called with not a string: "
-                      << elem->str());
-        }
-        s_val.reset(new Val(encode64(elem->stringValue()).c_str(), type));
-        break;
-
-    default:
-        isc_throw(NotImplemented,
-                  "value called with unsupported type: " << type);
+        optional<DataNode> node(session_.getData(xpath));
+        item = translate(node);
+    } catch (const Error& ex) {
+        isc_throw(SysrepoError, "sysrepo error getting item '"
+                                    << "' at '" << xpath << "': " << ex.what());
+    } catch (const ErrorWithCode& ex) {
+        isc_throw(SysrepoError, "sysrepo error getting item '"
+                                    << "' at '" << xpath << "': " << ex.what());
     }
 
-    return (s_val);
+    // If there is no item, assume empty JSON.
+    if (!item) {
+        item = Element::createMap();
+    }
+
+    return item;
 }
 
 void
-TranslatorBasic::setItem(const string& xpath, ConstElementPtr elem,
-                         sr_type_t type) {
-    S_Val s_val = value(elem, type);
+TranslatorBasic::setItem(const string& xpath, ConstElementPtr elem) {
     try {
-        session_->set_item(xpath.c_str(), s_val);
-    } catch (const sysrepo_exception& ex) {
+        Context context(session_.getContext());
+        SchemaNode schema(context.findPath(xpath));
+        if (schema.asLeaf().valueType().base() == LeafBaseType::Enum) {
+            // Enums are strings in ElementPtr and are accepted without
+            // the double quotes in sysrepo.
+            session_.setItem(xpath, elem->stringValue());
+        } else {
+            session_.setItem(xpath, elem->str());
+        }
+        session_.applyChanges();
+    } catch (const Error& ex) {
+        isc_throw(SysrepoError,
+                  "sysrepo error setting item '" << elem->str()
+                  << "' at '" << xpath << "': " << ex.what());
+    } catch (const ErrorWithCode& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error setting item '" << elem->str()
                   << "' at '" << xpath << "': " << ex.what());
     }
-    session_->apply_changes();
 }
 
 void
 TranslatorBasic::checkAndGetLeaf(ElementPtr& storage,
-                                 const std::string& xpath,
-                                 const std::string& name) {
+                                 const string& xpath,
+                                 const string& name) {
     ConstElementPtr x = getItem(xpath + "/" + name);
     if (x) {
         storage->set(name, x);
@@ -282,20 +282,19 @@ TranslatorBasic::checkAndGetLeaf(ElementPtr& storage,
 
 void TranslatorBasic::checkAndSetLeaf(ConstElementPtr const& from,
                                       string const& xpath,
-                                      string const& name,
-                                      sr_type_t const type) {
+                                      string const& name) {
     ConstElementPtr const& x(from->get(name));
     if (x) {
-        setItem(xpath + "/" + name, x, type);
+        setItem(xpath + "/" + name, x);
     }
 }
 
 void
-TranslatorBasic::delItem(const std::string& xpath) {
+TranslatorBasic::delItem(const string& xpath) {
     try {
-        session_->delete_item(xpath.c_str());
-    } catch (const sysrepo_exception& ex) {
-        if (std::string(ex.what()).find("Invalid argument") != string::npos) {
+        session_.deleteItem(xpath.c_str());
+    } catch (const ErrorWithCode& ex) {
+        if (string(ex.what()).find("Invalid argument") != string::npos) {
             // The YANG configuration node was not there.
             return;
         }
@@ -303,15 +302,7 @@ TranslatorBasic::delItem(const std::string& xpath) {
                   "sysrepo error deleting item at '"
                   << xpath << "': " << ex.what());
     }
-    session_->apply_changes();
-}
-
-S_Vals TranslatorBasic::getValuesFromItems(std::string const& xpath) {
-    try {
-        return session_->get_items(xpath.c_str());
-    } catch (sysrepo::sysrepo_exception const& exception) {
-        isc_throw(SysrepoError, "sysrepo error getting items: " << exception.what());
-    }
+    session_.applyChanges();
 }
 
 }  // namespace yang

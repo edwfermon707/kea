@@ -9,6 +9,7 @@
 #include <yang/translator_database.h>
 #include <yang/adaptor.h>
 #include <yang/yang_models.h>
+
 #include <sstream>
 
 using namespace std;
@@ -18,7 +19,7 @@ using namespace sysrepo;
 namespace isc {
 namespace yang {
 
-TranslatorDatabase::TranslatorDatabase(S_Session session, const string& model)
+TranslatorDatabase::TranslatorDatabase(Session session, const string& model)
     : TranslatorBasic(session, model) {
 }
 
@@ -32,7 +33,7 @@ TranslatorDatabase::getDatabase(const string& xpath) {
             (model_ == KEA_DHCP6_SERVER)) {
             return (getDatabaseKea(xpath));
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (const libyang::ErrorWithCode& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error getting database access at '" << xpath
                   << "': " << ex.what());
@@ -85,7 +86,7 @@ TranslatorDatabase::setDatabase(const string& xpath,
             isc_throw(NotImplemented,
                       "setDatabase not implemented for the model: " << model_);
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (const libyang::ErrorWithCode& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error setting database access '" << elem->str()
                   << "' at '" << xpath << "': " << ex.what());
@@ -106,33 +107,32 @@ TranslatorDatabase::setDatabaseKea(const string& xpath,
             isc_throw(BadValue, "setDatabase requires database type: "
                       << elem->str());
         }
-        setItem(xpath + "/database-type", type, SR_STRING_T);
+        setItem(xpath + "/database-type", type);
     }
-    checkAndSetLeaf(elem, xpath, "user", SR_STRING_T);
-    checkAndSetLeaf(elem, xpath, "password", SR_STRING_T);
-    checkAndSetLeaf(elem, xpath, "host", SR_STRING_T);
-    checkAndSetLeaf(elem, xpath, "name", SR_STRING_T);
-    checkAndSetLeaf(elem, xpath, "persist", SR_BOOL_T);
-    checkAndSetLeaf(elem, xpath, "port", SR_UINT16_T);
-    checkAndSetLeaf(elem, xpath, "lfc-interval", SR_UINT32_T);
-    checkAndSetLeaf(elem, xpath, "readonly", SR_BOOL_T);
-    checkAndSetLeaf(elem, xpath, "trust-anchor", SR_STRING_T);
-    checkAndSetLeaf(elem, xpath, "cert-file", SR_STRING_T);
-    checkAndSetLeaf(elem, xpath, "key-file", SR_STRING_T);
-    checkAndSetLeaf(elem, xpath, "cipher-list", SR_STRING_T);
-    checkAndSetLeaf(elem, xpath, "connect-timeout", SR_UINT32_T);
-    checkAndSetLeaf(elem, xpath, "max-reconnect-tries", SR_UINT32_T);
-    checkAndSetLeaf(elem, xpath, "reconnect-wait-time", SR_UINT32_T);
-    checkAndSetLeaf(elem, xpath, "max-row-errors", SR_UINT32_T);
-    checkAndSetLeaf(elem, xpath, "on-fail", SR_STRING_T);
+    checkAndSetLeaf(elem, xpath, "user");
+    checkAndSetLeaf(elem, xpath, "password");
+    checkAndSetLeaf(elem, xpath, "host");
+    checkAndSetLeaf(elem, xpath, "name");
+    checkAndSetLeaf(elem, xpath, "persist");
+    checkAndSetLeaf(elem, xpath, "port");
+    checkAndSetLeaf(elem, xpath, "lfc-interval");
+    checkAndSetLeaf(elem, xpath, "readonly");
+    checkAndSetLeaf(elem, xpath, "trust-anchor");
+    checkAndSetLeaf(elem, xpath, "cert-file");
+    checkAndSetLeaf(elem, xpath, "key-file");
+    checkAndSetLeaf(elem, xpath, "cipher-list");
+    checkAndSetLeaf(elem, xpath, "connect-timeout");
+    checkAndSetLeaf(elem, xpath, "max-reconnect-tries");
+    checkAndSetLeaf(elem, xpath, "reconnect-wait-time");
+    checkAndSetLeaf(elem, xpath, "max-row-errors");
+    checkAndSetLeaf(elem, xpath, "on-fail");
     ConstElementPtr context = Adaptor::getContext(elem);
     if (context) {
-        setItem(xpath + "/user-context", Element::create(context->str()),
-                SR_STRING_T);
+        setItem(xpath + "/user-context", Element::create(context->str()));
     }
 }
 
-TranslatorDatabases::TranslatorDatabases(S_Session session,
+TranslatorDatabases::TranslatorDatabases(Session session,
                                          const string& model)
     : TranslatorBasic(session, model),
       TranslatorDatabase(session, model) {
@@ -148,7 +148,7 @@ TranslatorDatabases::getDatabases(const string& xpath) {
             (model_ == KEA_DHCP6_SERVER)) {
             return (getDatabasesKea(xpath));
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (const libyang::ErrorWithCode& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error getting database accesses at '" << xpath
                   << "': " << ex.what());
@@ -174,7 +174,7 @@ TranslatorDatabases::setDatabases(const string& xpath, ConstElementPtr elem) {
                       "setDatabases not implemented for the model: "
                       << model_);
         }
-    } catch (const sysrepo_exception& ex) {
+    } catch (const libyang::ErrorWithCode& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error setting database accesses '" << elem->str()
                   << "' at '" << xpath << "': " << ex.what());

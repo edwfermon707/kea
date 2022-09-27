@@ -98,7 +98,7 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
-    TranslatorLogger(sysrepo::S_Session session, const std::string& model);
+    TranslatorLogger(sysrepo::Session session, const std::string& model);
 
     /// @brief Destructor.
     virtual ~TranslatorLogger();
@@ -172,7 +172,7 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
-    TranslatorLoggers(sysrepo::S_Session session, const std::string& model);
+    TranslatorLoggers(sysrepo::Session session, const std::string& model);
 
     /// @brief Destructor.
     virtual ~TranslatorLoggers();
@@ -195,7 +195,7 @@ protected:
     /// @brief getLoggers JSON for loggers.
     ///
     /// @param xpath The xpath of loggers.
-    /// @return JSON representation of  loggers.
+    /// @return JSON representation of loggers.
     /// @throw SysrepoError when sysrepo raises an error.
     isc::data::ElementPtr getLoggersKea(const std::string& xpath);
 

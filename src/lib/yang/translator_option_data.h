@@ -80,7 +80,7 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
-    TranslatorOptionData(sysrepo::S_Session session, const std::string& model);
+    TranslatorOptionData(sysrepo::Session session, const std::string& model);
 
     /// @brief Destructor.
     virtual ~TranslatorOptionData();
@@ -127,7 +127,7 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
-    TranslatorOptionDataList(sysrepo::S_Session session,
+    TranslatorOptionDataList(sysrepo::Session session,
                              const std::string& model);
 
     /// @brief Destructor.
