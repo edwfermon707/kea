@@ -888,9 +888,8 @@ void
 ListElement::toJSON(std::ostream& ss) const {
     ss << "[ ";
 
-    const std::vector<ElementPtr>& v = listValue();
-    for (auto it = v.begin(); it != v.end(); ++it) {
-        if (it != v.begin()) {
+    for (auto it = l.begin(); it != l.end(); ++it) {
+        if (it != l.begin()) {
             ss << ", ";
         }
         (*it)->toJSON(ss);
@@ -902,7 +901,6 @@ void
 MapElement::toJSON(std::ostream& ss) const {
     ss << "{ ";
 
-    const std::map<std::string, ConstElementPtr>& m = mapValue();
     for (auto it = m.begin(); it != m.end(); ++it) {
         if (it != m.begin()) {
             ss << ", ";
