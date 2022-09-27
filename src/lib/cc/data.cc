@@ -133,7 +133,7 @@ Element::get(const int) const {
 
 ElementPtr
 Element::getNonConst(const int) const {
-    throwTypeError("get(int) called on a non-container Element");
+    throwTypeError("getNonConst(int) called on a non-container Element");
 }
 
 void
@@ -164,6 +164,11 @@ Element::empty() const {
 ConstElementPtr
 Element::get(const std::string&) const {
     throwTypeError("get(string) called on a non-map Element");
+}
+
+ElementPtr
+Element::getNonConst(std::string const&) const {
+    throwTypeError("getNonConst(string) called on a non-map Element");
 }
 
 void
@@ -1592,6 +1597,12 @@ void Element::preprocess(std::istream& in, std::stringstream& out) {
         out << line;
         out << "\n";
     }
+}
+
+ElementPtr
+MapElement::getNonConst(const std::string& s) const {
+    auto found = m.find(s);
+    return (found == m.end() ? ElementPtr() : copy(found->second, 0));
 }
 
 } // end of isc::data namespace
