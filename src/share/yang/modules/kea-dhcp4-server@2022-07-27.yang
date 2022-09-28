@@ -156,7 +156,7 @@ module kea-dhcp4-server {
 
   grouping reservations {
     description "Host reservations grouping.";
-    list host {
+    list reservations {
       key "identifier-type identifier";
       description "Host reservation list.";
       uses host;
@@ -202,7 +202,7 @@ module kea-dhcp4-server {
       uses dhcp:subnet-client-class;
       uses dhcp:subnet-require-client-classes;
       uses reservations {
-        refine host {
+        refine reservations {
           description "Subnet host reservations list.";
         }
       }
@@ -335,7 +335,7 @@ module kea-dhcp4-server {
     uses dhcp:decline-probation-period;
     uses subnet4-list;
 
-    list shared-network {
+    list shared-networks {
       key name;
       description "List of IPv4 shared networks.";
       uses dhcp:network-name;
@@ -457,7 +457,7 @@ module kea-dhcp4-server {
     uses dhcp:sanity-checks;
     uses dhcp:reservation-mode;
     uses reservations {
-      refine host {
+      refine reservations {
         description "Global host reservations list.";
       }
     }

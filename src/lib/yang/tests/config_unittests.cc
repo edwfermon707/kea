@@ -152,12 +152,22 @@ public:
     /// @param expected The expected JSON tree.
     bool verify(ConstElementPtr expected) {
         TranslatorConfig tc(session_, model_);
-        ConstElementPtr content = tc.getConfig();
-        if (isEquivalent(expected, content)) {
+        ElementPtr content(tc.getConfig());
+        ElementPtr wrapped_content;
+        if (model_ == KEA_DHCP4_SERVER) {
+            wrapped_content = Element::createMap();
+            wrapped_content->set("Dhcp4", content);
+        } else if (model_ == KEA_DHCP6_SERVER) {
+            wrapped_content = Element::createMap();
+            wrapped_content->set("Dhcp6", content);
+        } else {
+            wrapped_content = content;
+        }
+        if (isEquivalent(expected, wrapped_content)) {
             return (true);
         }
         string wanted = prettyPrint(expected);
-        string got = prettyPrint(content);
+        string got = prettyPrint(wrapped_content);
         cerr << "Expected:\n" << wanted << "\n"
              << "Actual:\n" << got
 #ifdef HAVE_CREATE_UNIFIED_DIFF
@@ -205,39 +215,54 @@ struct ConfigTestIetfV6 : ConfigTest {
 TEST_F(ConfigTestIetfV6, emptyIetf6) {
     YRTree tree;
     ASSERT_NO_THROW_LOG(load(tree));
-    EXPECT_TRUE(verify(tree));
+    bool result;
+    EXPECT_NO_THROW_LOG(result = verify(tree));
+    EXPECT_TRUE(result);
 
     ConstElementPtr json = Element::fromJSON(emptyJson6);
-    EXPECT_TRUE(verify(json));
+    EXPECT_NO_THROW_LOG(result = verify(json));
+    EXPECT_TRUE(result);
     ASSERT_NO_THROW_LOG(load(json));
-    EXPECT_TRUE(verify(emptyJson6));
-    EXPECT_TRUE(verify(tree));
+    EXPECT_NO_THROW_LOG(result = verify(emptyJson6));
+    EXPECT_TRUE(result);
+    EXPECT_NO_THROW_LOG(result = verify(tree));
+    EXPECT_TRUE(result);
 }
 
 // Check empty config with kea-dhcp4-server:config model.
 TEST_F(ConfigTestKeaV4, emptyKeaDhcp4) {
     YRTree tree;
     ASSERT_NO_THROW_LOG(load(tree));
-    EXPECT_TRUE(verify(emptyTreeKeaDhcp4));
+    bool result;
+    EXPECT_NO_THROW_LOG(result = verify(emptyTreeKeaDhcp4));
+    EXPECT_TRUE(result);
 
     ConstElementPtr json = Element::fromJSON(emptyJson4);
-    EXPECT_TRUE(verify(json));
+    EXPECT_NO_THROW_LOG(result = verify(json));
+    EXPECT_TRUE(result);
     ASSERT_NO_THROW_LOG(load(json));
-    EXPECT_TRUE(verify(emptyJson4));
-    EXPECT_TRUE(verify(emptyTreeKeaDhcp4));
+    EXPECT_NO_THROW_LOG(result = verify(emptyJson4));
+    EXPECT_TRUE(result);
+    EXPECT_NO_THROW_LOG(result = verify(emptyTreeKeaDhcp4));
+    EXPECT_TRUE(result);
 }
 
 // Check empty config with kea-dhcp6-server:config model.
 TEST_F(ConfigTestKeaV6, emptyKeaDhcp6) {
     YRTree tree;
     ASSERT_NO_THROW_LOG(load(tree));
-    EXPECT_TRUE(verify(emptyTreeKeaDhcp6));
+    bool result;
+    EXPECT_NO_THROW_LOG(result = verify(emptyTreeKeaDhcp6));
+    EXPECT_TRUE(result);
 
     ConstElementPtr json = Element::fromJSON(emptyJson6);
-    EXPECT_TRUE(verify(json));
+    EXPECT_NO_THROW_LOG(result = verify(json));
+    EXPECT_TRUE(result);
     ASSERT_NO_THROW_LOG(load(json));
-    EXPECT_TRUE(verify(emptyJson6));
-    EXPECT_TRUE(verify(emptyTreeKeaDhcp6));
+    EXPECT_NO_THROW_LOG(result = verify(emptyJson6));
+    EXPECT_TRUE(result);
+    EXPECT_NO_THROW_LOG(result = verify(emptyTreeKeaDhcp6));
+    EXPECT_TRUE(result);
 }
 
 // Check subnet with two pools with ietf-dhcpv6-server model.
@@ -247,54 +272,66 @@ TEST_F(ConfigTestKeaV6, emptyKeaDhcp6) {
 TEST_F(ConfigTestIetfV6, subnetTwoPoolsIetf6) {
     ASSERT_NO_THROW_LOG(load(subnetTwoPoolsTreeIetf6));
     bool result;
-    ASSERT_NO_THROW_LOG(result = verify(subnetTwoPoolsJson6));
+    EXPECT_NO_THROW_LOG(result = verify(subnetTwoPoolsJson6));
     EXPECT_TRUE(result);
 
     resetSession();
 
     ASSERT_NO_THROW_LOG(load(subnetTwoPoolsJson6));
-    EXPECT_TRUE(verify(subnetTwoPoolsTreeIetf6));
+    EXPECT_NO_THROW_LOG(result = verify(subnetTwoPoolsTreeIetf6));
+    EXPECT_TRUE(result);
 }
 
 // Check subnet with a pool and option data lists with
 // kea-dhcp4-server:config model.
 TEST_F(ConfigTestKeaV4, subnetOptionsKeaDhcp4) {
     ASSERT_NO_THROW_LOG(load(subnetOptionsTreeKeaDhcp4));
-    EXPECT_TRUE(verify(subnetOptionsJson4));
+    bool result;
+    EXPECT_NO_THROW_LOG(result = verify(subnetOptionsJson4));
+    EXPECT_TRUE(result);
 
     resetSession();
 
     ASSERT_NO_THROW_LOG(load(subnetOptionsJson4));
-    EXPECT_TRUE(verify(subnetOptionsTreeKeaDhcp4));
+    EXPECT_NO_THROW_LOG(result = verify(subnetOptionsTreeKeaDhcp4));
+    EXPECT_TRUE(result);
 }
 
 // Check subnet with a pool and option data lists with
 // kea-dhcp6-server:config model.
 TEST_F(ConfigTestKeaV6, subnetOptionsKeaDhcp6) {
     ASSERT_NO_THROW_LOG(load(subnetOptionsTreeKeaDhcp6));
-    EXPECT_TRUE(verify(subnetOptionsJson6));
+    bool result;
+    EXPECT_NO_THROW_LOG(result = verify(subnetOptionsJson6));
+    EXPECT_TRUE(result);
 
     resetSession();
 
     ASSERT_NO_THROW_LOG(load(subnetOptionsJson6));
-    EXPECT_TRUE(verify(subnetOptionsTreeKeaDhcp6));
+    EXPECT_NO_THROW_LOG(result = verify(subnetOptionsTreeKeaDhcp6));
+    EXPECT_TRUE(result);
 }
 
 // Check with timers.
 TEST_F(ConfigTestIetfV6, subnetTimersIetf6) {
     ASSERT_NO_THROW_LOG(load(subnetTimersIetf6));
-    EXPECT_TRUE(verify(subnetTimersJson6));
+    bool result;
+    EXPECT_NO_THROW_LOG(result = verify(subnetTimersJson6));
+    EXPECT_TRUE(result);
 
     resetSession();
 
     ASSERT_NO_THROW_LOG(load(subnetTimersJson6));
-    EXPECT_TRUE(verify(subnetTimersIetf6));
+    EXPECT_NO_THROW_LOG(result = verify(subnetTimersIetf6));
+    EXPECT_TRUE(result);
 }
 
 // Check a ietf-dhcpv6-server configuration which validates.
 TEST_F(ConfigTestIetfV6, validateIetf6) {
     ASSERT_NO_THROW_LOG(load(validTreeIetf6));
-    EXPECT_TRUE(verify(validTreeIetf6));
+    bool result;
+    EXPECT_NO_THROW_LOG(result = verify(validTreeIetf6));
+    EXPECT_TRUE(result);
 }
 
 // Check Kea4 example files.
@@ -333,7 +370,9 @@ TEST_F(ConfigTestKeaV4, examples4) {
         ConstElementPtr json;
         ASSERT_NO_THROW_LOG(json = loadFile(path));
         json = isc::test::moveComments(json);
-        EXPECT_TRUE(verify(json));
+        bool result;
+        EXPECT_NO_THROW_LOG(result = verify(json));
+        EXPECT_TRUE(result);
     }
 }
 
@@ -375,19 +414,24 @@ TEST_F(ConfigTestKeaV6, examples6) {
         ConstElementPtr json;
         ASSERT_NO_THROW_LOG(json = loadFile(path));
         json = isc::test::moveComments(json);
-        EXPECT_TRUE(verify(json));
+        bool result;
+        EXPECT_NO_THROW_LOG(result = verify(json));
+        EXPECT_TRUE(result);
     }
 }
 
 // Check the example in the design document.
 TEST_F(ConfigTestIetfV6, designExample) {
     ASSERT_NO_THROW_LOG(load(designExampleTree));
-    EXPECT_TRUE(verify(designExampleJson));
+    bool result;
+    EXPECT_NO_THROW_LOG(result = verify(designExampleJson));
+    EXPECT_TRUE(result);
 
     resetSession();
 
     ASSERT_NO_THROW_LOG(load(designExampleJson));
-    EXPECT_TRUE(verify(designExampleTree));
+    EXPECT_NO_THROW_LOG(result = verify(designExampleTree));
+    EXPECT_TRUE(result);
 }
 
 }  // namespace

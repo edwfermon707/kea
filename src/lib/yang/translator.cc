@@ -24,7 +24,8 @@ ElementPtr
 TranslatorBasic::leaf(optional<DataNode> const& data_node) {
     DataNodeTerm const& leaf(data_node->asTerm());
     Value const& value(leaf.value());
-    if (holds_alternative<string>(value)) {
+    if (holds_alternative<string>(value) ||
+        holds_alternative<Enum>(value)) {
         // Should be a string. Call create(). Should be slightly faster
         // than wrapping value in double quotes and calling fromJSON().
         return Element::create(string(leaf.valueStr()));
@@ -57,7 +58,16 @@ TranslatorBasic::translate(optional<DataNode> const& data_node) {
 
                 SchemaNode const& child_schema(child.schema());
                 string const key(child_schema.name());
-                result->set(key, element);
+                if (child.schema().nodeType() == NodeType::Leaflist) {
+                    ElementPtr l(result->getNonConst(key));
+                    if (!l) {
+                        l = Element::createList();
+                    }
+                    l->add(element);
+                    result->set(key, l);
+                } else {
+                    result->set(key, element);
+                }
             }
         }
     } else if (node_type == NodeType::List) {
@@ -114,6 +124,8 @@ TranslatorBasic::translate(optional<DataNode> const& data_node) {
                         underlying_map->set(leaf_name, leaf(key_child));
                     }
                     if (!result) {
+                        // Create a list now and not earlier to make sure that we don't
+                        // end up with an empty list in case there are no elements.
                         result = Element::createList();
                         result->add(underlying_map);
                     }
@@ -126,12 +138,12 @@ TranslatorBasic::translate(optional<DataNode> const& data_node) {
         }
     } else if (node_type == NodeType::Leaf) {
         result = leaf(data_node);
+    } else if (node_type == NodeType::Leaflist) {
+        result = leaf(data_node);
     } else if (node_type == NodeType::Unknown) {
         isc_throw(SysrepoError, "Unhandled node type: Unknown");
     } else if (node_type == NodeType::Choice) {
         isc_throw(SysrepoError, "Unhandled node type: Choice");
-    } else if (node_type == NodeType::Leaflist) {
-        isc_throw(SysrepoError, "Unhandled node type: Leaflist");
     } else if (node_type == NodeType::AnyXML) {
         isc_throw(SysrepoError, "Unhandled node type: AnyXML");
     } else if (node_type == NodeType::AnyData) {
@@ -162,7 +174,6 @@ TranslatorBasic::translate(optional<DataNode> const& data_node) {
 
 void
 TranslatorBasic::set(string const& xpath, ElementPtr const& element) {
-    std::cout << xpath << std::endl;
     Context const& context(session_.getContext());
     SchemaNode const& schema(context.findPath(xpath));
     NodeType const node_type(schema.nodeType());
@@ -171,27 +182,53 @@ TranslatorBasic::set(string const& xpath, ElementPtr const& element) {
         for (auto kv : element->mapValue()) {
             stringstream child_xpath;
             child_xpath << xpath << "/" << kv.first;
-            set(child_xpath.str(), boost::const_pointer_cast<Element>(kv.second));
+            set(child_xpath.str(), copy(kv.second, 0));
         }
     } else if (node_type == NodeType::List) {
         List const& list(schema.asList());
         std::vector<Leaf> const& list_keys(list.keys());
-        stringstream child_xpath;
-        child_xpath << xpath;
-        for (Leaf const& l : list_keys) {
-            string const leaf_name(l.name());
-            ElementPtr child_element(element->getNonConst(leaf_name));
-            child_xpath << "[" << leaf_name << "="
-                        << "'" << child_element->str() << "']";
-        }
         for (ElementPtr i : element->listValue()) {
-            set(child_xpath.str(), i);
+            stringstream child_xpath;
+            child_xpath << xpath;
+            for (Leaf const& l : list_keys) {
+                string const leaf_name(l.name());
+                ElementPtr child_element(i->getNonConst(leaf_name));
+                if (!child_element) {
+                    isc_throw(SysrepoError, "element at xpath " << xpath << " is missing key '"
+                                                                << leaf_name << "': " << i->str());
+                }
+                if (child_element->getType() == Element::string) {
+                    child_xpath << "[" << leaf_name << "="
+                                << "'" << child_element->stringValue() << "']";
+                } else {
+                    child_xpath << "[" << leaf_name << "="
+                                << "'" << child_element->str() << "']";
+                }
+            }
+            for (auto kv : i->mapValue()) {
+                bool found(false);
+                for (Leaf const& l : list_keys) {
+                    string const leaf_name(l.name());
+                    if (kv.first == leaf_name) {
+                        found = true;
+                    }
+                }
+                if (found) {
+                    continue;
+                }
+
+                stringstream map_xpath;
+                map_xpath << child_xpath.str() << "/" << kv.first;
+                set(map_xpath.str(), copy(kv.second, 0));
+            }
         }
     } else if (node_type == NodeType::Leaf) {
         setItem(xpath, element);
     } else if (node_type == NodeType::Leaflist) {
         for (ElementPtr i : element->listValue()) {
-            set(xpath, i);
+            stringstream child_xpath;
+            child_xpath << xpath << "[.='" << i->str() << "']";
+            setItem(xpath, i);
         }
     } else if (node_type == NodeType::Unknown) {
         isc_throw(SysrepoError, "Unhandled node type: Unknown");
@@ -230,10 +267,11 @@ TranslatorBasic::getItem(const string& xpath) {
     try {
         optional<DataNode> node(session_.getData(xpath));
         item = translate(node);
-    } catch (const Error& ex) {
+    } catch (ErrorWithCode& ex) {
         isc_throw(SysrepoError, "sysrepo error getting item '"
-                                    << "' at '" << xpath << "': " << ex.what());
-    } catch (const ErrorWithCode& ex) {
+                                    << "' at '" << xpath << "': code " << ex.code() << " - "
+                                    << ex.what());
+    } catch (Error const& ex) {
         isc_throw(SysrepoError, "sysrepo error getting item '"
                                     << "' at '" << xpath << "': " << ex.what());
     }
@@ -249,21 +287,42 @@ TranslatorBasic::getItem(const string& xpath) {
 void
 TranslatorBasic::setItem(const string& xpath, ConstElementPtr elem) {
     try {
-        Context context(session_.getContext());
-        SchemaNode schema(context.findPath(xpath));
-        if (schema.asLeaf().valueType().base() == LeafBaseType::Enum) {
-            // Enums are strings in ElementPtr and are accepted without
-            // the double quotes in sysrepo.
-            session_.setItem(xpath, elem->stringValue());
+        Context const& context(session_.getContext());
+        SchemaNode const& schema(context.findPath(xpath));
+        NodeType const node_type(schema.nodeType());
+        LeafBaseType base_type;
+        if (node_type == NodeType::Leaf) {
+            base_type = schema.asLeaf().valueType().base();
+        } else if (node_type == NodeType::Leaflist) {
+            base_type = schema.asLeafList().valueType().base();
         } else {
-            session_.setItem(xpath, elem->str());
+            isc_throw(SysrepoError, "TranslatorBasic::setItem(): unsupported node type: " << node_type);
         }
+        string value;
+        if (base_type == LeafBaseType::Enum ||
+            base_type == LeafBaseType::String ||
+            base_type == LeafBaseType::Union) {
+            // Enums are strings in ElementPtr, but are accepted
+            // without the double quotes in sysrepo.
+            if (elem->getType() == Element::map) {
+                // Except for some nodes which are maps e.g. user-context.
+                value = elem->str();
+            } else {
+                value = elem->stringValue();
+            }
+        } else {
+            // The rest of YANG values can be expressed using the
+            // general string representation of ElementPtr.
+            value = elem->str();
+        }
+
+        session_.setItem(xpath, value);
         session_.applyChanges();
-    } catch (const Error& ex) {
-        isc_throw(SysrepoError,
-                  "sysrepo error setting item '" << elem->str()
-                  << "' at '" << xpath << "': " << ex.what());
-    } catch (const ErrorWithCode& ex) {
+    } catch (ErrorWithCode& ex) {
+        isc_throw(SysrepoError, "sysrepo error setting item '"
+                                    << "' at '" << xpath << "': code " << ex.code() << " - "
+                                    << ex.what());
+    } catch (Error const& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error setting item '" << elem->str()
                   << "' at '" << xpath << "': " << ex.what());

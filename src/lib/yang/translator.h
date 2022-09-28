@@ -114,8 +114,8 @@ public:
     /// from the list
     template <typename T>
     isc::data::ElementPtr getList(std::string const& xpath,
-                                  T& t,
-                                  isc::data::ElementPtr (T::*f)(std::string const& xpath)) {
+                                  T& /* t */,
+                                  isc::data::ElementPtr (T::* /* f */)(std::string const& xpath)) {
         return getItem(xpath);
     }
 

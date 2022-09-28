@@ -48,13 +48,26 @@ TranslatorConfig::~TranslatorConfig() {
 
 ElementPtr
 TranslatorConfig::getConfig() {
+    ElementPtr result;
     try {
-        return getItem("/" + model_ + ":*//.");
+        result = getItem("/" + model_ + ":*//.");
     } catch (const libyang::ErrorWithCode& ex) {
         isc_throw(SysrepoError, "sysrepo error getting config: " << ex.what());
     }
-    isc_throw(NotImplemented,
-              "getConfig not implemented for the model: " << model_);
+
+    if (model_ == KEA_DHCP4_SERVER ||
+        model_ == KEA_DHCP6_SERVER) {
+        result->forAll([](Element& e) {
+            if (e.getType() == Element::map) {
+                ElementPtr user_context(e.getNonConst("user-context"));
+                if (user_context) {
+                    e.set("user-context", Element::fromJSON(user_context->stringValue()));
+                }
+            }
+        });
+    }
+
+    return result;
 }
 
 ElementPtr
@@ -410,6 +423,25 @@ TranslatorConfig::getServerKeaDhcp6() {
 
 void
 TranslatorConfig::setConfig(ConstElementPtr elem) {
+    if (model_ == KEA_DHCP4_SERVER ||
+        model_ == KEA_DHCP6_SERVER) {
+        ElementPtr mutable_elem(copy(elem, 0));
+        mutable_elem->forAll([](Element& e) {
+            if (e.getType() == Element::map) {
+                ElementPtr reservations(e.getNonConst("reservations"));
+                if (reservations) {
+                    for (ElementPtr i : reservations->listValue()) {
+                        ElementPtr duid(i->getNonConst("duid"));
+                        if (duid) {
+                            i->set("identifier-type", Element::create("duid"));
+                            i->set("identifier", duid);
+                        }
+                    }
+                }
+            }
+        });
+    }
+
     try {
         if (model_ == IETF_DHCPV6_SERVER) {
             ElementPtr config(elem->getNonConst("config"));

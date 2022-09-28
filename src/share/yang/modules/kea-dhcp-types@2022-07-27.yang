@@ -186,7 +186,7 @@ module kea-dhcp-types {
 
   grouping database {
     description "Database grouping.";
-    leaf database-type {
+    leaf type {
       type string;
       mandatory true;
       description "Database type (e.g. mysql).";
@@ -314,8 +314,8 @@ module kea-dhcp-types {
       description "Lease database.";
       uses database;
     }
-    list hosts-database {
-      key database-type;
+    list hosts-databases {
+      key type;
       description "List of databases.";
       uses database;
     }
@@ -912,8 +912,8 @@ module kea-dhcp-types {
         units "seconds";
         description "Configuration fetch wait time entry.";
       }
-      list config-database {
-        key database-type;
+      list config-databases {
+        key type;
         description "List of databases.";
         uses database;
       }
