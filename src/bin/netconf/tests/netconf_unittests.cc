@@ -210,7 +210,7 @@ public:
     }
 
     /// @brief Default change callback (print changes and return OK).
-    sr_error_t callback(sysrepo::S_Session sess,
+    sr_error_t callback(sysrepo::Session sess,
                         const char* module_name,
                         const char* /* xpath */,
                         sr_event_t /* event */,
@@ -442,17 +442,17 @@ TEST_F(NetconfAgentLogTest, checkModules) {
 TEST_F(NetconfAgentLogTest, logChanges) {
     // Initial YANG configuration.
     const YRTree tree0 = YangRepr::buildTreeFromVector({
-        { "/kea-dhcp4-server:config", "", SR_CONTAINER_T, false },
-        { "/kea-dhcp4-server:config/subnet4[id='1']", "", SR_LIST_T, false },
+        { "/kea-dhcp4-server:config", "", false },
+        { "/kea-dhcp4-server:config/subnet4[id='1']", "", false },
         { "/kea-dhcp4-server:config/subnet4[id='1']/id",
-          "1", SR_UINT32_T, false },
+          "1", false },
         { "/kea-dhcp4-server:config/subnet4[id='1']/subnet",
-          "10.0.0.0/24", SR_STRING_T, true },
-        { "/kea-dhcp4-server:config/subnet4[id='2']", "", SR_LIST_T, false },
+          "10.0.0.0/24", true },
+        { "/kea-dhcp4-server:config/subnet4[id='2']", "", false },
         { "/kea-dhcp4-server:config/subnet4[id='2']/id",
-          "2", SR_UINT32_T, false },
+          "2", false },
         { "/kea-dhcp4-server:config/subnet4[id='2']/subnet",
-          "10.0.2.0/24", SR_STRING_T, true }
+          "10.0.2.0/24", true }
     });
     // Load initial YANG configuration.
     ASSERT_NO_THROW_LOG(agent_->initSysrepo());
@@ -462,7 +462,7 @@ TEST_F(NetconfAgentLogTest, logChanges) {
 
     // Subscribe configuration changes.
     S_Subscribe subs(new Subscribe(agent_->running_sess_));
-    auto cb = [&](sysrepo::S_Session sess, const char* module_name,
+    auto cb = [&](sysrepo::Session sess, const char* module_name,
                   const char* xpath, sr_event_t event, uint32_t request_id) {
         return callback(sess, module_name, xpath, event, request_id);
     };
@@ -473,17 +473,17 @@ TEST_F(NetconfAgentLogTest, logChanges) {
 
     // Change configuration (subnet #1 moved from 10.0.0.0/24 to 10.0.1/0/24).
     const YRTree tree1 = YangRepr::buildTreeFromVector({
-        { "/kea-dhcp4-server:config", "", SR_CONTAINER_T, false },
-        { "/kea-dhcp4-server:config/subnet4[id='1']", "", SR_LIST_T, false },
+        { "/kea-dhcp4-server:config", "", false },
+        { "/kea-dhcp4-server:config/subnet4[id='1']", "", false },
         { "/kea-dhcp4-server:config/subnet4[id='1']/id",
-          "1", SR_UINT32_T, false },
+          "1", false },
         { "/kea-dhcp4-server:config/subnet4[id='1']/subnet",
-          "10.0.1.0/24", SR_STRING_T, true }, // The change is here!
-        { "/kea-dhcp4-server:config/subnet4[id='2']", "", SR_LIST_T, false },
+          "10.0.1.0/24", true }, // The change is here!
+        { "/kea-dhcp4-server:config/subnet4[id='2']", "", false },
         { "/kea-dhcp4-server:config/subnet4[id='2']/id",
-          "2", SR_UINT32_T, false },
+          "2", false },
         { "/kea-dhcp4-server:config/subnet4[id='2']/subnet",
-          "10.0.2.0/24", SR_STRING_T, true }
+          "10.0.2.0/24", true }
     });
     EXPECT_NO_THROW(repr.set(tree1, agent_->running_sess_));
     EXPECT_NO_THROW(agent_->running_sess_->apply_changes());
@@ -512,17 +512,17 @@ TEST_F(NetconfAgentLogTest, logChanges) {
 TEST_F(NetconfAgentLogTest, logChanges2) {
     // Initial YANG configuration.
     const YRTree tree0 = YangRepr::buildTreeFromVector({
-        { "/kea-dhcp4-server:config", "", SR_CONTAINER_T, false },
-        { "/kea-dhcp4-server:config/subnet4[id='1']", "", SR_LIST_T, false },
+        { "/kea-dhcp4-server:config", "", false },
+        { "/kea-dhcp4-server:config/subnet4[id='1']", "", false },
         { "/kea-dhcp4-server:config/subnet4[id='1']/id",
-          "1", SR_UINT32_T, false },
+          "1", false },
         { "/kea-dhcp4-server:config/subnet4[id='1']/subnet",
-          "10.0.0.0/24", SR_STRING_T, true },
-        { "/kea-dhcp4-server:config/subnet4[id='2']", "", SR_LIST_T, false },
+          "10.0.0.0/24", true },
+        { "/kea-dhcp4-server:config/subnet4[id='2']", "", false },
         { "/kea-dhcp4-server:config/subnet4[id='2']/id",
-          "2", SR_UINT32_T, false },
+          "2", false },
         { "/kea-dhcp4-server:config/subnet4[id='2']/subnet",
-          "10.0.2.0/24", SR_STRING_T, true }
+          "10.0.2.0/24", true }
     });
     // Load initial YANG configuration.
     ASSERT_NO_THROW_LOG(agent_->initSysrepo());
@@ -532,7 +532,7 @@ TEST_F(NetconfAgentLogTest, logChanges2) {
 
     // Subscribe configuration changes.
     S_Subscribe subs(new Subscribe(agent_->running_sess_));
-    auto cb = [&](sysrepo::S_Session sess, const char* module_name,
+    auto cb = [&](sysrepo::Session sess, const char* module_name,
                   const char* xpath, sr_event_t event, uint32_t request_id) {
         return callback(sess, module_name, xpath, event, request_id);
     };
@@ -545,17 +545,17 @@ TEST_F(NetconfAgentLogTest, logChanges2) {
     string xpath = "/kea-dhcp4-server:config/subnet4[id='1']";
     EXPECT_NO_THROW(agent_->running_sess_->delete_item(xpath.c_str()));
     const YRTree tree1 = YangRepr::buildTreeFromVector({
-        { "/kea-dhcp4-server:config", "", SR_CONTAINER_T, false },
-        { "/kea-dhcp4-server:config/subnet4[id='10']", "", SR_LIST_T, false },
+        { "/kea-dhcp4-server:config", "", false },
+        { "/kea-dhcp4-server:config/subnet4[id='10']", "", false },
         { "/kea-dhcp4-server:config/subnet4[id='10']/id",
-          "10", SR_UINT32_T, false },
+          "10", false },
         { "/kea-dhcp4-server:config/subnet4[id='10']/subnet",
-          "10.0.0.0/24", SR_STRING_T, true }, // The change is here!
-        { "/kea-dhcp4-server:config/subnet4[id='2']", "", SR_LIST_T, false },
+          "10.0.0.0/24", true }, // The change is here!
+        { "/kea-dhcp4-server:config/subnet4[id='2']", "", false },
         { "/kea-dhcp4-server:config/subnet4[id='2']/id",
-          "2", SR_UINT32_T, false },
+          "2", false },
         { "/kea-dhcp4-server:config/subnet4[id='2']/subnet",
-          "10.0.2.0/24", SR_STRING_T, true }
+          "10.0.2.0/24", true }
     });
     EXPECT_NO_THROW(repr.set(tree1, agent_->running_sess_));
     EXPECT_NO_THROW(agent_->running_sess_->apply_changes());
@@ -663,17 +663,17 @@ TEST_F(NetconfAgentTest, keaConfig) {
 TEST_F(NetconfAgentTest, yangConfig) {
     // YANG configuration.
     const YRTree tree = YangRepr::buildTreeFromVector({
-        { "/kea-dhcp4-server:config", "", SR_CONTAINER_T, false },
-        { "/kea-dhcp4-server:config/subnet4[id='1']", "", SR_LIST_T, false },
+        { "/kea-dhcp4-server:config", "", false },
+        { "/kea-dhcp4-server:config/subnet4[id='1']", "", false },
         { "/kea-dhcp4-server:config/subnet4[id='1']/id",
-          "1", SR_UINT32_T, false },
+          "1", false },
         { "/kea-dhcp4-server:config/subnet4[id='1']/subnet",
-          "10.0.0.0/24", SR_STRING_T, true },
-        { "/kea-dhcp4-server:config/subnet4[id='2']", "", SR_LIST_T, false },
+          "10.0.0.0/24", true },
+        { "/kea-dhcp4-server:config/subnet4[id='2']", "", false },
         { "/kea-dhcp4-server:config/subnet4[id='2']/id",
-          "2", SR_UINT32_T, false },
+          "2", false },
         { "/kea-dhcp4-server:config/subnet4[id='2']/subnet",
-          "10.0.2.0/24", SR_STRING_T, true }
+          "10.0.2.0/24", true }
     });
     // Load YANG configuration.
     ASSERT_NO_THROW_LOG(agent_->initSysrepo());
@@ -826,17 +826,17 @@ TEST_F(NetconfAgentTest, subscribeConfig) {
 TEST_F(NetconfAgentTest, update) {
     // Initial YANG configuration.
     const YRTree tree0 = YangRepr::buildTreeFromVector({
-        { "/kea-dhcp4-server:config", "", SR_CONTAINER_T, false },
-        { "/kea-dhcp4-server:config/subnet4[id='1']", "", SR_LIST_T, false },
+        { "/kea-dhcp4-server:config", "", false },
+        { "/kea-dhcp4-server:config/subnet4[id='1']", "", false },
         { "/kea-dhcp4-server:config/subnet4[id='1']/id",
-          "1", SR_UINT32_T, false },
+          "1", false },
         { "/kea-dhcp4-server:config/subnet4[id='1']/subnet",
-          "10.0.0.0/24", SR_STRING_T, true },
-        { "/kea-dhcp4-server:config/subnet4[id='2']", "", SR_LIST_T, false },
+          "10.0.0.0/24", true },
+        { "/kea-dhcp4-server:config/subnet4[id='2']", "", false },
         { "/kea-dhcp4-server:config/subnet4[id='2']/id",
-          "2", SR_UINT32_T, false },
+          "2", false },
         { "/kea-dhcp4-server:config/subnet4[id='2']/subnet",
-          "10.0.2.0/24", SR_STRING_T, true }
+          "10.0.2.0/24", true }
     });
     // Load initial YANG configuration.
     ASSERT_NO_THROW_LOG(agent_->initSysrepo());
@@ -896,17 +896,17 @@ TEST_F(NetconfAgentTest, update) {
 
     // Change configuration (subnet #1 moved from 10.0.0.0/24 to 10.0.1/0/24).
     const YRTree tree1 = YangRepr::buildTreeFromVector({
-        { "/kea-dhcp4-server:config", "", SR_CONTAINER_T, false },
-        { "/kea-dhcp4-server:config/subnet4[id='1']", "", SR_LIST_T, false },
+        { "/kea-dhcp4-server:config", "", false },
+        { "/kea-dhcp4-server:config/subnet4[id='1']", "", false },
         { "/kea-dhcp4-server:config/subnet4[id='1']/id",
-          "1", SR_UINT32_T, false },
+          "1", false },
         { "/kea-dhcp4-server:config/subnet4[id='1']/subnet",
-          "10.0.1.0/24", SR_STRING_T, true }, // The change is here!
-        { "/kea-dhcp4-server:config/subnet4[id='2']", "", SR_LIST_T, false },
+          "10.0.1.0/24", true }, // The change is here!
+        { "/kea-dhcp4-server:config/subnet4[id='2']", "", false },
         { "/kea-dhcp4-server:config/subnet4[id='2']/id",
-          "2", SR_UINT32_T, false },
+          "2", false },
         { "/kea-dhcp4-server:config/subnet4[id='2']/subnet",
-          "10.0.2.0/24", SR_STRING_T, true }
+          "10.0.2.0/24", true }
     });
     EXPECT_NO_THROW(repr.set(tree1, agent_->running_sess_));
     EXPECT_NO_THROW(agent_->running_sess_->apply_changes());
@@ -961,17 +961,17 @@ TEST_F(NetconfAgentTest, update) {
 TEST_F(NetconfAgentTest, validate) {
     // Initial YANG configuration.
     const YRTree tree0 = YangRepr::buildTreeFromVector({
-        { "/kea-dhcp4-server:config", "", SR_CONTAINER_T, false },
-        { "/kea-dhcp4-server:config/subnet4[id='1']", "", SR_LIST_T, false },
+        { "/kea-dhcp4-server:config", "", false },
+        { "/kea-dhcp4-server:config/subnet4[id='1']", "", false },
         { "/kea-dhcp4-server:config/subnet4[id='1']/id",
-          "1", SR_UINT32_T, false },
+          "1", false },
         { "/kea-dhcp4-server:config/subnet4[id='1']/subnet",
-          "10.0.0.0/24", SR_STRING_T, true },
-        { "/kea-dhcp4-server:config/subnet4[id='2']", "", SR_LIST_T, false },
+          "10.0.0.0/24", true },
+        { "/kea-dhcp4-server:config/subnet4[id='2']", "", false },
         { "/kea-dhcp4-server:config/subnet4[id='2']/id",
-          "2", SR_UINT32_T, false },
+          "2", false },
         { "/kea-dhcp4-server:config/subnet4[id='2']/subnet",
-          "10.0.2.0/24", SR_STRING_T, true }
+          "10.0.2.0/24", true }
     });
     // Load initial YANG configuration.
     ASSERT_NO_THROW_LOG(agent_->initSysrepo());
@@ -1034,17 +1034,17 @@ TEST_F(NetconfAgentTest, validate) {
 
     // Change configuration (subnet #1 moved from 10.0.0.0/24 to 10.0.1/0/24).
     const YRTree tree1 = YangRepr::buildTreeFromVector({
-        { "/kea-dhcp4-server:config", "", SR_CONTAINER_T, false },
-        { "/kea-dhcp4-server:config/subnet4[id='1']", "", SR_LIST_T, false },
+        { "/kea-dhcp4-server:config", "", false },
+        { "/kea-dhcp4-server:config/subnet4[id='1']", "", false },
         { "/kea-dhcp4-server:config/subnet4[id='1']/id",
-          "1", SR_UINT32_T, false },
+          "1", false },
         { "/kea-dhcp4-server:config/subnet4[id='1']/subnet",
-          "10.0.1.0/24", SR_STRING_T, true }, // The change is here!
-        { "/kea-dhcp4-server:config/subnet4[id='2']", "", SR_LIST_T, false },
+          "10.0.1.0/24", true }, // The change is here!
+        { "/kea-dhcp4-server:config/subnet4[id='2']", "", false },
         { "/kea-dhcp4-server:config/subnet4[id='2']/id",
-          "2", SR_UINT32_T, false },
+          "2", false },
         { "/kea-dhcp4-server:config/subnet4[id='2']/subnet",
-          "10.0.2.0/24", SR_STRING_T, true }
+          "10.0.2.0/24", true }
     });
     EXPECT_NO_THROW(repr.set(tree1, agent_->running_sess_));
     EXPECT_NO_THROW(agent_->running_sess_->apply_changes());
@@ -1132,12 +1132,12 @@ TEST_F(NetconfAgentTest, validate) {
 TEST_F(NetconfAgentTest, noValidate) {
     // Initial YANG configuration.
     const YRTree tree0 = YangRepr::buildTreeFromVector({
-        { "/kea-dhcp4-server:config", "", SR_CONTAINER_T, false },
-        { "/kea-dhcp4-server:config/subnet4[id='1']", "", SR_LIST_T, false },
+        { "/kea-dhcp4-server:config", "", false },
+        { "/kea-dhcp4-server:config/subnet4[id='1']", "", false },
         { "/kea-dhcp4-server:config/subnet4[id='1']/id",
-          "1", SR_UINT32_T, false },
+          "1", false },
         { "/kea-dhcp4-server:config/subnet4[id='1']/subnet",
-          "10.0.0.0/24", SR_STRING_T, true }
+          "10.0.0.0/24", true }
     });
     // Load initial YANG configuration.
     ASSERT_NO_THROW_LOG(agent_->initSysrepo());
@@ -1189,18 +1189,18 @@ TEST_F(NetconfAgentTest, noValidate) {
 
     // Change configuration (add invalid user context).
     const YRTree tree1 = YangRepr::buildTreeFromVector({
-        { "/kea-dhcp4-server:config", "", SR_CONTAINER_T, false },
-        { "/kea-dhcp4-server:config/subnet4[id='1']", "", SR_LIST_T, false },
+        { "/kea-dhcp4-server:config", "", false },
+        { "/kea-dhcp4-server:config/subnet4[id='1']", "", false },
         { "/kea-dhcp4-server:config/subnet4[id='1']/id",
-          "1", SR_UINT32_T, false },
+          "1", false },
         { "/kea-dhcp4-server:config/subnet4[id='1']/subnet",
-          "10.0.0.0/24", SR_STRING_T, true },
+          "10.0.0.0/24", true },
         { "/kea-dhcp4-server:config/subnet4[id='1']/user-context",
-          "BOGUS", SR_STRING_T, true }
+          "BOGUS", true }
     });
     try {
         repr.set(tree1, agent_->running_sess_);
-    } catch (const sysrepo_exception& ex) {
+    } catch (const libyang::ErrorWithCode& ex) {
         EXPECT_EQ("User callback failed", string(ex.what()));
     } catch (const std::exception& ex) {
         ADD_FAILURE() << "unexpected exception: " << ex.what();

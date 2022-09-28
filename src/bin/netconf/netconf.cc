@@ -55,7 +55,7 @@ public:
     /// @param event The event.
     /// @param private_ctx The private context.
     /// @return the sysrepo return code.
-    sr_error_t module_change(S_Session sess,
+    sr_error_t module_change(Session sess,
                              const char* module_name,
                              const char* /* xpath */,
                              sr_event_t event,
@@ -99,10 +99,10 @@ public:
         }
     }
 
-    void event_notif(sysrepo::S_Session /* session */,
+    void event_notif(sysrepo::Session /* session */,
                      sr_ev_notif_type_t const notification_type,
                      char const* /* path */,
-                     sysrepo::S_Vals const vals,
+                     DataNodes const vals,
                      time_t /* timestamp */,
                      void* /* private_data */) {
         string n;
@@ -272,7 +272,7 @@ void NetconfAgent::getModules() {
     try {
         S_Context context(running_sess_->get_context());
         modules = context->get_module_iter();
-    } catch (const sysrepo_exception& ex) {
+    } catch (const libyang::ErrorWithCode& ex) {
         isc_throw(Unexpected, "can't retrieve available modules: " << ex.what());
     }
 
@@ -443,7 +443,7 @@ NetconfAgent::subscribeConfig(const CfgServersMapPair& service_pair) {
         .arg(service_pair.first)
         .arg(model);
     S_Subscribe subs(new Subscribe(running_sess_));
-    auto callback = [=](sysrepo::S_Session sess, const char* module_name,
+    auto callback = [=](sysrepo::Session sess, const char* module_name,
                         const char* xpath, sr_event_t event,
                         uint32_t /* request_id */) {
         NetconfAgentCallback agent(service_pair);
@@ -487,10 +487,10 @@ NetconfAgent::subscribeToNotifications(const CfgServersMapPair& service_pair) {
         .arg(model);
 
     S_Subscribe subscription(std::make_shared<Subscribe>(running_sess_));
-    auto callback = [=](sysrepo::S_Session session,
+    auto callback = [=](sysrepo::Session session,
                         sr_ev_notif_type_t const notification_type,
                         char const* path,
-                        sysrepo::S_Vals const vals,
+                        DataNodes const vals,
                         time_t timestamp) {
         NetconfAgentCallback agent(service_pair);
         return agent.event_notif(session, notification_type, path, vals, timestamp, nullptr);
@@ -511,7 +511,7 @@ NetconfAgent::subscribeToNotifications(const CfgServersMapPair& service_pair) {
 }
 
 sr_error_t
-NetconfAgent::change(S_Session sess, const CfgServersMapPair& service_pair) {
+NetconfAgent::change(Session sess, const CfgServersMapPair& service_pair) {
     // If we're shutting down, or the subscribe-changes or the
     // validate-changes flag is not set or the model associated with
     // it is not specified.
@@ -592,7 +592,7 @@ NetconfAgent::change(S_Session sess, const CfgServersMapPair& service_pair) {
 }
 
 sr_error_t
-NetconfAgent::done(S_Session sess, const CfgServersMapPair& service_pair) {
+NetconfAgent::done(Session sess, const CfgServersMapPair& service_pair) {
     // Check if we should and can process this update.
     if (!service_pair.second->getSubscribeChanges() ||
         service_pair.second->getModel().empty()) {
@@ -682,7 +682,7 @@ NetconfAgent::done(S_Session sess, const CfgServersMapPair& service_pair) {
 }
 
 void
-NetconfAgent::logChanges(S_Session sess, const string& model) {
+NetconfAgent::logChanges(Session sess, const string& model) {
     ostringstream stream;
     stream << "/" << model << ":*//.";
     std::string const xpath(stream.str());
@@ -697,7 +697,7 @@ NetconfAgent::logChanges(S_Session sess, const string& model) {
         ostringstream msg;
         try {
             change = sess->get_change_next(iter);
-        } catch (const sysrepo_exception& ex) {
+        } catch (const libyang::ErrorWithCode& ex) {
             msg << "get change iterator next failed: " << ex.what();
             LOG_WARN(netconf_logger, NETCONF_LOG_CHANGE_FAIL)
                 .arg(msg.str());
@@ -707,8 +707,8 @@ NetconfAgent::logChanges(S_Session sess, const string& model) {
             // End of changes, not an error.
             return;
         }
-        S_Val new_val = change->new_val();
-        S_Val old_val = change->old_val();
+        DataNode new_val = change->new_val();
+        DataNode old_val = change->old_val();
         string report;
         switch (change->oper()) {
         case SR_OP_CREATED:

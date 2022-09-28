@@ -70,7 +70,7 @@ public:
     /// @param service_pair The service name and configuration pair.
     /// @return return code for sysrepo.
     static sr_error_t
-    change(sysrepo::S_Session sess, const CfgServersMapPair& service_pair);
+    change(sysrepo::Session sess, const CfgServersMapPair& service_pair);
 
     /// @brief SR_EV_DONE callback.
     ///
@@ -81,7 +81,7 @@ public:
     /// @param service_pair The service name and configuration pair.
     /// @return return code for sysrepo.
     static sr_error_t
-    done(sysrepo::S_Session sess, const CfgServersMapPair& service_pair);
+    done(sysrepo::Session sess, const CfgServersMapPair& service_pair);
 
     /// @brief Log changes.
     ///
@@ -91,7 +91,7 @@ public:
     ///
     /// @param sess The sysrepo running datastore session.
     /// @param model The model name.
-    static void logChanges(sysrepo::S_Session sess, const std::string& model);
+    static void logChanges(sysrepo::Session sess, const std::string& model);
 
 protected:
     /// @brief Get and display Kea server configuration.
@@ -165,10 +165,10 @@ protected:
     sysrepo::S_Connection conn_;
 
     /// @brief Sysrepo startup datastore session.
-    sysrepo::S_Session startup_sess_;
+    sysrepo::Session startup_sess_;
 
     /// @brief Sysrepo running datastore session.
-    sysrepo::S_Session running_sess_;
+    sysrepo::Session running_sess_;
 
     /// @brief Available modules and revisions in Sysrepo.
     std::map<const std::string, const std::string> modules_;
