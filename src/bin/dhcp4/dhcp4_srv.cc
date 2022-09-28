@@ -235,27 +235,21 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
     }
 
     // Set KNOWN builtin class if something was found, UNKNOWN if not.
-    if (!context_->hosts_.empty()) {
-        query->addClass("KNOWN");
-        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_ASSIGNED)
-            .arg(query->getLabel())
-            .arg("KNOWN");
-    } else {
+    if (context_->hosts_.empty()) {
         query->addClass("UNKNOWN");
-        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_ASSIGNED)
-            .arg(query->getLabel())
-            .arg("UNKNOWN");
+    } else {
+        query->addClass("KNOWN");
     }
+    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_ASSIGNED)
+        .arg(query_->getLabel())
+        .arg(query_->getClasses().toText());
 
     // Perform second pass of classification.
     evaluateClasses(query, true);
 
-    const ClientClasses& classes = query_->getClasses();
-    if (!classes.empty()) {
-        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_ASSIGNED)
-            .arg(query_->getLabel())
-            .arg(classes.toText());
-    }
+    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_ASSIGNED)
+        .arg(query_->getLabel())
+        .arg(query_->getClasses().toText());
 
     // Check the DROP special class.
     if (query_->inClass("DROP")) {
