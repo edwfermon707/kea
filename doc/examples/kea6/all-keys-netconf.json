@@ -18,7 +18,6 @@
                 "name": "phones_server1",
 
                 // Class specific DHCPv6 options list.
-                "option-data": [],
 
                 // Class selection expression. The DHCP packet is assigned to this
                 // class when the given expression evaluates to true.
@@ -47,7 +46,6 @@
                 "name": "phones_server2",
 
                 // Class specific DHCPv6 options list.
-                "option-data": [],
 
                 // Class selection expression. The DHCP packet is assigned to this
                 // class when the given expression evaluates to true.
@@ -827,7 +825,6 @@
                                 "excluded-prefix-len": 72,
 
                                 // Prefix pool level list of DHCP options.
-                                "option-data": [],
 
                                 // Prefix range (address) used for client assignments.
                                 "prefix": "2001:db8:1::",
@@ -848,7 +845,6 @@
                                 "client-class": "phones_server1",
 
                                 // Pool level list of DHCP options.
-                                "option-data": [],
 
                                 // Address range used for client assignments.
                                 "pool": "2001:db8:0:1::/64",
@@ -863,7 +859,6 @@
                                 "client-class": "phones_server2",
 
                                 // Pool level list of DHCP options.
-                                "option-data": [],
 
                                 // Address range used for client assignments.
                                 "pool": "2001:db8:0:3::/64",
@@ -955,6 +950,8 @@
                                 // Reservation specific option data.
                                 "option-data": [
                                     {
+                                        "code": 17,
+                                        "space": "dhcp6",
                                         // Option name.
                                         "name": "vendor-opts",
 
