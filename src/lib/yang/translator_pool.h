@@ -134,12 +134,23 @@ public:
     /// @brief Destructor.
     virtual ~TranslatorPool();
 
-    /// @brief Get and translate a pool from YANG to JSON.
+    /// @brief Translate a pool from YANG to JSON.
+    ///
+    /// @param data_node the YANG node representing the pool
+    ///
+    /// @return the JSON representation of the pool
+    ///
+    /// @throw SysrepoError when sysrepo raises an error.
+    isc::data::ElementPtr getPool(libyang::DataNode const& data_node);
+
+    /// @brief Translate a pool from YANG to JSON.
     ///
     /// @param xpath The xpath of the pool.
+    ///
     /// @return JSON representation of the pool.
+    ///
     /// @throw SysrepoError when sysrepo raises an error.
-    isc::data::ElementPtr getPool(const std::string& xpath);
+    isc::data::ElementPtr getPool(std::string const& xpath);
 
     /// @brief Translate and set (address) pool from JSON to YANG.
     ///
@@ -163,7 +174,7 @@ protected:
     /// @param xpath The xpath of the pool.
     /// @return JSON representation of the pool.
     /// @throw BadValue on pool without prefix.
-    isc::data::ElementPtr getPoolIetf6(const std::string& xpath);
+    isc::data::ElementPtr getPoolIetf6(libyang::DataNode const& data_node);
 
     /// @brief setPool for ietf-dhcpv6-server.
     ///
@@ -179,7 +190,7 @@ protected:
     /// @param xpath The xpath of the pool.
     /// @return JSON representation of the pool.
     /// @throw BadValue on a pool without prefix and start or end address.
-    isc::data::ElementPtr getPoolKea(const std::string& xpath);
+    isc::data::ElementPtr getPoolKea(libyang::DataNode const& data_node);
 
     /// @brief setPool for kea-dhcp[46]-server.
     ///
@@ -204,11 +215,23 @@ public:
     /// @brief Destructor.
     virtual ~TranslatorPools();
 
-    /// @brief Get and translate pools from YANG to JSON.
+    /// @brief Translate pools from YANG to JSON.
+    ///
+    /// @param data_node the YANG node representing the list of pools
+    ///
+    /// @return the JSON representation of the list of pools
+    ///
+    /// @throw SysrepoError when sysrepo raises an error.
+    isc::data::ElementPtr getPools(libyang::DataNode const& data_node);
+
+    /// @brief Translate pools from YANG to JSON.
     ///
     /// @param xpath The xpath of the pool list.
+    ///
+    /// @return the JSON representation of the list of pools
+    ///
     /// @throw SysrepoError when sysrepo raises an error.
-    isc::data::ElementPtr getPools(const std::string& xpath);
+    isc::data::ElementPtr getPools(std::string const& xpath);
 
     /// @brief Translate and set (address) pools from JSON to YANG.
     ///
@@ -220,12 +243,12 @@ protected:
     /// @brief getPools for ietf-dhcpv6-server.
     ///
     /// @param xpath The xpath of the pool list.
-    isc::data::ElementPtr getPoolsIetf(const std::string& xpath);
+    isc::data::ElementPtr getPoolsIetf(libyang::DataNode const& data_node);
 
     /// @brief getPools for kea-dhcp[46]-server.
     ///
     /// @param xpath The xpath of the pool list.
-    isc::data::ElementPtr getPoolsKea(const std::string& xpath);
+    isc::data::ElementPtr getPoolsKea(libyang::DataNode const& data_node);
 
     /// @brief setPools using pool-id.
     ///
