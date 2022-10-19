@@ -51,25 +51,27 @@ public:
     /// @param interval The interval used to start the timer.
     /// @param interval_mode The interval mode used by the timer.
     void setup(const IntervalTimer::Callback& cbfunc, const long interval,
-               const IntervalTimer::Mode& interval_mode
-               = IntervalTimer::REPEATING);
+               const IntervalTimer::Mode& interval_mode = IntervalTimer::REPEATING);
 
     /// @brief Callback function which calls the registerd callback.
     ///
     /// @param error The error code retrieved from the timer.
-    void callback(const boost::system::error_code& error);
+    /// @param interval The interval value which indicates if the timer has been
+    /// canceled (has value set to 0).
+    void callback(const boost::system::error_code& error,
+                  std::shared_ptr<std::atomic<long>> interval);
 
     /// @brief Cancel timer.
     void cancel() {
         lock_guard<mutex> lk (mutex_);
         timer_.cancel();
-        interval_ = 0;
+        *interval_ = 0;
     }
 
     /// @brief Get the timer interval.
     ///
     /// @return The timer interval.
-    long getInterval() const { return (interval_); }
+    long getInterval() const { return (*interval_); }
 
 private:
 
@@ -82,7 +84,7 @@ private:
     IntervalTimer::Callback cbfunc_;
 
     /// @brief The interval in milliseconds.
-    std::atomic<long> interval_;
+    std::shared_ptr<std::atomic<long>> interval_;
 
     /// @brief The asio timer.
     boost::asio::deadline_timer timer_;
@@ -101,12 +103,12 @@ private:
 };
 
 IntervalTimerImpl::IntervalTimerImpl(IOService& io_service) :
-    interval_(0), timer_(io_service.get_io_service()),
-    mode_(IntervalTimer::REPEATING) {
+    interval_(std::make_shared<std::atomic<long>>(0)),
+    timer_(io_service.get_io_service()), mode_(IntervalTimer::REPEATING) {
 }
 
 IntervalTimerImpl::~IntervalTimerImpl() {
-    interval_ = INVALIDATED_INTERVAL;
+    *interval_ = INVALIDATED_INTERVAL;
 }
 
 void
@@ -125,7 +127,7 @@ IntervalTimerImpl::setup(const IntervalTimer::Callback& cbfunc,
 
     lock_guard<mutex> lk(mutex_);
     cbfunc_ = cbfunc;
-    interval_ = interval;
+    *interval_ = interval;
     mode_ = mode;
 
     // Set initial expire time.
@@ -138,12 +140,13 @@ void
 IntervalTimerImpl::update() {
     try {
         // Update expire time to (current time + interval_).
-        timer_.expires_from_now(boost::posix_time::millisec(long(interval_)));
+        timer_.expires_from_now(boost::posix_time::millisec(long(*interval_)));
         // Reset timer.
         // Pass a function bound with a shared_ptr to this.
         timer_.async_wait(std::bind(&IntervalTimerImpl::callback,
-                                    shared_from_this(),
-                                    ph::_1)); //error
+                                    shared_from_this(), // this
+                                    ph::_1, // error
+                                    interval_)); // interval
     } catch (const boost::system::system_error& e) {
         isc_throw(isc::Unexpected, "Failed to update timer: " << e.what());
     } catch (const boost::bad_weak_ptr&) {
@@ -152,11 +155,12 @@ IntervalTimerImpl::update() {
 }
 
 void
-IntervalTimerImpl::callback(const boost::system::error_code& ec) {
-    if (interval_ == INVALIDATED_INTERVAL) {
+IntervalTimerImpl::callback(const boost::system::error_code& ec,
+                            std::shared_ptr<std::atomic<long>> interval) {
+    if (*interval == INVALIDATED_INTERVAL) {
         isc_throw(isc::BadValue, "Interval internal state");
     }
-    if (interval_ == 0 || ec) {
+    if (*interval == 0 || ec) {
         // timer has been canceled. Do nothing.
     } else {
         {
