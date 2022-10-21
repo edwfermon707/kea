@@ -71,8 +71,8 @@ void TranslatorBasic::checkAndSetLeaf(ConstElementPtr const& from,
 
 void
 TranslatorBasic::delItem(const std::string& xpath) {
-    // TODO: Remove this if convenient. It is not strictly required and only done to detect
-    // missing schema nodes and throw an exception to keep old behavior.
+    /// @todo: Remove this if convenient. It is not strictly required and only done to detect
+    /// missing schema nodes and throw an exception to keep old behavior.
     try {
         Context const& context(session_.getContext());
         context.findPath(xpath);
@@ -124,12 +124,12 @@ TranslatorBasic::getItem(DataNode const& data_node, string const& xpath) const {
             }
             return result;
         } else if (node_type == NodeType::Container) {
-            // TODO:
-            // isc_throw(SysrepoError, "getting containers not supported, xpath is '" << xpath << "'");
+            /// @todo:
+            /// isc_throw(SysrepoError, "getting containers not supported, xpath is '" << xpath << "'");
             return ElementPtr();
         } else if (node_type == NodeType::List) {
-            // TODO:
-            // isc_throw(SysrepoError, "getting lists not supported, xpath is '" << xpath << "'");
+            /// @todo:
+            /// isc_throw(SysrepoError, "getting lists not supported, xpath is '" << xpath << "'");
             return ElementPtr();
         }
 
@@ -145,8 +145,8 @@ ElementPtr
 TranslatorBasic::getItem(string const& xpath) const {
     optional<DataNode> const& data_node(getNode(xpath));
     if (!data_node) {
-        // TODO:
-        // isc_throw(SysrepoError, "no data ");
+        /// @todo:
+        /// isc_throw(SysrepoError, "no data ");
         return ElementPtr();
     }
     return getItem(*data_node, xpath);
@@ -154,8 +154,8 @@ TranslatorBasic::getItem(string const& xpath) const {
 
 optional<DataNode>
 TranslatorBasic::getNode(string const& xpath) const {
-    // TODO: Remove this if convenient. It is not strictly required and only done to detect
-    // missing schema nodes and throw an exception to keep old behavior.
+    /// @todo: Remove this if convenient. It is not strictly required and only done to detect
+    /// missing schema nodes and throw an exception to keep old behavior.
     try {
         Context const& context(session_.getContext());
         context.findPath(xpath);
@@ -219,10 +219,10 @@ TranslatorBasic::value(ConstElementPtr const& element,
         // keys in sysrepo since setting the key itself results in an error.
         return std::nullopt;
     } else if (element->getType() == Element::map) {
-        // TODO: implement
+        /// @todo: implement
         isc_throw(NotImplemented, "TranslatorBasic::value(): map element");
     } else if (element->getType() == Element::list) {
-        // TODO: implement
+        /// @todo: implement
         isc_throw(NotImplemented, "TranslatorBasic::value(): list element");
     }
     if (type == LeafBaseType::Enum ||
