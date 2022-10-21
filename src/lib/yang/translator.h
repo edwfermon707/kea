@@ -49,7 +49,11 @@ public:
         if (!nodes.empty()) {
             T* t(dynamic_cast<T*>(tt));
             if (!t) {
-                isc_throw(isc::BadValue, "TODO");
+                // This should never happen which is why we're taxing it harshly with an excepton.
+                // With the virtual inheritance extended across most of the translators, the cast
+                // should succeed most of the time, regardless what translators you pass in.
+                isc_throw(isc::Unexpected, "TranslatorBasic::checkAndGet(): attempted to cast "
+                          "translator to one that is not part of the same inheritance hierarchy");
             }
             isc::data::ElementPtr const& element((t->*f)(nodes.front()));
             if (element) {
@@ -71,7 +75,11 @@ public:
         if (!nodes.empty()) {
             T* t(dynamic_cast<T*>(tt));
             if (!t) {
-                isc_throw(isc::BadValue, "TODO");
+                // This should never happen which is why we're taxing it harshly with an excepton.
+                // With the virtual inheritance extended across most of the translators, the cast
+                // should succeed most of the time, regardless what translators you pass in.
+                isc_throw(isc::Unexpected, "TranslatorBasic::checkAndGet(): attempted to cast "
+                          "translator to one that is not part of the same inheritance hierarchy");
             }
             isc::data::ElementPtr const& element((t->*f)(nodes.front(), xpath));
             if (element) {
