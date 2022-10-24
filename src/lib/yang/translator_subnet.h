@@ -285,9 +285,9 @@ public:
 
     /// @brief Get and translate a subnet from YANG to JSON.
     ///
-    /// @param xpath The xpath of the subnet.
+    /// @param data_node the YANG node representing the subnet configuration
     ///
-    /// @param data_node the YANG node representing the subnet
+    /// @return the JSON representation of the subnet
     ///
     /// @throw SysrepoError when sysrepo raises an error.
     /// @throw BadValue on a subnet without prefix or id.
@@ -313,7 +313,8 @@ public:
 protected:
     /// @brief getSubnet for ietf-dhcpv6-server.
     ///
-    /// @param xpath The xpath of the subnet.
+    /// @param data_node the YANG node representing the subnet configuration
+    ///
     /// @return JSON representation of the subnet.
     isc::data::ElementPtr getSubnetIetf6(libyang::DataNode const& data_node);
 
@@ -326,7 +327,8 @@ protected:
 
     /// @brief getSubnet for kea-dhcp[46]-server.
     ///
-    /// @param xpath The xpath of the subnet.
+    /// @param data_node the YANG node representing the subnet configuration
+    ///
     /// @return JSON representation of the subnet.
     isc::data::ElementPtr getSubnetKea(libyang::DataNode const& data_node);
 
@@ -382,8 +384,10 @@ public:
 protected:
     /// @brief getSubnets common part.
     ///
-    /// @param xpath The xpath of the subnet list.
+    /// @param data_node the YANG node representing the list of subnets
     /// @param subsel The subnet list name.
+    ///
+    /// @return the JSON representation of the list of subnets
     isc::data::ElementPtr getSubnetsCommon(libyang::DataNode const& data_node,
                                            const std::string& subsel);
 

@@ -127,7 +127,7 @@ public:
     /// @note This is a computationally expensive operation that makes a lookup in the sysrepo
     /// datastore by calling Session::getData(). It should be used sparingly in production code,
     /// mainly to get an initial data node to work with. It may be used at will in unit tests.
-    /// Use @ref getDatabase(libyang::DataNode) as a scalable alternative.
+    /// Use getDatabase(libyang::DataNode) as a scalable alternative.
     ///
     /// @param xpath The xpath of the database.
     ///
@@ -150,8 +150,10 @@ public:
 protected:
     /// @brief getDatabase JSON for kea-dhcp[46]-server models.
     ///
-    /// @param xpath The xpath of the database.
+    /// @param data_node the YANG node representing the database configuration
+    ///
     /// @return JSON representation of the database
+    ///
     /// @throw SysrepoError when sysrepo raises an error.
     isc::data::ElementPtr getDatabaseKea(libyang::DataNode const& data_node);
 
@@ -198,7 +200,7 @@ public:
     /// @note This is a computationally expensive operation that makes a lookup in the sysrepo
     /// datastore by calling Session::getData(). It should be used sparingly in production code,
     /// mainly to get an initial data node to work with. It may be used at will in unit tests.
-    /// Use @ref getDatabases(libyang::DataNode, std::string) as a scalable alternative.
+    /// Use getDatabases(libyang::DataNode, std::string) as a scalable alternative.
     ///
     /// @param xpath The xpath of databases including the list name.
     ///

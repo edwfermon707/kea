@@ -155,8 +155,10 @@ public:
 protected:
     /// @brief getPdPool for ietf-dhcpv6-server.
     ///
-    /// @param xpath The xpath of the pd-pool.
+    /// @param data_node the YANG node representing the PD pool
+    ///
     /// @return JSON representation of the pd-pool.
+    ///
     /// @throw SysrepoError when sysrepo raises an error.
     isc::data::ElementPtr getPdPoolIetf6(libyang::DataNode const& data_node);
 
@@ -170,8 +172,10 @@ protected:
 
     /// @brief getPdPool for kea-dhcp6-server.
     ///
-    /// @param xpath The xpath of the pd-pool.
+    /// @param data_node the YANG node representing the PD pool
+    ///
     /// @return JSON representation of the pd-pool.
+    ///
     /// @throw SysrepoError when sysrepo raises an error.
     isc::data::ElementPtr getPdPoolKea(libyang::DataNode const& data_node);
 
@@ -228,7 +232,8 @@ public:
 protected:
     /// @brief getPdPools common part.
     ///
-    /// @param xpath The xpath of the pd-pool list.
+    /// @param data_node the YANG node representing the list of PD pools
+    ///
     /// @throw SysrepoError when sysrepo raises an error.
     isc::data::ElementPtr getPdPoolsCommon(libyang::DataNode const& data_node);
 

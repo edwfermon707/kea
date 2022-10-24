@@ -205,8 +205,9 @@ protected:
     /// @brief getSharedNetwork for kea-dhcp4-server and
     /// kea-dhcp6-server models
     ///
-    /// @param xpath The xpath of the shared network.
+    /// @param data_node the YANG node representing the shared nework
     /// @param subsel The subnet list name (either "subnet4" or "subnet6").
+    ///
     /// @return JSON representation of the shared network.
     isc::data::ElementPtr getSharedNetworkKea(libyang::DataNode const& data_node,
                                               const std::string& subsel);

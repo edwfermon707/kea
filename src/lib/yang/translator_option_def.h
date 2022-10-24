@@ -116,8 +116,10 @@ public:
 protected:
     /// @brief getOptionDef implementation specific to kea-dhcp[46]-server models.
     ///
-    /// @param xpath The xpath of the option definition.
+    /// @param data_node the YANG node representing the option definition
+    ///
     /// @return JSON representation of the option definition.
+    ///
     /// @throw SysrepoError when sysrepo raises an error.
     /// @throw BadValue on option definition without name or type.
     isc::data::ElementPtr getOptionDefKea(libyang::DataNode const& data_node);
@@ -178,7 +180,8 @@ protected:
     /// @brief getOptionDefList implementation specific to kea-dhcp[46]-server
     ///        models.
     ///
-    /// @param xpath The xpath of the option definition list.
+    /// @param data_node the YANG node representing the list of option definitions
+    ///
     /// @throw SysrepoError when sysrepo raises an error.
     isc::data::ConstElementPtr getOptionDefListKea(libyang::DataNode const& data_node);
 

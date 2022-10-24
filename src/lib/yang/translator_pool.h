@@ -171,8 +171,10 @@ public:
 protected:
     /// @brief getPool for ietf-dhcpv6-server.
     ///
-    /// @param xpath The xpath of the pool.
+    /// @param data_node the YANG node representing the pool configuration
+    ///
     /// @return JSON representation of the pool.
+    ///
     /// @throw BadValue on pool without prefix.
     isc::data::ElementPtr getPoolIetf6(libyang::DataNode const& data_node);
 
@@ -187,8 +189,10 @@ protected:
 
     /// @brief getPool for kea-dhcp[46]-server.
     ///
-    /// @param xpath The xpath of the pool.
+    /// @param data_node the YANG node representing the pool configuration
+    ///
     /// @return JSON representation of the pool.
+    ///
     /// @throw BadValue on a pool without prefix and start or end address.
     isc::data::ElementPtr getPoolKea(libyang::DataNode const& data_node);
 
@@ -242,12 +246,16 @@ public:
 protected:
     /// @brief getPools for ietf-dhcpv6-server.
     ///
-    /// @param xpath The xpath of the pool list.
+    /// @param data_node the YANG node representing the list of pools
+    ///
+    /// @return the JSON representation of the list of pools
     isc::data::ElementPtr getPoolsIetf(libyang::DataNode const& data_node);
 
     /// @brief getPools for kea-dhcp[46]-server.
     ///
-    /// @param xpath The xpath of the pool list.
+    /// @param data_node the YANG node representing the list of pools
+    ///
+    /// @return the JSON representation of the list of pools
     isc::data::ElementPtr getPoolsKea(libyang::DataNode const& data_node);
 
     /// @brief setPools using pool-id.

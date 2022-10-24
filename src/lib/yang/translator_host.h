@@ -137,7 +137,7 @@ public:
     /// @note This is a computationally expensive operation that makes a lookup in the sysrepo
     /// datastore by calling Session::getData(). It should be used sparingly in production code,
     /// mainly to get an initial data node to work with. It may be used at will in unit tests.
-    /// Use @ref getHost(libyang::DataNode) as a scalable alternative.
+    /// Use getHost(libyang::DataNode) as a scalable alternative.
     ///
     /// @param xpath The xpath of the host reservation.
     ///
@@ -155,7 +155,8 @@ public:
 protected:
     /// @brief getHost for kea-dhcp[46]-server models.
     ///
-    /// @param xpath The xpath of the host reservation.
+    /// @param data_node the YANG node representing the host reservation
+    ///
     /// @return JSON representation of the host reservation.
     isc::data::ElementPtr getHostKea(libyang::DataNode const& data_node);
 
@@ -200,7 +201,7 @@ public:
     /// @note This is a computationally expensive operation that makes a lookup in the sysrepo
     /// datastore by calling Session::getData(). It should be used sparingly in production code,
     /// mainly to get an initial data node to work with. It may be used at will in unit tests.
-    /// Use @ref getHosts(libyang::DataNode) as a scalable alternative.
+    /// Use getHosts(libyang::DataNode) as a scalable alternative.
     ///
     /// @param xpath The xpath of the host reservation list.
     ///

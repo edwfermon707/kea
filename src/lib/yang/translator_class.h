@@ -100,7 +100,7 @@ public:
     /// @note This is a computationally expensive operation that makes a lookup in the sysrepo
     /// datastore by calling Session::getData(). It should be used sparingly in production code,
     /// mainly to get an initial data node to work with. It may be used at will in unit tests.
-    /// Use @ref getClass(libyang::DataNode) as a scalable alternative.
+    /// Use getClass(libyang::DataNode) as a scalable alternative.
     ///
     /// @param xpath the xpath of the class
     ///
@@ -118,7 +118,7 @@ public:
 protected:
     /// @brief getClass JSON for kea-dhcp[46].
     ///
-    /// @param xpath the xpath of the class
+    /// @param data_node the YANG node representing the client class
     ///
     /// @return JSON representation of the class
     ///
@@ -164,7 +164,7 @@ public:
     /// @note This is a computationally expensive operation that makes a lookup in the sysrepo
     /// datastore by calling Session::getData(). It should be used sparingly in production code,
     /// mainly to get an initial data node to work with. It may be used at will in unit tests.
-    /// Use @ref getClasses(libyang::DataNode) as a scalable alternative.
+    /// Use getClasses(libyang::DataNode) as a scalable alternative.
     ///
     /// @param xpath The xpath of classes.
     ///

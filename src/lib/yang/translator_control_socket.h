@@ -93,7 +93,7 @@ public:
     /// @note This is a computationally expensive operation that makes a lookup in the sysrepo
     /// datastore by calling Session::getData(). It should be used sparingly in production code,
     /// mainly to get an initial data node to work with. It may be used at will in unit tests.
-    /// Use @ref getClasses(libyang::DataNode) as a scalable alternative.
+    /// Use getControlSocket(libyang::DataNode) as a scalable alternative.
     ///
     /// @param xpath The xpath of the control socket.
     ///

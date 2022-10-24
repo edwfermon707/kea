@@ -105,8 +105,10 @@ public:
 
     /// @brief Translate a logger from YANG to JSON.
     ///
-    /// @param xpath The xpath of the logger.
+    /// @param data_node the YANG node representing the logger configuration
+    ///
     /// @return JSON representation of the logger.
+    ///
     /// @throw SysrepoError when sysrepo raises an error.
     isc::data::ElementPtr getLogger(libyang::DataNode const& data_node);
 
@@ -119,15 +121,19 @@ public:
 protected:
     /// @brief Translate an output option from YANG to JSON.
     ///
-    /// @param xpath The xpath of the output option.
+    /// @param data_node the YANG node representing the output option
+    ///
     /// @return JSON representation of the output option.
+    ///
     /// @throw SysrepoError when sysrepo raises an error.
     isc::data::ElementPtr getOutputOption(libyang::DataNode const& data_node);
 
     /// @brief Translate output options from YANG to JSON.
     ///
-    /// @param xpath The xpath of output options.
+    /// @param data_node the YANG node representing output options
+    ///
     /// @return JSON representation of output options.
+    ///
     /// @throw SysrepoError when sysrepo raises an error.
     isc::data::ElementPtr getOutputOptions(libyang::DataNode const& data_node);
 
@@ -148,8 +154,10 @@ protected:
 
     /// @brief getLogger JSON for loggers.
     ///
-    /// @param xpath The xpath of the logger.
+    /// @param data_node the YANG node representing the logger configuration
+    ///
     /// @return JSON representation of the logger.
+    ///
     /// @throw SysrepoError when sysrepo raises an error.
     isc::data::ElementPtr getLoggerKea(libyang::DataNode const& data_node);
 
@@ -198,15 +206,18 @@ public:
     /// @brief Translate and set loggers from JSON to YANG.
     ///
     /// @param xpath The xpath of loggers.
+    ///
     /// @param elem The JSON element.
     void setLoggers(const std::string& xpath,
-                      isc::data::ConstElementPtr elem);
+                    isc::data::ConstElementPtr elem);
 
 protected:
     /// @brief getLoggers JSON for loggers.
     ///
-    /// @param xpath The xpath of loggers.
+    /// @param data_node the YANG node representing loggers configuration
+    ///
     /// @return JSON representation of loggers.
+    ///
     /// @throw SysrepoError when sysrepo raises an error.
     isc::data::ElementPtr getLoggersKea(libyang::DataNode const& data_node);
 

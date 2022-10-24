@@ -70,7 +70,7 @@ public:
                      std::string const& xpath,
                      TT* tt,
                      isc::data::ElementPtr (T::*f)(libyang::DataNode const& data_node,
-                                                    std::string const& xpath)) {
+                                                   std::string const& xpath)) {
         libyang::Set<libyang::DataNode> const& nodes(data_node.findXPath(xpath));
         if (!nodes.empty()) {
             T* t(dynamic_cast<T*>(tt));
@@ -157,7 +157,7 @@ public:
     /// @brief Translate a basic value from YANG to JSON for
     /// a given xpath that is relative to the given source node.
     ///
-    /// @param data_note the source data node
+    /// @param data_node the source data node
     /// @param xpath the relative xpath
     ///
     /// @return The Element representing the item at xpath or null
@@ -184,8 +184,8 @@ public:
     /// @tparam T typename of the translator that holds the function that will
     /// be called on the xpath of each child from the list
     ///
-    /// @param xpath the xpath to the element to be retrieved from, usually a
-    /// list
+    /// @param data_node the YANG data node to retrieve data from
+    /// @param xpath the xpath to the element to be retrieved from, relative to {data_node}
     /// @param t address of a translator instance that holds the function that
     /// will be called on the xpath of each child from the list
     /// @param f the function that will be called on the xpath of each child

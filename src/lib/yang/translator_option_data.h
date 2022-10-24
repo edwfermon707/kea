@@ -113,8 +113,10 @@ public:
 protected:
     /// @brief getOptionData JSON for kea-dhcp[46].
     ///
-    /// @param xpath The xpath of the option data.
+    /// @param data_node the YANG node representing the option data
+    ///
     /// @return JSON representation of the option data.
+    ///
     /// @throw SysrepoError when sysrepo raises an error.
     isc::data::ElementPtr getOptionDataKea(libyang::DataNode const& data_node);
 
@@ -171,7 +173,8 @@ public:
 protected:
     /// @brief getOptionDataList for kea-dhcp[46].
     ///
-    /// @param xpath The xpath of the option data list.
+    /// @param data_node the YANG node representing the list of option data
+    ///
     /// @throw SysrepoError when sysrepo raises an error.
     isc::data::ConstElementPtr getOptionDataListKea(libyang::DataNode const& data_node);
 

@@ -467,7 +467,8 @@ protected:
 
     /// @brief getServer common part for kea-dhcp[46]-server:config.
     ///
-    /// @param xpath The xpath of the server.
+    /// @param data_node the YANG node representing the server configuration
+    ///
     /// @return JSON representation of the server.
     isc::data::ElementPtr getServerKeaDhcpCommon(libyang::DataNode const& data_node);
 
@@ -507,31 +508,36 @@ protected:
 
     /// @brief Retrieves hooks configuration from sysrepo.
     ///
-    /// @param xpath path to hooks configuration.
+    /// @param data_node the YANG node representing the hook libraries
+    ///
     /// @return ElementList with hooks configuration.
     isc::data::ElementPtr getHooksKea(libyang::DataNode const& data_node);
 
     /// @brief Retrieves expired leases processing parameters from sysrepo.
     ///
-    /// @param xpath path to expired leases configuration.
+    /// @param data_node the YANG node representing the configuration for expired lease processing
+    ///
     /// @return ElementList with expired leases configuration.
     isc::data::ElementPtr getExpiredKea(libyang::DataNode const& data_node);
 
     /// @brief Retrieves DDNS configuration from sysrepo
     ///
-    /// @param xpath path to dhcp-ddns configuration.
+    /// @param data_node the YANG node representing dhcp-ddns configuration
+    ///
     /// @return ElementList with dhcp-ddns configuration.
     isc::data::ElementPtr getDdnsKea(libyang::DataNode const& data_node);
 
     /// @brief Retrieves configuration control from sysrepo.
     ///
-    /// @param xpath path to configuration control.
+    /// @param data_node the YANG node representing configuration control
+    ///
     /// @return ElementMap with configuration control.
     isc::data::ElementPtr getConfigControlKea(libyang::DataNode const& data_node);
 
-    /// @brief Retrieves configuration control from sysrepo.
+    /// @brief Retrieves interfaces configuration from sysrepo.
     ///
-    /// @param xpath path to configuration control.
+    /// @param data_node the YANG node representing the interfaces configuration
+    ///
     /// @return ElementMap with configuration control.
     isc::data::ElementPtr getInterfacesKea(libyang::DataNode const& data_node);
 
