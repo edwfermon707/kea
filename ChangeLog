@@ -3,7 +3,7 @@
 	with kea-netconf. Instead of making a request to the sysrepo
 	datastore for each leaf and leaf-list node, a single request is
 	done and the config is translated from the received data node.
-	This approach is considered experimental until Kea 2.4.0.
+	This approach is considered experimental.
 	(Gitlab #2400)
 
 2070.	[func]		andrei
