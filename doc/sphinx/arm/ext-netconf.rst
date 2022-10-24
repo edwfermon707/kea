@@ -822,11 +822,10 @@ datastore, i.e. changes are not permanent.
 .. note::
 
     kea-netconf fetches the entire configuration from any Sysrepo datastore in a
-    single get-config NETCONF operation. Prior to the introduction of this
-    performance improvement in Kea 2.3.2, a get-config operation would be done
-    for each leaf and leaf-list node. Since this required an extensive overhaul,
-    kea-netconf is considered experimental until the release of the following
-    stable Kea, to be versioned 2.4.0.
+    single get-config NETCONF operation. It underwent an extensive overhaul
+    from the approach prior to Kea 2.3.2 where a get-config operation was done
+    for each leaf and leaf-list node. Because of the broad changes, kea-netconf
+    is considered experimental.
 
 .. _operation-example-errors:
 
