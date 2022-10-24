@@ -52,6 +52,12 @@ public:
                 // This should never happen which is why we're taxing it harshly with an excepton.
                 // With the virtual inheritance extended across most of the translators, the cast
                 // should succeed most of the time, regardless what translators you pass in.
+                // On the offchance that it fails, it is a coding error and should be fixed by
+                // introducing a new inheritance relationship between T and TT. If they cannot be
+                // inherited from one another, it would mean that the non-static method T::*f()
+                // would not be callable from the context where checkAndGet() is called any way and
+                // you would have to build T first and pass the address of that T instance to the
+                // checkAndGet().
                 isc_throw(isc::Unexpected, "TranslatorBasic::checkAndGet(): attempted to cast "
                           "translator to one that is not part of the same inheritance hierarchy");
             }
@@ -78,6 +84,12 @@ public:
                 // This should never happen which is why we're taxing it harshly with an excepton.
                 // With the virtual inheritance extended across most of the translators, the cast
                 // should succeed most of the time, regardless what translators you pass in.
+                // On the offchance that it fails, it is a coding error and should be fixed by
+                // introducing a new inheritance relationship between T and TT. If they cannot be
+                // inherited from one another, it would mean that the non-static method T::*f()
+                // would not be callable from the context where checkAndGet() is called any way and
+                // you would have to build T first and pass the address of that T instance to the
+                // checkAndGet().
                 isc_throw(isc::Unexpected, "TranslatorBasic::checkAndGet(): attempted to cast "
                           "translator to one that is not part of the same inheritance hierarchy");
             }
