@@ -67,14 +67,20 @@ TranslatorSubnet::getSubnetIetf6(DataNode const& data_node) {
     ElementPtr result = Element::createMap();
     /// @todo timers
     /// @todo: option-data
-    checkAndGet(result, data_node, "address-pools", this, &TranslatorPools::getPools);
-    // Move from address-pools to pools.
-    ConstElementPtr const& address_pools(result->get("address-pools"));
-    if (address_pools) {
-        result->set("pools", address_pools);
-        result->remove("address-pools");
+    Set<DataNode> const& address_pools(data_node.findXPath("address-pools"));
+    if (!address_pools.empty()) {
+        ConstElementPtr const& pools(getPools(address_pools.front()));
+        if (pools && !pools->empty()) {
+            result->set("pools", pools);
+        }
     }
-    checkAndGet(result, data_node, "pd-pools", this, &TranslatorPdPools::getPdPools);
+    Set<DataNode> const& yang_pd_pools(data_node.findXPath("pd-pools"));
+    if (!yang_pd_pools.empty()) {
+        ConstElementPtr const& pd_pools(getPdPools(yang_pd_pools.front()));
+        if (pd_pools && !pd_pools->empty()) {
+            result->set("pd-pools", pd_pools);
+        }
+    }
     ConstElementPtr subnet = getItem(data_node, "network-prefix");
     if (!subnet) {
         isc_throw(BadValue, "getSubnetIetf6 requires network prefix");

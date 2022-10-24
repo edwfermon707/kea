@@ -236,11 +236,17 @@ TranslatorConfig::getServerKeaDhcpCommon(DataNode const& data_node) {
     if (classes && !classes->empty()) {
         result->set("client-classes", classes);
     }
-    ConstElementPtr databases = getDatabases(data_node, "hosts-database");
-    if (databases && !databases->empty()) {
-        result->set("hosts-databases", databases);
+    ConstElementPtr const& hosts_databases(getDatabases(data_node, "hosts-database"));
+    if (hosts_databases && !hosts_databases->empty()) {
+        result->set("hosts-databases", hosts_databases);
     }
-    checkAndGet(result, data_node, "lease-database", this, &TranslatorDatabase::getDatabase);
+    Set<DataNode> const& yang_lease_database(data_node.findXPath("lease-database"));
+    if (!yang_lease_database.empty()) {
+        ConstElementPtr const& lease_database(getDatabase(yang_lease_database.front()));
+        if (lease_database && !lease_database->empty()) {
+            result->set("lease-database", lease_database);
+        }
+    }
     ConstElementPtr host_ids =
         getItem(data_node, "host-reservation-identifiers");
     if (host_ids) {
@@ -258,10 +264,29 @@ TranslatorConfig::getServerKeaDhcpCommon(DataNode const& data_node) {
     if (hooks && !hooks->empty()) {
         result->set("hooks-libraries", hooks);
     }
-    checkAndGet(result, data_node, "expired-leases-processing", this, &TranslatorConfig::getExpiredKea);
     checkAndGetLeaf(result, data_node, "dhcp4o6-port");
-    checkAndGet(result, data_node, "control-socket", this, &TranslatorConfig::getControlSocket);
-    checkAndGet(result, data_node, "dhcp-ddns", this, &TranslatorConfig::getDdnsKea);
+    Set<DataNode> const& yang_control_socket(data_node.findXPath("control-socket"));
+    if (!yang_control_socket.empty()) {
+        ConstElementPtr const& control_socket(getControlSocket(yang_control_socket.front()));
+        if (control_socket) {
+            result->set("control-socket", control_socket);
+        }
+    }
+    Set<DataNode> const& yang_dhcp_ddns(data_node.findXPath("dhcp-ddns"));
+    if (!yang_dhcp_ddns.empty()) {
+        ConstElementPtr const& dhcp_ddns(getDdnsKea(yang_dhcp_ddns.front()));
+        if (dhcp_ddns) {
+            result->set("dhcp-ddns", dhcp_ddns);
+        }
+    }
+    Set<DataNode> const& yang_expired_leases_processing(
+        data_node.findXPath("expired-leases-processing"));
+    if (!yang_expired_leases_processing.empty()) {
+        ConstElementPtr const& expired_leases_processing(getExpiredKea(yang_expired_leases_processing.front()));
+        if (expired_leases_processing) {
+            result->set("expired-leases-processing", expired_leases_processing);
+        }
+    }
     ConstElementPtr context = getItem(data_node, "user-context");
     if (context) {
         result->set("user-context", Element::fromJSON(context->stringValue()));
@@ -277,7 +302,13 @@ TranslatorConfig::getServerKeaDhcpCommon(DataNode const& data_node) {
     if (hosts && !hosts->empty()) {
         result->set("reservations", hosts);
     }
-    checkAndGet(result, data_node, "config-control", this, &TranslatorConfig::getConfigControlKea);
+    Set<DataNode> const& yang_config_control(data_node.findXPath("config-control"));
+    if (!yang_config_control.empty()) {
+        ConstElementPtr const& config_control(getConfigControlKea(yang_config_control.front()));
+        if (config_control) {
+            result->set("config-control", config_control);
+        }
+    }
     checkAndGetLeaf(result, data_node, "server-tag");
     ConstElementPtr queue_ctrl = getItem(data_node, "dhcp-queue-control");
     if (queue_ctrl) {
