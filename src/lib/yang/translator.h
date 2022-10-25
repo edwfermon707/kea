@@ -163,6 +163,16 @@ public:
     /// @throw SysrepoError when the used sysrepo API throws an error
     std::optional<libyang::DataNode> getNode(std::string const& xpath) const;
 
+    static isc::data::ElementPtr leaf(std::optional<libyang::DataNode> const& data_node);
+
+    void set(std::string const& xpath, isc::data::ElementPtr const& element);
+
+    /// @brief Translate and set basic value from JSON to YANG.
+    ///
+    /// @param xpath The xpath of the basic value.
+    /// @param elem The JSON element.
+    void setItem(const std::string& xpath, isc::data::ConstElementPtr elem);
+
     /// @brief Translate and set basic value from JSON to YANG.
     ///
     /// @param xpath The xpath of the basic value.
@@ -171,6 +181,12 @@ public:
     void setItem(const std::string& xpath,
                  isc::data::ConstElementPtr elem,
                  libyang::LeafBaseType type);
+
+    /// @brief Translate a DataNode to ElementPtr.
+    ///
+    /// @param data_node YANG node retrieved
+    /// @return The Element representing the sysrepo value.
+    static isc::data::ElementPtr translate(std::optional<libyang::DataNode> const& data_node);
 
     /// @brief Translate basic value from the given YANG data node to JSON element.
     ///

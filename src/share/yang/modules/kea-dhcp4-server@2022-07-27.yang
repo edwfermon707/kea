@@ -156,7 +156,7 @@ module kea-dhcp4-server {
 
   grouping reservations {
     description "Host reservations grouping.";
-    list host {
+    list reservations {
       key "identifier-type identifier";
       description "Host reservation list.";
       uses host;
@@ -178,24 +178,14 @@ module kea-dhcp4-server {
       uses dhcp:t1-percent;
       uses dhcp:t2-percent;
       uses option-data-list;
-      list pool {
-        key "start-address end-address";
+      list pools {
+        key "prefix";
         ordered-by user;
         description "Pool list.";
         leaf prefix {
           type inet:ipv4-prefix;
           description "Defines a pool of dynamic IPv4 addresses to be managed
                        by the server.";
-        }
-        leaf start-address {
-          type inet:ipv4-address;
-          mandatory true;
-          description "First IPv4 address in a pool.";
-        }
-        leaf end-address {
-          type inet:ipv4-address;
-          mandatory true;
-          description "Last IPv4 address in a pool.";
         }
         uses option-data-list;
         uses dhcp:pool-client-class;
@@ -212,7 +202,7 @@ module kea-dhcp4-server {
       uses dhcp:subnet-client-class;
       uses dhcp:subnet-require-client-classes;
       uses reservations {
-        refine host {
+        refine reservations {
           description "Subnet host reservations list.";
         }
       }
@@ -260,7 +250,7 @@ module kea-dhcp4-server {
 
   grouping client-classes {
     description "Client class grouping.";
-    list client-class {
+    list client-classes {
       key name;
       ordered-by user;
       description "List of client classes.";
@@ -345,7 +335,7 @@ module kea-dhcp4-server {
     uses dhcp:decline-probation-period;
     uses subnet4-list;
 
-    list shared-network {
+    list shared-networks {
       key name;
       description "List of IPv4 shared networks.";
       uses dhcp:network-name;
@@ -467,7 +457,7 @@ module kea-dhcp4-server {
     uses dhcp:sanity-checks;
     uses dhcp:reservation-mode;
     uses reservations {
-      refine host {
+      refine reservations {
         description "Global host reservations list.";
       }
     }

@@ -121,6 +121,10 @@ module kea-dhcp6-server {
 
   grouping relay {
     description "Relay grouping.";
+    leaf ip-address {
+      type inet:ipv6-address;
+      description "IPv6 address.";
+    }
     leaf-list ip-addresses {
       type inet:ipv6-address;
       description "IPv6 addresses.";
@@ -159,10 +163,13 @@ module kea-dhcp6-server {
 
   grouping reservations {
     description "Host reservations grouping.";
-    list host {
+    list reservations {
       key "identifier-type identifier";
       description "Host reservation list.";
       uses host;
+      leaf duid {
+        type string;
+      }
     }
   }
 
@@ -184,37 +191,31 @@ module kea-dhcp6-server {
       uses dhcp:t1-percent;
       uses dhcp:t2-percent;
       uses option-data-list;
-      list pool {
-        key "start-address end-address";
+      list pools {
+        key "pool";
         ordered-by user;
         description "Pool list.";
-        leaf prefix {
+        leaf pool {
           type inet:ipv6-prefix;
           description "Pool prefix.";
-        }
-        leaf start-address {
-          type inet:ipv6-address;
-          mandatory true;
-          description "First IPv6 address in a pool.";
-        }
-        leaf end-address {
-          type inet:ipv6-address;
-          mandatory true;
-          description "Last IPv6 address in a pool.";
         }
         uses option-data-list;
         uses dhcp:pool-client-class;
         uses dhcp:pool-require-client-classes;
         uses dhcp:pool-user-context;
       }
-      list pd-pool {
+      list pd-pools {
         key prefix;
         ordered-by user;
         description "Prefix delegation pool list.";
         leaf prefix {
-          type inet:ipv6-prefix;
+          type string;
           mandatory true;
           description "IPv6 pool prefix.";
+        }
+        leaf prefix-len {
+          type uint8;
+          description "Length of prefix.";
         }
         leaf delegated-len {
           type uint8;
@@ -234,8 +235,12 @@ module kea-dhcp6-server {
           }
         }
         leaf excluded-prefix {
-          type inet:ipv6-prefix;
+          type string;
           description "Prefix pool excluded prefix.";
+        }
+        leaf excluded-prefix-len {
+          type uint8;
+          description "Length of excluded prefix.";
         }
         uses kea:user-context {
           refine user-context {
@@ -264,7 +269,7 @@ module kea-dhcp6-server {
       uses dhcp:subnet-client-class;
       uses dhcp:require-client-classes;
       uses reservations {
-        refine host {
+        refine reservations {
           description "Subnet host reservations list.";
         }
       }
@@ -295,7 +300,7 @@ module kea-dhcp6-server {
 
   grouping client-classes {
     description "Client class grouping.";
-    list client-class {
+    list client-classes {
       key name;
       ordered-by user;
       description "List of client classes.";
@@ -383,7 +388,7 @@ module kea-dhcp6-server {
     uses dhcp:decline-probation-period;
     uses subnet6-list;
 
-    list shared-network {
+    list shared-networks {
       key name;
       uses dhcp:network-name;
       description "List of IPv4 shared networks.";
@@ -531,7 +536,7 @@ module kea-dhcp6-server {
     uses dhcp:sanity-checks;
     uses dhcp:reservation-mode;
     uses reservations {
-      refine host {
+      refine reservations {
         description "Global host reservations list.";
       }
     }

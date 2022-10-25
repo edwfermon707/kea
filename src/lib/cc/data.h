@@ -318,6 +318,12 @@ public:
     /// @return The ElementPtr at the given key, or null if not present
     virtual ConstElementPtr get(const std::string& name) const;
 
+    /// @brief returns element as non-const pointer
+    ///
+    /// @param i The position of the ElementPtr to retrieve
+    /// @return specified element pointer
+    virtual ElementPtr getNonConst(const std::string& name) const;
+
     /// Sets the ElementPtr at the given key
     /// @param name The key of the Element to set
     /// @param element The ElementPtr to set at the given key.
@@ -544,16 +550,7 @@ public:
                     child = getNonConst(i);
                 } else if (type_ == map) {
                     std::string const key(get(i)->stringValue());
-                    // The ElementPtr - ConstElementPtr disparity between
-                    // ListElement and MapElement is forcing a const cast here.
-                    // It's undefined behavior to modify it after const casting.
-                    // The options are limited. I've tried templating, moving
-                    // this function from a member function to free-standing and
-                    // taking the Element template as argument. I've tried
-                    // making it a virtual function with overridden
-                    // implementations in ListElement and MapElement. Nothing
-                    // works.
-                    child = boost::const_pointer_cast<Element>(get(key));
+                    child = getNonConst(key);
                 }
 
                 // Makes no sense to continue for non-container children.
@@ -573,6 +570,26 @@ public:
                     --s;
                 }
             }
+        }
+    }
+
+    void forAll(std::function<void(Element&)> f) {
+        if (type_ == list || type_ == map) {
+            size_t s(size());
+            for (size_t i = 0; i < s; ++i) {
+                // Get child.
+                ElementPtr child;
+                if (type_ == list) {
+                    child = getNonConst(i);
+                } else if (type_ == map) {
+                    std::string const key(get(i)->stringValue());
+                    child = getNonConst(key);
+                }
+                child->forAll(f);
+                f(*child);
+            }
+        } else {
+            f(*this);
         }
     }
 };
@@ -673,6 +690,7 @@ public:
     }
     using Element::get;
     ConstElementPtr get(int i) const { return (l.at(i)); }
+    using Element::getNonConst;
     ElementPtr getNonConst(int i) const  { return (l.at(i)); }
     using Element::set;
     void set(size_t i, ElementPtr e) {
@@ -723,6 +741,8 @@ public:
         auto found = m.find(s);
         return (found != m.end() ? found->second : ConstElementPtr());
     }
+    using Element::getNonConst;
+    ElementPtr getNonConst(const std::string& s) const override;
 
     /// @brief Get the i-th element in the map.
     ///
@@ -731,6 +751,11 @@ public:
     /// @param i the position of the element you want to return
     /// @return the element at position i
     ConstElementPtr get(int const i) const override {
+        auto it(m.begin());
+        std::advance(it, i);
+        return create(it->first);
+    }
+    ElementPtr getNonConst(int const i) const override {
         auto it(m.begin());
         std::advance(it, i);
         return create(it->first);
@@ -758,7 +783,7 @@ public:
     // we should name the two finds better...
     // find the element at id; raises TypeError if one of the
     // elements at path except the one we're looking for is not a
-    // mapelement.
+    // map element.
     // returns an empty element if the item could not be found
     ConstElementPtr find(const std::string& id) const override;
 
