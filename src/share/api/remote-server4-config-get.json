@@ -1,0 +1,39 @@
+{
+    "access": "read",
+    "avail": "2.3.3",
+    "brief": [
+        "This command fetches the entire DHCPv4 configuration."
+    ],
+    "cmd-comment": [
+        "This command contains no arguments besides the optional ``remote``."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"remote-server4-config-get\",",
+        "    \"arguments\": {",
+        "        \"remote\": {",
+        "            <specification of the database to connect to>",
+        "        }",
+        "    }",
+        "}"
+    ],
+    "hook": "cb_cmds",
+    "name": "remote-server4-config-get",
+    "resp-comment": [
+        "The configuraton can be fed directly into kea-dhcp4 as file configuration."
+    ],
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"DHCP server configuration returned.\",",
+        "    \"arguments\": {",
+        "        \"Dhcp4\": {",
+        "            <configuration>",
+        "        },",
+        "    }",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp4"
+    ]
+}

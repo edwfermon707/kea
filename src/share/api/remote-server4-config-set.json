@@ -1,0 +1,32 @@
+{
+    "access": "write",
+    "avail": "2.3.3",
+    "brief": [
+        "This command creates or replaces the entire DHCPv4 configuration in the database."
+    ],
+    "cmd-comment": [
+        "This command carries the entire DHCPv4 configuration starting with the Dhcp4 map."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"remote-server4-config-set\",",
+        "    \"arguments\": {",
+        "        \"Dhcp4\": {",
+        "            <configuration>",
+        "        },",
+        "    }",
+        "}"
+    ],
+    "hook": "cb_cmds",
+    "name": "remote-server4-config-set",
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"DHCPv4 configuration successfully set.\",",
+        "    }",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp4"
+    ]
+}

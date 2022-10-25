@@ -2179,3 +2179,8 @@ The ``follow-class-name`` parameter can be explicitly set to ``null``, e.g.:
 It yields the same behavior as if the ``follow-class-name`` parameter were not included,
 i.e. the new class is appended at the end of the class hierarchy, and the updated
 class remains at the current position.
+
+.. _command-remote-server4-config-get:
+.. _command-remote-server6-config-get:
+.. _command-remote-server4-config-set:
+.. _command-remote-server6-config-set:

@@ -1,0 +1,32 @@
+{
+    "access": "write",
+    "avail": "2.3.3",
+    "brief": [
+        "This command creates or replaces the entire DHCPv6 configuration in the database."
+    ],
+    "cmd-comment": [
+        "This command carries the entire DHCPv6 configuration starting with the Dhcp6 map."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"remote-server6-config-set\",",
+        "    \"arguments\": {",
+        "        \"Dhcp6\": {",
+        "            <configuration>",
+        "        },",
+        "    }",
+        "}"
+    ],
+    "hook": "cb_cmds",
+    "name": "remote-server6-config-set",
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"DHCPv6 configuration successfully set.\",",
+        "    }",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp6"
+    ]
+}

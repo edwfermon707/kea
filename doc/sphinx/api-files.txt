@@ -133,10 +133,14 @@ src/share/api/remote-option6-pool-del.json
 src/share/api/remote-option6-pool-set.json
 src/share/api/remote-option6-subnet-del.json
 src/share/api/remote-option6-subnet-set.json
+src/share/api/remote-server4-config-get.json
+src/share/api/remote-server4-config-set.json
 src/share/api/remote-server4-del.json
 src/share/api/remote-server4-get-all.json
 src/share/api/remote-server4-get.json
 src/share/api/remote-server4-set.json
+src/share/api/remote-server6-config-get.json
+src/share/api/remote-server6-config-set.json
 src/share/api/remote-server6-del.json
 src/share/api/remote-server6-get-all.json
 src/share/api/remote-server6-get.json
