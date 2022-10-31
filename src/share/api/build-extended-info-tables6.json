@@ -1,0 +1,33 @@
+{
+    "access": "write",
+    "avail": "2.3.3",
+    "brief": [
+        "This command sanitizes extended info of all IPv6 leases and puts them into tables."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"build-extended-info-tables6\",",
+        "    \"arguments\": {",
+        "        \"update\": false,",
+	"        \"sanity\": \"fix\"",
+        "    }",
+        "}"
+    ],
+    "description": "See <xref linkend=\"command-build-extended-info-tables6\"/>",
+    "hook": "lease_query",
+    "name": "build-extended-info-tables6",
+    "resp-comment": [
+        "If the sanity parameter specified its value (which must be none, fix, strict or pedantic) is used during the build-extended-info-tables6 processing. If update is configured to true modified leases are written into database and the count of such updates will be returned. For all IPv6 leases the extended info is sanitized, eventually written back and if IPv6 extended info tables are enabled extended info is entered into fresh tables."
+    ],
+    "resp-syntax": [
+        "{",
+        "  \"arguments\": {",
+        "  },",
+        "  \"result\": 0,",
+        "  \"text\": \"to be done\"",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp6"
+    ]
+}

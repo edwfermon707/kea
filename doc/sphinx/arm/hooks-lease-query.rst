@@ -14,6 +14,9 @@ Leasequery (`RFC 5007 <https://tools.ietf.org/html/rfc5007>`__).
 
 The Leasequery library is only available to ISC customers with a paid support contract.
 
+Since Kea 2.3.3 DHCPv6 Bulk Leasequery as described in
+`RFC 5460 <https://tools.ietf.org/html/rfc5460>`__; is supported.
+
 .. _lease-query-dhcpv4:
 
 DHCPv4 Leasequery
@@ -329,3 +332,92 @@ addresses:
 
     For security purposes, there is no way to specify wildcards. Each requester address
     must be explicitly listed.
+
+
+.. _bulk-lease-query-dhcpv6:
+
+DHCPv6 Bulk Leasequery
+~~~~~~~~~~~~~~~~~~~~~~
+
+To be filled.
+
+
+.. _bulk-lease-query-dhcpv6-config:
+
+Bulk Leasequery Configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The Bulk Leasequery support adds a new parameter, ``extended-info-tables``,
+which enables the extended info tables used to retrieve leases by new
+query types as QUERY_BY_RELAY_ID when configured to true.
+
+.. note::
+
+   Currently extended info tables are supported only for DHCPv6 and
+   the memfile backend.
+
+When the hook library is loaded the value of ``extended-info-tables``
+is passed to the backend configuration. For the memfile backend at
+startup extended info of all (currently DHCPv6 only) leases are sanitized
+using the ``extended-info-checks`` parameter value of the ``sanity-checks``
+section of the server configuration (:ref:`store-extended-info-v6`) and
+if extended info tables are enabled the extended info is entered into them.
+
+The behavior of database backend is not yet fully defined but a specific
+command was added to (re)build the tables: ``build-extended-info-tables6``
+(:ref:`command-build-extended-info-tables6`).
+
+.. note::
+
+   If the extended info is not stored relay info is not usable
+   for retrieving leases nor is added to retrieved leases.
+   If the extended info was stored in the old format relay info
+   is not usable for retrieving leases but is added to retrieved leases.
+
+
+.. _command-build-extended-info-tables6:
+
+The ``build-extended-info-tables6`` Command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``build-extended-info-tables`` command was designed for database
+backends where it is required to handle previous leases but is still
+useful for the memfile backend in some cases.
+
+The command iterates on all DHCPv6 leases to sanitize extended info
+and enter extended info into extended info tables.
+
+The command accepts two parameters:
+
+- ``update`` which governs if a modified extended info is written back to
+  the database.
+
+- ``sanity`` which specifies an extended info sanity level to use during
+  the command processing (default is to use the current configuration
+  value). Accepted values are none, fix, strict and pedantic.
+
+The command uses two configuration parameters: the extended info sanity
+level (current value or the ``sanity`` specified one), and the
+extended info table enable flag.
+
+The detailed behavior described here is for the DHCPv6 memfile version but
+same principles will be used for DHCPv4 or database backends:
+
+- if the ``sanity`` parameter is present the specified value is set
+  in the current configuration.
+
+- the memfile mutex is taken. For database backends a multi-threading
+  critical section will be entered to disable concurrent packet or
+  other command processing. Note that the time to run the command is
+  unbound so anyway it should not run on an active server.
+
+- if extended info tables are enabled they are cleared.
+
+- for each lease the extended info is sanitized. If the lease was modified
+  and ``update`` is true the lease is written back to persistent storage.
+
+- for each lease if the extended info tables are enabled the extended info
+  is inserted into (by relay id, by remote id and by link address) tables.
+
+- if the ``sanity`` parameter is present the previous value is restored.
+
