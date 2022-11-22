@@ -627,10 +627,11 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
 
     Lease6Collection leases;
 
-    IOAddress hint = IOAddress::IPV6_ZERO_ADDRESS();
+    // Initialize hint as ::/0
+    Resource hint = Resource(IOAddress::IPV4_ZERO_ADDRESS(), 0);
     if (!ctx.currentIA().hints_.empty()) {
         /// @todo: We support only one hint for now
-        hint = ctx.currentIA().hints_[0].getAddress();
+        hint = ctx.currentIA().hints_[0];
     }
 
     Subnet6Ptr original_subnet = ctx.subnet_;
@@ -641,6 +642,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
     CalloutHandle::CalloutNextStep callout_status = CalloutHandle::NEXT_STEP_CONTINUE;
 
     auto const& classes = ctx.query_->getClasses();
+    auto const& lease_type = ctx.currentIA().type_;
 
     for (; subnet; subnet = subnet->getNextSubnet(original_subnet)) {
         if (!subnet->clientSupported(classes)) {
@@ -650,9 +652,16 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
         ctx.subnet_ = subnet;
 
         // check if the hint is in pool and is available
-        // This is equivalent of subnet->inPool(hint), but returns the pool
-        pool = boost::dynamic_pointer_cast<Pool6>
-            (subnet->getPool(ctx.currentIA().type_, classes, hint));
+        if (lease_type == Lease::TYPE_PD) {
+            // check for pd pools using the prefix length and address as hints
+            pool = boost::dynamic_pointer_cast<Pool6>
+                (subnet->getPDPool(classes, hint.getAddress(), hint.getPrefixLength()));
+        } else {
+            // This is equivalent of subnet->inPool(hint), but returns the pool
+            pool = boost::dynamic_pointer_cast<Pool6>
+                (subnet->getPool(lease_type, classes, hint.getAddress()));
+        }
+
 
         // check if the pool is allowed
         if (!pool || !pool->clientSupported(classes)) {
@@ -663,7 +672,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
 
         /// @todo: We support only one hint for now
         Lease6Ptr lease =
-            LeaseMgrFactory::instance().getLease6(ctx.currentIA().type_, hint);
+            LeaseMgrFactory::instance().getLease6(lease_type, hint.getAddress());
         if (!lease) {
 
             // In-pool reservations: Check if this address is reserved for someone
@@ -677,8 +686,8 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
             // with in-pool addresses.
             if (in_subnet &&
                 (!subnet->getReservationsOutOfPool() ||
-                 !subnet->inPool(ctx.currentIA().type_, hint))) {
-                hosts = getIPv6Resrv(subnet->getID(), hint);
+                 !subnet->inPool(lease_type, hint.getAddress()))) {
+                hosts = getIPv6Resrv(subnet->getID(), hint.getAddress());
             }
 
             if (hosts.empty()) {
@@ -687,7 +696,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
 
                 // The hint is valid and not currently used, let's create a
                 // lease for it
-                lease = createLease6(ctx, hint, pool->getLength(), callout_status);
+                lease = createLease6(ctx, hint.getAddress(), pool->getLength(), callout_status);
 
                 // It can happen that the lease allocation failed (we could
                 // have lost the race condition. That means that the hint is
@@ -704,7 +713,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
                 LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
                           ALLOC_ENGINE_V6_HINT_RESERVED)
                     .arg(ctx.query_->getLabel())
-                    .arg(hint.toText());
+                    .arg(hint.getAddress().toText());
             }
 
         } else if (lease->expired()) {
@@ -717,8 +726,8 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
             // with in-pool addresses.
             if (in_subnet &&
                 (!subnet->getReservationsOutOfPool() ||
-                 !subnet->inPool(ctx.currentIA().type_, hint))) {
-                hosts = getIPv6Resrv(subnet->getID(), hint);
+                 !subnet->inPool(lease_type, hint.getAddress()))) {
+                hosts = getIPv6Resrv(subnet->getID(), hint.getAddress());
             }
 
             // Let's check if there is a reservation for this address.
@@ -741,7 +750,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
                 LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
                           ALLOC_ENGINE_V6_EXPIRED_HINT_RESERVED)
                     .arg(ctx.query_->getLabel())
-                    .arg(hint.toText());
+                    .arg(hint.getAddress().toText());
             }
         }
     }
@@ -775,7 +784,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
         // This timestamp is only updated for the allocations made with an
         // allocator (unreserved lease allocations), not the static
         // allocations or requested addresses.
-        original_subnet = network->getPreferredSubnet(original_subnet, ctx.currentIA().type_);
+        original_subnet = network->getPreferredSubnet(original_subnet, lease_type);
     }
 
     ctx.subnet_ = subnet = original_subnet;
@@ -799,7 +808,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
         // - we find an address for which the lease has expired
         // - we exhaust number of tries
         uint64_t possible_attempts =
-            subnet->getPoolCapacity(ctx.currentIA().type_, classes);
+            subnet->getPoolCapacity(lease_type, classes);
 
         // If the number of tries specified in the allocation engine constructor
         // is set to 0 (unlimited) or the pools capacity is lower than that number,
@@ -833,16 +842,16 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
 
             ++total_attempts;
 
-            auto allocator = subnet->getAllocator(ctx.currentIA().type_);
+            auto allocator = subnet->getAllocator(lease_type);
             IOAddress candidate = allocator->pickAddress(classes,
                                                          ctx.duid_,
-                                                         hint);
+                                                         hint.getAddress());
             // The first step is to find out prefix length. It is 128 for
             // non-PD leases.
             uint8_t prefix_len = 128;
-            if (ctx.currentIA().type_ == Lease::TYPE_PD) {
+            if (lease_type == Lease::TYPE_PD) {
                 pool = boost::dynamic_pointer_cast<Pool6>(
-                        subnet->getPool(ctx.currentIA().type_,
+                        subnet->getPool(lease_type,
                                         classes,
                                         candidate));
                 if (pool) {
@@ -863,13 +872,13 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
             // by another thread to another client.
             ResourceHandler resource_handler;
             if (MultiThreadingMgr::instance().getMode() &&
-                !resource_handler.tryLock(ctx.currentIA().type_, candidate)) {
+                !resource_handler.tryLock(lease_type, candidate)) {
                 // Don't allocate.
                 continue;
             }
 
             // Look for an existing lease for the candidate.
-            Lease6Ptr existing = LeaseMgrFactory::instance().getLease6(ctx.currentIA().type_,
+            Lease6Ptr existing = LeaseMgrFactory::instance().getLease6(lease_type,
                                                                        candidate);
 
             if (!existing) {

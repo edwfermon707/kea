@@ -36,6 +36,19 @@ prefixLessThanFirstAddress(const IOAddress& prefix, const PoolPtr& pool) {
     return (prefix < pool->getFirstAddress());
 }
 
+/// @brief Function used in calls to std::lower_bound to check
+/// if the specified prefix length is greater or equal to the prefix
+/// length a pool.
+///
+/// @return true if prefix length is lower than the delegated prefix
+/// length of the pool.
+bool
+prefixLengthGreaterEqualsPool(const PoolPtr& pool,
+                              const uint8_t& prefix_len) {
+    auto pool6 = reinterpret_cast<const Pool6Ptr&>(pool);
+    return (prefix_len >= pool6->getLength());
+}
+
 /// @brief Function used in calls to std::sort to compare first
 /// prefixes of the two pools.
 ///
@@ -373,6 +386,33 @@ const PoolPtr Subnet::getPool(Lease::Type type,
         if (ub != pools.begin()) {
             --ub;
             if ((*ub)->inRange(hint) &&
+                (*ub)->clientSupported(client_classes)) {
+                candidate = *ub;
+            }
+        }
+    }
+
+    // Return a pool or NULL if no match found.
+    return (candidate);
+}
+
+const PoolPtr Subnet::getPDPool(const ClientClasses& client_classes,
+                                const isc::asiolink::IOAddress& prefix,
+                                const uint8_t& prefix_len) const {
+    const PoolCollection& pools = getPools(Lease::TYPE_PD);
+
+    PoolPtr candidate;
+
+    if (!pools.empty()) {
+        PoolCollection::const_iterator ub =
+            std::lower_bound(pools.begin(), pools.end(), prefix_len,
+                             prefixLengthGreaterEqualsPool);
+
+        if (ub != pools.begin()) {
+            --ub;
+            if (
+                (prefix == IOAddress::IPV6_ZERO_ADDRESS() ||
+                 (*ub)->inRange(prefix)) &&
                 (*ub)->clientSupported(client_classes)) {
                 candidate = *ub;
             }

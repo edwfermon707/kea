@@ -150,6 +150,17 @@ public:
                           const ClientClasses& client_classes,
                           const isc::asiolink::IOAddress& addr) const;
 
+    /// @brief Returns a PD pool which belong to with classes based on hints.
+    ///
+    /// Variant using only PD pools allowing given classes and hints.
+    ///
+    /// @param client_classes client class list which must be allowed
+    /// @param prefix prefix that the returned pool should have (optional)
+    /// @param prefix_len prefix length that the returned pool should have (optional)
+    const PoolPtr getPDPool(const ClientClasses& client_classes,
+                            const isc::asiolink::IOAddress& prefix,
+                            const uint8_t& prefix_len) const;
+
     /// @brief Returns a pool without any address specified.
     ///
     /// @param type pool type that the pool is looked for
