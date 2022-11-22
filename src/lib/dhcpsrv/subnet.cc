@@ -43,8 +43,8 @@ prefixLessThanFirstAddress(const IOAddress& prefix, const PoolPtr& pool) {
 /// @return true if prefix length is lower than the delegated prefix
 /// length of the pool.
 bool
-prefixLengthGreaterEqualsPool(const PoolPtr& pool,
-                              const uint8_t& prefix_len) {
+prefixLengthGreaterEqualsPool(const uint8_t& prefix_len,
+                              const PoolPtr& pool) {
     auto pool6 = reinterpret_cast<const Pool6Ptr&>(pool);
     return (prefix_len >= pool6->getLength());
 }
@@ -402,20 +402,15 @@ const PoolPtr Subnet::getPDPool(const ClientClasses& client_classes,
     const PoolCollection& pools = getPools(Lease::TYPE_PD);
 
     PoolPtr candidate;
-
     if (!pools.empty()) {
         PoolCollection::const_iterator ub =
-            std::lower_bound(pools.begin(), pools.end(), prefix_len,
+            std::upper_bound(pools.begin(), pools.end(), prefix_len,
                              prefixLengthGreaterEqualsPool);
-
-        if (ub != pools.begin()) {
-            --ub;
-            if (
-                (prefix == IOAddress::IPV6_ZERO_ADDRESS() ||
-                 (*ub)->inRange(prefix)) &&
-                (*ub)->clientSupported(client_classes)) {
-                candidate = *ub;
-            }
+        if (ub != pools.end() &&
+            (prefix == IOAddress::IPV6_ZERO_ADDRESS() ||
+             (*ub)->inRange(prefix)) &&
+            (*ub)->clientSupported(client_classes)) {
+            candidate = *ub;
         }
     }
 
