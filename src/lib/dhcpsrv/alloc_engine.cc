@@ -643,6 +643,8 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
 
     auto const& classes = ctx.query_->getClasses();
     auto const& lease_type = ctx.currentIA().type_;
+    auto const& iaid = ctx.currentIA().iaid_;
+    std::cout << "IAID: " << iaid << std::endl;
 
     for (; subnet; subnet = subnet->getNextSubnet(original_subnet)) {
         if (!subnet->clientSupported(classes)) {

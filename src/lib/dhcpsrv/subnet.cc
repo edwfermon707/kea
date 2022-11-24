@@ -404,10 +404,16 @@ const PoolPtr Subnet::getPDPool(const ClientClasses& client_classes,
 
     PoolPtr candidate;
     if (!pools.empty()) {
-        PoolCollection::const_iterator ub =
-            std::upper_bound(pools.begin(), pools.end(), prefix_len,
-                             prefixLengthGreaterEqualsPool);
+        PoolCollection::const_iterator ub;
+        if (anypool) {
+            ub = std::upper_bound(pools.begin(), pools.end(), prefix_len,
+                                  prefixLengthGreaterEqualsPool);
+        } else {
+            ub = std::upper_bound(pools.begin(), pools.end(), prefix,
+                                  prefixLessThanFirstAddress);
+        }
         if (ub != pools.end()) { // ensure the pool exists
+            if (!anypool) --ub;
             // select the pool if anypool is true, or if the hint address
             // is inside of the pool. in either case, the pool must also
             // support the client classes
@@ -416,6 +422,7 @@ const PoolPtr Subnet::getPDPool(const ClientClasses& client_classes,
                 candidate = *ub;
             }
         }
+
     }
 
     // Return a pool or NULL if no match found.
