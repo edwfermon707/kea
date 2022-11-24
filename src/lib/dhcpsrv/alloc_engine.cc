@@ -654,8 +654,18 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
         // check if the hint is in pool and is available
         if (lease_type == Lease::TYPE_PD) {
             // check for pd pools using the prefix length and address as hints
+            bool zero_addr = hint.getAddress() ==
+                             IOAddress::IPV6_ZERO_ADDRESS();
+
             pool = boost::dynamic_pointer_cast<Pool6>
-                (subnet->getPDPool(classes, hint.getAddress(), hint.getPrefixLength()));
+                (subnet->getPDPool(classes, hint.getAddress(),
+                                   hint.getPrefixLength(), zero_addr));
+            if (pool && zero_addr) {
+                // if zero addr was specified in hint, use the first pool addr
+                // from here on out instead
+                hint = Resource(pool->getFirstAddress(), pool->getLength());
+            }
+
         } else {
             // This is equivalent of subnet->inPool(hint), but returns the pool
             pool = boost::dynamic_pointer_cast<Pool6>

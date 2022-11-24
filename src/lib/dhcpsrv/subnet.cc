@@ -398,7 +398,8 @@ const PoolPtr Subnet::getPool(Lease::Type type,
 
 const PoolPtr Subnet::getPDPool(const ClientClasses& client_classes,
                                 const isc::asiolink::IOAddress& prefix,
-                                const uint8_t& prefix_len) const {
+                                const uint8_t& prefix_len,
+                                bool anypool) const {
     const PoolCollection& pools = getPools(Lease::TYPE_PD);
 
     PoolPtr candidate;
@@ -406,11 +407,14 @@ const PoolPtr Subnet::getPDPool(const ClientClasses& client_classes,
         PoolCollection::const_iterator ub =
             std::upper_bound(pools.begin(), pools.end(), prefix_len,
                              prefixLengthGreaterEqualsPool);
-        if (ub != pools.end() &&
-            (prefix == IOAddress::IPV6_ZERO_ADDRESS() ||
-             (*ub)->inRange(prefix)) &&
-            (*ub)->clientSupported(client_classes)) {
-            candidate = *ub;
+        if (ub != pools.end()) { // ensure the pool exists
+            // select the pool if anypool is true, or if the hint address
+            // is inside of the pool. in either case, the pool must also
+            // support the client classes
+            if ((anypool || (*ub)->inRange(prefix)) &&
+                (*ub)->clientSupported(client_classes)) {
+                candidate = *ub;
+            }
         }
     }
 
