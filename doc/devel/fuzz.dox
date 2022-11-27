@@ -44,7 +44,7 @@ Whatever tests are done, Kea needs to be built with fuzzing in mind.  The steps
 for this are:
 
 -# Install AFL on the system on which you plan to build Kea and do the fuzzing.
-   AFL may be downloaded from  http://lcamtuf.coredump.cx/afl.  At the time of
+   AFL may be downloaded from http://lcamtuf.coredump.cx/afl.  At the time of
    writing (August 2019), the latest version is 2.52b.  AFL should be built as
    per the instructions in the README file in the distribution.  The LLVM-based
    instrumentation programs should also be built, as per the instructions in

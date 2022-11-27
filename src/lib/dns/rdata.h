@@ -480,7 +480,7 @@ RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
 /// of another RDATA of same kind.
 ///
 /// This method creates an \c Rdata object of the given pair of
-/// RR type and class, copying the  content of the given \c Rdata,
+/// RR type and class, copying the content of the given \c Rdata,
 /// \c source.
 ///
 /// \param rrtype An \c RRType object specifying the type/class pair.

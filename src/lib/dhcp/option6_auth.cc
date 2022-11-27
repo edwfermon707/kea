@@ -128,5 +128,5 @@ Option6Auth::toText(int indent) const {
     return output.str();
 }
 
-} // end  namespace dhcp
+} // end namespace dhcp
 } // end namespace isc

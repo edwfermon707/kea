@@ -439,7 +439,7 @@ public:
     /// @param option_space Option space name.
     ///
     /// @throw isc::BadValue if the descriptor's option instance is null,
-    /// if  space is invalid, or if the option does not already exist
+    /// if space is invalid, or if the option does not already exist
     /// in the given space.
     void replace(const OptionDescriptor& desc, const std::string& option_space);
 
@@ -708,7 +708,7 @@ public:
         return (options_.getOptionSpaceNames());
     }
 
-    /// @brief Returns a list of all configured  vendor identifiers.
+    /// @brief Returns a list of all configured vendor identifiers.
     std::list<uint32_t> getVendorIds() const {
         return (vendor_options_.getOptionSpaceNames());
     }

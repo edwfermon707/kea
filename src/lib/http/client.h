@@ -282,7 +282,7 @@ public:
 
     /// @brief Closes a connection if it has an out-of-band socket event
     ///
-    /// If the  client owns a connection using the given socket and that
+    /// If the client owns a connection using the given socket and that
     /// connection is currently in a transaction the method returns as this
     /// indicates a normal ready event.  If the connection is not in an
     /// ongoing transaction, then the connection is closed.

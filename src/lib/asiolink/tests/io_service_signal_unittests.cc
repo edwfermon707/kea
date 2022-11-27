@@ -93,7 +93,7 @@ public:
 
     /// @brief Sets the failsafe timer for the test to the given time.
     ///
-    /// @param  test_time_ms maximum time in milliseconds the test should
+    /// @param test_time_ms maximum time in milliseconds the test should
     /// be allowed to run.
     void setTestTime(int test_time_ms) {
         // Fail safe shutdown

@@ -25,7 +25,7 @@ class TimedSignal {
 public:
     /// @brief Constructor
     ///
-    /// @param io_service  IOService to run the timer
+    /// @param io_service IOService to run the timer
     /// @param signum OS signal value (e.g. SIGHUP, SIGUSR1 ...)
     /// @param milliseconds time in milliseconds to wait until the signal is
     /// raised.

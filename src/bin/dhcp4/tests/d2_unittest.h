@@ -21,7 +21,7 @@ namespace test {
 /// @brief Test derivation of Dhcpv4Srv class used in D2 testing.
 /// Use of this class allows the intervention at strategic points in testing
 /// by permitting overridden methods and access to scope protected members.
-class D2Dhcpv4Srv : public  Dhcpv4Srv {
+class D2Dhcpv4Srv : public Dhcpv4Srv {
 public:
     /// @brief Counts the number of times the client error handler is called.
     int error_count_;
@@ -70,7 +70,7 @@ public:
     /// @param enable_updates value to assign to the enable-updates parameter
     /// @param exp_result indicates if configuration should pass or fail
     /// @param server_ip IP address for the D2 server
-    /// @param port  port for the D2 server
+    /// @param port port for the D2 server
     /// @param sender_ip NCR sender's IP address
     /// @param sender_port NCR sender port
     /// @param max_queue_size maximum number of NCRs allowed in sender's queue

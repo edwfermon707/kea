@@ -265,7 +265,7 @@ CommunicationStateTest::initialDurationTest() {
     EXPECT_TRUE(state_.isPoked());
 }
 
-// Verifies that  poking the state updates the returned duration.
+// Verifies that poking the state updates the returned duration.
 void
 CommunicationStateTest::pokeTest() {
     state_.modifyPokeTime(-30);

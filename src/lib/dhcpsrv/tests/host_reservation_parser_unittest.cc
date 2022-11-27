@@ -539,7 +539,7 @@ TEST_F(HostReservationParserTest, noIdentifier) {
     testInvalidConfig<HostReservationParser4>(config);
 }
 
-// This test verifies  that the configuration parser for host reservations
+// This test verifies that the configuration parser for host reservations
 // no longer throws when neither ip address nor hostname is specified.
 TEST_F(HostReservationParserTest, noResource) {
     std::string config = "{ \"hw-address\": \"01:02:03:04:05:06\" }";
@@ -594,7 +594,7 @@ TEST_F(HostReservationParserTest, noIPAddress) {
     runToElementTest<CfgHostsSubnet>("[ ]", cfg_subnet1);
 }
 
-// This test verifies  that the configuration parser for host reservations
+// This test verifies that the configuration parser for host reservations
 // no longer throws when hostname is empty, and IP address is not specified.
 TEST_F(HostReservationParserTest, emptyHostname) {
     std::string config = "{ \"hw-address\": \"01:02:03:04:05:06\","

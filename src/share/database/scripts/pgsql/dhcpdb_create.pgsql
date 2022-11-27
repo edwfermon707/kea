@@ -865,7 +865,7 @@ CREATE INDEX timestamp_id ON logs (timestamp);
 CREATE INDEX address_id ON logs (address);
 
 -- Create auth_key in hosts table for storing keys for DHCPv6 reconfigure.
-ALTER TABLE hosts ADD COLUMN auth_key  VARCHAR(16) DEFAULT NULL;
+ALTER TABLE hosts ADD COLUMN auth_key VARCHAR(16) DEFAULT NULL;
 
 -- Update the schema version number.
 UPDATE schema_version
@@ -2077,7 +2077,7 @@ BEGIN
         RETURN;
     END IF;
 
-    INSERT INTO  dhcp4_client_class_order(class_id, order_index, depend_on_known_indirectly)
+    INSERT INTO dhcp4_client_class_order(class_id, order_index, depend_on_known_indirectly)
         VALUES (id, follow_class_index + 1, 0);
     RETURN;
 END;$$;
@@ -2394,7 +2394,7 @@ END;$$;
 CREATE TABLE IF NOT EXISTS dhcp4_client_class_server (
     class_id BIGINT NOT NULL,
     server_id BIGINT NOT NULL,
-    modification_ts  TIMESTAMP WITH TIME ZONE NULL DEFAULT NULL,
+    modification_ts TIMESTAMP WITH TIME ZONE NULL DEFAULT NULL,
     PRIMARY KEY (class_id,server_id),
     CONSTRAINT fk_dhcp4_client_class_class_id FOREIGN KEY (class_id)
         REFERENCES dhcp4_client_class (id)
@@ -2681,7 +2681,7 @@ BEGIN
         RETURN;
     END IF;
 
-    INSERT INTO  dhcp6_client_class_order(class_id, order_index, depend_on_known_indirectly)
+    INSERT INTO dhcp6_client_class_order(class_id, order_index, depend_on_known_indirectly)
         VALUES (id, follow_class_index + 1, 0);
     RETURN;
 END;$$;
@@ -2998,7 +2998,7 @@ END;$$;
 CREATE TABLE IF NOT EXISTS dhcp6_client_class_server (
     class_id BIGINT NOT NULL,
     server_id BIGINT NOT NULL,
-    modification_ts  TIMESTAMP WITH TIME ZONE NULL DEFAULT NULL,
+    modification_ts TIMESTAMP WITH TIME ZONE NULL DEFAULT NULL,
     PRIMARY KEY (class_id,server_id),
     CONSTRAINT fk_dhcp6_client_class_class_id FOREIGN KEY (class_id)
         REFERENCES dhcp6_client_class (id)
@@ -3916,7 +3916,7 @@ ALTER TABLE dhcp4_subnet_server
 -- should be added to the table for the referencing column.
 --
 -- dhcp6_global_parameter_server
-CREATE INDEX  fk_dhcp6_global_parameter_server_server_id ON dhcp6_global_parameter_server (server_id);
+CREATE INDEX fk_dhcp6_global_parameter_server_server_id ON dhcp6_global_parameter_server (server_id);
 
 -- dhcp6_options
 -- Missing foreign key constraint and indexes
@@ -3944,7 +3944,7 @@ CREATE INDEX fk_dhcp6_option_def_server_server_id ON dhcp6_option_def_server (se
 CREATE INDEX fk_dhcp6_option_def_client_class_id ON dhcp6_option_def (class_id);
 
 -- dhcp4_global_parameter_server
-CREATE INDEX  fk_dhcp4_global_parameter_server_server_id ON dhcp4_global_parameter_server (server_id);
+CREATE INDEX fk_dhcp4_global_parameter_server_server_id ON dhcp4_global_parameter_server (server_id);
 
 -- dhcp4_options
 -- Missing foreign key constraint and indexes
@@ -4581,7 +4581,7 @@ BEGIN
         RETURN;
     END IF;
 
-    INSERT INTO  dhcp4_client_class_order(class_id, order_index, depend_on_known_indirectly)
+    INSERT INTO dhcp4_client_class_order(class_id, order_index, depend_on_known_indirectly)
         VALUES (id, follow_class_index + 1, false);
     RETURN;
 END;$$;
@@ -4704,7 +4704,7 @@ BEGIN
         RETURN;
     END IF;
 
-    INSERT INTO  dhcp6_client_class_order(class_id, order_index, depend_on_known_indirectly)
+    INSERT INTO dhcp6_client_class_order(class_id, order_index, depend_on_known_indirectly)
         VALUES (id, follow_class_index + 1, false);
     RETURN;
 END;$$;

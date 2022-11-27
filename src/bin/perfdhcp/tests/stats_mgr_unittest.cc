@@ -105,7 +105,7 @@ public:
 
     /// \brief Pass multiple DHCPv6 packets to Statistics Manager.
     ///
-    /// Method simulates sending or receiving  multiple DHCPv6 packets.
+    /// Method simulates sending or receiving multiple DHCPv6 packets.
     ///
     /// \note The xchg_type parameter is passed as non-const value to avoid
     /// false cppcheck errors which expect enum value being passed by reference.

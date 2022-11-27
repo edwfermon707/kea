@@ -24,7 +24,7 @@ class D2CfgContext;
 /// @brief Pointer to a configuration context.
 typedef boost::shared_ptr<D2CfgContext> D2CfgContextPtr;
 
-/// @brief  DHCP-DDNS Configuration Context
+/// @brief DHCP-DDNS Configuration Context
 ///
 /// Implements the storage container for configuration context.
 /// It provides a single enclosure for the storage of configuration parameters
@@ -258,7 +258,7 @@ public:
     ///
     /// @return a std::string containing the reverse order address.
     ///
-    /// @throw D2CfgError if not given an IPv4  address.
+    /// @throw D2CfgError if not given an IPv4 address.
     static std::string reverseV4Address(const isc::asiolink::IOAddress& ioaddr);
 
     /// @brief Generate a reverse order string for the given IP address

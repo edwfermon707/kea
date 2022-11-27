@@ -87,7 +87,7 @@ public:
     /// @param server_port IP port of the kea-dhcp-ddns server
     /// @param sender_ip IP address of the kea-dhcp-ddns server (IPv4 or IPv6)
     /// @param sender_port IP port of the kea-dhcp-ddns server
-    /// @param max_queue_size  maximum NCRs allowed in sender's queue
+    /// @param max_queue_size maximum NCRs allowed in sender's queue
     /// @param ncr_protocol Socket protocol to use with kea-dhcp-ddns
     /// Currently only UDP is supported.
     /// @param ncr_format Format of the kea-dhcp-ddns requests.
@@ -169,7 +169,7 @@ public:
     /// @param enable boolean value to assign to the enable-updates flag
     void enableUpdates(bool enable);
 
-    /// @brief Converts labels to  ReplaceClientNameMode enum values.
+    /// @brief Converts labels to ReplaceClientNameMode enum values.
     ///
     /// @param mode_str text to convert to an enum.
     /// Valid string values: "never", "always", "when-present",

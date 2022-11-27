@@ -113,7 +113,7 @@ being unloaded.  If all is successful, it will be followed by the
 HOOKS_LIBRARY_UNLOADED informational message.
 
 % HOOKS_LIBRARY_VERSION hooks library %1 reports its version as %2
-A debug  message issued when the version check on the hooks library
+A debug message issued when the version check on the hooks library
 has succeeded.
 
 % HOOKS_LOAD_ERROR 'load' function in hook library %1 returned error %2

@@ -66,8 +66,8 @@ std::string trim(const std::string& instring);
 /// the buffer to trim
 /// @param trim_val - byte value to trim off
 ///
-/// @return Iterator pointing the first character from the end of the
-/// buffer not equal to the  trim value
+/// @return Iterator pointing to the first character from the end of
+/// the buffer not equal to the trim value
 template<typename Iterator>
 Iterator
 seekTrimmed(Iterator begin, Iterator end, uint8_t trim_val) {

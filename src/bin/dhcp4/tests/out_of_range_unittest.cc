@@ -28,7 +28,7 @@ namespace {
 /// - Configuration 0 - Reference configuration, all tests start with the
 ///   server configured with this configuration:
 ///   - 1 subnet: 10.0.0.0/24
-///   - with one pool  10.0.0.10 - 10.0.0.100
+///   - with one pool 10.0.0.10 - 10.0.0.100
 ///   - 1 address reservation (fixed host) for HW address:
 ///     ff:ff:ff:ff:ff:01
 ///   - 1 hostname reservation (dynamic host) for HW address:

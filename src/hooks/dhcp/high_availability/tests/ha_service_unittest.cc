@@ -271,7 +271,7 @@ public:
         return (PostHttpRequestJsonPtr());
     }
 
-    /// @brief Sets control result  to be included in the responses.
+    /// @brief Sets control result to be included in the responses.
     ///
     /// @param control_result new control result value.
     void setControlResult(const int control_result) {
@@ -5255,7 +5255,7 @@ public:
     /// of receiving a response to an IO operation. IO operations such as
     /// lease updates, heartbeats etc. trigger state machine changes.
     /// We can capture certain events to detect when a response to the heartbeat
-    /// or other control commands  is received. This is useful to return control
+    /// or other control commands is received. This is useful to return control
     /// to a test to verify that the state machine remains in the expected state
     /// after receiving such response.
     ///

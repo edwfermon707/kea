@@ -19,7 +19,7 @@ namespace dhcp {
 namespace test {
 
 /// @brief Implements a simple IPC for the test.
-class Dhcp4o6TestIpc : public  Dhcp4o6IpcBase {
+class Dhcp4o6TestIpc : public Dhcp4o6IpcBase {
 public:
 
     /// @brief Constructor.

@@ -123,7 +123,7 @@ public:
     /// io_service->runOne() with a test of the shutdown flag. Once invoked,
     /// the method will continue until the process itself is exiting due to a
     /// request to shutdown or some anomaly forces an exit.
-    /// @return  returns 0 upon a successful, "normal" termination, non-zero to
+    /// @return returns 0 upon a successful, "normal" termination, non-zero to
     /// indicate an abnormal termination.
     virtual void run();
 
@@ -482,12 +482,12 @@ public:
     /// @endcode
     ///
     /// suffix the content within a JSON element with the given module
-    /// name or  wrapped by a JSON
+    /// name or wrapped by a JSON
     /// element  . Tests will
     /// attempt to read that file.
     ///
     /// @param content JSON text to be written to file
-    /// @param module_name  content content to be written to file
+    /// @param module_name content content to be written to file
     void writeFile(const std::string& content,
                    const std::string& module_name = "");
 
@@ -523,7 +523,7 @@ public:
     /// - After launch returns, it calculates the elapsed time and returns it
     ///
     /// @param config configuration file content to write before calling launch
-    /// @param run_time_ms  maximum amount of time to allow runProcess() to
+    /// @param run_time_ms maximum amount of time to allow runProcess() to
     /// continue.
     /// @param[out] elapsed_time the actual time in ms spent in launch().
     void runWithConfig(const std::string& config, int run_time_ms,
@@ -547,7 +547,7 @@ public:
     ///
     /// @note the callback is called before the shutdown and MUST NOT throw
     /// @param config configuration file content to write before calling launch
-    /// @param run_time_ms  maximum amount of time to allow runProcess() to
+    /// @param run_time_ms maximum amount of time to allow runProcess() to
     /// continue.
     /// @param callback testing callback of TestCallback type
     /// @param[out] elapsed_time the actual time in ms spent in launch().
@@ -707,7 +707,7 @@ public:
         return (::testing::AssertionSuccess());
     }
 
-    /// @brief Compares the status in the  parse result stored in member
+    /// @brief Compares the status in the parse result stored in member
     /// variable answer_ to a given value.
     ///
     /// @param should_be is an integer against which to compare the status.

@@ -88,7 +88,7 @@ D2UpdateMgr::checkFinishedTransactions() {
     while (it != transaction_list_.end()) {
         NameChangeTransactionPtr trans = (*it).second;
         if (trans->isModelDone()) {
-            // @todo  Additional actions based on NCR status could be
+            // @todo Additional actions based on NCR status could be
             // performed here.
             transaction_list_.erase(it++);
         } else {
@@ -100,7 +100,7 @@ D2UpdateMgr::checkFinishedTransactions() {
 void D2UpdateMgr::pickNextJob() {
     // Start at the front of the queue, looking for the first entry for
     // which no transaction is in progress.  If we find an eligible entry
-    // remove it from the queue and  make a transaction for it.
+    // remove it from the queue and make a transaction for it.
     // Requests and transactions are associated by DHCID.  If a request has
     // the same DHCID as a transaction, they are presumed to be for the same
     // "end user".

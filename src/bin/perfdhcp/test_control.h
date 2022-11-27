@@ -400,7 +400,7 @@ protected:
     ///
     /// This factory function creates option with specified universe,
     /// type and buf. It does not have any additional logic validating
-    /// the buffer contents, size  etc.
+    /// the buffer contents, size, etc.
     ///
     /// \param u universe (V6 or V4).
     /// \param type option-type (ignored).

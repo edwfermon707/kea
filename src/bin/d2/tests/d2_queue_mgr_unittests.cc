@@ -67,7 +67,7 @@ const char *valid_msgs[] =
      "}"
 };
 
-static const  int VALID_MSG_CNT = sizeof(valid_msgs)/sizeof(char*);
+static const int VALID_MSG_CNT = sizeof(valid_msgs)/sizeof(char*);
 
 const char* TEST_ADDRESS = "127.0.0.1";
 const uint32_t LISTENER_PORT = 5301;
@@ -108,7 +108,7 @@ TEST(D2QueueMgrBasicTest, construction3) {
     EXPECT_EQ(100, queue_mgr->getMaxQueueSize());
 }
 
-/// @brief Tests  QueueMgr's basic queue functions
+/// @brief Tests QueueMgr's basic queue functions
 /// This test verifies that:
 /// 1. Following construction queue is empty
 /// 2. Attempting to peek at an empty queue is not allowed
@@ -209,7 +209,7 @@ class QueueMgrUDPTest : public virtual ::testing::Test, public D2StatTest,
                         NameChangeSender::RequestSendHandler {
 public:
     asiolink::IOServicePtr io_service_;
-    NameChangeSenderPtr   sender_;
+    NameChangeSenderPtr sender_;
     isc::asiolink::IntervalTimer test_timer_;
     D2QueueMgrPtr queue_mgr_;
 
@@ -263,7 +263,7 @@ public:
 /// 4. Attempting to initialize the listener from INITTED state is not
 /// allowed.
 /// 5. Starting listener from INITTED transitions to RUNNING.
-/// 6. Stopping the  listener transitions from RUNNING to STOPPED.
+/// 6. Stopping the listener transitions from RUNNING to STOPPED.
 /// 7. Starting listener from STOPPED transitions to RUNNING.
 TEST_F (QueueMgrUDPTest, stateModel) {
     // Create the queue manager.

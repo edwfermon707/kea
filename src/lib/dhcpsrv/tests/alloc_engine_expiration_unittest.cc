@@ -2275,7 +2275,7 @@ TEST_F(ExpirationAllocEngine4Test, reclaimReusedLeases) {
 }
 
 // This test verifies that the lease is not reclaimed when it is
-// reused and  if its state indicates that it has been already reclaimed.
+// reused and if its state indicates that it has been already reclaimed.
 TEST_F(ExpirationAllocEngine4Test, reclaimReusedLeasesAlreadyReclaimed) {
     // false value indicates that the leases will be reused
     // true value indicates that the lease will be initially reclaimed.

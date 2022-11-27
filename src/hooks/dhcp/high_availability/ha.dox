@@ -269,7 +269,7 @@ The @c isc::ha::HAImpl class implements callouts and command handlers supported
 by the HA hooks library. Its methods expect @c isc::hooks::CalloutHandle
 as arguments and are usually directly called by the callout functions
 such as @c pkt4_receive etc. This makes it more natural to unit test
-those implementations because the  tests can invoke methods of the @c HAImpl
+those implementations because the tests can invoke methods of the @c HAImpl
 class, rather than the "extern" functions.
 
 Internally, the @c HAImpl class methods call methods of the @c HAService

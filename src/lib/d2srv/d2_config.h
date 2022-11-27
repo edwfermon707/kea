@@ -146,7 +146,7 @@ public:
     ///
     /// @param ip_address IP address at which D2 should listen for NCRs
     /// @param port port on which D2 should listen NCRs
-    /// @param dns_server_timeout  maximum amount of time in milliseconds to
+    /// @param dns_server_timeout maximum amount of time in milliseconds to
     /// wait for a response to a single DNS update request.
     /// @param ncr_protocol socket protocol D2 should use to receive NCRS
     /// @param ncr_format packet format of the inbound NCRs
@@ -287,7 +287,7 @@ public:
     /// -# "HMAC-SHA384"
     /// -# "HMAC-SHA512"
     ///
-    /// @param secret  The base-64 encoded secret component for this key.
+    /// @param secret The base-64 encoded secret component for this key.
     /// (A suitable string for use here could be obtained by running the
     /// BIND 9 dnssec-keygen program; the contents of resulting key file
     /// will look similar to:
@@ -626,7 +626,7 @@ typedef boost::shared_ptr<DdnsDomainMap> DdnsDomainMapPtr;
 /// it supports a single matching service, which will return the matching
 /// domain or a wild card domain if one is specified.  The wild card domain is
 /// specified as a domain whose name is "*".  The wild card domain will match
-/// any entry and is provided for flexibility in FQDNs  If for instance, all
+/// any entry and is provided for flexibility in FQDNs.  If for instance, all
 /// forward requests are handled by the same servers, the configuration could
 /// specify the wild card domain as the only forward domain. All forward DNS
 /// updates would be sent to that one list of servers, regardless of the FQDN.
@@ -804,7 +804,7 @@ public:
     TSIGKeyInfoMapPtr parse(data::ConstElementPtr key_list_config);
 };
 
-/// @brief Parser for  DnsServerInfo
+/// @brief Parser for DnsServerInfo
 ///
 /// This class parses the configuration element "dns-server"
 /// and creates an instance of a DnsServerInfo.
@@ -856,7 +856,7 @@ public:
                                   const TSIGKeyInfoMapPtr keys);
 };
 
-/// @brief Parser for  DdnsDomain
+/// @brief Parser for DdnsDomain
 ///
 /// This class parses the configuration element "ddns-domain"
 /// and creates an instance of a DdnsDomain.

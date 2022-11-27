@@ -285,7 +285,7 @@ protected:
     /// The derivation uses this method to perform the steps needed to
     /// "close" the IO source.
     ///
-    /// @throw If the implementation encounters an error it  MUST
+    /// @throw If the implementation encounters an error it MUST
     /// throw it as an isc::Exception or derivative.
     virtual void close() = 0;
 
@@ -295,7 +295,7 @@ protected:
     /// initiate an asynchronous read of the IO source with the
     /// derivation's IO layer handler as the IO completion callback.
     ///
-    /// @throw If the implementation encounters an error it  MUST
+    /// @throw If the implementation encounters an error it MUST
     /// throw it as an isc::Exception or derivative.
     virtual void doReceive() = 0;
 
@@ -455,7 +455,7 @@ public:
 ///
 /// As stated earlier, the derivation's IO layer callback MUST invoke the
 /// application layer handler registered with the sender.  This is done by
-/// passing in  a status indicating the outcome of the send into the sender's
+/// passing in a status indicating the outcome of the send into the sender's
 /// invokeSendHandler method. This is the mechanism by which the sender's
 /// caller is handed outbound notifications.
 

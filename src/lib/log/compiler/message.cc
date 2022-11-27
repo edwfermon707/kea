@@ -449,7 +449,7 @@ main(int argc, char* argv[]) {
     const char* soptions = "hvpd:";               // Short options
 
     optind = 1;             // Ensure we start a new scan
-    int  opt;               // Value of the option
+    int opt;                // Value of the option
 
     const char *output_directory = NULL;
 

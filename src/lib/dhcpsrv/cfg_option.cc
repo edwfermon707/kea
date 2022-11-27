@@ -84,7 +84,7 @@ CfgOption::add(const OptionDescriptor& desc, const std::string& option_space) {
     if (!desc.option_) {
         isc_throw(isc::BadValue, "option being configured must not be NULL");
 
-    } else  if (!OptionSpace::validateName(option_space)) {
+    } else if (!OptionSpace::validateName(option_space)) {
         isc_throw(isc::BadValue, "invalid option space name: '"
                   << option_space << "'");
     }

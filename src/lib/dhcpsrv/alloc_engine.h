@@ -1214,7 +1214,7 @@ public:
     /// identifier. It also holds the information about the subnet that
     /// the client is connected to.
     ///
-    /// This structure is also used to pass  some information from
+    /// This structure is also used to pass some information from
     /// the allocation engine back to the server, i.e. the old lease
     /// which the client had before the allocation.
     ///

@@ -2277,7 +2277,7 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
         }
 
         if (!(do_fwd || do_rev) || (extended_only)) {
-            // Flags indicate no updates needed  or it was an extension of
+            // Flags indicate no updates needed or it was an extension of
             // an existing lease with no FQDN changes.  In the case of the
             // former, the most likely scenario is that we are honoring the
             // client's request that no updates be done.
@@ -3872,7 +3872,7 @@ Dhcpv6Srv::declineLeases(const Pkt6Ptr& decline, Pkt6Ptr& reply,
     // Let's set the status to be success by default. We can override it with
     // error status if needed. The important thing to understand here is that
     // the global status code may be set to success only if all IA options were
-    // handled properly. Therefore the declineIA  options
+    // handled properly. Therefore the declineIA options
     // may turn the status code to some error, but can't turn it back to success.
     int general_status = STATUS_Success;
 

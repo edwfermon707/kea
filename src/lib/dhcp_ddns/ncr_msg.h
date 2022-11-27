@@ -69,7 +69,7 @@ enum ConflictResolutionMode {
    NO_CHECK_WITHOUT_DHCID
 };
 
-/// @brief Function which converts labels to  NameChangeFormat enum values.
+/// @brief Function which converts labels to NameChangeFormat enum values.
 ///
 /// @param fmt_str text to convert to an enum.
 /// Valid string values: "JSON"
@@ -244,7 +244,7 @@ typedef boost::shared_ptr<NameChangeRequest> NameChangeRequestPtr;
 /// @brief Defines a map of Elements, keyed by their string name.
 typedef std::map<std::string, isc::data::ConstElementPtr> ElementMap;
 
-/// @brief  Represents a DHCP-DDNS client request.
+/// @brief Represents a DHCP-DDNS client request.
 /// This class is used by DHCP-DDNS clients (e.g. DHCP4, DHCP6) to
 /// request DNS updates.  Each message contains a single DNS change (either an
 /// add/update or a remove) for a single FQDN.  It provides marshalling services

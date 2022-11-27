@@ -285,7 +285,7 @@ def generate_typeclasscode(fileprefix, basemtime, code2txt, type_or_class):
     codes = [ (code, convert(txt)) for code, txt in code2txt.items() ]
 
     # Dump source code for libdns++
-    with  open(placeholder, 'r') as header_temp:
+    with open(placeholder, 'r') as header_temp:
         with open(outputfile, 'w') as header_out:
             header_out.write(heading_txt)
             for line in header_temp:

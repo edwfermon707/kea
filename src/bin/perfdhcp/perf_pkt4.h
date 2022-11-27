@@ -45,7 +45,7 @@ public:
     /// Localized option pointer type.
     typedef boost::shared_ptr<LocalizedOption> LocalizedOptionPtr;
 
-    /// \brief Constructor, used to create  messages from packet
+    /// \brief Constructor, used to create messages from packet
     /// template files.
     ///
     /// Creates a new DHCPv4 message using the provided buffer.

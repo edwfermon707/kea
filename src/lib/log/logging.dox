@@ -42,7 +42,7 @@ For example, the program started but attempts to open one or more network
 interfaces failed.</dd>
 
 <dt>WARN</dt>
-<dd>(Warning) An unusual event  happened.  Although the program will
+<dd>(Warning) An unusual event happened.  Although the program will
 continue working normally, the event was sufficiently out of the ordinary
 to warrant drawing attention to it.  For example, the authoritative
 server loaded a zone that contained no resource records.</dd>

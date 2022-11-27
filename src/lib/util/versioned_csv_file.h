@@ -145,7 +145,7 @@ public:
     /// is created by calling @c recreate or @c open function.
     ///
     /// @param col_name Name of the column.
-    /// @param version  Text representation of the schema version in which
+    /// @param version Text representation of the schema version in which
     /// this column first appeared.
     /// @param default_value value the missing column should be given during
     /// an upgrade.  It defaults to an empty string, ""

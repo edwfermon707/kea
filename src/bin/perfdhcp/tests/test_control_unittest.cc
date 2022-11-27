@@ -585,7 +585,7 @@ public:
     /// \brief Test generation of multiple MAC addresses.
     ///
     /// This method validates generation of multiple MAC addresses.
-    /// The MAC address can be randomized depending on  the number
+    /// The MAC address can be randomized depending on the number
     /// of simulated clients. This test checks if different MAC
     /// addresses are generated if number of simulated clients is
     /// greater than 1. It also checks if the same MAC addresses is

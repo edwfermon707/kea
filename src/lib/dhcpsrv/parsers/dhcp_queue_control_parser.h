@@ -39,7 +39,7 @@ public:
 
     /// @brief Parses content of the "dhcp-queue-control".
     ///
-    /// @param control_elem  MapElement containing the queue control values to
+    /// @param control_elem MapElement containing the queue control values to
     /// parse.
     /// @param multi_threading_enabled The flag which indicates if MT is enabled.
     ///

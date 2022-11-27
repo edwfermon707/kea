@@ -2543,7 +2543,7 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
     // The hostname option sent by the client should be at least 1 octet long.
     // If it isn't we ignore this option. (Per RFC 2131, section 3.14)
     /// @todo It would be more liberal to accept this and let it fall into
-    /// the case  of replace or less than two below.
+    /// the case of replace or less than two below.
     if (label_count == 0) {
         LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL, DHCP4_EMPTY_HOSTNAME)
             .arg(ex.getQuery()->getLabel());
@@ -3544,7 +3544,7 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover, AllocEngine::ClientContext4Ptr& co
 
 Pkt4Ptr
 Dhcpv4Srv::processRequest(Pkt4Ptr& request, AllocEngine::ClientContext4Ptr& context) {
-    // Since we cannot distinguish  between client states
+    // Since we cannot distinguish between client states
     // we'll make server-id is optional for REQUESTs.
     sanityCheck(request, OPTIONAL);
 

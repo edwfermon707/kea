@@ -79,7 +79,7 @@ D2ClientConfig::replaceClientNameModeToString(const ReplaceClientNameMode& mode)
     return (stream.str());
 }
 
-D2ClientConfig::D2ClientConfig(const  bool enable_updates,
+D2ClientConfig::D2ClientConfig(const bool enable_updates,
                                const isc::asiolink::IOAddress& server_ip,
                                const size_t server_port,
                                const isc::asiolink::IOAddress& sender_ip,

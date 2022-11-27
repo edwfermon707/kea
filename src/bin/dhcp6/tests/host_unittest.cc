@@ -2352,7 +2352,7 @@ TEST_F(HostTest, conflictResolutionReuseExpired) {
     ASSERT_NO_THROW(client2.doRenew());
 
     // The renewed address and prefix are now reserved for another client so
-    // available leases  should be allocated instead.
+    // available leases should be allocated instead.
     EXPECT_TRUE(client2.hasLeaseForAddress(IOAddress("2001:db8:1::1")));
     EXPECT_TRUE(client2.hasLeaseForPrefix(IOAddress("3000::"), 120));
     // The previously allocated leases should now be returned with zero lifetimes.

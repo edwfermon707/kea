@@ -126,7 +126,7 @@ protected:
     ///
     /// The READY_ST is the state the model transitions into when the inherited
     /// method, startTransaction() is invoked.  This handler, therefore, is the
-    /// entry point into the state model execution.h  Its primary task is to
+    /// entry point into the state model execution.  Its primary task is to
     /// determine whether to start with a forward DNS change or a reverse DNS
     /// change.
     ///

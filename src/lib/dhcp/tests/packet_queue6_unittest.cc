@@ -148,7 +148,7 @@ TEST(PacketQueueRing6, enqueueDequeueTest) {
     checkIntStat(q, "size", 0);
 }
 
-// Verifies peeking, pushing, and popping  which
+// Verifies peeking, pushing, and popping which
 // are unique to PacketQueueRing<> derivations.
 TEST(PacketQueueRing6, peekPushPopTest) {
     PacketQueueRing6 q("kea-ring6", 3);

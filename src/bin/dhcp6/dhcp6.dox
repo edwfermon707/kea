@@ -128,7 +128,7 @@ PHASE 2: simplify existing parsers by getting rid of the build/commit split.
    CfgOptionPtr parse(ConstElementPtr options)
    @endcode
    The whole complexity behind inheriting contexts should be removed
-   from the existing parsers  and implemented in the bison parser.
+   from the existing parsers and implemented in the bison parser.
    It should return extra JSON elements. The details are TBD, but there is
    one example for setting up an renew-timer value on the subnet level that
    is inherited from the global ("Dhcp6") level. This phase is covered by

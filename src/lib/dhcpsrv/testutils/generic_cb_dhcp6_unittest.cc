@@ -3765,7 +3765,7 @@ GenericConfigBackendDHCPv6Test::createUpdateDeletePoolOption6Test() {
 
     {
         SCOPED_TRACE("UPDATE audit entry for a subnet when updating "
-                     "address  pool specific option");
+                     "address pool specific option");
         testNewAuditEntry("dhcp6_subnet",
                           AuditEntry::ModificationType::UPDATE,
                           "address pool specific option set");

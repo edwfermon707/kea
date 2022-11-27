@@ -18,7 +18,7 @@
 
 #include <string>
 
-/// @file   classify.h
+/// @file classify.h
 ///
 /// @brief Defines elements for storing the names of client classes
 ///

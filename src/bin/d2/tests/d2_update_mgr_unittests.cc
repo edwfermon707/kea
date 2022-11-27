@@ -285,7 +285,7 @@ TEST(D2UpdateMgr, construction) {
               update_mgr->getMaxTransactions());
 
 
-    // Verify that constructor permits custom  max transactions.
+    // Verify that constructor permits custom max transactions.
     ASSERT_NO_THROW(update_mgr.reset(new D2UpdateMgr(queue_mgr, cfg_mgr,
                                                      io_service, 100)));
 
@@ -522,7 +522,7 @@ TEST_F(D2UpdateMgrTest, pickNextJob) {
     // Verify that the queue has been drained.
     EXPECT_EQ(0, update_mgr_->getQueueCount());
 
-    // Now verify that a subsequent request for a DCHID  for which a
+    // Now verify that a subsequent request for a DCHID for which a
     // transaction is in progress, is not dequeued.
     // First add the "subsequent" request.
     dhcp_ddns::NameChangeRequestPtr

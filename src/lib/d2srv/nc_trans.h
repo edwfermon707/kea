@@ -90,7 +90,7 @@ public:
     /// event.
     static const int SELECTING_FWD_SERVER_ST = SM_DERIVED_STATE_MIN + 2;
 
-    /// @brief State in which reverse DNS server  selection is done.
+    /// @brief State in which reverse DNS server selection is done.
     ///
     /// Within this state, the actual selection of the next reverse server
     /// to use is conducted.  Upon conclusion of this state the next server
@@ -112,7 +112,7 @@ public:
     /// @brief Issued when a server needs to be selected.
     static const int SELECT_SERVER_EVT = SM_DERIVED_EVENT_MIN + 1;
 
-    /// @brief Issued when a server  has been selected.
+    /// @brief Issued when a server has been selected.
     static const int SERVER_SELECTED_EVT = SM_DERIVED_EVENT_MIN + 2;
 
     /// @brief Issued when an update fails due to an IO error.
@@ -145,7 +145,7 @@ public:
     //@}
 
     /// @brief Default time to assign to a single DNS update.
-    /// @todo  This value will be made configurable in the very near future
+    /// @todo This value will be made configurable in the very near future
     /// under trac3268. For now we will define it to 100 milliseconds
     /// so unit tests will run within a reasonable amount of time.
     static const unsigned int DNS_UPDATE_DEFAULT_TIMEOUT = 100;
@@ -278,7 +278,7 @@ protected:
     /// If the maximum number of attempts has been reached, it will transition
     /// to the given state with a next event of SERVER_IO_ERROR_EVT.
     ///
-    /// @param fail_to_state  State to transition to if maximum attempts
+    /// @param fail_to_state State to transition to if maximum attempts
     /// have been tried.
     ///
     void retryTransition(const int fail_to_state);

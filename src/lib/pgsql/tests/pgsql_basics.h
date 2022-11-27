@@ -27,7 +27,7 @@ namespace test {
 /// @brief Fixture for exercising basic PostgreSQL operations and data types
 ///
 /// This class is intended to be used to verify basic operations and to
-/// verify that each PostgreSQL  data type currently used by Kea, can be
+/// verify that each PostgreSQL data type currently used by Kea, can be
 /// correctly written to and read from PostgreSQL.  Rather than use tables
 /// that belong to Kea the schema proper,  it creates its own. Currently it
 /// consists of a single table, called "basics" which contains one column for

@@ -234,7 +234,7 @@ private:
 
     /// Two maps, one for name->index, the other for index->name.  (This is
     /// simpler than using a multi-indexed container.)
-    HookCollection  hooks_;                 ///< Hook name/index collection
+    HookCollection hooks_;                  ///< Hook name/index collection
     InverseHookCollection inverse_hooks_;   ///< Hook index/name collection
 
     ParkingLotsPtr parking_lots_;

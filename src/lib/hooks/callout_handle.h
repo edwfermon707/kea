@@ -65,7 +65,7 @@ class LibraryManagerCollection;
 ///   information is accessed through the {get,set}Argument() methods.
 ///
 /// - Per-packet context.  Each packet has a context associated with it, this
-///   context being  on a per-library basis.  In other words, As a packet passes
+///   context being on a per-library basis.  In other words, As a packet passes
 ///   through the callouts associated with a given library, the callouts can
 ///   associate and retrieve information with the packet.  The per-library
 ///   nature of the context means that the callouts within a given library can
@@ -293,7 +293,7 @@ public:
     /// @brief Delete context element
     ///
     /// Deletes an item of the given name from the context associated with the
-    /// current library.  If an item  of that name does not exist, the method is
+    /// current library.  If an item of that name does not exist, the method is
     /// a no-op.
     ///
     /// N.B. If the element is a raw pointer, the pointed-to data is NOT deleted

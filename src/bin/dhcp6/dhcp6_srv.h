@@ -374,7 +374,7 @@ protected:
 
     /// @brief Processes incoming Rebind message.
     ///
-    /// @todo There are cases when the Rebind message should be  discarded
+    /// @todo There are cases when the Rebind message should be discarded
     /// by the DHCP server. One of those is when the server doesn't have a
     /// record of the client and it is unable to determine whether the
     /// client is on the appropriate link or not. We don't seem to do it

@@ -48,7 +48,7 @@ class MessageDictionary {
 public:
 
     typedef std::map<std::string, std::string> Dictionary;
-    typedef Dictionary::const_iterator  const_iterator;
+    typedef Dictionary::const_iterator const_iterator;
 
     /// \brief Constructor
     MessageDictionary();

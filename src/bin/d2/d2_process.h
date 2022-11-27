@@ -43,7 +43,7 @@ public:
     /// If the receive queue has become full, D2Process will "pause" the
     /// reception of requests by putting the queue manager in the stopped
     /// state.  Once the number of entries has decreased to this percentage
-    /// of  the maximum allowed, D2Process will "resume" receiving requests
+    /// of the maximum allowed, D2Process will "resume" receiving requests
     /// by restarting the queue manager.
     static const unsigned int QUEUE_RESTART_PERCENT;
 

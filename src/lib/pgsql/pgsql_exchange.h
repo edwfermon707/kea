@@ -269,7 +269,7 @@ struct PsqlBindArray {
     /// is destroyed.
     ///
     /// @param data buffer of binary data.
-    /// @param len  number of bytes of data in buffer
+    /// @param len number of bytes of data in buffer
     /// @throw DbOperationError if data is NULL.
     void add(const uint8_t* data, const size_t len);
 
@@ -595,7 +595,7 @@ public:
     /// @param col the column number within the row
     ///
     /// @return a const char* pointer to the column's raw data
-    /// @throw  DbOperationError if the value cannot be fetched.
+    /// @throw DbOperationError if the value cannot be fetched.
     static const char* getRawColumnValue(const PgSqlResult& r, const int row,
                                          const size_t col);
 
@@ -619,7 +619,7 @@ public:
     /// @param col the column number within the row
     /// @param[out] value parameter to receive the string value
     ///
-    /// @throw  DbOperationError if the value cannot be fetched or is
+    /// @throw DbOperationError if the value cannot be fetched or is
     /// invalid.
     static void getColumnValue(const PgSqlResult& r, const int row,
                                const size_t col, std::string& value);
@@ -631,7 +631,7 @@ public:
     /// @param col the column number within the row
     /// @param[out] value parameter to receive the converted value
     ///
-    /// @throw  DbOperationError if the value cannot be fetched or is
+    /// @throw DbOperationError if the value cannot be fetched or is
     /// invalid.
     static void getColumnValue(const PgSqlResult& r, const int row,
                                const size_t col, bool &value);
@@ -643,7 +643,7 @@ public:
     /// @param col the column number within the row
     /// @param[out] value parameter to receive the converted value
     ///
-    /// @throw  DbOperationError if the value cannot be fetched or is
+    /// @throw DbOperationError if the value cannot be fetched or is
     /// invalid.
     static void getColumnValue(const PgSqlResult& r, const int row,
                                const size_t col, uint8_t &value);
@@ -657,7 +657,7 @@ public:
     /// @param col the column number within the row
     ///
     /// @return isc::asiolink::IOAddress containing the IPv4 address.
-    /// @throw  DbOperationError if the value cannot be fetched or is
+    /// @throw DbOperationError if the value cannot be fetched or is
     /// invalid.
     static isc::asiolink::IOAddress getInetValue4(const PgSqlResult& r,
                                                   const int row,
@@ -672,7 +672,7 @@ public:
     /// @param col the column number within the row
     ///
     /// @return isc::asiolink::IOAddress containing the IPv6 address.
-    /// @throw  DbOperationError if the value cannot be fetched or is
+    /// @throw DbOperationError if the value cannot be fetched or is
     /// invalid.
     static isc::asiolink::IOAddress getInetValue6(const PgSqlResult& r,
                                                   const int row,
@@ -687,7 +687,7 @@ public:
     /// @param col the column number within the row
     ///
     /// @return isc::asiolink::IOAddress containing the IPv6 address.
-    /// @throw  DbOperationError if the value cannot be fetched or is
+    /// @throw DbOperationError if the value cannot be fetched or is
     /// invalid.
     static isc::asiolink::IOAddress getIPv6Value(const PgSqlResult& r,
                                                  const int row,
@@ -713,7 +713,7 @@ public:
     /// @param col the column number within the row
     /// @param[out] value parameter to receive the converted value
     ///
-    /// @throw  DbOperationError if the value cannot be fetched or is
+    /// @throw DbOperationError if the value cannot be fetched or is
     /// invalid.
     template<typename T>
     static void getColumnValue(const PgSqlResult& r, const int row,
@@ -735,7 +735,7 @@ public:
     /// @param col the column number within the row
     /// @param[out] value ptime parameter to receive the converted timestamp
     ///
-    /// @throw  DbOperationError if the value cannot be fetched or is
+    /// @throw DbOperationError if the value cannot be fetched or is
     /// invalid.
     static void getColumnValue(const PgSqlResult& r, const int row,
                                const size_t col, boost::posix_time::ptime& value);
@@ -747,7 +747,7 @@ public:
     /// @param col the column number within the row
     /// @param[out] value ElementPtr to receive the column data
     ///
-    /// @throw  DbOperationError if the value cannot be fetched or is
+    /// @throw DbOperationError if the value cannot be fetched or is
     /// invalid.
     static void getColumnValue(const PgSqlResult& r, const int row,
                                const size_t col, data::ElementPtr& value);
@@ -765,7 +765,7 @@ public:
     /// @param buffer_size size of the output buffer
     /// @param[out] bytes_converted number of bytes converted
     ///
-    /// @throw  DbOperationError if the value cannot be fetched or is
+    /// @throw DbOperationError if the value cannot be fetched or is
     /// invalid.
     static void convertFromBytea(const PgSqlResult& r, const int row,
                                  const size_t col, uint8_t* buffer,
@@ -783,7 +783,7 @@ public:
     /// @param[out] value vector to receive the converted bytes
     /// value
     ///
-    /// @throw  DbOperationError if the value cannot be fetched or is
+    /// @throw DbOperationError if the value cannot be fetched or is
     /// invalid.
     static void convertFromBytea(const PgSqlResult& r, const int row,
                                  const size_t col, std::vector<uint8_t>& value);
@@ -797,7 +797,7 @@ public:
     /// is null, the Triplet is returned as unspecified.
     /// @return Triplet to receive the column value
     ///
-    /// @throw  DbOperationError if the value cannot be fetched or is
+    /// @throw DbOperationError if the value cannot be fetched or is
     /// invalid.
     static isc::util::Triplet<uint32_t> getTripletValue(const PgSqlResult& r,
                                                         const int row,
@@ -817,7 +817,7 @@ public:
     /// maximum value.
     /// @return Triplet to receive the column value
     ///
-    /// @throw  DbOperationError if the value cannot be fetched or is
+    /// @throw DbOperationError if the value cannot be fetched or is
     /// invalid.
     static isc::util::Triplet<uint32_t> getTripletValue(const PgSqlResult& r,
                                                         const int row,

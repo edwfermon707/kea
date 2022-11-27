@@ -17,7 +17,7 @@ namespace dhcp {
 ///        a true or false decision
 ///
 /// @param expr the RPN expression, i.e., a vector of parsed tokens
-/// @param pkt  The v4 or v6 packet
+/// @param pkt The v4 or v6 packet
 /// @return the boolean decision
 /// @throw EvalStackError if there is not exactly one element on the value
 ///        stack at the end of the evaluation

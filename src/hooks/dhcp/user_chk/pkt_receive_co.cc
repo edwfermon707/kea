@@ -23,7 +23,7 @@ using namespace std;
 // issues related to namespaces.
 extern "C" {
 
-/// @brief  This callout is called at the "pkt4_receive" hook.
+/// @brief This callout is called at the "pkt4_receive" hook.
 ///
 /// This function determines if the DHCP client identified by the inbound
 /// DHCP query packet is in the user registry.
@@ -81,7 +81,7 @@ int pkt4_receive(CalloutHandle& handle) {
     return (0);
 }
 
-/// @brief  This callout is called at the "pkt6_receive" hook.
+/// @brief This callout is called at the "pkt6_receive" hook.
 ///
 /// This function determines if the DHCP client identified by the inbound
 /// DHCP query packet is in the user registry.

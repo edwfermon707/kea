@@ -141,7 +141,7 @@ DNSClientImpl::DNSClientImpl(D2UpdateMessagePtr& response_placeholder,
     }
 
     // Given that we already eliminated the possibility that TCP is used, it
-    // would be sufficient  to check that (proto != DNSClient::UDP). But, once
+    // would be sufficient to check that (proto != DNSClient::UDP). But, once
     // support TCP is added the check above will disappear and the extra check
     // will be needed here anyway.
     // Note that cascaded check is used here instead of:

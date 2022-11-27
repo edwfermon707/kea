@@ -196,7 +196,7 @@ TEST_F(PerfPkt4Test, RawUnpack) {
                                                      OptionBuffer(),
                                                      offset_merit));
 
-    const size_t  offset_msg_type = 255;
+    const size_t offset_msg_type = 255;
     LocalizedOptionPtr opt_msg_type(new LocalizedOption(Option::V4,
                                                         DHO_DHCP_MESSAGE_TYPE,
                                                         OptionBuffer(),

@@ -104,7 +104,7 @@ public:
     /// @return a reference to the current configuration pointer.
     const D2ClientConfigPtr& getD2ClientConfig() const;
 
-    /// @brief Determines server flags based on configuration and  client flags.
+    /// @brief Determines server flags based on configuration and client flags.
     ///
     /// This method uses input values for the client's FQDN S and N flags, in
     /// conjunction with the configuration parameters updates-enabled, override-
@@ -144,8 +144,8 @@ public:
     ///
     /// @endcode
     ///
-    /// @param client_s  S Flag from the client's FQDN
-    /// @param client_n  N Flag from the client's FQDN
+    /// @param client_s S Flag from the client's FQDN
+    /// @param client_n N Flag from the client's FQDN
     /// @param server_s [out] S Flag for the server's FQDN
     /// @param server_n [out] N Flag for the server's FQDN
     /// @param ddns_params DDNS behavioral configuration parameters
@@ -260,7 +260,7 @@ public:
     /// @param fqdn FQDN option from which to get client (inbound) name
     /// @param fqdn_resp FQDN option to update with the adjusted name
     /// @param ddns_params DDNS behavioral configuration parameters
-    /// @tparam T  FQDN Option class containing the FQDN data such as
+    /// @tparam T FQDN Option class containing the FQDN data such as
     /// dhcp::Option4ClientFqdn or dhcp::Option6ClientFqdn
     template <class T>
     void adjustDomainName(const T& fqdn, T& fqdn_resp,

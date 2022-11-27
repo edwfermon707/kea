@@ -1631,7 +1631,7 @@ processing threads during the execution of the not Kea thread safe code.
 Of course critical sections have an impact on performance so they should
 be used only for particular cases where no better choice is available.
 
-Some  Kea APIs were made thread safe mainly because they are used by the
+Some Kea APIs were made thread safe mainly because they are used by the
 packet processing:
  - logging is generic thread safe and even multi process safe i.e.
   messages logged into a file or by syslog from multiple processes

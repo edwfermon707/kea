@@ -221,7 +221,7 @@ ALTER TABLE dhcp4_subnet_server
 -- should be added to the table for the referencing column.
 --
 -- dhcp6_global_parameter_server
-CREATE INDEX  fk_dhcp6_global_parameter_server_server_id ON dhcp6_global_parameter_server (server_id);
+CREATE INDEX fk_dhcp6_global_parameter_server_server_id ON dhcp6_global_parameter_server (server_id);
 
 -- dhcp6_options
 -- Missing foreign key constraint and indexes
@@ -249,7 +249,7 @@ CREATE INDEX fk_dhcp6_option_def_server_server_id ON dhcp6_option_def_server (se
 CREATE INDEX fk_dhcp6_option_def_client_class_id ON dhcp6_option_def (class_id);
 
 -- dhcp4_global_parameter_server
-CREATE INDEX  fk_dhcp4_global_parameter_server_server_id ON dhcp4_global_parameter_server (server_id);
+CREATE INDEX fk_dhcp4_global_parameter_server_server_id ON dhcp4_global_parameter_server (server_id);
 
 -- dhcp4_options
 -- Missing foreign key constraint and indexes

@@ -187,7 +187,7 @@ public:
     /// @brief Converts JSON string into an NCR and sends it to the listener.
     ///
     void sendNcr(const std::string& msg) {
-        // Build an NCR  from json string. This verifies that the
+        // Build an NCR from json string. This verifies that the
         // test string is valid.
         ASSERT_NO_THROW(sent_ncr_ = NameChangeRequest::fromJSON(msg));
 
@@ -233,7 +233,7 @@ public:
     }
 };
 
-/// @brief  Tests NameChangeUDPListener ability to receive NCRs.
+/// @brief Tests NameChangeUDPListener ability to receive NCRs.
 /// This test verifies that a listener can enter listening mode and
 /// receive NCRs in wire format on its UDP socket; reconstruct the
 /// NCRs and delivery them to the "application" layer.
@@ -736,7 +736,7 @@ TEST_F(NameChangeUDPSenderBasicTest, autoStartMultiThreading) {
     EXPECT_EQ(0, sender.getQueueSize());
 }
 
-/// @brief Tests NameChangeUDPSender basic send  with INADDR_ANY and port 0.
+/// @brief Tests NameChangeUDPSender basic send with INADDR_ANY and port 0.
 TEST_F(NameChangeUDPSenderBasicTest, anyAddressSend) {
     isc::asiolink::IOAddress ip_address(TEST_ADDRESS);
     isc::asiolink::IOAddress any_address("0.0.0.0");
@@ -771,7 +771,7 @@ TEST_F(NameChangeUDPSenderBasicTest, anyAddressSend) {
     EXPECT_EQ(0, sender.getQueueSize());
 }
 
-/// @brief Tests NameChangeUDPSender basic send  with INADDR_ANY and port 0.
+/// @brief Tests NameChangeUDPSender basic send with INADDR_ANY and port 0.
 TEST_F(NameChangeUDPSenderBasicTest, anyAddressSendMultiThreading) {
     // Enable multi-threading
     MultiThreadingMgr::instance().setMode(true);

@@ -188,8 +188,8 @@ public:
 
     /// @brief Adds a row of Lease4 stat values to a list of value rows
     ///
-    /// @param[out] value_rows  list of rows to which to add
-    /// @param[out] subnet_id  id of the subnet of the new row. This value is
+    /// @param[out] value_rows list of rows to which to add
+    /// @param[out] subnet_id id of the subnet of the new row. This value is
     /// also used for fetching the total addresses in the subnet
     /// @param assigned number of assigned addresses in the subnet
     /// @param declined number of declined addresses in the subnet
@@ -198,8 +198,8 @@ public:
 
     /// @brief Adds a row of Lease6 stat values to a list of value rows
     ///
-    /// @param[out] value_rows  list of rows to which to add
-    /// @param[out] subnet_id  id of the subnet of the new row. This value is
+    /// @param[out] value_rows list of rows to which to add
+    /// @param[out] subnet_id id of the subnet of the new row. This value is
     /// also used for fetching the total NAs and PDs in the subnet
     /// @param assigned number of assigned NAs in the subnet
     /// @param declined number of declined NAs in the subnet

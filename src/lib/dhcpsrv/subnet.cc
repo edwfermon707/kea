@@ -869,7 +869,7 @@ Subnet6::createAllocators() {
                      (Lease::TYPE_PD, shared_from_this()));
         setAllocationState(Lease::TYPE_PD, SubnetAllocationStatePtr());
 
-    } else  if (pd_allocator_type == "flq") {
+    } else if (pd_allocator_type == "flq") {
         setAllocator(Lease::TYPE_PD,
                      boost::make_shared<FreeLeaseQueueAllocator>
                      (Lease::TYPE_PD, shared_from_this()));

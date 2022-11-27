@@ -193,7 +193,7 @@ TEST_F(DStubCfgMgrTest, rollBackTest) {
 }
 
 /// @brief Tests that the configuration context is preserved during
-/// check only  parsing.
+/// check only parsing.
 TEST_F(DStubCfgMgrTest, checkOnly) {
     // Create a configuration with all of the parameters.
     string config = "{ \"bool_test\": true , "

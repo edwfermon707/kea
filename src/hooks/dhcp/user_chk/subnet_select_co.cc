@@ -25,7 +25,7 @@ using namespace std;
 // issues related to namespaces.
 extern "C" {
 
-/// @brief  This callout is called at the "subnet4_select" hook.
+/// @brief This callout is called at the "subnet4_select" hook.
 ///
 /// This function alters the selected subnet based upon whether or not the
 /// requesting DHCP client is a "registered user".  It fetches a pointer to
@@ -85,7 +85,7 @@ int subnet4_select(CalloutHandle& handle) {
     return (0);
 }
 
-/// @brief  This callout is called at the "subnet6_select" hook.
+/// @brief This callout is called at the "subnet6_select" hook.
 ///
 /// This function alters the selected subnet based upon whether or not the
 /// requesting DHCP client is a "registered user".  It fetches a pointer to

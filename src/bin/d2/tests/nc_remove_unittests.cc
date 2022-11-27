@@ -912,7 +912,7 @@ TEST_F(NameRemoveTransactionTest, removingFwdRRsHandler_FwdAndRevOK) {
     // Simulate receiving a successful update response.
     name_remove->fakeResponse(DNSClient::SUCCESS, dns::Rcode::NOERROR());
 
-    // Run removingFwdRRsHandler again  to process the response.
+    // Run removingFwdRRsHandler again to process the response.
     EXPECT_NO_THROW(name_remove->removingFwdRRsHandler());
 
     // Forward change completion should be true, reverse flag should be false.

@@ -469,7 +469,7 @@ NetworkStateTest::resetUsingHACommandOriginTest() {
     EXPECT_TRUE(state.isServiceEnabled());
 }
 
-// This test verifies that reset works, so that internal state is  reset after
+// This test verifies that reset works, so that internal state is reset after
 // all managers are recreated.
 // 1. Disable using 'user command' origin 1 time (expect disabled state).
 // 2. Disable using 'HA command' origin 1 time (expect disabled state).

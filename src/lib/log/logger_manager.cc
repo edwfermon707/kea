@@ -65,7 +65,7 @@ std::string& initRootName() {
 namespace isc {
 namespace log {
 
-// Constructor - create the implementation  class.
+// Constructor - create the implementation class.
 LoggerManager::LoggerManager() {
     impl_ = new LoggerManagerImpl();
 }

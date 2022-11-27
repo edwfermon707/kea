@@ -46,7 +46,7 @@ public:
 /// basically doesn't hold mutable state once constructed, and hash
 /// calculation solely depends on the parameters given on construction and
 /// input to the \c calculate() method.  In that sense this could be a
-/// single free function rather than  a class, but we decided to provide the
+/// single free function rather than a class, but we decided to provide the
 /// functionality as a class for two reasons: NSEC3 hash calculations would
 /// often take place more than one time in a single query or validation
 /// process, so it would be more efficient if we could hold some internal

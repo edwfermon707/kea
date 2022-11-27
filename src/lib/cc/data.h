@@ -434,7 +434,7 @@ public:
     /// @name Compound factory functions
 
     /// @brief These functions will parse the given string (JSON)
-    /// representation  of a compound element. If there is a parse
+    /// representation of a compound element. If there is a parse
     /// error, an exception of the type isc::data::JSONError is thrown.
 
     //@{

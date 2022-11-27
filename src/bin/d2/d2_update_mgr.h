@@ -46,7 +46,7 @@ typedef std::map<TransactionKey, NameChangeTransactionPtr> TransactionList;
 /// transactions.
 ///
 /// As part of the process of forming transactions, D2UpdateMgr matches each
-/// request with the appropriate list of DNS servers.  This matching is  based
+/// request with the appropriate list of DNS servers.  This matching is based
 /// upon request attributes, primarily the FQDN and update direction (forward
 /// or reverse).  D2UpdateMgr uses the services of D2CfgMgr to match requests
 /// to DNS server lists.

@@ -77,11 +77,11 @@ public:
 
     /// @brief Returns true the if socket is marked as ready.
     ///
-    /// This method uses a non-blocking call to  select() to test read state of the
+    /// This method uses a non-blocking call to select() to test read state of the
     /// select_fd.  Rather than track what the status "should be" it tests the status.
     /// This should eliminate conditions where the select-fd appear to be perpetually
     /// ready.
-    /// @return  Returns true if select_fd is not SOCKET_NOT_VALID and select() reports it
+    /// @return Returns true if select_fd is not SOCKET_NOT_VALID and select() reports it
     /// as !EWOULDBLOCK, otherwise it returns false.
     /// This method is guaranteed NOT to throw.
     bool isReady();

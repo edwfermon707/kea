@@ -12,9 +12,9 @@
 
 #include <string>
 
-/// @file   pkt_captures6.cc
+/// @file pkt_captures6.cc
 ///
-/// @brief  contains packet captures imported from Wireshark
+/// @brief contains packet captures imported from Wireshark
 ///
 /// These are actual packets captured over wire. They are used in various
 /// tests.

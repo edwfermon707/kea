@@ -21,7 +21,7 @@ namespace isc {
 namespace dhcp {
 namespace test {
 
-/// @file   alloc_engine_utils.h
+/// @file alloc_engine_utils.h
 ///
 /// @brief This is a header file for all Allocation Engine tests.
 ///

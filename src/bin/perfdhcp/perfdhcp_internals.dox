@@ -106,7 +106,7 @@
 /// for DHCPv4 testing (i.e. to collect DHCPv4 packets) and will be
 /// configured to monitor statistics for DISCOVER-OFFER packet exchanges.
 ///
-/// @subsection  perfdhcpPkt PerfPkt4 and PerfPkt6
+/// @subsection perfdhcpPkt PerfPkt4 and PerfPkt6
 ///
 /// The isc::perfdhcp::PerfPkt4 and isc::perfdhcp::PerfPkt6 classes
 /// are derived from isc::dhcp::Pkt4 and isc::dhcp::Pkt6.  They extend

@@ -278,7 +278,7 @@ public:
     }
 
 
-    /// @brief  Instantiates a NameChangeStub test transaction
+    /// @brief Instantiates a NameChangeStub test transaction
     /// The transaction is constructed around a predefined (i.e "canned")
     /// NameChangeRequest. The request has both forward and reverse DNS
     /// changes requested, and both forward and reverse domains are populated.
@@ -296,7 +296,7 @@ public:
                                   forward_domain_, reverse_domain_, cfg_mgr_)));
     }
 
-    /// @brief  Instantiates a NameChangeStub test transaction
+    /// @brief Instantiates a NameChangeStub test transaction
     /// The transaction is constructed around a predefined (i.e "canned")
     /// NameChangeRequest. The request has both forward and reverse DNS
     /// changes requested, and both forward and reverse domains are populated.

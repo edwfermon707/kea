@@ -91,7 +91,7 @@ public:
     ///
     void setValid(unsigned int valid) { valid_=valid; }
 
-    /// Returns  address contained within this option.
+    /// Returns address contained within this option.
     ///
     /// @return address
     isc::asiolink::IOAddress

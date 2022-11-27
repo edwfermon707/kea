@@ -4451,7 +4451,7 @@ TEST_F(HooksDhcpv6SrvTest, lease6RebindLeaseUpdate) {
     ASSERT_NE(override_preferred_, subnet_->getPreferred());
     EXPECT_NE(override_valid_,     subnet_->getValid());
 
-    // Check that preferred and  valid were overridden in the callout
+    // Check that preferred and valid were overridden in the callout
     EXPECT_EQ(override_preferred_, l->preferred_lft_);
     EXPECT_EQ(override_valid_, l->valid_lft_);
 

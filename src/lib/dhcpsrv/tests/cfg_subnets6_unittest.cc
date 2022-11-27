@@ -81,7 +81,7 @@ generateInterfaceId(const std::string& text) {
 /// @param exp_subnet_id expected id of the target subnet
 /// @param prefix prefix of the target subnet
 /// @param exp_valid expected valid lifetime of the subnet
-/// @param exp_network  pointer to the subnet's shared-network (if one)
+/// @param exp_network pointer to the subnet's shared-network (if one)
 void checkMergedSubnet(CfgSubnets6& cfg_subnets,
                        const std::string& prefix,
                        const SubnetID exp_subnet_id,
@@ -210,7 +210,7 @@ TEST(CfgSubnets6Test, replaceSubnet) {
 
     // There should be three subnets.
     ASSERT_EQ(3, cfg.getAll()->size());
-    // We're going to replace  the subnet #2. Let's make sure it exists before
+    // We're going to replace the subnet #2. Let's make sure it exists before
     // we replace it.
     ASSERT_TRUE(cfg.getByPrefix("2001:db8:2::/48"));
 

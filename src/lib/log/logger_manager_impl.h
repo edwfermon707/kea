@@ -163,7 +163,7 @@ private:
     /// or console output:
     ///
     /// \param appender Appender for which this pattern is to be set.
-    /// \param pattern  Log message format pattern
+    /// \param pattern Log message format pattern
     static void setAppenderLayout(log4cplus::SharedAppenderPtr& appender,
                                   std::string pattern);
 

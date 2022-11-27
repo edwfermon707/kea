@@ -187,7 +187,7 @@ public:
             "       } ]"
             "}";
 
-        // Fill in the socket-name value with socket_path_  to
+        // Fill in the socket-name value with socket_path_ to
         // make the actual configuration text.
         std::string config_txt = header + interfaces_ + body + socket_path_  + footer;
         ASSERT_NO_THROW(server_.reset(new NakedControlledDhcpv4Srv()));

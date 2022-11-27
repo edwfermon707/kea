@@ -240,7 +240,7 @@ public:
         getStateInternal(PAUSE_ONCE_ST);
     }
 
-    /// @brief  Manually construct the event and state dictionaries.
+    /// @brief Manually construct the event and state dictionaries.
     /// This allows testing without running startModel.
     void initDictionaries() {
         ASSERT_NO_THROW(defineEvents());
@@ -280,7 +280,7 @@ public:
     }
 
 
-    /// @brief  Handler called when the model suffers an execution error.
+    /// @brief Handler called when the model suffers an execution error.
     virtual void onModelFailure(const std::string& explanation) {
         failure_explanation_ = explanation;
     }
@@ -608,7 +608,7 @@ TEST_F(StateModelTest, statusMethods) {
     // "START" the model.
     // Fake out starting the model by calling transition to move from NEW_ST
     // to DUMMY_ST with START_EVT.  If we used startModel this would blow by
-    // the status  of "running" but not "waiting".
+    // the status of "running" but not "waiting".
     EXPECT_NO_THROW(transition(DUMMY_ST, START_EVT));
 
 

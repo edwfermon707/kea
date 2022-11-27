@@ -514,7 +514,7 @@ TEST_F(CfgOptionTest, validMerge) {
     option.reset(new Option(Option::V4, 1, OptionBuffer(1, 0x10)));
     ASSERT_NO_THROW(other_cfg.add(option, false, false, "isc"));
 
-    // Add option 2  to "isc".
+    // Add option 2 to "isc".
     option.reset(new Option(Option::V4, 2, OptionBuffer(1, 0x20)));
     ASSERT_NO_THROW(other_cfg.add(option, false, false, "isc"));
 

@@ -97,7 +97,7 @@ TEST_F(PacketStorageTest, getRandom) {
     }
     // If the number of times id is equal to i, is the same as the number
     // of elements then they were NOT accessed randomly.
-    // The odds of 20 elements being randomly  accessed sequential order
+    // The odds of 20 elements being randomly accessed sequential order
     // is nil isn't it?
     EXPECT_NE(cnt_equals, STORAGE_SIZE);
 

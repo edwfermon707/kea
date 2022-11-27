@@ -48,7 +48,7 @@ const UserPtr& getDefaultUser6();
 // issues related to namespaces.
 extern "C" {
 
-/// @brief  This callout is called at the "pkt4_send" hook.
+/// @brief This callout is called at the "pkt4_send" hook.
 ///
 /// This function generates the user check outcome and modifies options
 /// to the IPv4 response packet based on whether the user is registered or not.
@@ -129,7 +129,7 @@ int pkt4_send(CalloutHandle& handle) {
     return (0);
 }
 
-/// @brief  This callout is called at the "pkt6_send" hook.
+/// @brief This callout is called at the "pkt6_send" hook.
 ///
 /// This function generates the user check outcome and modifies options
 /// to the IPv6 response packet based on whether the user is registered or not.
@@ -368,7 +368,7 @@ void add6Option(OptionPtr& vendor, uint8_t opt_code, std::string& opt_value) {
 ///
 /// @param id_type_str text label identify the id type
 /// @param id_val_str text representation of the user id
-/// @param addr_str text representation  of the selected subnet
+/// @param addr_str text representation of the selected subnet
 /// @param registered boolean indicating if the user is registered or not
 void generate_output_record(const std::string& id_type_str,
                             const std::string& id_val_str,

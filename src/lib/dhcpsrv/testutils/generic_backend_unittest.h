@@ -63,7 +63,7 @@ public:
                                        const bool cancel) const;
 
     /// @brief Creates an instance of the option for which it is possible to
-    /// specify universe, option type, persistence flag  and value in
+    /// specify universe, option type, persistence flag and value in
     /// the constructor.
     ///
     /// Examples of options that can be created using this function are:
@@ -103,7 +103,7 @@ public:
     }
 
     /// @brief Creates an instance of the option for which it is possible to
-    /// specify option type, persistence flag  and value in the constructor.
+    /// specify option type, persistence flag and value in the constructor.
     ///
     /// Examples of options that can be created using this function are:
     /// - @ref Option4AddrLst

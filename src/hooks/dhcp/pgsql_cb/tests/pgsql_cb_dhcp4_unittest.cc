@@ -444,7 +444,7 @@ public:
         isc::dhcp::PgSqlConfigBackendImpl::setIOService(io_service);
     }
 
-    /// @brief  Attempts to add a backend instance to the CB manager.
+    /// @brief Attempts to add a backend instance to the CB manager.
     ///
     /// @param access Connection access string containing the database
     /// connection parameters.

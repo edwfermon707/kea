@@ -114,7 +114,7 @@ public:
     /// are actually called.
     void testScheduleTimers();
 
-    /// @brief  This test verifies that exceptions emitted from the callback
+    /// @brief This test verifies that exceptions emitted from the callback
     /// would be handled by the TimerMgr.
     void testCallbackWithException();
 

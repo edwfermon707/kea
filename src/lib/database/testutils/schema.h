@@ -72,7 +72,7 @@ std::string connectionString(const char* type, const char* name = 0,
                              const char* trust_anchor = 0,
                              const char* cipher = 0);
 
-/// @brief Determines if  wiping only the data between tests is enabled
+/// @brief Determines if wiping only the data between tests is enabled
 ///
 /// @return true if the environment variable, KEA_TEST_DB_WIPE_DATA_ONLY is
 /// defined as "true" or if it is not present.

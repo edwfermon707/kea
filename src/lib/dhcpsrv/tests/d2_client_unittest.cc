@@ -296,7 +296,7 @@ TEST(D2ClientMgr, validConfig) {
     // Make sure convenience method agrees with the updated configuration.
     EXPECT_TRUE(d2_client_mgr->ddnsEnabled());
 
-    // Make sure the configuration we fetched is the one  we assigned,
+    // Make sure the configuration we fetched is the one we assigned,
     // and not the original configuration.
     EXPECT_EQ(*new_cfg, *updated_config);
     EXPECT_NE(*original_config, *updated_config);
@@ -415,7 +415,7 @@ TEST_F(D2ClientMgrParamsTest, analyzeFqdnEnabledNoOverrides) {
 
 
     // client S=0 N=1 means client wants no one to do forward updates.
-    // server S should be 0 (server is  not forward updates)
+    // server S should be 0 (server is not forward updates)
     // and server N should be 1 (server is not doing any updates)
     mgr.analyzeFqdn(false, true, server_s, server_n, *ddns_params_);
     EXPECT_FALSE(server_s);
@@ -493,7 +493,7 @@ TEST_F(D2ClientMgrParamsTest, analyzeFqdnEnabledOverrideClientUpdate) {
     EXPECT_FALSE(server_n);
 
     // client S=0 N=1 means client wants no one to do forward updates.
-    // server S should be 0 (server is  not forward updates)
+    // server S should be 0 (server is not forward updates)
     // and server N should be 1 (server is not doing any updates)
     mgr.analyzeFqdn(false, true, server_s, server_n, *ddns_params_);
     EXPECT_FALSE(server_s);

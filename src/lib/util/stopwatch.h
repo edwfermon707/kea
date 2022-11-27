@@ -88,7 +88,7 @@ public:
     /// @brief Retrieves total measured duration.
     ///
     /// If the stopwatch is in the "stopped" state this method retrieves the
-    /// total duration between all starts and stops invoked  during the
+    /// total duration between all starts and stops invoked during the
     /// lifetime of the object or since the last reset. If the stopwatch is
     /// in the "started" state, the returned is the sum of all durations
     /// between respective starts and stops, and the duration since the

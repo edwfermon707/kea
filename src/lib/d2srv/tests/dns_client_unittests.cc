@@ -656,7 +656,7 @@ TEST_F(DNSClientTest, sendReceiveTwice) {
 }
 
 // Verify that it is possible to use the DNSClient instance to perform the
-// following  sequence of message exchanges:
+// following sequence of message exchanges:
 // 1. send
 // 2. send
 // 3. receive

@@ -1109,7 +1109,7 @@ protected:
     /// @brief HttpClient connect callback handler
     ///
     /// Passed into HttpClient calls to allow registration of client's TCP socket
-    /// with an external monitor (such as IfaceMgr's  main-thread select()).
+    /// with an external monitor (such as IfaceMgr's main-thread select()).
     ///
     /// @param ec Error status of the ASIO connect
     /// @param tcp_native_fd socket descriptor to register

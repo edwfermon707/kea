@@ -94,7 +94,7 @@ const SimpleDefaults D2SimpleParser::TSIG_KEY_DEFAULTS = {
 
 /// Supplies defaults for optional values in DDNS domain managers
 /// (e.g. "forward-ddns" and "reverse-ddns").
-/// @note  While there are none yet defined, it is highly likely
+/// @note While there are none yet defined, it is highly likely
 /// there will be domain manager defaults added in the future.
 /// This code to set defaults already uses this list, so supporting
 /// values will simply require adding them to this list.

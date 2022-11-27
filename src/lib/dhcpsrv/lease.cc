@@ -75,7 +75,7 @@ Lease::textToType(const std::string& text) {
     if (text == "V4") {
         return (TYPE_V4);
 
-    } else  if (text == "IA_NA") {
+    } else if (text == "IA_NA") {
         return (TYPE_NA);
 
     } else if (text == "IA_TA") {

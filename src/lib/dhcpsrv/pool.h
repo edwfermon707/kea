@@ -120,7 +120,7 @@ public:
     /// @return true if client can be supported, false otherwise
     bool clientSupported(const ClientClasses& client_classes) const;
 
-    /// @brief Sets the supported class to  class class_name
+    /// @brief Sets the supported class to class class_name
     ///
     /// @param class_name client class to be supported by this pool
     void allowClientClass(const ClientClass& class_name);

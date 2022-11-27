@@ -55,7 +55,7 @@ typedef boost::shared_ptr<OptionStorage> OptionStoragePtr;
 template<typename ValueType>
 class ValueStorage {
 public:
-    /// @brief  Stores the parameter, its value and the position in the
+    /// @brief Stores the parameter, its value and the position in the
     /// store.
     ///
     /// If the parameter does not exist in the store, then it will be added,
@@ -140,7 +140,7 @@ public:
         return (param->second);
     }
 
-    /// @brief  Remove the parameter from the store.
+    /// @brief Remove the parameter from the store.
     ///
     /// Deletes the entry for the given parameter from the store if it
     /// exists.
@@ -313,7 +313,7 @@ public:
 protected:
     /// @brief Creates a Pool object given a IPv4 prefix and the prefix length.
     ///
-    /// @param addr is the IP  prefix of the pool.
+    /// @param addr is the IP prefix of the pool.
     /// @param len is the prefix length.
     /// @param ptype is the type of pool to create.
     /// @return returns a PoolPtr to the new Pool object.

@@ -100,7 +100,7 @@ public:
     /// a next event of IO_COMPLETED_EVT.
     ///
     /// @param status simulated DNSClient status
-    /// @param rcode  simulated server response code
+    /// @param rcode simulated server response code
     void fakeResponse(const DNSClient::Status& status,
                       const dns::Rcode& rcode) {
         // Set the DNS update status.  This is normally set in
@@ -597,7 +597,7 @@ TEST_F(CheckExistsAddTransactionTest, addingFwdAddrsHandler_fwdAndRevAddOK) {
     // Simulate receiving a successful update response.
     name_add->fakeResponse(DNSClient::SUCCESS, dns::Rcode::NOERROR());
 
-    // Run addingFwdAddrsHandler again  to process the response.
+    // Run addingFwdAddrsHandler again to process the response.
     EXPECT_NO_THROW(name_add->addingFwdAddrsHandler());
 
     // Forward change completion should be true, reverse flag should be false.
@@ -929,7 +929,7 @@ TEST_F(CheckExistsAddTransactionTest, replacingFwdAddrsHandler_FwdAndRevAddOK) {
     // Simulate receiving a successful update response.
     name_add->fakeResponse(DNSClient::SUCCESS, dns::Rcode::NOERROR());
 
-    // Run replacingFwdAddrsHandler again  to process the response.
+    // Run replacingFwdAddrsHandler again to process the response.
     EXPECT_NO_THROW(name_add->replacingFwdAddrsHandler());
 
     // Forward change completion should be true, reverse flag should be false.

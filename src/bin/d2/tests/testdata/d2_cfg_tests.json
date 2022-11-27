@@ -816,7 +816,7 @@
     }
 }
 
-#----- D2.forward-ddns.dhcp-ddns  tests
+#----- D2.forward-ddns.dhcp-ddns tests
 ,{
 "description" : "D2.forward-ddns.dhcp-ddns, unknown parameter",
 "syntax-error" : "<string>:1.41-47: got unexpected keyword \"bogus\" in ddns-domains map.",
@@ -1244,7 +1244,7 @@
     }
 }
 
-#----- D2.reverse-ddns.dhcp-ddns  tests
+#----- D2.reverse-ddns.dhcp-ddns tests
 ,{
 "description" : "D2.reverse-ddns.dhcp-ddns, unknown parameter",
 "syntax-error" : "<string>:1.63-69: got unexpected keyword \"bogus\" in ddns-domains map.",

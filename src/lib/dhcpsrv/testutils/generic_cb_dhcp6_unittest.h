@@ -91,7 +91,7 @@ public:
 
     /// @brief Tests that a backend of the given type can be instantiated.
     ///
-    /// @param  expected_type type of the back end created (i.e. "mysql",
+    /// @param expected_type type of the back end created (i.e. "mysql",
     /// "postgresql").
     void getTypeTest(const std::string& expected_type);
 

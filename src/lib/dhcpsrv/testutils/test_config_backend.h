@@ -104,13 +104,13 @@ public:
     /// @brief Fake database connection
     db::DatabaseConnection connection_;
 
-    /// @brief  Back end type
+    /// @brief Back end type
     std::string db_type_;
 
-    /// @brief  Back end host
+    /// @brief Back end host
     std::string host_;
 
-    /// @brief  Back end port
+    /// @brief Back end port
     uint16_t port_;
 };
 

@@ -33,7 +33,7 @@ class AbstractMessageRenderer;
 /// TSIG without knowing protocol details of TSIG, such as that it uses a
 /// fixed constant of TTL.
 ///
-/// \todo So the plan is to eventually provide  the "from wire" constructor.
+/// \todo So the plan is to eventually provide the "from wire" constructor.
 /// It's not yet provided in the current phase of development.
 ///
 /// \note

@@ -62,17 +62,17 @@ public:
     /// @return The text label as string
     std::string getLabel() const;
 
-    /// @brief  Equality operator
+    /// @brief Equality operator
     ///
     /// @return True if a.value_ is equal to b.value_.
     bool operator==(const LabeledValue& other) const;
 
-    /// @brief  Inequality operator
+    /// @brief Inequality operator
     ///
     /// @return True if a.value_ is not equal to b.value_.
     bool operator!=(const LabeledValue& other) const;
 
-    /// @brief  Less-than operator
+    /// @brief Less-than operator
     ///
     /// @return True if a.value_ is less than b.value_.
     bool operator<(const LabeledValue& other) const;

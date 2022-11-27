@@ -366,7 +366,7 @@ NameRemoveTransaction::removingFwdRRsHandler() {
             // due to IO failures, we will abort the remaining updates.
             // The rational is that we are only in this state, if the remove
             // of the forward address RR succeeded (removingFwdAddrsHandler)
-            // on the current server. Therefore  we should not attempt another
+            // on the current server. Therefore we should not attempt another
             // removal on a different server.  This is perhaps a point
             // for discussion.
             // @todo Should we go ahead with the reverse remove?

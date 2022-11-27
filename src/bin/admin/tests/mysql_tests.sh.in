@@ -916,7 +916,7 @@ mysql_upgrade_test() {
     assert_eq 1 "${count}" "lease_hwaddr_source does not contain entry for HWADDR_SOURCE_UNKNOWN. (record count %d, expected %d)"
 
     # table: stored procedures for lease data dumps were modified (upgrade 4.0 -> 4.1)
-    # verify  lease4DumpData has order by lease address
+    # verify lease4DumpData has order by lease address
     qry="show create procedure lease4DumpData"
     run_command \
         mysql_execute "${qry}"
@@ -924,7 +924,7 @@ mysql_upgrade_test() {
     count=$(echo "${OUTPUT}" | grep -Eci 'order by [a-z]*[\.]?address') || true
     assert_eq 1 "${count}" "lease4DumpData is missing order by clause. (expected count %d, returned %d)"
 
-    # verify  lease6DumpData has order by lease address
+    # verify lease6DumpData has order by lease address
     qry="show create procedure lease6DumpData"
     run_command \
         mysql_execute "${qry}"

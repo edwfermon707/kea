@@ -620,7 +620,7 @@ public:
     /// verifies connectivity by issuing a known valid query. Next it simulates
     /// connectivity lost by identifying and closing the socket connection to
     /// the CB backend. It then reissues the query and verifies that:
-    /// -# The Query throws  DbOperationError (rather than exiting)
+    /// -# The Query throws DbOperationError (rather than exiting)
     /// -# The registered DbLostCallback was invoked
     /// -# The registered DbRecoveredCallback was invoked
     void testDbLostAndRecoveredCallback();
@@ -632,7 +632,7 @@ public:
     /// verifies connectivity by issuing a known valid query. Next it simulates
     /// connectivity lost by identifying and closing the socket connection to
     /// the CB backend. It then reissues the query and verifies that:
-    /// -# The Query throws  DbOperationError (rather than exiting)
+    /// -# The Query throws DbOperationError (rather than exiting)
     /// -# The registered DbLostCallback was invoked
     /// -# The registered DbFailedCallback was invoked
     void testDbLostAndFailedCallback();
@@ -644,7 +644,7 @@ public:
     /// verifies connectivity by issuing a known valid query. Next it simulates
     /// connectivity lost by identifying and closing the socket connection to
     /// the CB backend. It then reissues the query and verifies that:
-    /// -# The Query throws  DbOperationError (rather than exiting)
+    /// -# The Query throws DbOperationError (rather than exiting)
     /// -# The registered DbLostCallback was invoked
     /// -# The registered DbRecoveredCallback was invoked after two reconnect
     /// attempts (once failing and second triggered by timer)
@@ -657,7 +657,7 @@ public:
     /// verifies connectivity by issuing a known valid query. Next it simulates
     /// connectivity lost by identifying and closing the socket connection to
     /// the CB backend. It then reissues the query and verifies that:
-    /// -# The Query throws  DbOperationError (rather than exiting)
+    /// -# The Query throws DbOperationError (rather than exiting)
     /// -# The registered DbLostCallback was invoked
     /// -# The registered DbFailedCallback was invoked after two reconnect
     /// attempts (once failing and second triggered by timer)
@@ -1034,7 +1034,7 @@ protected:
 
     /// @brief Utility function that returns true if a given data source
     /// is primary (it isn't an alternate source).
-    /// @param data_source  Host data source to check.
+    /// @param data_source Host data source to check.
     /// @return True if the data source is primary. Otherwise, false.
     bool isPrimaryDataSource(const BaseHostDataSource& data_source) const;
 

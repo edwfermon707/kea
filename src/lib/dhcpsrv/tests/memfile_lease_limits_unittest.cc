@@ -52,7 +52,7 @@ public:
     ///     }
     /// }
     ///
-    /// @param classes  list of classes to include in the context
+    /// @param classes list of classes to include in the context
     /// @return ElementPtr containing the user-context
     ElementPtr makeContextWithClasses(const std::list<ClientClass>& classes) {
         ElementPtr ctx = Element::createMap();

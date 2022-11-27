@@ -134,7 +134,7 @@ protected:
     ///
     /// The READY_ST is the state the model transitions into when the inherited
     /// method, startTransaction() is invoked.  This handler, therefore, is the
-    /// entry point into the state model execution.h  Its primary task is to
+    /// entry point into the state model execution.  Its primary task is to
     /// determine whether to start with a forward DNS change or a reverse DNS
     /// change.
     ///
@@ -278,7 +278,7 @@ protected:
     /// - PROCESS_TRANS_OK_ST with next event of UPDATE_OK_EVT upon successful
     /// replacement and the request does not include a reverse DNS update.
     ///
-    /// - ADDING_FWD_ADDR_STR with a next event of SERVER_SELECTED_EVT  if the
+    /// - ADDING_FWD_ADDR_STR with a next event of SERVER_SELECTED_EVT if the
     /// DNS server response indicates that the FQDN is not in use.  This could
     /// occur if a previous add attempt indicated the FQDN was in use, but
     /// that entry has since been removed by another entity prior to this

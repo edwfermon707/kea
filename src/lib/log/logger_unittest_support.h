@@ -50,7 +50,7 @@ namespace log {
 ///   - \c stdout Send output to stdout.
 ///   - \c stderr Send output to stderr
 ///   - \c syslog Send output to syslog using the facility local0.
-///   - \c syslog:xxx  Send output to syslog, using the facility xxx. ("xxx"
+///   - \c syslog:xxx Send output to syslog, using the facility xxx. ("xxx"
 ///     should be one of the syslog facilities such as "local0".)  There must
 ///     be a colon between "syslog" and "xxx
 ///   - \c other Anything else is interpreted as the name of a file to which

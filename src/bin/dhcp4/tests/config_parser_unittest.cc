@@ -3195,7 +3195,7 @@ TEST_F(Dhcp4ParserTest, optionDataTwoSpaces) {
     ASSERT_TRUE(desc2.option_);
     EXPECT_EQ(56, desc1.option_->getType());
     // Try to get the non-existing option from the non-existing
-    // option space and  expect that option is not returned.
+    // option space and expect that the option is not returned.
     OptionDescriptor desc3 =
         CfgMgr::instance().getStagingCfg()->getCfgOption()->get("non-existing", 56);
     ASSERT_FALSE(desc3.option_);
@@ -4195,7 +4195,7 @@ TEST_F(Dhcp4ParserTest, vendorOptionsHex) {
     EXPECT_EQ(100, desc1.option_->getType());
 
     // Try to get the non-existing option from the non-existing
-    // option space and  expect that option is not returned.
+    // option space and expect that the option is not returned.
     OptionDescriptor desc3 =
         CfgMgr::instance().getStagingCfg()->getCfgOption()->get(5678, 100);
     ASSERT_FALSE(desc3.option_);
@@ -4247,7 +4247,7 @@ TEST_F(Dhcp4ParserTest, vendorOptionsCsv) {
     EXPECT_EQ(100, desc1.option_->getType());
 
     // Try to get the non-existing option from the non-existing
-    // option space and  expect that option is not returned.
+    // option space and expect that the option is not returned.
     OptionDescriptor desc2 =
         CfgMgr::instance().getStagingCfg()->getCfgOption()->get(5678, 100);
     ASSERT_FALSE(desc2.option_);
@@ -6484,7 +6484,7 @@ TEST_F(Dhcp4ParserTest, sharedNetworksEmptyName) {
         "} \n";
 
     configure(config, CONTROL_RESULT_ERROR,
-              "Shared-network with subnets  is missing mandatory 'name' parameter");
+              "Shared-network with subnets is missing mandatory 'name' parameter");
 }
 
 // Test verifies that a degenerated shared-network (no subnets) is
@@ -7205,7 +7205,7 @@ TEST_F(Dhcp4ParserTest, globalReservations) {
         hwaddr.push_back(static_cast<uint8_t>(i));
     }
 
-    // Retrieve the global reservation and sanity check the  hostname reserved.
+    // Retrieve the global reservation and sanity check the hostname reserved.
     ConstHostPtr host = hosts_cfg->get4(SUBNET_ID_GLOBAL, Host::IDENT_HWADDR,
                                         &hwaddr[0], hwaddr.size());
     ASSERT_TRUE(host);
@@ -7237,7 +7237,7 @@ TEST_F(Dhcp4ParserTest, globalReservations) {
         duid.push_back(static_cast<uint8_t>(i));
     }
 
-    // Retrieve the global reservation and sanity check the  hostname reserved.
+    // Retrieve the global reservation and sanity check the hostname reserved.
     host = hosts_cfg->get4(SUBNET_ID_GLOBAL, Host::IDENT_DUID, &duid[0], duid.size());
     ASSERT_TRUE(host);
     EXPECT_EQ("global1", host->getHostname());

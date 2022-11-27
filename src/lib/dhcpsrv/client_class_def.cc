@@ -527,7 +527,7 @@ ClientClassDictionary::createOptions(const CfgOptionDefPtr& external_defs) {
             // composite set of definitions to recreate its options.
             // We make copies of both sets of definitions, then merge
             // the external defs copy into the class defs copy.
-            // We do this because  merging actually effects both sets
+            // We do this because merging actually effects both sets
             // of definitions and we cannot alter either set.
             // Seed the composite set with the class's definitions.
             CfgOptionDefPtr composite_defs(new CfgOptionDef());

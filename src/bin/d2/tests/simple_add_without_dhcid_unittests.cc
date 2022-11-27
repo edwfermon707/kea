@@ -100,7 +100,7 @@ public:
     /// a next event of IO_COMPLETED_EVT.
     ///
     /// @param status simulated DNSClient status
-    /// @param rcode  simulated server response code
+    /// @param rcode simulated server response code
     void fakeResponse(const DNSClient::Status& status,
                       const dns::Rcode& rcode) {
         // Set the DNS update status.  This is normally set in

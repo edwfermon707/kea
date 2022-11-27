@@ -744,7 +744,7 @@ public:
     void authoritative();
 
     /// @brief Test that the client in the INIT-REBOOT state can request the IP
-    /// address it has and the address is returned. Also, check that if  the
+    /// address it has and the address is returned. Also, check that if the
     /// client is unknown the request is dropped.
     void notAuthoritative();
 
@@ -787,7 +787,7 @@ public:
     /// pool.
     void reservation();
 
-    /// @brief  This test checks that it is possible to make a reservation by
+    /// @brief This test checks that it is possible to make a reservation by
     /// DUID carried in the Client Identifier option.
     void reservationByDUID();
 
@@ -799,7 +799,7 @@ public:
     ///  client-id.
     void reservationByClientId();
 
-    /// @brief  This test verifies that order in which host identifiers are used
+    /// @brief This test verifies that order in which host identifiers are used
     /// to retrieve host reservations can be controlled.
     void hostIdentifiersOrder();
 
@@ -896,7 +896,7 @@ public:
     /// client which identifier doesn't match the identifier in the reservation.
     void changingCircuitId();
 
-    /// @brief  Verifies that extended info is stored on the lease when
+    /// @brief Verifies that extended info is stored on the lease when
     /// store-extended-info is enabled.
     void storeExtendedInfoEnabled();
 

@@ -199,7 +199,7 @@ TEST_F(VersionedCSVFileTest, currentSchemaTest) {
     EXPECT_EQ(3, csv->getValidColumnCount());
     EXPECT_EQ(0, csv->getMinimumValidColumns());
 
-    // Input schema and current schema should both be  2.0
+    // Input schema and current schema should both be 2.0
     EXPECT_EQ("2.0", csv->getInputSchemaVersion());
     EXPECT_EQ("2.0", csv->getSchemaVersion());
 
@@ -233,7 +233,7 @@ TEST_F(VersionedCSVFileTest, currentSchemaTest) {
 // it through two schema evolutions.
 TEST_F(VersionedCSVFileTest, upgradeOlderVersions) {
 
-    // Create version 1.0 schema  CSV file
+    // Create version 1.0 schema CSV file.
     writeFile("animal\n"
               "cat\n"
               "lion\n"
@@ -352,7 +352,7 @@ TEST_F(VersionedCSVFileTest, upgradeOlderVersions) {
 }
 
 TEST_F(VersionedCSVFileTest, minimumValidColumn) {
-    // Create version 1.0 schema  CSV file
+    // Create version 1.0 schema CSV file.
     writeFile("animal\n"
               "cat\n"
               "lion\n"

@@ -81,7 +81,7 @@ addr6 [0-9a-fA-F]*\:[0-9a-fA-F]*\:[0-9a-fA-F:.]*
 /* This code run each time a pattern is matched. It updates the location
    by moving it ahead by yyleng bytes. yyleng specifies the length of the
    currently matched token. */
-#define YY_USER_ACTION  loc.columns(evalleng);
+#define YY_USER_ACTION loc.columns(evalleng);
 %}
 
 %%

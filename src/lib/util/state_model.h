@@ -246,7 +246,7 @@ public:
 /// until the model reaches the END_ST or fails, it is considered to be
 /// "running".  If the model encounters a NOP_EVT then it is "running" and
 /// "waiting".   If the model reaches END_ST with an END_EVT it is considered
-/// "done".  If the  model fails (END_ST with a FAILED_EVT) it is considered
+/// "done".  If the model fails (END_ST with a FAILED_EVT) it is considered
 /// "done" and "failed".  There are several boolean status methods which may
 /// be used to check these conditions.
 /// Once the model has been started, defining new events or new states is
@@ -597,7 +597,7 @@ protected:
 
     /// @brief Checks if on entry flag is true.
     ///
-    /// This method acts as a one-shot test of whether or not  the model is
+    /// This method acts as a one-shot test of whether or not the model is
     /// transitioning into a new state.  It returns true if the on-entry flag
     /// is true upon entering this method and will set the flag false prior
     /// to exit.  It may be used within state handlers to perform steps that

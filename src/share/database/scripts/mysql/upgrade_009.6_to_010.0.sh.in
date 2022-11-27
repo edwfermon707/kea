@@ -79,7 +79,7 @@ shrink_tag_column() {
         then
             printf 'shrink_tag_column: failed to resize server tag column for table %s.\n' "${table}"
             printf 'Ensure that no server tags are longer than 64 characters and rerun this migration.\n'
-            printf 'The remote-server4-set and remote-server6-set commands from  the cb_cmds hooks\n'
+            printf 'The remote-server4-set and remote-server6-set commands from the cb_cmds hooks\n'
             printf 'library can be used to modify the tags.\n'
             exit 255
         fi

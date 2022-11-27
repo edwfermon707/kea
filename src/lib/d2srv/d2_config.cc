@@ -533,7 +533,7 @@ DnsServerInfoParser::parse(ConstElementPtr server_config,
         /// as follows:
         ///
         /// @code
-        /// // When  hostname is specified, create a valid, blank IOAddress
+        /// // When hostname is specified, create a valid, blank IOAddress
         /// // and then create the DnsServerInfo.
         /// serverInfo.reset(new DnsServerInfo(hostname, io_addr, port));
         ///

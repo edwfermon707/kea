@@ -983,7 +983,7 @@ checkContext(NameChangeTransactionPtr trans, const int exp_state,
             << " at " << file << ":" << line;
 }
 
-// Verifies that the contents of the given transaction's  DNS update request
+// Verifies that the contents of the given transaction's DNS update request
 // is correct for replacing a forward DNS entry when using the
 // "check-exists-with-dhcid" conflict resolution mode.
 void
@@ -1052,7 +1052,7 @@ checkExistsReplaceFwdAddressRequest(NameChangeTransaction& tran) {
     ASSERT_NO_THROW(request->toWire(renderer));
 }
 
-// Verifies that the contents of the given transaction's  DNS update request
+// Verifies that the contents of the given transaction's DNS update request
 // is correct for removing a forward DNS entry when using the
 // "check-exists-with-dhcid" conflict resolution mode.
 void
@@ -1095,7 +1095,7 @@ checkExistsRemoveFwdAddressRequest(NameChangeTransaction& tran) {
     ASSERT_NO_THROW(request->toWire(renderer));
 }
 
-// Verifies that the contents of the given transaction's  DNS update request
+// Verifies that the contents of the given transaction's DNS update request
 // is correct for removing a forward DNS RRs when using the
 // "check-exists-with-dhcid" conflict resolution mode.
 void
@@ -1143,7 +1143,7 @@ checkExistsRemoveFwdRRsRequest(NameChangeTransaction& tran) {
     ASSERT_NO_THROW(request->toWire(renderer));
 }
 
-// Verifies that the contents of the given transaction's  DNS update request
+// Verifies that the contents of the given transaction's DNS update request
 // is correct for replacing a forward DNS entry when using the
 // "no-check-without-dhcid" conflict resolution mode.
 void
@@ -1194,7 +1194,7 @@ checkSimpleReplaceFwdAddressWithoutDHCIDRequest(NameChangeTransaction& tran) {
     ASSERT_NO_THROW(request->toWire(renderer));
 }
 
-// Verifies that the contents of the given transaction's  DNS update request
+// Verifies that the contents of the given transaction's DNS update request
 // is correct for removing a forward DNS entry when using the
 // "no-check-without-dhcid" conflict resolution mode.
 void
@@ -1230,7 +1230,7 @@ checkSimpleRemoveFwdRRsWithoutDHCIDRequest(NameChangeTransaction& tran) {
     ASSERT_NO_THROW(request->toWire(renderer));
 }
 
-// Verifies that the contents of the given transaction's  DNS update request
+// Verifies that the contents of the given transaction's DNS update request
 // is correct for replacing a reverse DNS entry when using the
 // "no-check-without-dhcid" conflict resolution mode.
 void
@@ -1281,7 +1281,7 @@ checkSimpleReplaceRevPtrsWithoutDHCIDRequest(NameChangeTransaction& tran) {
     ASSERT_NO_THROW(request->toWire(renderer));
 }
 
-// Verifies that the contents of the given transaction's  DNS update request
+// Verifies that the contents of the given transaction's DNS update request
 // is correct for removing a reverse DNS entry when using the
 // "no-check-without-dhcid" conflict resolution mode.
 void

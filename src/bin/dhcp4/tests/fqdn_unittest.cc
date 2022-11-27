@@ -388,7 +388,7 @@ public:
     }
 
     virtual ~NameDhcpv4SrvTest() {
-        // CfgMgr singleton doesn't get wiped between tests, so  we'll
+        // CfgMgr singleton doesn't get wiped between tests, so we'll
         // disable D2 explicitly between tests.
         disableD2();
     }
@@ -735,7 +735,7 @@ public:
         EXPECT_EQ(flag_e, fqdn->getFlag(Option4ClientFqdn::FLAG_E));
     }
 
-    /// @brief  Invokes Dhcpv4Srv::processHostname on the given packet
+    /// @brief Invokes Dhcpv4Srv::processHostname on the given packet.
     ///
     /// Processes the Hostname option in the client's message and returns
     /// the hostname option which would be sent to the client. It will
@@ -1322,7 +1322,7 @@ TEST_F(NameDhcpv4SrvTest, processRequestFqdnEmptyDomainName) {
 }
 
 // Test that server generates client's hostname from the IP address assigned
-// to it when DHCPv4 Client FQDN option specifies an empty domain-name  AND
+// to it when DHCPv4 Client FQDN option specifies an empty domain-name AND
 // ddns updates are disabled.
 TEST_F(NameDhcpv4SrvTest, processRequestEmptyDomainNameDisabled) {
     // Create fake interfaces and open fake sockets.
@@ -1494,7 +1494,7 @@ TEST_F(NameDhcpv4SrvTest, processTwoRequestsHostname) {
 }
 
 // Test that client may send two requests, each carrying the same FQDN option.
-// Server should renew  existing lease for the second request without generating
+// Server should renew existing lease for the second request without generating
 // any NCRs.
 TEST_F(NameDhcpv4SrvTest, processRequestRenewFqdn) {
     IfaceMgrTestConfig test_config(true);
@@ -1534,7 +1534,7 @@ TEST_F(NameDhcpv4SrvTest, processRequestRenewFqdn) {
 }
 
 // Test that client may send two requests, each carrying the same hostname
-// option.  Server should renew  existing lease for the second request without
+// option.  Server should renew existing lease for the second request without
 // generating any NCRs.
 TEST_F(NameDhcpv4SrvTest, processRequestRenewHostname) {
     IfaceMgrTestConfig test_config(true);

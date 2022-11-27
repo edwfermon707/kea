@@ -201,7 +201,7 @@ private:
     /// @brief Boolean flag set when shutdown has been requested.
     std::atomic<bool> shut_down_flag_;
 
-    /// @brief  Pointer to the configuration manager.
+    /// @brief Pointer to the configuration manager.
     DCfgMgrBasePtr cfg_mgr_;
 };
 

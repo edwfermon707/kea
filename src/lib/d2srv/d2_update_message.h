@@ -309,7 +309,7 @@ private:
     /// class to do the actual processing of the DNS Update message.
     ///
     /// @param section An enum indicating the section for which the
-    /// corresponding  enum value from @c isc::dns::Message will be returned.
+    /// corresponding enum value from @c isc::dns::Message will be returned.
     ///
     /// @return The enum value indicating the section in the DNS message
     /// represented by the @c isc::dns::Message class.

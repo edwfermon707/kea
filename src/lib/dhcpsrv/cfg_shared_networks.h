@@ -170,7 +170,7 @@ public:
             other_network != other_networks->end(); ++other_network) {
 
             // In theory we should drop subnet assignments from "other". The
-            // idea being  those that come from the CB should not have subnets_
+            // idea being those that come from the CB should not have subnets_
             // populated.  We will quietly throw them away, just in case.
             (*other_network)->delAll();
 

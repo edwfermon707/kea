@@ -2094,7 +2094,7 @@ public:
     ///
     /// @param server_selector Server selector.
     /// @param pool_start_address Lower bound pool address.
-    /// @param pool_end_address  Upper bound pool address.
+    /// @param pool_end_address Upper bound pool address.
     /// @param code Code of the deleted option.
     /// @param space Option space of the deleted option.
     /// @return Number of deleted options.

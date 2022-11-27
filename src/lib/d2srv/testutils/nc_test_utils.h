@@ -75,7 +75,7 @@ public:
     /// @brief Constructor
     ///
     /// @param io_service IOService to be used for socket IO.
-    /// @param address  IP address at which the server should listen.
+    /// @param address IP address at which the server should listen.
     /// @param port Port number at which the server should listen.
     FauxServer(asiolink::IOService& io_service, asiolink::IOAddress& address,
                size_t port);
@@ -292,7 +292,7 @@ extern void checkZone(const D2UpdateMessagePtr& request,
 /// @param exp_name expected value of RRset name (FQDN or reverse ip)
 /// @param exp_class expected RRClass value of RRset
 /// @param exp_typ expected RRType value of RRset
-/// @param exp_ttl  expected TTL value of RRset
+/// @param exp_ttl expected TTL value of RRset
 /// @param ncr NameChangeRequest on which the RRset is based
 /// @param has_rdata if true, RRset's rdata will be checked based on it's
 /// RRType.  Set this to false if the RRset's type supports Rdata but it does
@@ -402,7 +402,7 @@ extern void checkSimpleRemoveFwdRRsRequest(NameChangeTransaction& tran);
 /// removing reverse RR DNS entries when not using conflict resolution.
 ///
 /// @param tran Transaction containing the request to be verified.
-extern void  checkSimpleRemoveRevPtrsRequest(NameChangeTransaction& tran);
+extern void checkSimpleRemoveRevPtrsRequest(NameChangeTransaction& tran);
 
 /// @brief Creates a NameChangeRequest from JSON string.
 ///
@@ -482,7 +482,7 @@ extern std::string toHexText(const uint8_t* data, size_t len);
 /// @brief Verifies the current state and next event in a transaction
 /// @param trans NameChangeTransaction to check
 /// @param exp_state expected current state of the transaction
-/// @param exp_event  expected next event of the transaction
+/// @param exp_event expected next event of the transaction
 /// @param file source file name
 /// @param line source line number
 extern void checkContext(NameChangeTransactionPtr trans, const int exp_state,
@@ -558,7 +558,7 @@ extern void checkSimpleReplaceRevPtrsWithoutDHCIDRequest(NameChangeTransaction& 
 /// conflict resolution mode.
 ///
 /// @param tran Transaction containing the request to be verified.
-extern void  checkSimpleRemoveRevPtrsWithoutDHCIDRequest(NameChangeTransaction& tran);
+extern void checkSimpleRemoveRevPtrsWithoutDHCIDRequest(NameChangeTransaction& tran);
 
 } // namespace isc::d2
 } // namespace isc

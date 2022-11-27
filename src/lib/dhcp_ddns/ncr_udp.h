@@ -310,7 +310,7 @@ public:
 /// @brief Convenience type for UDP socket based listener
 typedef isc::asiolink::UDPSocket<UDPCallback> NameChangeUDPSocket;
 
-/// @brief Provides the ability to receive NameChangeRequests via  UDP socket
+/// @brief Provides the ability to receive NameChangeRequests via UDP socket
 ///
 /// This class is a derivation of the NameChangeListener which is capable of
 /// receiving NameChangeRequests through a UDP socket.  The caller need only
@@ -432,7 +432,7 @@ private:
 };
 
 
-/// @brief Provides the ability to send NameChangeRequests via  UDP socket
+/// @brief Provides the ability to send NameChangeRequests via UDP socket
 ///
 /// This class is a derivation of the NameChangeSender which is capable of
 /// sending NameChangeRequests through a UDP socket.  The caller need only
@@ -449,7 +449,7 @@ public:
     /// @param ip_address the IP address from which to send
     /// @param port the port from which to send
     /// @param server_address the IP address of the target listener
-    /// @param server_port is the IP port  of the target listener
+    /// @param server_port is the IP port of the target listener
     /// @param format is the wire format of the outbound requests.
     /// @param ncr_send_handler the send handler object to notify when
     /// when a send completes.
