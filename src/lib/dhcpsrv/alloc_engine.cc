@@ -643,127 +643,170 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
 
     auto const& classes = ctx.query_->getClasses();
     auto const& lease_type = ctx.currentIA().type_;
-    auto const& iaid = ctx.currentIA().iaid_;
-    std::cout << "IAID: " << iaid << std::endl;
 
-    for (; subnet; subnet = subnet->getNextSubnet(original_subnet)) {
-        if (!subnet->clientSupported(classes)) {
-            continue;
-        }
 
-        ctx.subnet_ = subnet;
+    if (lease_type == Lease::TYPE_PD) {
+        // check for pd pools using the prefix length and address as hints
+        bool zero_addr = hint.getAddress() ==
+                         IOAddress::IPV6_ZERO_ADDRESS();
+        Pool6Ptr candidate_pool;
+        Resource candidate_prefix = Resource(IOAddress::IPV4_ZERO_ADDRESS(), 0);
 
-        // check if the hint is in pool and is available
-        if (lease_type == Lease::TYPE_PD) {
-            // check for pd pools using the prefix length and address as hints
-            bool zero_addr = hint.getAddress() ==
-                             IOAddress::IPV6_ZERO_ADDRESS();
+        for (; subnet; subnet = subnet->getNextSubnet(original_subnet)) {
+            if (!subnet->clientSupported(classes)) {
+                continue;
+            }
+
+            ctx.subnet_ = subnet;
 
             pool = boost::dynamic_pointer_cast<Pool6>
                 (subnet->getPDPool(classes, hint.getAddress(),
                                    hint.getPrefixLength(), zero_addr));
-            if (pool && zero_addr) {
-                // if zero addr was specified in hint, use the first pool addr
-                // from here on out instead
-                hint = Resource(pool->getFirstAddress(), pool->getLength());
+
+            // check if the pool is allowed
+            if (!pool || !pool->clientSupported(classes)) {
+                continue;
+            } else {
+                candidate_prefix = Resource(pool->getFirstAddress(),
+                                            pool->getLength());
+                // if there's no candidate yet, set first eligible pool as
+                // the candidate
+                if (!candidate_pool) {
+                    candidate_pool = pool;
+                }
+                if (zero_addr) {
+                    // if hint prefix and length are both 0, then select the
+                    // first eligible pool
+                    if (hint.getPrefixLength() == 0) {
+                        // if hinted address is zero, set the hint to the pool
+                        // address from here on out
+                        break;
+                    }
+                }
+                // check if current pool is more suitable than the
+                // candidate pool
+                if ((hint.getPrefixLength() >= pool->getLength()) &&
+                    (candidate_pool->getLength() <= pool->getLength())) {
+                    candidate_pool = pool;
+                }
+                // if the prefix matches, break out of the loop
+                if (pool->getLength() == hint.getPrefixLength()) {
+                    break;
+                }
+            }
+        }
+        // if the supplied hint address was zero, use the selected pool address
+        // instead
+        if (zero_addr) {
+            hint = candidate_prefix;
+        }
+        pool = candidate_pool;
+    } else {
+        for (; subnet; subnet = subnet->getNextSubnet(original_subnet)) {
+            if (!subnet->clientSupported(classes)) {
+                continue;
             }
 
-        } else {
+            ctx.subnet_ = subnet;
+
             // This is equivalent of subnet->inPool(hint), but returns the pool
             pool = boost::dynamic_pointer_cast<Pool6>
                 (subnet->getPool(lease_type, classes, hint.getAddress()));
-        }
 
-
-        // check if the pool is allowed
-        if (!pool || !pool->clientSupported(classes)) {
-            continue;
-        }
-
-        bool in_subnet = subnet->getReservationsInSubnet();
-
-        /// @todo: We support only one hint for now
-        Lease6Ptr lease =
-            LeaseMgrFactory::instance().getLease6(lease_type, hint.getAddress());
-        if (!lease) {
-
-            // In-pool reservations: Check if this address is reserved for someone
-            // else. There is no need to check for whom it is reserved, because if
-            // it has been reserved for us we would have already allocated a lease.
-
-            ConstHostCollection hosts;
-            // When out-of-pool flag is true the server may assume that all host
-            // reservations are for addresses that do not belong to the dynamic
-            // pool. Therefore, it can skip the reservation checks when dealing
-            // with in-pool addresses.
-            if (in_subnet &&
-                (!subnet->getReservationsOutOfPool() ||
-                 !subnet->inPool(lease_type, hint.getAddress()))) {
-                hosts = getIPv6Resrv(subnet->getID(), hint.getAddress());
-            }
-
-            if (hosts.empty()) {
-                // If the in-pool reservations are disabled, or there is no
-                // reservation for a given hint, we're good to go.
-
-                // The hint is valid and not currently used, let's create a
-                // lease for it
-                lease = createLease6(ctx, hint.getAddress(), pool->getLength(), callout_status);
-
-                // It can happen that the lease allocation failed (we could
-                // have lost the race condition. That means that the hint is
-                // no longer usable and we need to continue the regular
-                // allocation path.
-                if (lease) {
-
-                    /// @todo: We support only one lease per ia for now
-                    Lease6Collection collection;
-                    collection.push_back(lease);
-                    return (collection);
-                }
+            // check if the pool is allowed
+            if (pool && !pool->clientSupported(classes)) {
+                continue;
             } else {
-                LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
-                          ALLOC_ENGINE_V6_HINT_RESERVED)
-                    .arg(ctx.query_->getLabel())
-                    .arg(hint.getAddress().toText());
+                break;
             }
+        }
+    }
 
-        } else if (lease->expired()) {
 
-            // If the lease is expired, we may likely reuse it, but...
-            ConstHostCollection hosts;
-            // When out-of-pool flag is true the server may assume that all host
-            // reservations are for addresses that do not belong to the dynamic
-            // pool. Therefore, it can skip the reservation checks when dealing
-            // with in-pool addresses.
-            if (in_subnet &&
-                (!subnet->getReservationsOutOfPool() ||
-                 !subnet->inPool(lease_type, hint.getAddress()))) {
-                hosts = getIPv6Resrv(subnet->getID(), hint.getAddress());
-            }
+    bool in_subnet = subnet->getReservationsInSubnet();
 
-            // Let's check if there is a reservation for this address.
-            if (hosts.empty()) {
+    /// @todo: We support only one hint for now
+    Lease6Ptr lease =
+        LeaseMgrFactory::instance().getLease6(lease_type, hint.getAddress());
+    if (!lease) {
 
-                // Copy an existing, expired lease so as it can be returned
-                // to the caller.
-                Lease6Ptr old_lease(new Lease6(*lease));
-                ctx.currentIA().old_leases_.push_back(old_lease);
+        // In-pool reservations: Check if this address is reserved for someone
+        // else. There is no need to check for whom it is reserved, because if
+        // it has been reserved for us we would have already allocated a lease.
 
-                /// We found a lease and it is expired, so we can reuse it
-                lease = reuseExpiredLease(lease, ctx, pool->getLength(),
-                                          callout_status);
+        ConstHostCollection hosts;
+        // When out-of-pool flag is true the server may assume that all host
+        // reservations are for addresses that do not belong to the dynamic
+        // pool. Therefore, it can skip the reservation checks when dealing
+        // with in-pool addresses.
+        if (in_subnet &&
+            (!subnet->getReservationsOutOfPool() ||
+             !subnet->inPool(lease_type, hint.getAddress()))) {
+            hosts = getIPv6Resrv(subnet->getID(), hint.getAddress());
+        }
+
+        if (hosts.empty()) {
+            // If the in-pool reservations are disabled, or there is no
+            // reservation for a given hint, we're good to go.
+
+            // The hint is valid and not currently used, let's create a
+            // lease for it
+            lease = createLease6(ctx, hint.getAddress(),
+                                 hint.getPrefixLength(), callout_status);
+
+            // It can happen that the lease allocation failed (we could
+            // have lost the race condition. That means that the hint is
+            // no longer usable and we need to continue the regular
+            // allocation path.
+            if (lease) {
 
                 /// @todo: We support only one lease per ia for now
-                leases.push_back(lease);
-                return (leases);
-
-            } else {
-                LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
-                          ALLOC_ENGINE_V6_EXPIRED_HINT_RESERVED)
-                    .arg(ctx.query_->getLabel())
-                    .arg(hint.getAddress().toText());
+                Lease6Collection collection;
+                collection.push_back(lease);
+                return (collection);
             }
+        } else {
+            LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                      ALLOC_ENGINE_V6_HINT_RESERVED)
+                .arg(ctx.query_->getLabel())
+                .arg(hint.getAddress().toText());
+        }
+
+    } else if (lease->expired()) {
+
+        // If the lease is expired, we may likely reuse it, but...
+        ConstHostCollection hosts;
+        // When out-of-pool flag is true the server may assume that all host
+        // reservations are for addresses that do not belong to the dynamic
+        // pool. Therefore, it can skip the reservation checks when dealing
+        // with in-pool addresses.
+        if (in_subnet &&
+            (!subnet->getReservationsOutOfPool() ||
+             !subnet->inPool(lease_type, hint.getAddress()))) {
+            hosts = getIPv6Resrv(subnet->getID(), hint.getAddress());
+        }
+
+        // Let's check if there is a reservation for this address.
+        if (hosts.empty()) {
+
+            // Copy an existing, expired lease so as it can be returned
+            // to the caller.
+            Lease6Ptr old_lease(new Lease6(*lease));
+            ctx.currentIA().old_leases_.push_back(old_lease);
+
+            /// We found a lease and it is expired, so we can reuse it
+            lease = reuseExpiredLease(lease, ctx, pool->getLength(),
+                                      callout_status);
+
+            /// @todo: We support only one lease per ia for now
+            leases.push_back(lease);
+            return (leases);
+
+        } else {
+            LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                      ALLOC_ENGINE_V6_EXPIRED_HINT_RESERVED)
+                .arg(ctx.query_->getLabel())
+                .arg(hint.getAddress().toText());
         }
     }
 
@@ -840,7 +883,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
             continue;
         }
 
-        bool in_subnet = subnet->getReservationsInSubnet();
+        in_subnet = subnet->getReservationsInSubnet();
         bool out_of_pool = subnet->getReservationsOutOfPool();
 
         // Set the default status code in case the lease6_select callouts
