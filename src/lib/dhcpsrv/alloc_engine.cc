@@ -666,6 +666,13 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
                 (subnet->getPDPool(classes, hint.getAddress(),
                                    hint.getPrefixLength(), zero_addr));
 
+            // if we don't have a match for specific address, try anyaddr
+            if (!pool) {
+                pool = boost::dynamic_pointer_cast<Pool6>
+                    (subnet->getPDPool(classes, hint.getAddress(),
+                                       hint.getPrefixLength(), true));
+            }
+
             // check if the pool is allowed
             if (!pool || !pool->clientSupported(classes)) {
                 continue;
