@@ -649,12 +649,15 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
         // check for pd pools using the prefix length and address as hints
         bool zero_addr = hint.getAddress() ==
                          IOAddress::IPV6_ZERO_ADDRESS();
+        Subnet6Ptr candidate_subnet;
         Pool6Ptr candidate_pool;
         Resource candidate_prefix = Resource(IOAddress::IPV4_ZERO_ADDRESS(), 0);
 
         for (; subnet; subnet = subnet->getNextSubnet(original_subnet)) {
             if (!subnet->clientSupported(classes)) {
                 continue;
+            } else if (!candidate_subnet) {
+                candidate_subnet = subnet;
             }
 
             ctx.subnet_ = subnet;
@@ -667,12 +670,13 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
             if (!pool || !pool->clientSupported(classes)) {
                 continue;
             } else {
-                candidate_prefix = Resource(pool->getFirstAddress(),
-                                            pool->getLength());
                 // if there's no candidate yet, set first eligible pool as
                 // the candidate
                 if (!candidate_pool) {
+                    candidate_subnet = subnet;
                     candidate_pool = pool;
+                    candidate_prefix = Resource(pool->getFirstAddress(),
+                                                pool->getLength());
                 }
                 if (zero_addr) {
                     // if hint prefix and length are both 0, then select the
@@ -687,7 +691,10 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
                 // candidate pool
                 if ((hint.getPrefixLength() >= pool->getLength()) &&
                     (candidate_pool->getLength() <= pool->getLength())) {
+                    candidate_subnet = subnet;
                     candidate_pool = pool;
+                    candidate_prefix = Resource(pool->getFirstAddress(),
+                                                pool->getLength());
                 }
                 // if the prefix matches, break out of the loop
                 if (pool->getLength() == hint.getPrefixLength()) {
@@ -695,12 +702,13 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
                 }
             }
         }
-        // if the supplied hint address was zero, use the selected pool address
-        // instead
-        if (zero_addr) {
+        subnet = candidate_subnet;
+        pool = candidate_pool;
+        // if the supplied hint address was zero or the hint is not in the
+        // selected pool, use the selected pool address instead
+        if (zero_addr || !pool->inRange(hint.getAddress())) {
             hint = candidate_prefix;
         }
-        pool = candidate_pool;
     } else {
         for (; subnet; subnet = subnet->getNextSubnet(original_subnet)) {
             if (!subnet->clientSupported(classes)) {
