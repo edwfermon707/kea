@@ -406,23 +406,31 @@ const PoolPtr Subnet::getPDPool(const ClientClasses& client_classes,
     if (!pools.empty()) {
         PoolCollection::const_iterator ub;
         if (anypool) {
+            // if any pool will do (only prefix_len matters), return the best
+            // matching pool in the subnet
             ub = std::upper_bound(pools.begin(), pools.end(), prefix_len,
                                   prefixLengthGreaterEqualsPool);
+            if (ub != pools.end()) {
+                // select the pool if anypool is true, or if the hint address
+                // is inside of the pool. in either case, the pool must also
+                // support the client classes
+                if (anypool && (*ub)->clientSupported(client_classes)) {
+                    candidate = *ub;
+                }
+            }
         } else {
+            // if we're taking the prefix into consideration, try to find a
+            // pool that the prefix is inside of
             ub = std::upper_bound(pools.begin(), pools.end(), prefix,
                                   prefixLessThanFirstAddress);
-        }
-        if (ub != pools.end()) { // ensure the pool exists
-            if (!anypool) --ub;
-            // select the pool if anypool is true, or if the hint address
-            // is inside of the pool. in either case, the pool must also
-            // support the client classes
-            if ((anypool || (*ub)->inRange(prefix)) &&
-                (*ub)->clientSupported(client_classes)) {
-                candidate = *ub;
+            if (ub != pools.begin()) {
+                --ub;
+                if ((*ub)->inRange(prefix) &&
+                    (*ub)->clientSupported(client_classes)) {
+                    candidate = *ub;
+                }
             }
         }
-
     }
 
     // Return a pool or NULL if no match found.
