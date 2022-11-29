@@ -707,6 +707,8 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
                 if (pool->getLength() == hint.getPrefixLength()) {
                     break;
                 }
+                // reset pool for next iteration
+                pool = nullptr;
             }
         }
         if (!candidate_pool) {
