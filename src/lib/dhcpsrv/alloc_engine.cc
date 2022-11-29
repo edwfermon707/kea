@@ -711,10 +711,15 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
         }
         subnet = candidate_subnet;
         pool = candidate_pool;
-        // if the supplied hint address was zero or the hint is not in the
-        // selected pool, use the selected pool address instead
         if (zero_addr || !pool->inRange(hint.getAddress())) {
+            // if the supplied hint address was zero or the hint is not in the
+            // selected pool, use the selected pool address instead
             hint = candidate_prefix;
+        } else if (pool->inRange(hint.getAddress()) &&
+                   pool->getLength() != hint.getPrefixLength()) {
+            // if the supplied hint has a smaller subnet than the pool, fix it
+            // to the pool size
+            hint = Resource(hint.getAddress(), pool->getLength());
         }
     } else {
         for (; subnet; subnet = subnet->getNextSubnet(original_subnet)) {
