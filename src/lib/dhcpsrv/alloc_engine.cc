@@ -709,6 +709,10 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
                 }
             }
         }
+        if (!candidate_pool) {
+            // hint is bogus and we cannot allocate anything
+            return (Lease6Collection());
+        }
         subnet = candidate_subnet;
         pool = candidate_pool;
         if (zero_addr || !pool->inRange(hint.getAddress())) {
