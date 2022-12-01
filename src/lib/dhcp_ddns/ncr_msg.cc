@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -674,7 +674,7 @@ NameChangeRequest::toText() const {
 }
 
 bool
-NameChangeRequest::operator == (const NameChangeRequest& other) {
+NameChangeRequest::operator == (const NameChangeRequest& other) const {
     return ((change_type_ == other.change_type_) &&
             (forward_change_ == other.forward_change_) &&
             (reverse_change_ == other.reverse_change_) &&
@@ -687,7 +687,7 @@ NameChangeRequest::operator == (const NameChangeRequest& other) {
 }
 
 bool
-NameChangeRequest::operator != (const NameChangeRequest& other) {
+NameChangeRequest::operator != (const NameChangeRequest& other) const {
     return (!(*this == other));
 }
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -709,8 +709,8 @@ public:
     /// @return a string containing the text.
     std::string toText() const;
 
-    bool operator == (const NameChangeRequest& b);
-    bool operator != (const NameChangeRequest& b);
+    bool operator == (const NameChangeRequest& b) const;
+    bool operator != (const NameChangeRequest& b) const;
 
 private:
     /// @brief Denotes the type of this change as either an Add or a Remove.
