@@ -92,26 +92,28 @@ Option6Auth::packHashInput(isc::util::OutputBuffer& buf) const {
 void
 Option6Auth::unpack(OptionBufferConstIter begin,
                      OptionBufferConstIter end) {
-   // throw if it contains length less than minimum size of the auth option
-   if (distance(begin, end) < Option6Auth::OPTION6_AUTH_MIN_LEN) {
-       isc_throw(OutOfRange, "Option " << type_ << " truncated");
-   }
+    // throw if it contains length less than minimum size of the auth option
+    if (distance(begin, end) < Option6Auth::OPTION6_AUTH_MIN_LEN) {
+        isc_throw(OutOfRange, "Option " << type_ << " truncated");
+    }
 
-   protocol_ = *begin;
-   begin += sizeof(uint8_t);
+    auth_info_.clear();
 
-   algorithm_ = *begin;
-   begin += sizeof(uint8_t);
+    protocol_ = *begin;
+    begin += sizeof(uint8_t);
 
-   rdm_method_ = *begin;
-   begin += sizeof(uint8_t);
+    algorithm_ = *begin;
+    begin += sizeof(uint8_t);
 
-   rdm_value_ =  isc::util::readUint64(&(*begin), sizeof(uint64_t));
-   begin += sizeof(uint64_t);
+    rdm_method_ = *begin;
+    begin += sizeof(uint8_t);
 
-   auth_info_.erase(auth_info_.begin(), auth_info_.end());
-   std::for_each(begin, end, [this](uint8_t msgdata)
-                {  auth_info_.push_back(msgdata); });
+    rdm_value_ =  isc::util::readUint64(&(*begin), sizeof(uint64_t));
+    begin += sizeof(uint64_t);
+
+    std::for_each(begin, end, [this](uint8_t msgdata) {
+            auth_info_.push_back(msgdata);
+        });
 }
 
 std::string

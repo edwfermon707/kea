@@ -87,6 +87,9 @@ void Option6AddrLst::unpack(OptionBufferConstIter begin,
                   << " malformed: len=" << distance(begin, end)
                   << " is not divisible by 16.");
     }
+
+    addrs_.clear();
+
     while (begin != end) {
         addrs_.push_back(IOAddress::fromBytes(AF_INET6, &(*begin)));
         begin += V6ADDRESS_LEN;

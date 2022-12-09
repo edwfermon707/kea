@@ -404,14 +404,14 @@ OptionPtr TokenRelay6Option::getOption(Pkt& pkt) {
             // get the option and return it.
             if (nest_level_ >= 0) {
                 uint8_t nesting_level = static_cast<uint8_t>(nest_level_);
-                return(pkt6.getRelayOption(option_code_, nesting_level));
+                return (pkt6.getRelayOption(option_code_, nesting_level));
             } else {
                 int nesting_level = pkt6.relay_info_.size() + nest_level_;
                 if (nesting_level < 0) {
                     return (OptionPtr());
                 }
-                return(pkt6.getRelayOption(option_code_,
-                                           static_cast<uint8_t>(nesting_level)));
+                return (pkt6.getRelayOption(option_code_,
+                                            static_cast<uint8_t>(nesting_level)));
             }
         }
         catch (const isc::OutOfRange&) {
@@ -1041,15 +1041,16 @@ TokenMember::evaluate(Pkt& pkt, ValueStack& values) {
         .arg('\'' + values.top() + '\'');
 }
 
-TokenVendor::TokenVendor(Option::Universe u, uint32_t vendor_id, RepresentationType repr,
+TokenVendor::TokenVendor(Option::Universe u, uint32_t vendor_id,
+                         RepresentationType repr,
                          uint16_t option_code)
-    :TokenOption(option_code, repr), universe_(u), vendor_id_(vendor_id),
-     field_(option_code ? SUBOPTION : EXISTS) {
+    : TokenOption(option_code, repr), universe_(u), vendor_id_(vendor_id),
+      field_(option_code ? SUBOPTION : EXISTS) {
 }
 
 TokenVendor::TokenVendor(Option::Universe u, uint32_t vendor_id, FieldType field)
-    :TokenOption(0, TokenOption::HEXADECIMAL), universe_(u), vendor_id_(vendor_id),
-     field_(field) {
+    : TokenOption(0, TokenOption::HEXADECIMAL), universe_(u), vendor_id_(vendor_id),
+      field_(field) {
     if (field_ == EXISTS) {
         representation_type_ = TokenOption::EXISTS;
     }

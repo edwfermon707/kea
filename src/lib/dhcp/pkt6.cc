@@ -462,6 +462,10 @@ Pkt6::packTCP() {
 
 void
 Pkt6::unpack() {
+    options_.clear();
+
+    relay_info_.clear();
+
     switch (proto_) {
     case UDP:
         return unpackUDP();
@@ -949,7 +953,7 @@ Pkt6::getMACFromDocsisModem() {
         }
         vendor = boost::dynamic_pointer_cast< OptionVendor>(opt.second);
         // Check if this is indeed DOCSIS3 environment
-        if (!vendor || vendor->getVendorId() != VENDOR_ID_CABLE_LABS) {
+        if (!vendor || (vendor->getVendorId() != VENDOR_ID_CABLE_LABS)) {
             continue;
         }
         // If it is, try to get device-id option
@@ -964,7 +968,7 @@ Pkt6::getMACFromDocsisModem() {
         }
     }
 
-    return mac;
+    return (mac);
 }
 
 HWAddrPtr
@@ -982,9 +986,9 @@ Pkt6::getMACFromDocsisCMTS() {
         if (opt.first != D6O_VENDOR_OPTS) {
             continue;
         }
-        vendor = boost::dynamic_pointer_cast< OptionVendor>(opt.second);
+        vendor = boost::dynamic_pointer_cast<OptionVendor>(opt.second);
         // Check if this is indeed DOCSIS3 environment
-        if (!vendor || vendor->getVendorId() != VENDOR_ID_CABLE_LABS) {
+        if (!vendor || (vendor->getVendorId() != VENDOR_ID_CABLE_LABS)) {
             continue;
         }
         // Try to get cable modem mac

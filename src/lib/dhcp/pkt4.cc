@@ -146,6 +146,8 @@ Pkt4::pack() {
 
 void
 Pkt4::unpack() {
+    options_.clear();
+
     // input buffer (used during message reception)
     isc::util::InputBuffer buffer_in(&data_[0], data_.size());
 

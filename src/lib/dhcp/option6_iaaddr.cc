@@ -28,8 +28,7 @@ namespace dhcp {
 
 Option6IAAddr::Option6IAAddr(uint16_t type, const isc::asiolink::IOAddress& addr,
                              uint32_t pref, uint32_t valid)
-    :Option(V6, type), addr_(addr), preferred_(pref),
-     valid_(valid) {
+    : Option(V6, type), addr_(addr), preferred_(pref), valid_(valid) {
     setEncapsulatedSpace(DHCP6_OPTION_SPACE);
     if (!addr.isV6()) {
         isc_throw(isc::BadValue, addr_ << " is not an IPv6 address");
@@ -38,7 +37,7 @@ Option6IAAddr::Option6IAAddr(uint16_t type, const isc::asiolink::IOAddress& addr
 
 Option6IAAddr::Option6IAAddr(uint32_t type, OptionBuffer::const_iterator begin,
                              OptionBuffer::const_iterator end)
-    :Option(V6, type), addr_("::") {
+    : Option(V6, type), addr_("::") {
     setEncapsulatedSpace(DHCP6_OPTION_SPACE);
     unpack(begin, end);
 }
@@ -70,9 +69,11 @@ void Option6IAAddr::pack(isc::util::OutputBuffer& buf, bool) const {
 
 void Option6IAAddr::unpack(OptionBuffer::const_iterator begin,
                       OptionBuffer::const_iterator end) {
-    if ( distance(begin, end) < OPTION6_IAADDR_LEN) {
+    if (distance(begin, end) < OPTION6_IAADDR_LEN) {
         isc_throw(OutOfRange, "Option " << type_ << " truncated");
     }
+
+    options_.clear();
 
     // 16 bytes: IPv6 address
     addr_ = IOAddress::fromBytes(AF_INET6, &(*begin));

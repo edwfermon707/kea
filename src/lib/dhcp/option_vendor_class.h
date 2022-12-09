@@ -199,7 +199,6 @@ private:
 
     /// @brief Collection of opaque data tuples carried by the option.
     TuplesCollection tuples_;
-
 };
 
 /// @brief Defines a pointer to the @c OptionVendorClass.

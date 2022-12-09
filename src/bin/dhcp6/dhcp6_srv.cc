@@ -1505,8 +1505,7 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
              desc != range.second; ++desc) {
             // Add the persistent option code to requested options
             if (desc->option_) {
-                uint16_t code = desc->option_->getType();
-                static_cast<void>(requested_opts.insert(code));
+                static_cast<void>(requested_opts.insert(desc->option_->getType()));
             }
         }
     }
@@ -1541,8 +1540,7 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
             OptionVendorClassPtr vendor_class;
             vendor_class = boost::dynamic_pointer_cast<OptionVendorClass>(opt.second);
             if (vendor_class) {
-                uint32_t vendor_id = vendor_class->getVendorId();
-                static_cast<void>(vendor_ids.insert(vendor_id));
+                static_cast<void>(vendor_ids.insert(vendor_class->getVendorId()));
             }
         }
         // Iterate on the configured option list.
@@ -1576,8 +1574,7 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
             OptionVendorPtr vendor_opts;
             vendor_opts = boost::dynamic_pointer_cast<OptionVendor>(opt.second);
             if (vendor_opts) {
-                uint32_t vendor_id = vendor_opts->getVendorId();
-                static_cast<void>(vendor_ids.insert(vendor_id));
+                static_cast<void>(vendor_ids.insert(vendor_opts->getVendorId()));
             }
         }
         // Iterate on the configured option list
@@ -1658,8 +1655,7 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question,
         OptionVendorClassPtr vendor_class;
         vendor_class = boost::dynamic_pointer_cast<OptionVendorClass>(opt.second);
         if (vendor_class) {
-            uint32_t vendor_id = vendor_class->getVendorId();
-            static_cast<void>(vendor_ids.insert(vendor_id));
+            static_cast<void>(vendor_ids.insert(vendor_class->getVendorId()));
         }
     }
 
@@ -1710,8 +1706,7 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question,
                     continue;
                 }
                 // Add the persistent option code to requested options
-                uint16_t code = desc->option_->getType();
-                static_cast<void>(requested_opts[vendor_id].insert(code));
+                static_cast<void>(requested_opts[vendor_id].insert(desc->option_->getType()));
             }
         }
 

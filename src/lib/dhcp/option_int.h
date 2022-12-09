@@ -151,6 +151,8 @@ public:
         }
         // @todo consider what to do if buffer is longer than data type.
 
+        options_.clear();
+
         // Depending on the data type length we use different utility functions
         // readUint16 or readUint32 which read the data laid in the network byte
         // order from the provided buffer. The same functions can be safely used
@@ -177,6 +179,7 @@ public:
         // of clang complain about unresolved reference to
         // OptionDataTypeTraits structure during linking.
         begin += data_size_len;
+
         unpackOptions(OptionBuffer(begin, end));
     }
 

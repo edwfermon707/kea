@@ -77,8 +77,7 @@ TEST_F(OptionTest, v4_basic) {
     EXPECT_NO_THROW(opt.reset(new Option(Option::V4, 255)));
 }
 
-const uint8_t dummyPayload[] =
-{ 1, 2, 3, 4};
+const uint8_t dummyPayload[] = {1, 2, 3, 4};
 
 TEST_F(OptionTest, v4_data1) {
 
@@ -92,6 +91,17 @@ TEST_F(OptionTest, v4_data1) {
     // Check that content is reported properly
     EXPECT_EQ(123, opt->getType());
     vector<uint8_t> optData = opt->getData();
+    ASSERT_EQ(optData.size(), data.size());
+    EXPECT_TRUE(optData == data);
+    EXPECT_EQ(2, opt->getHeaderLen());
+    EXPECT_EQ(6, opt->len());
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_NO_THROW(opt->unpack(data.begin(), data.end()));
+    // Check that content is reported properly
+    EXPECT_EQ(123, opt->getType());
+    optData = opt->getData();
     ASSERT_EQ(optData.size(), data.size());
     EXPECT_TRUE(optData == data);
     EXPECT_EQ(2, opt->getHeaderLen());
@@ -239,7 +249,16 @@ TEST_F(OptionTest, v6_data1) {
 
     ASSERT_EQ(11, opt->len());
     ASSERT_EQ(7, opt->getData().size());
-    EXPECT_EQ(0, memcmp(&buf_[3], &opt->getData()[0], 7) );
+    EXPECT_EQ(0, memcmp(&buf_[3], &opt->getData()[0], 7));
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_NO_THROW(opt->unpack(buf_.begin() + 3, buf_.begin() + 10));
+    EXPECT_EQ(333, opt->getType());
+
+    ASSERT_EQ(11, opt->len());
+    ASSERT_EQ(7, opt->getData().size());
+    EXPECT_EQ(0, memcmp(&buf_[3], &opt->getData()[0], 7));
 
     opt->pack(outBuf_);
     EXPECT_EQ(11, outBuf_.getLength());

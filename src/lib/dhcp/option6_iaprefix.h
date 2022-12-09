@@ -113,10 +113,14 @@ public:
     ///
     /// @param prefix prefix to be sent in this option
     /// @param length prefix length
-    void setPrefix(const isc::asiolink::IOAddress& prefix,
-                   uint8_t length) { addr_ = prefix; prefix_len_ = length; }
+    void setPrefix(const isc::asiolink::IOAddress& prefix, uint8_t length) {
+        addr_ = prefix;
+        prefix_len_ = length;
+    }
 
-    uint8_t getLength() const { return prefix_len_; }
+    uint8_t getLength() const {
+        return (prefix_len_);
+    }
 
     /// returns data length (data length + DHCPv4/DHCPv6 option header)
     virtual uint16_t len() const;
@@ -136,6 +140,7 @@ private:
               const uint8_t len,
               OptionBuffer& output_address) const;
 
+    /// @brief The prefix length.
     uint8_t prefix_len_;
 };
 

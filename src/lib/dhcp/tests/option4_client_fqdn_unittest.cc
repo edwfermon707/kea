@@ -379,7 +379,6 @@ TEST(Option4ClientFqdnTest, assignment) {
     ASSERT_EQ("myhost", option2.getDomainName());
     ASSERT_EQ(Option4ClientFqdn::PARTIAL, option2.getDomainNameType());
 
-
     // Make the assignment.
     ASSERT_NO_THROW(option2 = option);
 
@@ -814,6 +813,18 @@ TEST(Option4ClientFqdnTest, unpack) {
     EXPECT_TRUE(option->getFlag(Option4ClientFqdn::FLAG_E));
     EXPECT_EQ("myhost.example.com.", option->getDomainName());
     EXPECT_EQ(Option4ClientFqdn::FULL, option->getDomainNameType());
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_NO_THROW(option->unpack(in_buf.begin(), in_buf.end()));
+
+    // Check that new values are correct.
+    EXPECT_TRUE(option->getFlag(Option4ClientFqdn::FLAG_S));
+    EXPECT_FALSE(option->getFlag(Option4ClientFqdn::FLAG_N));
+    EXPECT_FALSE(option->getFlag(Option4ClientFqdn::FLAG_O));
+    EXPECT_TRUE(option->getFlag(Option4ClientFqdn::FLAG_E));
+    EXPECT_EQ("myhost.example.com.", option->getDomainName());
+    EXPECT_EQ(Option4ClientFqdn::FULL, option->getDomainNameType());
 }
 
 // This test verifies that on-wire option data holding partial domain name
@@ -857,6 +868,18 @@ TEST(Option4ClientFqdnTest, unpackPartial) {
     EXPECT_FALSE(option->getFlag(Option4ClientFqdn::FLAG_O));
     EXPECT_EQ("myhost", option->getDomainName());
     EXPECT_EQ(Option4ClientFqdn::PARTIAL, option->getDomainNameType());
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_NO_THROW(option->unpack(in_buf.begin(), in_buf.end()));
+
+    // Check that new values are correct.
+    EXPECT_TRUE(option->getFlag(Option4ClientFqdn::FLAG_S));
+    EXPECT_TRUE(option->getFlag(Option4ClientFqdn::FLAG_E));
+    EXPECT_FALSE(option->getFlag(Option4ClientFqdn::FLAG_N));
+    EXPECT_FALSE(option->getFlag(Option4ClientFqdn::FLAG_O));
+    EXPECT_EQ("myhost", option->getDomainName());
+    EXPECT_EQ(Option4ClientFqdn::PARTIAL, option->getDomainNameType());
 }
 
 // This test verifies that the empty buffer is rejected when decoding an option
@@ -872,6 +895,10 @@ TEST(Option4ClientFqdnTest, unpackTruncated) {
 
     // Empty buffer is invalid. It should be at least 1 octet long.
     OptionBuffer in_buf;
+    EXPECT_THROW(option->unpack(in_buf.begin(), in_buf.end()), OutOfRange);
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
     EXPECT_THROW(option->unpack(in_buf.begin(), in_buf.end()), OutOfRange);
 }
 
@@ -960,7 +987,6 @@ TEST(Option4ClientFqdnTest, len) {
     );
     ASSERT_TRUE(option);
     EXPECT_EQ(20, option->len());
-
 }
 
 // This test verifies that the correct length of the option in on-wire
@@ -1012,7 +1038,6 @@ TEST(Option4ClientFqdnTest, lenAscii) {
     ASSERT_TRUE(option);
 
     EXPECT_EQ(19, option->len());
-
 
     // A special case is an empty domain name for which the returned length
     // should be a sum of the header length, RCODE1, RCODE2 and flag fields

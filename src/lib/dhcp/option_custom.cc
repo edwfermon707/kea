@@ -324,10 +324,8 @@ OptionCustom::createBuffers(const OptionBuffer& data_buf) {
                 buffers.push_back(OptionBuffer(data, data + data_size));
                 data += data_size;
             }
-        }
-
-        // Unpack suboptions if any.
-        else if (data != data_buf.end() && !getEncapsulatedSpace().empty()) {
+        } else if (data != data_buf.end() && !getEncapsulatedSpace().empty()) {
+            // Unpack suboptions if any.
             unpackOptions(OptionBuffer(data, data_buf.end()));
         }
 
@@ -444,6 +442,7 @@ OptionCustom::dataFieldToText(const OptionDataType data_type,
         PSIDTuple t = readPsid(index);
         text << "len=" << t.first.asUnsigned() << ",psid=" << t.second.asUint16();
     }
+        break;
     default:
         ;
     }
@@ -684,6 +683,8 @@ OptionCustom::len() const {
 
 void OptionCustom::initialize(const OptionBufferConstIter first,
                               const OptionBufferConstIter last) {
+    options_.clear();
+
     setData(first, last);
 
     // Chop the data_ buffer into set of buffers that represent
