@@ -445,11 +445,11 @@ HostOptionsTest::testOverrideVendorOptions(const bool stateless) {
     // Client needs to include V-I Vendor Specific Information option
     // to include ORO suboption, which the server will use to determine
     // which suboptions should be returned to the client.
-    OptionVendorPtr opt_vendor(new OptionVendor(Option::V4,
-                                                VENDOR_ID_CABLE_LABS));
+    OptionVendorPtr opt_vendor(new OptionVendor(Option::V4, { VENDOR_ID_CABLE_LABS }));
     // Include ORO with TFTP servers suboption code being requested.
-    opt_vendor->addOption(OptionPtr(new OptionUint8(Option::V4, DOCSIS3_V4_ORO,
-                                                    DOCSIS3_V4_TFTP_SERVERS)));
+    opt_vendor->addOption(VENDOR_ID_CABLE_LABS, OptionPtr(new OptionUint8(Option::V4,
+                                                                          DOCSIS3_V4_ORO,
+                                                                          DOCSIS3_V4_TFTP_SERVERS)));
     client.addExtraOption(opt_vendor);
 
     // Configure DHCP server.

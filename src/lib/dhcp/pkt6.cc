@@ -949,11 +949,11 @@ Pkt6::getMACFromDocsisModem() {
         }
         vendor = boost::dynamic_pointer_cast< OptionVendor>(opt.second);
         // Check if this is indeed DOCSIS3 environment
-        if (!vendor || vendor->getVendorId() != VENDOR_ID_CABLE_LABS) {
+        if (!vendor || !vendor->hasVendorId(VENDOR_ID_CABLE_LABS)) {
             continue;
         }
         // If it is, try to get device-id option
-        OptionPtr device_id = vendor->getOption(DOCSIS3_V6_DEVICE_ID);
+        OptionPtr device_id = vendor->getOption(VENDOR_ID_CABLE_LABS, DOCSIS3_V6_DEVICE_ID);
         if (device_id) {
             // If the option contains any data, use it as MAC address
             if (!device_id->getData().empty()) {
@@ -964,7 +964,7 @@ Pkt6::getMACFromDocsisModem() {
         }
     }
 
-    return mac;
+    return (mac);
 }
 
 HWAddrPtr
@@ -982,13 +982,13 @@ Pkt6::getMACFromDocsisCMTS() {
         if (opt.first != D6O_VENDOR_OPTS) {
             continue;
         }
-        vendor = boost::dynamic_pointer_cast< OptionVendor>(opt.second);
+        vendor = boost::dynamic_pointer_cast<OptionVendor>(opt.second);
         // Check if this is indeed DOCSIS3 environment
-        if (!vendor || vendor->getVendorId() != VENDOR_ID_CABLE_LABS) {
+        if (!vendor || !vendor->hasVendorId(VENDOR_ID_CABLE_LABS)) {
             continue;
         }
         // Try to get cable modem mac
-        OptionPtr cm_mac = vendor->getOption(DOCSIS3_V6_CMTS_CM_MAC);
+        OptionPtr cm_mac = vendor->getOption(VENDOR_ID_CABLE_LABS, DOCSIS3_V6_CMTS_CM_MAC);
 
         // If the option contains any data, use it as MAC address
         if (cm_mac && !cm_mac->getData().empty()) {

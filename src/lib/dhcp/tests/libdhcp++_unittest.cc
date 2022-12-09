@@ -408,7 +408,7 @@ TEST_F(LibDhcpTest, packOptions6) {
                                    OptionBuffer(v6packed + 46, v6packed + 50)));
 
     boost::shared_ptr<OptionInt<uint32_t> >
-        vsi(new OptionInt<uint32_t>(Option::V6, D6O_VENDOR_OPTS, 4491));
+        vsi(new OptionInt<uint32_t>(Option::V6, D6O_VENDOR_OPTS, VENDOR_ID_CABLE_LABS));
     vsi->addOption(cm_mac);
     vsi->addOption(cmts_caps);
 
@@ -451,7 +451,7 @@ TEST_F(LibDhcpTest, unpackOptions6) {
     ASSERT_EQ(5, x->second->getData().size());
     EXPECT_EQ(0, memcmp(&x->second->getData()[0], v6packed + 4, 5)); // data len=5
 
-        x = options.find(2);
+    x = options.find(2);
     ASSERT_FALSE(x == options.end()); // option 2 should exist
     EXPECT_EQ(2, x->second->getType());  // this should be option 2
     ASSERT_EQ(7, x->second->len()); // it should be of length 7
@@ -510,15 +510,18 @@ TEST_F(LibDhcpTest, unpackOptions6) {
     EXPECT_EQ(D6O_VENDOR_OPTS, x->second->getType());
     EXPECT_EQ(26, x->second->len());
 
+    OptionVendorPtr vendor = boost::dynamic_pointer_cast<OptionVendor>(x->second);
+    ASSERT_TRUE(vendor);
+
     // CM MAC Address Option
-    OptionPtr cm_mac = x->second->getOption(OPTION_CM_MAC);
+    OptionPtr cm_mac = vendor->getOption(VENDOR_ID_CABLE_LABS, OPTION_CM_MAC);
     ASSERT_TRUE(cm_mac);
     EXPECT_EQ(OPTION_CM_MAC, cm_mac->getType());
     ASSERT_EQ(10, cm_mac->len());
     EXPECT_EQ(0, memcmp(&cm_mac->getData()[0], v6packed + 54, 6));
 
     // CMTS Capabilities
-    OptionPtr cmts_caps = x->second->getOption(OPTION_CMTS_CAPS);
+    OptionPtr cmts_caps = vendor->getOption(VENDOR_ID_CABLE_LABS, OPTION_CMTS_CAPS);
     ASSERT_TRUE(cmts_caps);
     EXPECT_EQ(OPTION_CMTS_CAPS, cmts_caps->getType());
     ASSERT_EQ(8, cmts_caps->len());
@@ -1082,24 +1085,24 @@ TEST_F(LibDhcpTest, packOptions4) {
     vector<uint8_t> payload[5];
     for (unsigned i = 0; i < 5; i++) {
         payload[i].resize(3);
-        payload[i][0] = i*10;
-        payload[i][1] = i*10+1;
-        payload[i][2] = i*10+2;
+        payload[i][0] = i * 10;
+        payload[i][1] = i * 10 + 1;
+        payload[i][2] = i * 10 + 2;
     }
 
     OptionPtr opt1(new Option(Option::V4, 12, payload[0]));
     OptionPtr opt2(new Option(Option::V4, 60, payload[1]));
     OptionPtr opt3(new Option(Option::V4, 14, payload[2]));
-    OptionPtr opt4(new Option(Option::V4,254, payload[3]));
-    OptionPtr opt5(new Option(Option::V4,128, payload[4]));
+    OptionPtr opt4(new Option(Option::V4, 254, payload[3]));
+    OptionPtr opt5(new Option(Option::V4, 128, payload[4]));
 
     // Create vendor option instance with DOCSIS3.0 enterprise id.
-    OptionVendorPtr vivsi(new OptionVendor(Option::V4, 4491));
-    vivsi->addOption(OptionPtr(new Option4AddrLst(DOCSIS3_V4_TFTP_SERVERS,
-                                                  IOAddress("10.0.0.10"))));
+    OptionVendorPtr vivsi(new OptionVendor(Option::V4, { VENDOR_ID_CABLE_LABS }));
+    vivsi->addOption(VENDOR_ID_CABLE_LABS, OptionPtr(new Option4AddrLst(DOCSIS3_V4_TFTP_SERVERS,
+                                                                        IOAddress("10.0.0.10"))));
 
     OptionPtr vsi(new Option(Option::V4, DHO_VENDOR_ENCAPSULATED_OPTIONS,
-                              OptionBuffer()));
+                             OptionBuffer()));
     vsi->addOption(OptionPtr(new Option(Option::V4, 0xDC, OptionBuffer())));
 
     // Add RAI option, which comprises 3 sub-options.
@@ -1245,8 +1248,8 @@ TEST_F(LibDhcpTest, unpackOptions4) {
     OptionVendorPtr vivsi = boost::dynamic_pointer_cast<OptionVendor>(x->second);
     ASSERT_TRUE(vivsi);
     EXPECT_EQ(DHO_VIVSO_SUBOPTIONS, vivsi->getType());
-    EXPECT_EQ(4491, vivsi->getVendorId());
-    OptionCollection suboptions = vivsi->getOptions();
+    EXPECT_EQ(VENDOR_ID_CABLE_LABS, vivsi->getVendorIds()[0]);
+    OptionCollection suboptions = vivsi->getOptions(VENDOR_ID_CABLE_LABS);
 
     // There should be one suboption of V-I VSI.
     ASSERT_EQ(1, suboptions.size());
@@ -2723,7 +2726,7 @@ TEST_F(LibDhcpTest, vendorClass6) {
     // Let's investigate if the option content is correct
 
     // 3 fields expected: vendor-id, data-len and data
-    EXPECT_EQ(4491, vclass->getVendorId());
+    EXPECT_EQ(VENDOR_ID_CABLE_LABS, vclass->getVendorId());
     EXPECT_EQ(20, vclass->len());
     ASSERT_EQ(1, vclass->getTuplesNum());
     EXPECT_EQ("eRouter1.0", vclass->getTuple(0).getText());

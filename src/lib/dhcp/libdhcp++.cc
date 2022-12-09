@@ -304,7 +304,6 @@ LibDHCP::optionFactory(Option::Universe u,
     return (it->second(u, type, buf));
 }
 
-
 size_t
 LibDHCP::unpackOptions6(const OptionBuffer& buf,
                         const std::string& option_space,

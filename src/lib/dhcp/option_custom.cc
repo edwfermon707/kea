@@ -685,6 +685,7 @@ OptionCustom::len() const {
 void OptionCustom::initialize(const OptionBufferConstIter first,
                               const OptionBufferConstIter last) {
     setData(first, last);
+    options_.clear();
 
     // Chop the data_ buffer into set of buffers that represent
     // option fields data.

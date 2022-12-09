@@ -33,7 +33,7 @@ public:
     ///
     /// @param u universe (V4 or V6)
     /// @param vendor_id vendor enterprise-id (unique 32 bit integer)
-    OptionVendor(Option::Universe u, const uint32_t vendor_id);
+    OptionVendor(Option::Universe u, const std::vector<uint32_t> vendor_ids);
 
     /// @brief Constructor.
     ///
@@ -49,6 +49,8 @@ public:
     /// @todo Extend constructor to set encapsulated option space name.
     OptionVendor(Option::Universe u, OptionBufferConstIter begin,
                  OptionBufferConstIter end);
+
+    OptionVendor(const OptionVendor& option);
 
     /// @brief Copies this option and returns a pointer to the copy.
     OptionPtr clone() const;
@@ -77,12 +79,38 @@ public:
     /// @brief Sets enterprise identifier
     ///
     /// @param vendor_id vendor identifier
-    void setVendorId(const uint32_t vendor_id) { vendor_id_ = vendor_id; }
+    void setVendorIds(const std::vector<uint32_t> vendor_ids) {
+        if (universe_ == Option::V6 && vendor_ids.size() > 1) {
+            isc_throw(isc::BadValue, "Invalid number of enterprise IDs for universe type " << universe_);
+        }
+        if (vendor_ids.size() == 0) {
+            isc_throw(isc::BadValue, "Empty set of enterprise IDs for universe type " << universe_);
+        }
+        vendor_ids_ = vendor_ids;
+        // erase options which are not correlated to any Enterprise ID
+        auto vendor_options_copy = *vendor_options_;
+        for (auto const& vendor : vendor_options_copy) {
+            if (std::find(vendor_ids_.begin(), vendor_ids_.end(), vendor.first) == vendor_ids_.end()) {
+                vendor_options_->erase(vendor.first);
+            }
+        }
+    }
 
     /// @brief Returns enterprise identifier
     ///
     /// @return enterprise identifier
-    uint32_t getVendorId() const { return (vendor_id_); }
+    std::vector<uint32_t> getVendorIds() const {
+        return (vendor_ids_);
+    }
+
+    bool hasVendorId(uint32_t id) const {
+        for (auto const& vendor_id : vendor_ids_) {
+            if (id == vendor_id) {
+                return (true);
+            }
+        }
+        return (false);
+    }
 
     /// @brief returns complete length of option
     ///
@@ -98,19 +126,59 @@ public:
     /// @return Vendor option in the textual format.
     virtual std::string toText(int indent = 0) const;
 
+    OptionPtr getOption(uint32_t vendor_id, uint16_t type) const;
+
+    bool delOption(uint32_t vendor_id, uint16_t type);
+
+    void addOption(uint32_t vendor_id, OptionPtr opt);
+
+    const OptionCollection getOptions(uint32_t vendor_id) const;
+
+    OptionVendor& operator=(const OptionVendor& rhs);
+
 private:
 
-    /// @brief Calculates the data-len value for DHCPv4.
+    /// @brief Store sub options in a buffer.
     ///
-    /// The data-len field is only present in DHCPv4 space. It follows
-    /// the vendor-id field. This method is called from the
-    /// @c OptionVendor::pack and @c OptionVendor::toText to calculate
-    /// this value.
+    /// This method stores all sub-options defined for a particular
+    /// option in a on-wire format in output buffer provided.
+    /// This function is called by pack function in this class or
+    /// derived classes that override pack.
     ///
-    /// @return Returns calculated data-len value.
-    uint8_t dataLen() const;
+    /// @param [out] buf output buffer.
+    /// @param check if set to false, allows options larger than 255 for v4
+    ///
+    /// @todo The set of exceptions thrown by this function depend on
+    /// exceptions thrown by pack methods invoked on objects
+    /// representing sub options. We should consider whether to aggregate
+    /// those into one exception which can be documented here.
+    void packVendorOptions(isc::util::OutputBuffer& buf, uint32_t vendor_id,
+                           bool check = true) const;
 
-    uint32_t vendor_id_;  ///< Enterprise-id
+    /// @brief Performs deep copy of suboptions.
+    ///
+    /// This method calls @ref clone method to deep copy each option.
+    ///
+    /// @param [out] options_copy Container where copied options are stored.
+    void getOptionsCopy(std::shared_ptr<std::map<uint32_t, OptionCollection>>& vendor_options) const;
+
+    /// @brief Enterprise-ids
+    std::vector<uint32_t> vendor_ids_;
+
+    /// @brief Specific Enterprise-ids options
+    std::shared_ptr<std::map<uint32_t, OptionCollection>> vendor_options_;
+
+    OptionPtr getOption(uint16_t type) const;
+
+    bool delOption(uint16_t type);
+
+    void addOption(OptionPtr opt);
+
+    void getOptionsCopy(OptionCollection& options_copy) const;
+
+    std::string suboptionsToText(const int indent = 0) const;
+
+    const OptionCollection& getOptions() const;
 };
 
 /// Pointer to a vendor option

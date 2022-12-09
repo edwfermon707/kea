@@ -407,8 +407,8 @@ Dhcp6Client::createMsg(const uint8_t msg_type) {
         OptionUint16ArrayPtr vendor_oro(new OptionUint16Array(Option::V6,
                                                               DOCSIS3_V6_ORO));
         vendor_oro->setValues(docsis_oro_);
-        OptionPtr vendor(new OptionVendor(Option::V6, 4491));
-        vendor->addOption(vendor_oro);
+        OptionVendorPtr vendor(new OptionVendor(Option::V6, { VENDOR_ID_CABLE_LABS }));
+        vendor->addOption(VENDOR_ID_CABLE_LABS, vendor_oro);
         msg->addOption(vendor);
     }
 

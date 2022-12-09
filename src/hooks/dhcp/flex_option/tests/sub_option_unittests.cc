@@ -1486,8 +1486,8 @@ TEST_F(FlexSubOptionTest, subProcessAddDocSISVIVSO) {
     ASSERT_TRUE(opt);
     OptionVendorPtr vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
     ASSERT_TRUE(vendor);
-    EXPECT_EQ(VENDOR_ID_CABLE_LABS, vendor->getVendorId());
-    OptionPtr sub = vendor->getOption(DOCSIS3_V4_TFTP_SERVERS);
+    EXPECT_EQ(VENDOR_ID_CABLE_LABS, vendor->getVendorIds()[0]);
+    OptionPtr sub = vendor->getOption(VENDOR_ID_CABLE_LABS, DOCSIS3_V4_TFTP_SERVERS);
     ASSERT_TRUE(sub);
     Option4AddrLstPtr addr = boost::dynamic_pointer_cast<Option4AddrLst>(sub);
     ASSERT_TRUE(addr);
@@ -1529,8 +1529,8 @@ TEST_F(FlexSubOptionTest, subProcessAddDocSISVendorOps) {
     ASSERT_TRUE(opt);
     OptionVendorPtr vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
     ASSERT_TRUE(vendor);
-    EXPECT_EQ(VENDOR_ID_CABLE_LABS, vendor->getVendorId());
-    OptionPtr sub = vendor->getOption(DOCSIS3_V6_VENDOR_NAME);
+    EXPECT_EQ(VENDOR_ID_CABLE_LABS, vendor->getVendorIds()[0]);
+    OptionPtr sub = vendor->getOption(VENDOR_ID_CABLE_LABS, DOCSIS3_V6_VENDOR_NAME);
     ASSERT_TRUE(sub);
     const OptionBuffer& buffer = sub->getData();
     ASSERT_EQ(6, buffer.size());
@@ -1573,8 +1573,8 @@ TEST_F(FlexSubOptionTest, subProcessAddVivso) {
     ASSERT_TRUE(opt);
     OptionVendorPtr vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
     ASSERT_TRUE(vendor);
-    EXPECT_EQ(123456, vendor->getVendorId());
-    OptionPtr sub = vendor->getOption(1);
+    EXPECT_EQ(123456, vendor->getVendorIds()[0]);
+    OptionPtr sub = vendor->getOption(123456, 1);
     ASSERT_TRUE(sub);
     const OptionBuffer& buffer = sub->getData();
     ASSERT_EQ(6, buffer.size());
@@ -1610,10 +1610,10 @@ TEST_F(FlexSubOptionTest, subProcessAddVivsoMismatch) {
 
     Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
     Pkt4Ptr response(new Pkt4(DHCPOFFER, 12345));
-    OptionVendorPtr vendor(new OptionVendor(Option::V4, 67890));
+    OptionVendorPtr vendor(new OptionVendor(Option::V4, { 67890 }));
     response->addOption(vendor);
     OptionStringPtr str(new OptionString(Option::V4, 2, "xyzt"));
-    vendor->addOption(str);
+    vendor->addOption(67890, str);
     string response_txt = response->toText();
 
     EXPECT_NO_THROW(impl_->process<Pkt4Ptr>(Option::V4, query, response));
@@ -1623,10 +1623,10 @@ TEST_F(FlexSubOptionTest, subProcessAddVivsoMismatch) {
     ASSERT_TRUE(opt);
     vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
     ASSERT_TRUE(vendor);
-    EXPECT_EQ(67890, vendor->getVendorId());
-    OptionPtr sub = vendor->getOption(1);
+    EXPECT_EQ(67890, vendor->getVendorIds()[0]);
+    OptionPtr sub = vendor->getOption(67890, 1);
     EXPECT_FALSE(sub);
-    sub = vendor->getOption(2);
+    sub = vendor->getOption(67890, 2);
     ASSERT_TRUE(sub);
     const OptionBuffer& buffer = sub->getData();
     ASSERT_EQ(4, buffer.size());
@@ -1671,8 +1671,8 @@ TEST_F(FlexSubOptionTest, subProcessAddVendorOpts) {
     ASSERT_TRUE(opt);
     OptionVendorPtr vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
     ASSERT_TRUE(vendor);
-    EXPECT_EQ(123456, vendor->getVendorId());
-    OptionPtr sub = vendor->getOption(1);
+    EXPECT_EQ(123456, vendor->getVendorIds()[0]);
+    OptionPtr sub = vendor->getOption(123456, 1);
     ASSERT_TRUE(sub);
     const OptionBuffer& buffer = sub->getData();
     ASSERT_EQ(6, buffer.size());
@@ -1710,10 +1710,10 @@ TEST_F(FlexSubOptionTest, subProcessAddVendorOptsMismatch) {
 
     Pkt6Ptr query(new Pkt6(DHCPV6_SOLICIT, 12345));
     Pkt6Ptr response(new Pkt6(DHCPV6_ADVERTISE, 12345));
-    OptionVendorPtr vendor(new OptionVendor(Option::V6, 67890));
+    OptionVendorPtr vendor(new OptionVendor(Option::V6, { 67890 }));
     response->addOption(vendor);
     OptionStringPtr str(new OptionString(Option::V6, 2, "xyzt"));
-    vendor->addOption(str);
+    vendor->addOption(67890, str);
     string response_txt = response->toText();
 
     EXPECT_NO_THROW(impl_->process<Pkt6Ptr>(Option::V6, query, response));
@@ -1723,10 +1723,10 @@ TEST_F(FlexSubOptionTest, subProcessAddVendorOptsMismatch) {
     ASSERT_TRUE(opt);
     vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
     ASSERT_TRUE(vendor);
-    EXPECT_EQ(67890, vendor->getVendorId());
-    OptionPtr sub = vendor->getOption(1);
+    EXPECT_EQ(67890, vendor->getVendorIds()[0]);
+    OptionPtr sub = vendor->getOption(67890, 1);
     EXPECT_FALSE(sub);
-    sub = vendor->getOption(2);
+    sub = vendor->getOption(67890, 2);
     ASSERT_TRUE(sub);
     const OptionBuffer& buffer = sub->getData();
     ASSERT_EQ(4, buffer.size());
@@ -2115,8 +2115,8 @@ TEST_F(FlexSubOptionTest, subProcessSupersedeDocSISVIVSO) {
     ASSERT_TRUE(opt);
     OptionVendorPtr vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
     ASSERT_TRUE(vendor);
-    EXPECT_EQ(VENDOR_ID_CABLE_LABS, vendor->getVendorId());
-    OptionPtr sub = vendor->getOption(DOCSIS3_V4_TFTP_SERVERS);
+    EXPECT_EQ(VENDOR_ID_CABLE_LABS, vendor->getVendorIds()[0]);
+    OptionPtr sub = vendor->getOption(VENDOR_ID_CABLE_LABS, DOCSIS3_V4_TFTP_SERVERS);
     ASSERT_TRUE(sub);
     const OptionBuffer& buffer = sub->getData();
     ASSERT_EQ(4, buffer.size());
@@ -2157,8 +2157,8 @@ TEST_F(FlexSubOptionTest, subProcessSupersedeDocSISVendorOps) {
     ASSERT_TRUE(opt);
     OptionVendorPtr vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
     ASSERT_TRUE(vendor);
-    EXPECT_EQ(VENDOR_ID_CABLE_LABS, vendor->getVendorId());
-    OptionPtr sub = vendor->getOption(DOCSIS3_V6_VENDOR_NAME);
+    EXPECT_EQ(VENDOR_ID_CABLE_LABS, vendor->getVendorIds()[0]);
+    OptionPtr sub = vendor->getOption(VENDOR_ID_CABLE_LABS, DOCSIS3_V6_VENDOR_NAME);
     ASSERT_TRUE(sub);
     const OptionBuffer& buffer = sub->getData();
     ASSERT_EQ(6, buffer.size());
@@ -2201,8 +2201,8 @@ TEST_F(FlexSubOptionTest, subProcessSupersedeVivso) {
     ASSERT_TRUE(opt);
     OptionVendorPtr vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
     ASSERT_TRUE(vendor);
-    EXPECT_EQ(123456, vendor->getVendorId());
-    OptionPtr sub = vendor->getOption(1);
+    EXPECT_EQ(123456, vendor->getVendorIds()[0]);
+    OptionPtr sub = vendor->getOption(123456, 1);
     ASSERT_TRUE(sub);
     const OptionBuffer& buffer = sub->getData();
     ASSERT_EQ(6, buffer.size());
@@ -2238,10 +2238,10 @@ TEST_F(FlexSubOptionTest, subProcessSupersedeVivsoMismatch) {
 
     Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
     Pkt4Ptr response(new Pkt4(DHCPOFFER, 12345));
-    OptionVendorPtr vendor(new OptionVendor(Option::V4, 67890));
+    OptionVendorPtr vendor(new OptionVendor(Option::V4, { 67890 }));
     response->addOption(vendor);
     OptionStringPtr str(new OptionString(Option::V4, 2, "xyzt"));
-    vendor->addOption(str);
+    vendor->addOption(67890, str);
     string response_txt = response->toText();
 
     EXPECT_NO_THROW(impl_->process<Pkt4Ptr>(Option::V4, query, response));
@@ -2251,10 +2251,10 @@ TEST_F(FlexSubOptionTest, subProcessSupersedeVivsoMismatch) {
     ASSERT_TRUE(opt);
     vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
     ASSERT_TRUE(vendor);
-    EXPECT_EQ(67890, vendor->getVendorId());
-    OptionPtr sub = vendor->getOption(1);
+    EXPECT_EQ(67890, vendor->getVendorIds()[0]);
+    OptionPtr sub = vendor->getOption(67890, 1);
     EXPECT_FALSE(sub);
-    sub = vendor->getOption(2);
+    sub = vendor->getOption(67890, 2);
     ASSERT_TRUE(sub);
     const OptionBuffer& buffer = sub->getData();
     ASSERT_EQ(4, buffer.size());
@@ -2299,8 +2299,8 @@ TEST_F(FlexSubOptionTest, subProcessSupersedeVendorOpts) {
     ASSERT_TRUE(opt);
     OptionVendorPtr vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
     ASSERT_TRUE(vendor);
-    EXPECT_EQ(123456, vendor->getVendorId());
-    OptionPtr sub = vendor->getOption(1);
+    EXPECT_EQ(123456, vendor->getVendorIds()[0]);
+    OptionPtr sub = vendor->getOption(123456, 1);
     ASSERT_TRUE(sub);
     const OptionBuffer& buffer = sub->getData();
     ASSERT_EQ(6, buffer.size());
@@ -2338,10 +2338,10 @@ TEST_F(FlexSubOptionTest, subProcessSupersedeVendorOptsMismatch) {
 
     Pkt6Ptr query(new Pkt6(DHCPV6_SOLICIT, 12345));
     Pkt6Ptr response(new Pkt6(DHCPV6_ADVERTISE, 12345));
-    OptionVendorPtr vendor(new OptionVendor(Option::V6, 67890));
+    OptionVendorPtr vendor(new OptionVendor(Option::V6, { 67890 }));
     response->addOption(vendor);
     OptionStringPtr str(new OptionString(Option::V6, 2, "xyzt"));
-    vendor->addOption(str);
+    vendor->addOption(67890, str);
     string response_txt = response->toText();
 
     EXPECT_NO_THROW(impl_->process<Pkt6Ptr>(Option::V6, query, response));
@@ -2351,10 +2351,10 @@ TEST_F(FlexSubOptionTest, subProcessSupersedeVendorOptsMismatch) {
     ASSERT_TRUE(opt);
     vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
     ASSERT_TRUE(vendor);
-    EXPECT_EQ(67890, vendor->getVendorId());
-    OptionPtr sub = vendor->getOption(1);
+    EXPECT_EQ(67890, vendor->getVendorIds()[0]);
+    OptionPtr sub = vendor->getOption(67890, 1);
     EXPECT_FALSE(sub);
-    sub = vendor->getOption(2);
+    sub = vendor->getOption(67890, 2);
     ASSERT_TRUE(sub);
     const OptionBuffer& buffer = sub->getData();
     ASSERT_EQ(4, buffer.size());
@@ -2682,11 +2682,11 @@ TEST_F(FlexSubOptionTest, subProcessRemoveDocSISVIVSO) {
     query->addClass("ALL");
     Pkt4Ptr response(new Pkt4(DHCPOFFER, 12345));
     string response_txt = response->toText();
-    OptionVendorPtr vendor(new OptionVendor(Option::V4, 4491));
+    OptionVendorPtr vendor(new OptionVendor(Option::V4, { VENDOR_ID_CABLE_LABS }));
     response->addOption(vendor);
     Option4AddrLstPtr tftp(new Option4AddrLst(DOCSIS3_V4_TFTP_SERVERS,
                                               IOAddress("10.1.2.3")));
-    vendor->addOption(tftp);
+    vendor->addOption(VENDOR_ID_CABLE_LABS, tftp);
 
     EXPECT_NO_THROW(impl_->process<Pkt4Ptr>(Option::V4, query, response));
 
@@ -2721,11 +2721,11 @@ TEST_F(FlexSubOptionTest, subProcessRemoveDocSISVendorOps) {
     Pkt6Ptr query(new Pkt6(DHCPV6_SOLICIT, 12345));
     Pkt6Ptr response(new Pkt6(DHCPV6_ADVERTISE, 12345));
     string response_txt = response->toText();
-    OptionVendorPtr vendor(new OptionVendor(Option::V6, 4491));
+    OptionVendorPtr vendor(new OptionVendor(Option::V6, { VENDOR_ID_CABLE_LABS }));
     response->addOption(vendor);
     OptionStringPtr str(new OptionString(Option::V6, DOCSIS3_V6_VENDOR_NAME,
                                          "foobar"));
-    vendor->addOption(str);
+    vendor->addOption(VENDOR_ID_CABLE_LABS, str);
     EXPECT_TRUE(response->getOption(D6O_VENDOR_OPTS));
 
     EXPECT_NO_THROW(impl_->process<Pkt6Ptr>(Option::V6, query, response));
@@ -2764,10 +2764,10 @@ TEST_F(FlexSubOptionTest, subProcessRemoveVivso) {
     Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
     Pkt4Ptr response(new Pkt4(DHCPOFFER, 12345));
     string response_txt = response->toText();
-    OptionVendorPtr vendor(new OptionVendor(Option::V4, 123456));
+    OptionVendorPtr vendor(new OptionVendor(Option::V4, { 123456 }));
     response->addOption(vendor);
     OptionStringPtr str(new OptionString(Option::V4, 1, "foobar"));
-    vendor->addOption(str);
+    vendor->addOption(123456, str);
     EXPECT_TRUE(response->getOption(DHO_VIVSO_SUBOPTIONS));
 
     EXPECT_NO_THROW(impl_->process<Pkt4Ptr>(Option::V4, query, response));
@@ -2806,10 +2806,10 @@ TEST_F(FlexSubOptionTest, subProcessRemoveVivsoMismatch) {
     Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
     query->addClass("ALL");
     Pkt4Ptr response(new Pkt4(DHCPOFFER, 12345));
-    OptionVendorPtr vendor(new OptionVendor(Option::V4, 67890));
+    OptionVendorPtr vendor(new OptionVendor(Option::V4, { 67890 }));
     response->addOption(vendor);
     OptionStringPtr str(new OptionString(Option::V4, 2, "xyzt"));
-    vendor->addOption(str);
+    vendor->addOption(67890, str);
     string response_txt = response->toText();
 
     EXPECT_NO_THROW(impl_->process<Pkt4Ptr>(Option::V4, query, response));
@@ -2819,10 +2819,10 @@ TEST_F(FlexSubOptionTest, subProcessRemoveVivsoMismatch) {
     ASSERT_TRUE(opt);
     vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
     ASSERT_TRUE(vendor);
-    EXPECT_EQ(67890, vendor->getVendorId());
-    OptionPtr sub = vendor->getOption(1);
+    EXPECT_EQ(67890, vendor->getVendorIds()[0]);
+    OptionPtr sub = vendor->getOption(67890, 1);
     EXPECT_FALSE(sub);
-    sub = vendor->getOption(2);
+    sub = vendor->getOption(67890, 2);
     ASSERT_TRUE(sub);
     const OptionBuffer& buffer = sub->getData();
     ASSERT_EQ(4, buffer.size());
@@ -2861,10 +2861,10 @@ TEST_F(FlexSubOptionTest, subProcessRemoveVendorOpts) {
     Pkt6Ptr query(new Pkt6(DHCPV6_SOLICIT, 12345));
     Pkt6Ptr response(new Pkt6(DHCPV6_ADVERTISE, 12345));
     string response_txt = response->toText();
-    OptionVendorPtr vendor(new OptionVendor(Option::V6, 123456));
+    OptionVendorPtr vendor(new OptionVendor(Option::V6, { 123456 }));
     response->addOption(vendor);
     OptionStringPtr str(new OptionString(Option::V6, 1, "foobar"));
-    vendor->addOption(str);
+    vendor->addOption(123456, str);
     EXPECT_TRUE(response->getOption(D6O_VENDOR_OPTS));
 
     EXPECT_NO_THROW(impl_->process<Pkt6Ptr>(Option::V6, query, response));
@@ -2904,10 +2904,10 @@ TEST_F(FlexSubOptionTest, subProcessRemoveVendorOptsMismatch) {
 
     Pkt6Ptr query(new Pkt6(DHCPV6_SOLICIT, 12345));
     Pkt6Ptr response(new Pkt6(DHCPV6_ADVERTISE, 12345));
-    OptionVendorPtr vendor(new OptionVendor(Option::V6, 67890));
+    OptionVendorPtr vendor(new OptionVendor(Option::V6, { 67890 }));
     response->addOption(vendor);
     OptionStringPtr str(new OptionString(Option::V6, 2, "xyzt"));
-    vendor->addOption(str);
+    vendor->addOption(67890, str);
     string response_txt = response->toText();
 
     EXPECT_NO_THROW(impl_->process<Pkt6Ptr>(Option::V6, query, response));
@@ -2917,10 +2917,10 @@ TEST_F(FlexSubOptionTest, subProcessRemoveVendorOptsMismatch) {
     ASSERT_TRUE(opt);
     vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
     ASSERT_TRUE(vendor);
-    EXPECT_EQ(67890, vendor->getVendorId());
-    OptionPtr sub = vendor->getOption(1);
+    EXPECT_EQ(67890, vendor->getVendorIds()[0]);
+    OptionPtr sub = vendor->getOption(67890, 1);
     EXPECT_FALSE(sub);
-    sub = vendor->getOption(2);
+    sub = vendor->getOption(67890, 2);
     ASSERT_TRUE(sub);
     const OptionBuffer& buffer = sub->getData();
     ASSERT_EQ(4, buffer.size());
