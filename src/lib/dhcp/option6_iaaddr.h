@@ -77,37 +77,49 @@ public:
     /// sets address in this option.
     ///
     /// @param addr address to be sent in this option
-    void setAddress(const isc::asiolink::IOAddress& addr) { addr_ = addr; }
+    void setAddress(const isc::asiolink::IOAddress& addr) {
+        addr_ = addr;
+    }
 
     /// Sets preferred lifetime (in seconds)
     ///
     /// @param pref address preferred lifetime (in seconds)
     ///
-    void setPreferred(unsigned int pref) { preferred_=pref; }
+    void setPreferred(unsigned int pref) {
+        preferred_ = pref;
+    }
 
     /// Sets valid lifetime (in seconds).
     ///
     /// @param valid address valid lifetime (in seconds)
     ///
-    void setValid(unsigned int valid) { valid_=valid; }
+    void setValid(unsigned int valid) {
+        valid_ = valid;
+    }
 
     /// Returns  address contained within this option.
     ///
     /// @return address
     isc::asiolink::IOAddress
-    getAddress() const { return addr_; }
+    getAddress() const {
+        return (addr_);
+    }
 
     /// Returns preferred lifetime of an address.
     ///
     /// @return preferred lifetime (in seconds)
     unsigned int
-    getPreferred() const { return preferred_; }
+    getPreferred() const {
+        return (preferred_);
+    }
 
     /// Returns valid lifetime of an address.
     ///
     /// @return valid lifetime (in seconds)
     unsigned int
-    getValid() const { return valid_; }
+    getValid() const {
+        return (valid_);
+    }
 
     /// returns data length (data length + DHCPv4/DHCPv6 option header)
     virtual uint16_t len() const;

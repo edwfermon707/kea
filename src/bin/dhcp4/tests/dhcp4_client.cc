@@ -6,6 +6,7 @@
 
 #include <config.h>
 #include <dhcp/dhcp4.h>
+#include <dhcp/docsis3_option_defs.h>
 #include <dhcp/option.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_vendor.h>
@@ -184,7 +185,7 @@ Dhcp4Client::applyConfiguration() {
     OptionVendorPtr opt_vendor = boost::dynamic_pointer_cast<
         OptionVendor>(resp->getOption(DHO_VIVSO_SUBOPTIONS));
     if (opt_vendor) {
-        config_.vendor_suboptions_ = opt_vendor->getOptions();
+        config_.vendor_suboptions_ = opt_vendor->getOptions(VENDOR_ID_CABLE_LABS);
     }
     // siaddr
     config_.siaddr_ = resp->getSiaddr();

@@ -1072,9 +1072,9 @@ TEST_F(RebindTest, docsisORO) {
         boost::dynamic_pointer_cast<OptionVendor>(opt);
     ASSERT_TRUE(vendor);
     // The vendor-id should be DOCSIS.
-    EXPECT_EQ(VENDOR_ID_CABLE_LABS, vendor->getVendorId());
+    EXPECT_EQ(VENDOR_ID_CABLE_LABS, vendor->getVendorIds()[0]);
     // There must be a config file sub-option.
-    opt = vendor->getOption(DOCSIS3_V6_CONFIG_FILE);
+    opt = vendor->getOption(VENDOR_ID_CABLE_LABS, DOCSIS3_V6_CONFIG_FILE);
     // With the expected content.
     OptionStringPtr config_file =
         boost::dynamic_pointer_cast<OptionString>(opt);

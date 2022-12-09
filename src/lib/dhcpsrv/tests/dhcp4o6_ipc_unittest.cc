@@ -196,10 +196,10 @@ Dhcp4o6IpcBaseTest::createDHCPv4o6MsgWithVendorOption(uint16_t msg_type,
     Pkt6Ptr pkt = createDHCPv4o6Message(msg_type, postfix);
 
     // Create vendor option with ISC enterprise id.
-    OptionVendorPtr option_vendor(new OptionVendor(Option::V6, enterprise_id));
+    OptionVendorPtr option_vendor(new OptionVendor(Option::V6, { enterprise_id }));
 
     // Add some option to the vendor option.
-    option_vendor->addOption(OptionPtr(new Option(Option::V6, 100)));
+    option_vendor->addOption(enterprise_id, OptionPtr(new Option(Option::V6, 100)));
 
     // Add vendor option to the message.
     pkt->addOption(option_vendor);
@@ -465,13 +465,14 @@ TEST_F(Dhcp4o6IpcBaseTest, receiveWithoutVendorOption) {
 // enterprise ID carried in the vendor option is invalid.
 TEST_F(Dhcp4o6IpcBaseTest, receiveInvalidEnterpriseId) {
     Pkt6Ptr pkt(new Pkt6(DHCPV6_DHCPV4_QUERY, 0));
-    OptionVendorPtr option_vendor(new OptionVendor(Option::V6, 1));
-    option_vendor->addOption(
-        OptionStringPtr(new OptionString(Option::V6, ISC_V6_4O6_INTERFACE,
-                                         "eth0")));
-    option_vendor->addOption(
-        Option6AddrLstPtr(new Option6AddrLst(ISC_V6_4O6_SRC_ADDRESS,
-                                             IOAddress("2001:db8:1::1")))
+    OptionVendorPtr option_vendor(new OptionVendor(Option::V6, { 1 }));
+    option_vendor->addOption(1,
+                             OptionStringPtr(new OptionString(Option::V6,
+                                                              ISC_V6_4O6_INTERFACE,
+                                                              "eth0")));
+    option_vendor->addOption(1,
+                             Option6AddrLstPtr(new Option6AddrLst(ISC_V6_4O6_SRC_ADDRESS,
+                                                                  IOAddress("2001:db8:1::1")))
     );
 
     pkt->addOption(option_vendor);
@@ -482,16 +483,15 @@ TEST_F(Dhcp4o6IpcBaseTest, receiveInvalidEnterpriseId) {
 // interface option is not present.
 TEST_F(Dhcp4o6IpcBaseTest, receiveWithoutInterfaceOption) {
     Pkt6Ptr pkt(new Pkt6(DHCPV6_DHCPV4_QUERY, 0));
-    OptionVendorPtr option_vendor(new OptionVendor(Option::V6,
-                                                   ENTERPRISE_ID_ISC));
-    option_vendor->addOption(
-        Option6AddrLstPtr(new Option6AddrLst(ISC_V6_4O6_SRC_ADDRESS,
-                                             IOAddress("2001:db8:1::1")))
+    OptionVendorPtr option_vendor(new OptionVendor(Option::V6, { ENTERPRISE_ID_ISC }));
+    option_vendor->addOption(ENTERPRISE_ID_ISC,
+                             Option6AddrLstPtr(new Option6AddrLst(ISC_V6_4O6_SRC_ADDRESS,
+                                                                  IOAddress("2001:db8:1::1")))
     );
-    option_vendor->addOption(
-        OptionUint16Ptr(new OptionUint16(Option::V6,
-                                         ISC_V6_4O6_SRC_PORT,
-                                         TEST_PORT)));
+    option_vendor->addOption(ENTERPRISE_ID_ISC,
+                             OptionUint16Ptr(new OptionUint16(Option::V6,
+                                                              ISC_V6_4O6_SRC_PORT,
+                                                              TEST_PORT)));
 
     pkt->addOption(option_vendor);
     testReceiveError(pkt);
@@ -502,19 +502,19 @@ TEST_F(Dhcp4o6IpcBaseTest, receiveWithoutInterfaceOption) {
 // system.
 TEST_F(Dhcp4o6IpcBaseTest, receiveWithInvalidInterface) {
     Pkt6Ptr pkt(new Pkt6(DHCPV6_DHCPV4_QUERY, 0));
-    OptionVendorPtr option_vendor(new OptionVendor(Option::V6,
-                                                   ENTERPRISE_ID_ISC));
-    option_vendor->addOption(
-        OptionStringPtr(new OptionString(Option::V6, ISC_V6_4O6_INTERFACE,
-                                         "ethX")));
-    option_vendor->addOption(
-        Option6AddrLstPtr(new Option6AddrLst(ISC_V6_4O6_SRC_ADDRESS,
-                                             IOAddress("2001:db8:1::1")))
+    OptionVendorPtr option_vendor(new OptionVendor(Option::V6, { ENTERPRISE_ID_ISC }));
+    option_vendor->addOption(ENTERPRISE_ID_ISC,
+                             OptionStringPtr(new OptionString(Option::V6,
+                                                              ISC_V6_4O6_INTERFACE,
+                                                              "ethX")));
+    option_vendor->addOption(ENTERPRISE_ID_ISC,
+                             Option6AddrLstPtr(new Option6AddrLst(ISC_V6_4O6_SRC_ADDRESS,
+                                                                  IOAddress("2001:db8:1::1")))
     );
-    option_vendor->addOption(
-        OptionUint16Ptr(new OptionUint16(Option::V6,
-                                         ISC_V6_4O6_SRC_PORT,
-                                         TEST_PORT)));
+    option_vendor->addOption(ENTERPRISE_ID_ISC,
+                             OptionUint16Ptr(new OptionUint16(Option::V6,
+                                                              ISC_V6_4O6_SRC_PORT,
+                                                              TEST_PORT)));
 
     pkt->addOption(option_vendor);
     testReceiveError(pkt);
@@ -525,15 +525,15 @@ TEST_F(Dhcp4o6IpcBaseTest, receiveWithInvalidInterface) {
 // source address option is not present.
 TEST_F(Dhcp4o6IpcBaseTest, receiveWithoutSourceAddressOption) {
     Pkt6Ptr pkt(new Pkt6(DHCPV6_DHCPV4_QUERY, 0));
-    OptionVendorPtr option_vendor(new OptionVendor(Option::V6,
-                                                   ENTERPRISE_ID_ISC));
-    option_vendor->addOption(
-        OptionStringPtr(new OptionString(Option::V6, ISC_V6_4O6_INTERFACE,
-                                         "eth0")));
-    option_vendor->addOption(
-        OptionUint16Ptr(new OptionUint16(Option::V6,
-                                         ISC_V6_4O6_SRC_PORT,
-                                         TEST_PORT)));
+    OptionVendorPtr option_vendor(new OptionVendor(Option::V6, { ENTERPRISE_ID_ISC }));
+    option_vendor->addOption(ENTERPRISE_ID_ISC,
+                             OptionStringPtr(new OptionString(Option::V6,
+                                             ISC_V6_4O6_INTERFACE,
+                                             "eth0")));
+    option_vendor->addOption(ENTERPRISE_ID_ISC,
+                             OptionUint16Ptr(new OptionUint16(Option::V6,
+                                                              ISC_V6_4O6_SRC_PORT,
+                                                              TEST_PORT)));
 
     pkt->addOption(option_vendor);
     testReceiveError(pkt);
@@ -543,14 +543,14 @@ TEST_F(Dhcp4o6IpcBaseTest, receiveWithoutSourceAddressOption) {
 // source port option is not present.
 TEST_F(Dhcp4o6IpcBaseTest, receiveWithoutSourcePortOption) {
     Pkt6Ptr pkt(new Pkt6(DHCPV6_DHCPV4_QUERY, 0));
-    OptionVendorPtr option_vendor(new OptionVendor(Option::V6,
-                                                   ENTERPRISE_ID_ISC));
-    option_vendor->addOption(
-        OptionStringPtr(new OptionString(Option::V6, ISC_V6_4O6_INTERFACE,
-                                         "eth0")));
-    option_vendor->addOption(
-        Option6AddrLstPtr(new Option6AddrLst(ISC_V6_4O6_SRC_ADDRESS,
-                                             IOAddress("2001:db8:1::1")))
+    OptionVendorPtr option_vendor(new OptionVendor(Option::V6, { ENTERPRISE_ID_ISC }));
+    option_vendor->addOption(ENTERPRISE_ID_ISC,
+                             OptionStringPtr(new OptionString(Option::V6,
+                                                              ISC_V6_4O6_INTERFACE,
+                                                              "eth0")));
+    option_vendor->addOption(ENTERPRISE_ID_ISC,
+                             Option6AddrLstPtr(new Option6AddrLst(ISC_V6_4O6_SRC_ADDRESS,
+                                                                  IOAddress("2001:db8:1::1")))
     );
 
     pkt->addOption(option_vendor);

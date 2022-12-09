@@ -101,11 +101,8 @@ public:
 
 // Basic test for v4 vendor option functionality
 TEST_F(OptionVendorTest, v4Basic) {
-
-    uint32_t vendor_id = 1234;
-
-    scoped_ptr<Option> opt;
-    EXPECT_NO_THROW(opt.reset(new OptionVendor(Option::V4, vendor_id)));
+    OptionPtr opt;
+    EXPECT_NO_THROW(opt.reset(new OptionVendor(Option::V4, { 1024 })));
 
     EXPECT_EQ(Option::V4, opt->getUniverse());
     EXPECT_EQ(DHO_VIVSO_SUBOPTIONS, opt->getType());
@@ -119,11 +116,8 @@ TEST_F(OptionVendorTest, v4Basic) {
 
 // Basic test for v6 vendor option functionality
 TEST_F(OptionVendorTest, v6Basic) {
-
-    uint32_t vendor_id = 1234;
-
-    scoped_ptr<Option> opt;
-    EXPECT_NO_THROW(opt.reset(new OptionVendor(Option::V6, vendor_id)));
+    OptionPtr opt;
+    EXPECT_NO_THROW(opt.reset(new OptionVendor(Option::V6, { 2048 })));
 
     EXPECT_EQ(Option::V6, opt->getUniverse());
     EXPECT_EQ(D6O_VENDOR_OPTS, opt->getType());
@@ -145,8 +139,8 @@ TEST_F(OptionVendorTest, v4Parse) {
                                                   binary.end())));
 
     // We know that there are supposed to be 2 options inside
-    EXPECT_TRUE(vendor->getOption(DOCSIS3_V4_ORO));
-    EXPECT_TRUE(vendor->getOption(5));
+    EXPECT_TRUE(vendor->getOption(VENDOR_ID_CABLE_LABS, DOCSIS3_V4_ORO));
+    EXPECT_TRUE(vendor->getOption(VENDOR_ID_CABLE_LABS, 5));
 }
 
 // Tests whether we can parse and then pack a v4 option.
@@ -183,31 +177,31 @@ TEST_F(OptionVendorTest, v6Parse) {
                                                   binary.end())));
 
     OptionPtr opt;
-    opt = vendor->getOption(DOCSIS3_V6_ORO);
+    opt = vendor->getOption(VENDOR_ID_CABLE_LABS, DOCSIS3_V6_ORO);
     ASSERT_TRUE(opt);
     OptionUint16ArrayPtr oro =
         boost::dynamic_pointer_cast<OptionUint16Array>(opt);
 
     // Check that all remaining expected options are there
-    EXPECT_TRUE(vendor->getOption(2));
-    EXPECT_TRUE(vendor->getOption(3));
-    EXPECT_TRUE(vendor->getOption(4));
-    EXPECT_TRUE(vendor->getOption(5));
-    EXPECT_TRUE(vendor->getOption(6));
-    EXPECT_TRUE(vendor->getOption(7));
-    EXPECT_TRUE(vendor->getOption(8));
-    EXPECT_TRUE(vendor->getOption(9));
-    EXPECT_TRUE(vendor->getOption(10));
-    EXPECT_TRUE(vendor->getOption(35));
-    EXPECT_TRUE(vendor->getOption(36));
+    EXPECT_TRUE(vendor->getOption(VENDOR_ID_CABLE_LABS, 2));
+    EXPECT_TRUE(vendor->getOption(VENDOR_ID_CABLE_LABS, 3));
+    EXPECT_TRUE(vendor->getOption(VENDOR_ID_CABLE_LABS, 4));
+    EXPECT_TRUE(vendor->getOption(VENDOR_ID_CABLE_LABS, 5));
+    EXPECT_TRUE(vendor->getOption(VENDOR_ID_CABLE_LABS, 6));
+    EXPECT_TRUE(vendor->getOption(VENDOR_ID_CABLE_LABS, 7));
+    EXPECT_TRUE(vendor->getOption(VENDOR_ID_CABLE_LABS, 8));
+    EXPECT_TRUE(vendor->getOption(VENDOR_ID_CABLE_LABS, 9));
+    EXPECT_TRUE(vendor->getOption(VENDOR_ID_CABLE_LABS, 10));
+    EXPECT_TRUE(vendor->getOption(VENDOR_ID_CABLE_LABS, 35));
+    EXPECT_TRUE(vendor->getOption(VENDOR_ID_CABLE_LABS, 36));
 
     // Check that there are no other options there
     for (uint16_t i = 11; i < 35; ++i) {
-        EXPECT_FALSE(vendor->getOption(i));
+        EXPECT_FALSE(vendor->getOption(VENDOR_ID_CABLE_LABS, i));
     }
 
     for (uint16_t i = 37; i < 65535; ++i) {
-        EXPECT_FALSE(vendor->getOption(i));
+        EXPECT_FALSE(vendor->getOption(VENDOR_ID_CABLE_LABS, i));
     }
 }
 
@@ -233,8 +227,8 @@ TEST_F(OptionVendorTest, packUnpack6) {
 // Tests that the vendor option is correctly returned in the textual
 // format for DHCPv4 case.
 TEST_F(OptionVendorTest, toText4) {
-    OptionVendor option(Option::V4, 1024);
-    option.addOption(OptionPtr(new OptionUint32(Option::V4, 1, 100)));
+    OptionVendor option(Option::V4, { 1024 });
+    option.addOption(1024, OptionPtr(new OptionUint32(Option::V4, 1, 100)));
 
     EXPECT_EQ("type=125, len=011: 1024 (uint32) 6 (uint8),\n"
               "options:\n"
@@ -245,8 +239,8 @@ TEST_F(OptionVendorTest, toText4) {
 // Tests that the vendor option is correctly returned in the textual
 // format for DHCPv6 case.
 TEST_F(OptionVendorTest, toText6) {
-    OptionVendor option(Option::V6, 2048);
-    option.addOption(OptionPtr(new OptionUint16(Option::V6, 1, 100)));
+    OptionVendor option(Option::V6, { 2048 });
+    option.addOption(2048, OptionPtr(new OptionUint16(Option::V6, 1, 100)));
 
     EXPECT_EQ("type=00017, len=00010: 2048 (uint32),\n"
               "options:\n"

@@ -1575,7 +1575,7 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
             OptionVendorPtr vendor_opts;
             vendor_opts = boost::dynamic_pointer_cast<OptionVendor>(opt.second);
             if (vendor_opts) {
-                uint32_t vendor_id = vendor_opts->getVendorId();
+                uint32_t vendor_id = vendor_opts->getVendorIds()[0];
                 static_cast<void>(vendor_ids.insert(vendor_id));
             }
         }
@@ -1593,7 +1593,7 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
                     continue;
                 }
                 // Is the vendor id already in the response?
-                uint32_t vendor_id = vendor_opts->getVendorId();
+                uint32_t vendor_id = vendor_opts->getVendorIds()[0];
                 if (vendor_ids.count(vendor_id) > 0) {
                     continue;
                 }
@@ -1631,7 +1631,7 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question,
         OptionVendorPtr vendor_rsp;
         vendor_rsp = boost::dynamic_pointer_cast<OptionVendor>(opt.second);
         if (vendor_rsp) {
-            uint32_t vendor_id = vendor_rsp->getVendorId();
+            uint32_t vendor_id = vendor_rsp->getVendorIds()[0];
             vendor_rsps[vendor_id] = vendor_rsp;
             static_cast<void>(vendor_ids.insert(vendor_id));
         }
@@ -1644,7 +1644,7 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question,
         OptionVendorPtr vendor_req;
         vendor_req = boost::dynamic_pointer_cast<OptionVendor>(opt.second);
         if (vendor_req) {
-            uint32_t vendor_id = vendor_req->getVendorId();
+            uint32_t vendor_id = vendor_req->getVendorIds()[0];
             vendor_reqs[vendor_id] = vendor_req;
             static_cast<void>(vendor_ids.insert(vendor_id));
         }
@@ -1675,7 +1675,7 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question,
     OptionUint16ArrayPtr oro;
     if (vendor_reqs.count(VENDOR_ID_CABLE_LABS) > 0) {
         OptionVendorPtr vendor_req = vendor_reqs[VENDOR_ID_CABLE_LABS];
-        OptionPtr oro_generic = vendor_req->getOption(DOCSIS3_V6_ORO);
+        OptionPtr oro_generic = vendor_req->getOption(VENDOR_ID_CABLE_LABS, DOCSIS3_V6_ORO);
         if (oro_generic) {
             // Vendor ID 4491 makes Kea look at DOCSIS3_V6_OPTION_DEFINITIONS
             // when parsing options. Based on that, oro_generic will have been
@@ -1725,19 +1725,19 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question,
         if (vendor_rsps.count(vendor_id) > 0) {
             vendor_rsp = vendor_rsps[vendor_id];
         } else {
-            vendor_rsp.reset(new OptionVendor(Option::V6, vendor_id));
+            vendor_rsp.reset(new OptionVendor(Option::V6, { vendor_id }));
         }
 
         // Get the list of options that client requested.
         bool added = false;
 
         for (uint16_t opt : requested_opts[vendor_id]) {
-            if (!vendor_rsp->getOption(opt)) {
+            if (!vendor_rsp->getOption(vendor_id, opt)) {
                 for (CfgOptionList::const_iterator copts = co_list.begin();
                      copts != co_list.end(); ++copts) {
                     OptionDescriptor desc = (*copts)->get(vendor_id, opt);
                     if (desc.option_) {
-                        vendor_rsp->addOption(desc.option_);
+                        vendor_rsp->addOption(vendor_id, desc.option_);
                         added = true;
                         break;
                     }
