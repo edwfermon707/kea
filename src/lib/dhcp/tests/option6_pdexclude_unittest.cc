@@ -102,6 +102,15 @@ TEST(Option6PDExcludeTest, unpack1ByteSubnetId) {
     EXPECT_EQ("2001:db8:dead:beef::",
               option->getExcludedPrefix(IOAddress("2001:db8:dead:bee0::1"), 59).toText());
     EXPECT_EQ(64, static_cast<int>(option->getExcludedPrefixLength()));
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_NO_THROW(option->unpack(vec.begin() + 4, vec.end()));
+
+    // Make sure that the option has been parsed correctly.
+    EXPECT_EQ("2001:db8:dead:beef::",
+              option->getExcludedPrefix(IOAddress("2001:db8:dead:bee0::1"), 59).toText());
+    EXPECT_EQ(64, static_cast<int>(option->getExcludedPrefixLength()));
 }
 
 // This test verifies parsing option wire format with subnet id of
@@ -124,26 +133,49 @@ TEST(Option6PDExcludeTest, unpack2ByteSubnetId) {
     EXPECT_EQ("2001:db8:dead:beef::",
               option->getExcludedPrefix(IOAddress("2001:db8:dead::"), 48).toText());
     EXPECT_EQ(64, static_cast<int>(option->getExcludedPrefixLength()));
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_NO_THROW(option->unpack(vec.begin() + 4, vec.end()));
+
+    // Make sure that the option has been parsed correctly.
+    EXPECT_EQ("2001:db8:dead:beef::",
+              option->getExcludedPrefix(IOAddress("2001:db8:dead::"), 48).toText());
+    EXPECT_EQ(64, static_cast<int>(option->getExcludedPrefixLength()));
 }
 
 // This test verifies that errors are reported when option buffer contains
 // invalid option data.
 TEST(Option6PDExcludeTest, unpackErrors) {
     const uint8_t data[] = {
-        0x00, 0x43,
-        0x00, 0x02,
-        0x40, 0x78
+        0x00, 0x43,       // option code 67
+        0x00, 0x02,       // option length
+        0x40, 0xbe, 0xef  // excluded prefix length 60 + subnet id
     };
     std::vector<uint8_t> vec(data, data + sizeof(data));
 
+    // Parse option.
+    Option6PDExcludePtr option;
+    ASSERT_NO_THROW(
+        option.reset(new Option6PDExclude(vec.begin() + 4, vec.end()))
+    );
+
     // Option has no IPv6 subnet id.
-    EXPECT_THROW(Option6PDExclude(vec.begin() + 4, vec.end() - 1),
+    EXPECT_THROW(Option6PDExclude(vec.begin() + 4, vec.end() - 2),
                  BadValue);
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_THROW(option->unpack(vec.begin() + 4, vec.end() - 2), BadValue);
 
     // IPv6 subnet id is 0.
     vec[4] = 0x00;
-    EXPECT_THROW(Option6PDExclude(vec.begin() + 4, vec.end()),
+    EXPECT_THROW(Option6PDExclude(vec.begin() + 4, vec.end() - 1),
                  BadValue);
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_THROW(option->unpack(vec.begin() + 4, vec.end() - 1), BadValue);
 }
 
 // This test verifies conversion of the Prefix Exclude option to the

@@ -2333,6 +2333,20 @@ TEST_F(OptionCustomTest, unpack) {
         ASSERT_NO_THROW(address = option->readAddress(i));
         EXPECT_EQ(addresses[i], address);
     }
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_NO_THROW(option->unpack(buf.begin(), buf.end()));
+
+    // Now we should have only 2 data fields.
+    ASSERT_EQ(2, option->getDataFieldsNum());
+
+    // Verify that the addresses have been overwritten.
+    for (int i = 0; i < 2; ++i) {
+        IOAddress address("10.10.10.10");
+        ASSERT_NO_THROW(address = option->readAddress(i));
+        EXPECT_EQ(addresses[i], address);
+    }
 }
 
 // The purpose of this test is to verify that unpack function works
@@ -2382,6 +2396,49 @@ TEST_F(OptionCustomTest, unpackRecordArray) {
     std::string text = option->toText();
     EXPECT_EQ("type=231, len=014: 8712 (uint16) 192.168.0.1 (ipv4-address) "
               "127.0.0.1 (ipv4-address) 10.10.1.2 (ipv4-address)", text);
+
+    buf.clear();
+    writeInt<uint16_t>(8712, buf);
+
+    // Store the collection of IPv4 addresses into the buffer.
+    for (size_t i = 0; i < addresses.size(); ++i) {
+        writeAddress(addresses[i], buf);
+    }
+
+    // Perform 'unpack'.
+    ASSERT_NO_THROW(option->unpack(buf.begin(), buf.end()));
+
+    // We should have 4 data fields.
+    ASSERT_EQ(4, option->getDataFieldsNum());
+
+    // We expect a 16 bit integer
+    ASSERT_NO_THROW(value0 = option->readInteger<uint16_t>(0));
+    EXPECT_EQ(8712, value0);
+
+    // ... and 3 IPv4 addresses being stored in the option.
+    for (int i = 0; i < 3; ++i) {
+        IOAddress address("10.10.10.10");
+        ASSERT_NO_THROW(address = option->readAddress(i + 1));
+        EXPECT_EQ(addresses[i], address);
+    }
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_NO_THROW(option->unpack(buf.begin(), buf.end()));
+
+    // We should have 4 data fields.
+    ASSERT_EQ(4, option->getDataFieldsNum());
+
+    // We expect a 16 bit integer
+    ASSERT_NO_THROW(value0 = option->readInteger<uint16_t>(0));
+    EXPECT_EQ(8712, value0);
+
+    // ... and 3 IPv4 addresses being stored in the option.
+    for (int i = 0; i < 3; ++i) {
+        IOAddress address("10.10.10.10");
+        ASSERT_NO_THROW(address = option->readAddress(i + 1));
+        EXPECT_EQ(addresses[i], address);
+    }
 }
 
 // The purpose of this test is to verify that new data can be set for

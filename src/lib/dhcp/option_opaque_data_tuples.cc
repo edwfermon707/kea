@@ -52,6 +52,8 @@ OptionOpaqueDataTuples::unpack(OptionBufferConstIter begin,
                   " size " << std::distance(begin, end));
     }
 
+    tuples_.clear();
+
     // Start reading opaque data.
     size_t offset = 0;
     while (offset < std::distance(begin, end)) {

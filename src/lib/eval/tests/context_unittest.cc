@@ -8,6 +8,7 @@
 
 #include <eval/eval_context.h>
 #include <eval/token.h>
+#include <dhcp/docsis3_option_defs.h>
 #include <dhcp/option.h>
 #include <dhcp/pkt4.h>
 #include <asiolink/io_address.h>
@@ -1967,11 +1968,11 @@ TEST_F(EvalContextTest, typeErrors) {
 }
 
 TEST_F(EvalContextTest, vendor4SpecificVendorExists) {
-    testVendor("vendor[4491].exists", Option::V4, 4491, TokenOption::EXISTS);
+    testVendor("vendor[4491].exists", Option::V4, VENDOR_ID_CABLE_LABS, TokenOption::EXISTS);
 }
 
 TEST_F(EvalContextTest, vendor6SpecificVendorExists) {
-    testVendor("vendor[4491].exists", Option::V6, 4491, TokenOption::EXISTS);
+    testVendor("vendor[4491].exists", Option::V6, VENDOR_ID_CABLE_LABS, TokenOption::EXISTS);
 }
 
 TEST_F(EvalContextTest, vendor4AnyVendorExists) {
@@ -1991,29 +1992,29 @@ TEST_F(EvalContextTest, vendor6enterprise) {
 }
 
 TEST_F(EvalContextTest, vendor4SuboptionExists) {
-    testVendor("vendor[4491].option[1].exists", Option::V4, 4491, 1, TokenOption::EXISTS);
+    testVendor("vendor[4491].option[1].exists", Option::V4, VENDOR_ID_CABLE_LABS, 1, TokenOption::EXISTS);
 }
 
 TEST_F(EvalContextTest, vendor6SuboptionExists) {
-    testVendor("vendor[4491].option[1].exists", Option::V6, 4491, 1, TokenOption::EXISTS);
+    testVendor("vendor[4491].option[1].exists", Option::V6, VENDOR_ID_CABLE_LABS, 1, TokenOption::EXISTS);
 }
 
 TEST_F(EvalContextTest, vendor4SuboptionHex) {
-    testVendor("vendor[4491].option[1].hex == 0x1234", Option::V4, 4491, 1,
+    testVendor("vendor[4491].option[1].hex == 0x1234", Option::V4, VENDOR_ID_CABLE_LABS, 1,
                TokenOption::HEXADECIMAL);
 }
 
 TEST_F(EvalContextTest, vendor6SuboptionHex) {
-    testVendor("vendor[4491].option[1].hex == 0x1234", Option::V6, 4491, 1,
+    testVendor("vendor[4491].option[1].hex == 0x1234", Option::V6, VENDOR_ID_CABLE_LABS, 1,
                TokenOption::HEXADECIMAL);
 }
 
 TEST_F(EvalContextTest, vendorClass4SpecificVendorExists) {
-    testVendorClass("vendor-class[4491].exists", Option::V4, 4491);
+    testVendorClass("vendor-class[4491].exists", Option::V4, VENDOR_ID_CABLE_LABS);
 }
 
 TEST_F(EvalContextTest, vendorClass6SpecificVendorExists) {
-    testVendorClass("vendor-class[4491].exists", Option::V6, 4491);
+    testVendorClass("vendor-class[4491].exists", Option::V6, VENDOR_ID_CABLE_LABS);
 }
 
 TEST_F(EvalContextTest, vendorClass4AnyVendorExists) {
@@ -2033,11 +2034,11 @@ TEST_F(EvalContextTest, vendorClass6enterprise) {
 }
 
 TEST_F(EvalContextTest, vendorClass4SpecificVendorData) {
-    testVendorClass("vendor-class[4491].data == 0x1234", Option::V4, 4491, 0);
+    testVendorClass("vendor-class[4491].data == 0x1234", Option::V4, VENDOR_ID_CABLE_LABS, 0);
 }
 
 TEST_F(EvalContextTest, vendorClass6SpecificVendorData) {
-    testVendorClass("vendor-class[4491].data == 0x1234", Option::V6, 4491, 0);
+    testVendorClass("vendor-class[4491].data == 0x1234", Option::V6, VENDOR_ID_CABLE_LABS, 0);
 }
 
 TEST_F(EvalContextTest, vendorClass4AnyVendorData) {
@@ -2049,11 +2050,11 @@ TEST_F(EvalContextTest, vendorClass6AnyVendorData) {
 }
 
 TEST_F(EvalContextTest, vendorClass4DataIndex) {
-    testVendorClass("vendor-class[4491].data[3] == 0x1234", Option::V4, 4491, 3);
+    testVendorClass("vendor-class[4491].data[3] == 0x1234", Option::V4, VENDOR_ID_CABLE_LABS, 3);
 }
 
 TEST_F(EvalContextTest, vendorClass6DataIndex) {
-    testVendorClass("vendor-class[4491].data[3] == 0x1234", Option::V6, 4491, 3);
+    testVendorClass("vendor-class[4491].data[3] == 0x1234", Option::V6, VENDOR_ID_CABLE_LABS, 3);
 }
 
 // Test the parsing of a sub-option with parent by code.

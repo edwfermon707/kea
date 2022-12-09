@@ -146,6 +146,8 @@ Pkt4::pack() {
 
 void
 Pkt4::unpack() {
+    options_.clear();
+
     // input buffer (used during message reception)
     isc::util::InputBuffer buffer_in(&data_[0], data_.size());
 
@@ -226,6 +228,10 @@ Pkt4::unpack() {
     // store more than 255 bytes of data and the regex parsers can effectively
     // access the entire data.
     LibDHCP::fuseOptions4(options_);
+
+    // Kea supports multiple vendor options so it needs to split received and
+    // fused options in multiple OptionVendor instances.
+    LibDHCP::extendVendorOptions4(options_);
 
     // No need to call check() here. There are thorough tests for this
     // later (see Dhcp4Srv::accept()). We want to drop the packet later,

@@ -35,20 +35,26 @@ Option4AddrLst::Option4AddrLst(uint8_t type, const AddressContainer& addrs)
     // don't set addrs_ directly. setAddresses() will do additional checks.
 }
 
-
-Option4AddrLst::Option4AddrLst(uint8_t type, OptionBufferConstIter first,
-                               OptionBufferConstIter last)
+Option4AddrLst::Option4AddrLst(uint8_t type, OptionBufferConstIter begin,
+                               OptionBufferConstIter end)
     : Option(V4, type) {
-    if ( (distance(first, last) % V4ADDRESS_LEN) ) {
+    unpack(begin, end);
+}
+
+void Option4AddrLst::unpack(OptionBufferConstIter begin,
+                            OptionBufferConstIter end) {
+    if ((distance(begin, end) % V4ADDRESS_LEN) ) {
         isc_throw(OutOfRange, "DHCPv4 Option4AddrLst " << type_
-                  << " has invalid length=" << distance(first, last)
+                  << " has invalid length=" << distance(begin, end)
                   << ", must be divisible by 4.");
     }
 
-    while (first != last) {
-        const uint8_t* ptr = &(*first);
-        addAddress(IOAddress(readUint32(ptr, distance(first, last))));
-        first += V4ADDRESS_LEN;
+    addrs_.clear();
+
+    while (begin != end) {
+        const uint8_t* ptr = &(*begin);
+        addAddress(IOAddress(readUint32(ptr, distance(begin, end))));
+        begin += V4ADDRESS_LEN;
     }
 }
 

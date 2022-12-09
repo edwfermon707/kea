@@ -2682,7 +2682,7 @@ TEST_F(FlexSubOptionTest, subProcessRemoveDocSISVIVSO) {
     query->addClass("ALL");
     Pkt4Ptr response(new Pkt4(DHCPOFFER, 12345));
     string response_txt = response->toText();
-    OptionVendorPtr vendor(new OptionVendor(Option::V4, 4491));
+    OptionVendorPtr vendor(new OptionVendor(Option::V4, VENDOR_ID_CABLE_LABS));
     response->addOption(vendor);
     Option4AddrLstPtr tftp(new Option4AddrLst(DOCSIS3_V4_TFTP_SERVERS,
                                               IOAddress("10.1.2.3")));
@@ -2721,7 +2721,7 @@ TEST_F(FlexSubOptionTest, subProcessRemoveDocSISVendorOps) {
     Pkt6Ptr query(new Pkt6(DHCPV6_SOLICIT, 12345));
     Pkt6Ptr response(new Pkt6(DHCPV6_ADVERTISE, 12345));
     string response_txt = response->toText();
-    OptionVendorPtr vendor(new OptionVendor(Option::V6, 4491));
+    OptionVendorPtr vendor(new OptionVendor(Option::V6, VENDOR_ID_CABLE_LABS));
     response->addOption(vendor);
     OptionStringPtr str(new OptionString(Option::V6, DOCSIS3_V6_VENDOR_NAME,
                                          "foobar"));

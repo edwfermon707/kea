@@ -8,6 +8,7 @@
 #include <fstream>
 #include <eval/token.h>
 #include <eval/eval_context.h>
+#include <dhcp/docsis3_option_defs.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/dhcp4.h>
@@ -2538,13 +2539,13 @@ TEST_F(TokenTest, member) {
 // This test verifies if expression vendor[4491].exists works properly in DHCPv4.
 TEST_F(TokenTest, vendor4SpecificVendorExists) {
     // Case 1: no option, should evaluate to false
-    testVendorExists(Option::V4, 4491, 0, "false");
+    testVendorExists(Option::V4, VENDOR_ID_CABLE_LABS, 0, "false");
 
     // Case 2: option present, but uses different enterprise-id, should fail
-    testVendorExists(Option::V4, 4491, 1234, "false");
+    testVendorExists(Option::V4, VENDOR_ID_CABLE_LABS, 1234, "false");
 
     // Case 3: option present and has matching enterprise-id, should succeed
-    testVendorExists(Option::V4, 4491, 4491, "true");
+    testVendorExists(Option::V4, VENDOR_ID_CABLE_LABS, VENDOR_ID_CABLE_LABS, "true");
 
     // Check if the logged messages are correct.
     addString("EVAL_DEBUG_VENDOR_NO_OPTION Option with code 125 missing, "
@@ -2559,13 +2560,13 @@ TEST_F(TokenTest, vendor4SpecificVendorExists) {
 // This test verifies if expression vendor[4491].exists works properly in DHCPv6.
 TEST_F(TokenTest, vendor6SpecificVendorExists) {
     // Case 1: no option, should evaluate to false
-    testVendorExists(Option::V6, 4491, 0, "false");
+    testVendorExists(Option::V6, VENDOR_ID_CABLE_LABS, 0, "false");
 
     // Case 2: option present, but uses different enterprise-id, should fail
-    testVendorExists(Option::V6, 4491, 1234, "false");
+    testVendorExists(Option::V6, VENDOR_ID_CABLE_LABS, 1234, "false");
 
     // Case 3: option present and has matching enterprise-id, should succeed
-    testVendorExists(Option::V6, 4491, 4491, "true");
+    testVendorExists(Option::V6, VENDOR_ID_CABLE_LABS, VENDOR_ID_CABLE_LABS, "true");
 
     // Check if the logged messages are correct.
     addString("EVAL_DEBUG_VENDOR_NO_OPTION Option with code 17 missing, "
@@ -2586,7 +2587,7 @@ TEST_F(TokenTest, vendor4AnyVendorExists) {
     testVendorExists(Option::V4, 0, 1234, "true");
 
     // Case 3: option present with vendor-id 4491, should succeed
-    testVendorExists(Option::V4, 0, 4491, "true");
+    testVendorExists(Option::V4, 0, VENDOR_ID_CABLE_LABS, "true");
 
     // Check if the logged messages are correct.
     addString("EVAL_DEBUG_VENDOR_NO_OPTION Option with code 125 missing, "
@@ -2607,7 +2608,7 @@ TEST_F(TokenTest, vendor6AnyVendorExists) {
     testVendorExists(Option::V6, 0, 1234, "true");
 
     // Case 3: option present with vendor-id 4491, should succeed
-    testVendorExists(Option::V6, 0, 4491, "true");
+    testVendorExists(Option::V6, 0, VENDOR_ID_CABLE_LABS, "true");
 
     // Check if the logged messages are correct.
     addString("EVAL_DEBUG_VENDOR_NO_OPTION Option with code 17 missing, "
@@ -2669,23 +2670,23 @@ TEST_F(TokenTest, vendor6enterprise) {
 // have the suboption with valid type, but enterprise may be different.
 TEST_F(TokenTest, vendor4SuboptionExists) {
     // Case 1: expression vendor[4491].option[1].exists, no option present
-    testVendorSuboption(Option::V4, 4491, 1, 0, 0, TokenOption::EXISTS, "false");
+    testVendorSuboption(Option::V4, VENDOR_ID_CABLE_LABS, 1, 0, 0, TokenOption::EXISTS, "false");
 
     // Case 2: expression vendor[4491].option[1].exists, option with vendor-id = 1234,
     // no suboptions, expected result "false"
-    testVendorSuboption(Option::V4, 4491, 1, 1234, 0, TokenOption::EXISTS, "false");
+    testVendorSuboption(Option::V4, VENDOR_ID_CABLE_LABS, 1, 1234, 0, TokenOption::EXISTS, "false");
 
     // Case 3: expression vendor[4491].option[1].exists, option with vendor-id = 1234,
     // suboption 1, expected result "false"
-    testVendorSuboption(Option::V4, 4491, 1, 1234, 1, TokenOption::EXISTS, "false");
+    testVendorSuboption(Option::V4, VENDOR_ID_CABLE_LABS, 1, 1234, 1, TokenOption::EXISTS, "false");
 
     // Case 4: expression vendor[4491].option[1].exists, option with vendor-id = 4491,
     // suboption 2, expected result "false"
-    testVendorSuboption(Option::V4, 4491, 1, 4491, 2, TokenOption::EXISTS, "false");
+    testVendorSuboption(Option::V4, VENDOR_ID_CABLE_LABS, 1, VENDOR_ID_CABLE_LABS, 2, TokenOption::EXISTS, "false");
 
     // Case 5: expression vendor[4491].option[1].exists, option with vendor-id = 4491,
     // suboption 1, expected result "true"
-    testVendorSuboption(Option::V4, 4491, 1, 4491, 1, TokenOption::EXISTS, "true");
+    testVendorSuboption(Option::V4, VENDOR_ID_CABLE_LABS, 1, VENDOR_ID_CABLE_LABS, 1, TokenOption::EXISTS, "true");
 
     // Check if the logged messages are correct.
     addString("EVAL_DEBUG_VENDOR_NO_OPTION Option with code 125 missing, pushing "
@@ -2703,23 +2704,23 @@ TEST_F(TokenTest, vendor4SuboptionExists) {
 // for DHCPv6.
 TEST_F(TokenTest, vendor6SuboptionExists) {
     // Case 1: expression vendor[4491].option[1].exists, no option present
-    testVendorSuboption(Option::V6, 4491, 1, 0, 0, TokenOption::EXISTS, "false");
+    testVendorSuboption(Option::V6, VENDOR_ID_CABLE_LABS, 1, 0, 0, TokenOption::EXISTS, "false");
 
     // Case 2: expression vendor[4491].option[1].exists, option with vendor-id = 1234,
     // no suboptions, expected result "false"
-    testVendorSuboption(Option::V6, 4491, 1, 1234, 0, TokenOption::EXISTS, "false");
+    testVendorSuboption(Option::V6, VENDOR_ID_CABLE_LABS, 1, 1234, 0, TokenOption::EXISTS, "false");
 
     // Case 3: expression vendor[4491].option[1].exists, option with vendor-id = 1234,
     // suboption 1, expected result "false"
-    testVendorSuboption(Option::V6, 4491, 1, 1234, 1, TokenOption::EXISTS, "false");
+    testVendorSuboption(Option::V6, VENDOR_ID_CABLE_LABS, 1, 1234, 1, TokenOption::EXISTS, "false");
 
     // Case 4: expression vendor[4491].option[1].exists, option with vendor-id = 4491,
     // suboption 2, expected result "false"
-    testVendorSuboption(Option::V6, 4491, 1, 4491, 2, TokenOption::EXISTS, "false");
+    testVendorSuboption(Option::V6, VENDOR_ID_CABLE_LABS, 1, VENDOR_ID_CABLE_LABS, 2, TokenOption::EXISTS, "false");
 
     // Case 5: expression vendor[4491].option[1].exists, option with vendor-id = 4491,
     // suboption 1, expected result "true"
-    testVendorSuboption(Option::V6, 4491, 1, 4491, 1, TokenOption::EXISTS, "true");
+    testVendorSuboption(Option::V6, VENDOR_ID_CABLE_LABS, 1, VENDOR_ID_CABLE_LABS, 1, TokenOption::EXISTS, "true");
 
     // Check if the logged messages are correct.
     addString("EVAL_DEBUG_VENDOR_NO_OPTION Option with code 17 missing, pushing "
@@ -2738,20 +2739,20 @@ TEST_F(TokenTest, vendor6SuboptionExists) {
 // This test is for DHCPv4.
 TEST_F(TokenTest, vendor4SuboptionHex) {
     // Case 1: no option present, should return empty string
-    testVendorSuboption(Option::V4, 4491, 1, 0, 0, TokenOption::HEXADECIMAL, "");
+    testVendorSuboption(Option::V4, VENDOR_ID_CABLE_LABS, 1, 0, 0, TokenOption::HEXADECIMAL, "");
 
     // Case 2: option with vendor-id = 1234, no suboptions, expected result ""
-    testVendorSuboption(Option::V4, 4491, 1, 1234, 0, TokenOption::HEXADECIMAL, "");
+    testVendorSuboption(Option::V4, VENDOR_ID_CABLE_LABS, 1, 1234, 0, TokenOption::HEXADECIMAL, "");
 
     // Case 3: option with vendor-id = 1234, suboption 1, expected result ""
-    testVendorSuboption(Option::V4, 4491, 1, 1234, 1, TokenOption::HEXADECIMAL, "");
+    testVendorSuboption(Option::V4, VENDOR_ID_CABLE_LABS, 1, 1234, 1, TokenOption::HEXADECIMAL, "");
 
     // Case 4: option with vendor-id = 4491, suboption 2, expected result ""
-    testVendorSuboption(Option::V4, 4491, 1, 4491, 2, TokenOption::HEXADECIMAL, "");
+    testVendorSuboption(Option::V4, VENDOR_ID_CABLE_LABS, 1, VENDOR_ID_CABLE_LABS, 2, TokenOption::HEXADECIMAL, "");
 
     // Case 5: option with vendor-id = 4491, suboption 1, expected result content
     // of the option
-    testVendorSuboption(Option::V4, 4491, 1, 4491, 1, TokenOption::HEXADECIMAL, "alpha");
+    testVendorSuboption(Option::V4, VENDOR_ID_CABLE_LABS, 1, VENDOR_ID_CABLE_LABS, 1, TokenOption::HEXADECIMAL, "alpha");
 
     // Check if the logged messages are correct.
     addString("EVAL_DEBUG_VENDOR_NO_OPTION Option with code 125 missing, pushing "
@@ -2770,20 +2771,20 @@ TEST_F(TokenTest, vendor4SuboptionHex) {
 // This test is for DHCPv4.
 TEST_F(TokenTest, vendor6SuboptionHex) {
     // Case 1: no option present, should return empty string
-    testVendorSuboption(Option::V6, 4491, 1, 0, 0, TokenOption::HEXADECIMAL, "");
+    testVendorSuboption(Option::V6, VENDOR_ID_CABLE_LABS, 1, 0, 0, TokenOption::HEXADECIMAL, "");
 
     // Case 2: option with vendor-id = 1234, no suboptions, expected result ""
-    testVendorSuboption(Option::V6, 4491, 1, 1234, 0, TokenOption::HEXADECIMAL, "");
+    testVendorSuboption(Option::V6, VENDOR_ID_CABLE_LABS, 1, 1234, 0, TokenOption::HEXADECIMAL, "");
 
     // Case 3: option with vendor-id = 1234, suboption 1, expected result ""
-    testVendorSuboption(Option::V6, 4491, 1, 1234, 1, TokenOption::HEXADECIMAL, "");
+    testVendorSuboption(Option::V6, VENDOR_ID_CABLE_LABS, 1, 1234, 1, TokenOption::HEXADECIMAL, "");
 
     // Case 4: option with vendor-id = 4491, suboption 2, expected result ""
-    testVendorSuboption(Option::V6, 4491, 1, 4491, 2, TokenOption::HEXADECIMAL, "");
+    testVendorSuboption(Option::V6, VENDOR_ID_CABLE_LABS, 1, VENDOR_ID_CABLE_LABS, 2, TokenOption::HEXADECIMAL, "");
 
     // Case 5: option with vendor-id = 4491, suboption 1, expected result content
     // of the option
-    testVendorSuboption(Option::V6, 4491, 1, 4491, 1, TokenOption::HEXADECIMAL, "alpha");
+    testVendorSuboption(Option::V6, VENDOR_ID_CABLE_LABS, 1, VENDOR_ID_CABLE_LABS, 1, TokenOption::HEXADECIMAL, "alpha");
 
     // Check if the logged messages are correct.
     addString("EVAL_DEBUG_VENDOR_NO_OPTION Option with code 17 missing, pushing "
@@ -2801,13 +2802,13 @@ TEST_F(TokenTest, vendor6SuboptionHex) {
 // in DHCPv4.
 TEST_F(TokenTest, vendorClass4SpecificVendorExists) {
     // Case 1: no option present, should fail
-    testVendorClassExists(Option::V4, 4491, 0, "false");
+    testVendorClassExists(Option::V4, VENDOR_ID_CABLE_LABS, 0, "false");
 
     // Case 2: option exists, but has different vendor-id (1234), should fail
-    testVendorClassExists(Option::V4, 4491, 1234, "false");
+    testVendorClassExists(Option::V4, VENDOR_ID_CABLE_LABS, 1234, "false");
 
     // Case 3: option exists and has matching vendor-id, should succeed
-    testVendorClassExists(Option::V4, 4491, 4491, "true");
+    testVendorClassExists(Option::V4, VENDOR_ID_CABLE_LABS, VENDOR_ID_CABLE_LABS, "true");
 
     // Check if the logged messages are correct.
     addString("EVAL_DEBUG_VENDOR_CLASS_NO_OPTION Option with code 124 missing, "
@@ -2823,13 +2824,13 @@ TEST_F(TokenTest, vendorClass4SpecificVendorExists) {
 // in DHCPv6.
 TEST_F(TokenTest, vendorClass6SpecificVendorExists) {
     // Case 1: no option present, should fail
-    testVendorClassExists(Option::V6, 4491, 0, "false");
+    testVendorClassExists(Option::V6, VENDOR_ID_CABLE_LABS, 0, "false");
 
     // Case 2: option exists, but has different vendor-id (1234), should fail
-    testVendorClassExists(Option::V6, 4491, 1234, "false");
+    testVendorClassExists(Option::V6, VENDOR_ID_CABLE_LABS, 1234, "false");
 
     // Case 3: option exists and has matching vendor-id, should succeed
-    testVendorClassExists(Option::V6, 4491, 4491, "true");
+    testVendorClassExists(Option::V6, VENDOR_ID_CABLE_LABS, VENDOR_ID_CABLE_LABS, "true");
 
     // Check if the logged messages are correct.
     addString("EVAL_DEBUG_VENDOR_CLASS_NO_OPTION Option with code 16 missing, pushing "
@@ -2851,7 +2852,7 @@ TEST_F(TokenTest, vendorClass4AnyVendorExists) {
     testVendorClassExists(Option::V4, 0, 1234, "true");
 
     // Case 3: option exists, should succeed, regardless of the vendor-id
-    testVendorClassExists(Option::V4, 0, 4491, "true");
+    testVendorClassExists(Option::V4, 0, VENDOR_ID_CABLE_LABS, "true");
 
     // Check if the logged messages are correct.
     addString("EVAL_DEBUG_VENDOR_CLASS_NO_OPTION Option with code 124 missing, "
@@ -2873,7 +2874,7 @@ TEST_F(TokenTest, vendorClass6AnyVendorExists) {
     testVendorClassExists(Option::V6, 0, 1234, "true");
 
     // Case 3: option exists, should succeed, regardless of the vendor-id
-    testVendorClassExists(Option::V6, 0, 4491, "true");
+    testVendorClassExists(Option::V6, 0, VENDOR_ID_CABLE_LABS, "true");
 
     // Check if the logged messages are correct.
     addString("EVAL_DEBUG_VENDOR_CLASS_NO_OPTION Option with code 16 missing, pushing "
@@ -2934,11 +2935,11 @@ TEST_F(TokenTest, vendorClass6enterprise) {
 TEST_F(TokenTest, vendorClass4SpecificVendorData) {
     // Case 1: Expression looks for vendor-id 4491, data[0], there is no
     // vendor-class option at all, expected result is empty string.
-    testVendorClassData(Option::V4, 4491, 0, 0, 0, "");
+    testVendorClassData(Option::V4, VENDOR_ID_CABLE_LABS, 0, 0, 0, "");
 
     // Case 2: Expression looks for vendor-id 4491, data[0], there is
     // vendor-class with vendor-id 1234 and no data, expected result is empty string.
-    testVendorClassData(Option::V4, 4491, 0, 1234, 0, "");
+    testVendorClassData(Option::V4, VENDOR_ID_CABLE_LABS, 0, 1234, 0, "");
 
     // Case 3: Expression looks for vendor-id 4491, data[0], there is
     // vendor-class with vendor-id 4491 and no data, expected result is empty string.
@@ -2946,16 +2947,16 @@ TEST_F(TokenTest, vendorClass4SpecificVendorData) {
     // it may be empty. The OptionVendor code was told to not create any special
     // tuples, but it creates one empty on its own. So the code finds that one
     // tuple and extracts its content (an empty string).
-    testVendorClassData(Option::V4, 4491, 0, 4491, 0, "");
+    testVendorClassData(Option::V4, VENDOR_ID_CABLE_LABS, 0, VENDOR_ID_CABLE_LABS, 0, "");
 
     // Case 4: Expression looks for vendor-id 4491, data[0], there is
     // vendor-class with vendor-id 1234 and 1 data tuple, expected result is empty string
-    testVendorClassData(Option::V4, 4491, 0, 1234, 1, "");
+    testVendorClassData(Option::V4, VENDOR_ID_CABLE_LABS, 0, 1234, 1, "");
 
     // Case 5: Expression looks for vendor-id 4491, data[0], there is
     // vendor-class with vendor-id 4491 and 1 data tuple, expected result is
     // content of that data ("alpha")
-    testVendorClassData(Option::V4, 4491, 0, 4491, 1, "alpha");
+    testVendorClassData(Option::V4, VENDOR_ID_CABLE_LABS, 0, VENDOR_ID_CABLE_LABS, 1, "alpha");
 
     // Check if the logged messages are correct.
     addString("EVAL_DEBUG_VENDOR_CLASS_NO_OPTION Option with code 124 missing, "
@@ -2976,24 +2977,24 @@ TEST_F(TokenTest, vendorClass4SpecificVendorData) {
 TEST_F(TokenTest, vendorClass6SpecificVendorData) {
     // Case 1: Expression looks for vendor-id 4491, data[0], there is no
     // vendor-class option at all, expected result is empty string.
-    testVendorClassData(Option::V6, 4491, 0, 0, 0, "");
+    testVendorClassData(Option::V6, VENDOR_ID_CABLE_LABS, 0, 0, 0, "");
 
     // Case 2: Expression looks for vendor-id 4491, data[0], there is
     // vendor-class with vendor-id 1234 and no data, expected result is empty string.
-    testVendorClassData(Option::V6, 4491, 0, 1234, 0, "");
+    testVendorClassData(Option::V6, VENDOR_ID_CABLE_LABS, 0, 1234, 0, "");
 
     // Case 3: Expression looks for vendor-id 4491, data[0], there is
     // vendor-class with vendor-id 4491 and no data, expected result is empty string
-    testVendorClassData(Option::V6, 4491, 0, 4491, 0, "");
+    testVendorClassData(Option::V6, VENDOR_ID_CABLE_LABS, 0, VENDOR_ID_CABLE_LABS, 0, "");
 
     // Case 4: Expression looks for vendor-id 4491, data[0], there is
     // vendor-class with vendor-id 1234 and 1 data tuple, expected result is empty string
-    testVendorClassData(Option::V6, 4491, 0, 1234, 1, "");
+    testVendorClassData(Option::V6, VENDOR_ID_CABLE_LABS, 0, 1234, 1, "");
 
     // Case 5: Expression looks for vendor-id 4491, data[0], there is
     // vendor-class with vendor-id 4491 and 1 data tuple, expected result is
     // content of that data ("alpha")
-    testVendorClassData(Option::V6, 4491, 0, 4491, 1, "alpha");
+    testVendorClassData(Option::V6, VENDOR_ID_CABLE_LABS, 0, VENDOR_ID_CABLE_LABS, 1, "alpha");
 
     // Check if the logged messages are correct.
     addString("EVAL_DEBUG_VENDOR_CLASS_NO_OPTION Option with code 16 missing, "
@@ -3025,7 +3026,7 @@ TEST_F(TokenTest, vendorClass4AnyVendorData) {
     // Case 3: Expression looks for any vendor-id (0), data[0], there is
     // vendor-class with vendor-id 4491 and no data (one empty tuple), expected
     // result is empty string.
-    testVendorClassData(Option::V4, 0, 0, 4491, 0, "");
+    testVendorClassData(Option::V4, 0, 0, VENDOR_ID_CABLE_LABS, 0, "");
 
     // Case 4: Expression looks for any vendor-id (0), data[0], there is
     // vendor-class with vendor-id 1234 and 1 data tuple, expected result is
@@ -3035,7 +3036,7 @@ TEST_F(TokenTest, vendorClass4AnyVendorData) {
     // Case 5: Expression looks for any vendor-id (0), data[0], there is
     // vendor-class with vendor-id 4491 and 1 data tuple, expected result is
     // content of that data ("alpha")
-    testVendorClassData(Option::V4, 0, 0, 4491, 1, "alpha");
+    testVendorClassData(Option::V4, 0, 0, VENDOR_ID_CABLE_LABS, 1, "alpha");
 
     // Check if the logged messages are correct.
     addString("EVAL_DEBUG_VENDOR_CLASS_NO_OPTION Option with code 124 missing, "
@@ -3064,7 +3065,7 @@ TEST_F(TokenTest, vendorClass6AnyVendorData) {
 
     // Case 3: Expression looks for any vendor-id (0), data[0], there is
     // vendor-class with vendor-id 4491 and no data, expected result is empty string
-    testVendorClassData(Option::V6, 0, 0, 4491, 0, "");
+    testVendorClassData(Option::V6, 0, 0, VENDOR_ID_CABLE_LABS, 0, "");
 
     // Case 4: Expression looks for any vendor-id (0), data[0], there is
     // vendor-class with vendor-id 1234 and 1 data tuple, expected result is
@@ -3074,7 +3075,7 @@ TEST_F(TokenTest, vendorClass6AnyVendorData) {
     // Case 5: Expression looks for any vendor-id (0), data[0], there is
     // vendor-class with vendor-id 4491 and 1 data tuple, expected result is
     // content of that data ("alpha")
-    testVendorClassData(Option::V6, 0, 0, 4491, 1, "alpha");
+    testVendorClassData(Option::V6, 0, 0, VENDOR_ID_CABLE_LABS, 1, "alpha");
 
     // Check if the logged messages are correct.
     addString("EVAL_DEBUG_VENDOR_CLASS_NO_OPTION Option with code 16 missing, "
@@ -3097,34 +3098,34 @@ TEST_F(TokenTest, vendorClass6AnyVendorData) {
 TEST_F(TokenTest, vendorClass4DataIndex) {
     // Case 1: Expression looks for vendor-id 4491, data[3], there is no
     // vendor-class option at all, expected result is empty string.
-    testVendorClassData(Option::V4, 4491, 3, 0, 0, "");
+    testVendorClassData(Option::V4, VENDOR_ID_CABLE_LABS, 3, 0, 0, "");
 
     // Case 2: Expression looks for vendor-id 4491, data[3], there is
     // vendor-class with vendor-id 1234 and no data, expected result is empty string.
-    testVendorClassData(Option::V4, 4491, 3, 1234, 0, "");
+    testVendorClassData(Option::V4, VENDOR_ID_CABLE_LABS, 3, 1234, 0, "");
 
     // Case 3: Expression looks for vendor-id 4491, data[3], there is
     // vendor-class with vendor-id 4491 and no data, expected result is empty string
-    testVendorClassData(Option::V4, 4491, 3, 4491, 0, "");
+    testVendorClassData(Option::V4, VENDOR_ID_CABLE_LABS, 3, VENDOR_ID_CABLE_LABS, 0, "");
 
     // Case 4: Expression looks for vendor-id 4491, data[3], there is
     // vendor-class with vendor-id 1234 and 1 data tuple, expected result is empty string.
-    testVendorClassData(Option::V4, 4491, 3, 1234, 1, "");
+    testVendorClassData(Option::V4, VENDOR_ID_CABLE_LABS, 3, 1234, 1, "");
 
     // Case 5: Expression looks for vendor-id 4491, data[3], there is
     // vendor-class with vendor-id 4491, but has only 3 data tuples, expected
     // result is empty string.
-    testVendorClassData(Option::V4, 4491, 3, 4491, 3, "");
+    testVendorClassData(Option::V4, VENDOR_ID_CABLE_LABS, 3, VENDOR_ID_CABLE_LABS, 3, "");
 
     // Case 6: Expression looks for vendor-id 4491, data[3], there is
     // vendor-class with vendor-id 4491 and 5 data tuples, expected result is
     // content of that tuple ("gamma")
-    testVendorClassData(Option::V4, 4491, 3, 4491, 5, "gamma");
+    testVendorClassData(Option::V4, VENDOR_ID_CABLE_LABS, 3, VENDOR_ID_CABLE_LABS, 5, "gamma");
 
     // Case 6: Expression looks for vendor-id 4491, data[3], there is
     // vendor-class with vendor-id 1234 and 5 data tuples, expected result is
     // empty string, because vendor-id does not match.
-    testVendorClassData(Option::V4, 4491, 3, 1234, 5, "");
+    testVendorClassData(Option::V4, VENDOR_ID_CABLE_LABS, 3, 1234, 5, "");
 
     // Check if the logged messages are correct.
     addString("EVAL_DEBUG_VENDOR_CLASS_NO_OPTION Option with code 124 missing, "
@@ -3151,29 +3152,29 @@ TEST_F(TokenTest, vendorClass4DataIndex) {
 TEST_F(TokenTest, vendorClass6DataIndex) {
     // Case 1: Expression looks for vendor-id 4491, data[3], there is no
     // vendor-class option at all, expected result is empty string.
-    testVendorClassData(Option::V6, 4491, 3, 0, 0, "");
+    testVendorClassData(Option::V6, VENDOR_ID_CABLE_LABS, 3, 0, 0, "");
 
     // Case 2: Expression looks for vendor-id 4491, data[3], there is
     // vendor-class with vendor-id 1234 and no data, expected result is empty string.
-    testVendorClassData(Option::V6, 4491, 3, 1234, 0, "");
+    testVendorClassData(Option::V6, VENDOR_ID_CABLE_LABS, 3, 1234, 0, "");
 
     // Case 3: Expression looks for vendor-id 4491, data[3], there is
     // vendor-class with vendor-id 4491 and no data, expected result is empty string
-    testVendorClassData(Option::V6, 4491, 3, 4491, 0, "");
+    testVendorClassData(Option::V6, VENDOR_ID_CABLE_LABS, 3, VENDOR_ID_CABLE_LABS, 0, "");
 
     // Case 4: Expression looks for vendor-id 4491, data[3], there is
     // vendor-class with vendor-id 1234 and 5 data tuples, expected result is empty string.
-    testVendorClassData(Option::V6, 4491, 3, 1234, 5, "");
+    testVendorClassData(Option::V6, VENDOR_ID_CABLE_LABS, 3, 1234, 5, "");
 
     // Case 5: Expression looks for vendor-id 4491, data[3], there is
     // vendor-class with vendor-id 4491, but has only 3 data tuples, expected
     // result is empty string.
-    testVendorClassData(Option::V6, 4491, 3, 4491, 3, "");
+    testVendorClassData(Option::V6, VENDOR_ID_CABLE_LABS, 3, VENDOR_ID_CABLE_LABS, 3, "");
 
     // Case 6: Expression looks for vendor-id 4491, data[3], there is
     // vendor-class with vendor-id 4491 and 5 data tuples, expected result is
     // content of that tuple ("gamma")
-    testVendorClassData(Option::V6, 4491, 3, 4491, 5, "gamma");
+    testVendorClassData(Option::V6, VENDOR_ID_CABLE_LABS, 3, VENDOR_ID_CABLE_LABS, 5, "gamma");
 
     // Check if the logged messages are correct.
     addString("EVAL_DEBUG_VENDOR_CLASS_NO_OPTION Option with code 16 missing, "

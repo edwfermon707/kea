@@ -23,7 +23,7 @@ namespace isc {
 namespace dhcp {
 
 Option6IA::Option6IA(uint16_t type, uint32_t iaid)
-    :Option(Option::V6, type), iaid_(iaid), t1_(0), t2_(0) {
+    : Option(Option::V6, type), iaid_(iaid), t1_(0), t2_(0) {
 
     // IA_TA has different layout than IA_NA and IA_PD. We can't use this class
     if (type == D6O_IA_TA) {
@@ -36,7 +36,7 @@ Option6IA::Option6IA(uint16_t type, uint32_t iaid)
 
 Option6IA::Option6IA(uint16_t type, OptionBufferConstIter begin,
                      OptionBufferConstIter end)
-    :Option(Option::V6, type) {
+    : Option(Option::V6, type) {
 
     // IA_TA has different layout than IA_NA and IA_PD. We can't use this class
     if (type == D6O_IA_TA) {
@@ -71,8 +71,12 @@ void Option6IA::unpack(OptionBufferConstIter begin,
     if (distance(begin, end) < OPTION6_IA_LEN) {
         isc_throw(OutOfRange, "Option " << type_ << " truncated");
     }
+
+    options_.clear();
+
     iaid_ = readUint32(&(*begin), distance(begin, end));
     begin += sizeof(uint32_t);
+
     t1_ = readUint32(&(*begin), distance(begin, end));
     begin += sizeof(uint32_t);
 

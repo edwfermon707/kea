@@ -40,16 +40,16 @@ public:
 
         // Copied from wireshark, file docsis-*-CG3000DCR-Registration-Filtered.cap
         // packet #1
-        /* V-I Vendor-specific Information (125)
-           Length: 127
-           Enterprise ID: Cable Television Laboratories, Inc. (4491)
-           Suboption 1: Option Request
-           Suboption 5: Modem capabilities */
         string from_wireshark = "7d7f0000118b7a01010205750101010201030301010401"
             "0105010106010107010f0801100901030a01010b01180c01010d0200400e020010"
             "0f010110040000000211010014010015013f1601011701011801041901041a0104"
             "1b01201c01021d01081e01201f0110200110210102220101230100240100250101"
             "260200ff270101";
+        /*  V-I Vendor-specific Information (125)
+            Length: 127
+            Enterprise ID: Cable Television Laboratories, Inc. (4491)
+            Suboption 1: Option Request
+            Suboption 5: Modem capabilities */
 
         OptionBuffer bin;
         // Decode the hex string and store it in bin (which happens
@@ -72,23 +72,23 @@ public:
             "14010015013f1601011701011801041901041a01041b01201c01021d01081e0120"
             "1f0110200110210102220101230100240100250101260200ff2701010024000620"
             "e52ab81514";
-        /* Vendor-specific Information
-                Option: Vendor-specific Information (17)
-                Length: 255
-                Value: 0000118b0001000a00200021002200250026000200034543...
-                Enterprise ID: Cable Television Laboratories, Inc. (4491)
-                Suboption 1: Option Request =  32 33 34 37 38
-                Suboption 2: Device Type = "ECM"
-                Suboption 3: Embedded Components = "ECM:EROUTER"
-                Suboption 4: Serial Number = "2BR229U40044C"
-                Suboption 5: Hardware Version = "1.04"
-                Suboption 6: Software Version = "V1.33.03"
-                Suboption 7: Boot ROM Version = "2.3.0R2"
-                Suboption 8: Organization Unique Identifier = "00095B"
-                Suboption 9: Model Number = "CG3000DCR"
-                Suboption 10: Vendor Name = "Netgear"
-                Suboption 35: TLV5 = 057501010102010303010104010105010106010107010f08...
-                Suboption 36: Device Identifier = 20e52ab81514 */
+        /*  Vendor-specific Information
+            Option: Vendor-specific Information (17)
+            Length: 255
+            Value: 0000118b0001000a00200021002200250026000200034543...
+            Enterprise ID: Cable Television Laboratories, Inc. (4491)
+            Suboption 1: Option Request =  32 33 34 37 38
+            Suboption 2: Device Type = "ECM"
+            Suboption 3: Embedded Components = "ECM:EROUTER"
+            Suboption 4: Serial Number = "2BR229U40044C"
+            Suboption 5: Hardware Version = "1.04"
+            Suboption 6: Software Version = "V1.33.03"
+            Suboption 7: Boot ROM Version = "2.3.0R2"
+            Suboption 8: Organization Unique Identifier = "00095B"
+            Suboption 9: Model Number = "CG3000DCR"
+            Suboption 10: Vendor Name = "Netgear"
+            Suboption 35: TLV5 = 057501010102010303010104010105010106010107010f08...
+            Suboption 36: Device Identifier = 20e52ab81514 */
 
         OptionBuffer bin;
         // Decode the hex string and store it in bin (which happens
@@ -101,11 +101,8 @@ public:
 
 // Basic test for v4 vendor option functionality
 TEST_F(OptionVendorTest, v4Basic) {
-
-    uint32_t vendor_id = 1234;
-
-    scoped_ptr<Option> opt;
-    EXPECT_NO_THROW(opt.reset(new OptionVendor(Option::V4, vendor_id)));
+    OptionVendorPtr opt;
+    EXPECT_NO_THROW(opt.reset(new OptionVendor(Option::V4, 1024)));
 
     EXPECT_EQ(Option::V4, opt->getUniverse());
     EXPECT_EQ(DHO_VIVSO_SUBOPTIONS, opt->getType());
@@ -113,17 +110,60 @@ TEST_F(OptionVendorTest, v4Basic) {
     // Minimal length is 7: 1(type) + 1(length) + 4(vendor-id) + datalen(1)
     EXPECT_EQ(7, opt->len());
 
+    EXPECT_EQ(opt->getVendorId(), 1024);
+
     // Check destructor
     EXPECT_NO_THROW(opt.reset());
 }
 
+// Basic test for v4 vendor option functionality
+TEST_F(OptionVendorTest, v4SubOptions) {
+    OptionVendorPtr opt;
+    EXPECT_NO_THROW(opt.reset(new OptionVendor(Option::V4, 1024)));
+
+    EXPECT_EQ(Option::V4, opt->getUniverse());
+    EXPECT_EQ(DHO_VIVSO_SUBOPTIONS, opt->getType());
+
+    // Minimal length is 7: 1(type) + 1(length) + 4(vendor-id) + datalen(1)
+    EXPECT_EQ(7, opt->len());
+
+    EXPECT_EQ(opt->getVendorId(), 1024);
+    ASSERT_FALSE(opt->getOption(1));
+    ASSERT_FALSE(opt->getOption(2));
+    ASSERT_FALSE(opt->getOption(3));
+
+    OptionPtr sub(new Option(Option::V4, 1));
+    ASSERT_NO_THROW(opt->addOption(sub));
+    ASSERT_TRUE(opt->getOption(1));
+    ASSERT_FALSE(opt->getOption(2));
+    ASSERT_FALSE(opt->getOption(3));
+
+    sub.reset(new Option(Option::V4, 2));
+    ASSERT_NO_THROW(opt->addOption(sub));
+    ASSERT_TRUE(opt->getOption(1));
+    ASSERT_TRUE(opt->getOption(2));
+    ASSERT_FALSE(opt->getOption(3));
+
+    sub.reset(new Option(Option::V4, 3));
+    ASSERT_NO_THROW(opt->addOption(sub));
+    ASSERT_TRUE(opt->getOption(1));
+    ASSERT_TRUE(opt->getOption(2));
+    ASSERT_TRUE(opt->getOption(3));
+
+    ASSERT_NO_THROW(opt->delOption(1));
+    ASSERT_NO_THROW(opt->delOption(2));
+    ASSERT_NO_THROW(opt->delOption(3));
+    ASSERT_NO_THROW(opt->delOption(1));
+    ASSERT_NO_THROW(opt->delOption(2));
+    ASSERT_NO_THROW(opt->delOption(3));
+
+    ASSERT_NO_THROW(opt->setVendorId(2048));
+}
+
 // Basic test for v6 vendor option functionality
 TEST_F(OptionVendorTest, v6Basic) {
-
-    uint32_t vendor_id = 1234;
-
-    scoped_ptr<Option> opt;
-    EXPECT_NO_THROW(opt.reset(new OptionVendor(Option::V6, vendor_id)));
+    OptionVendorPtr opt;
+    EXPECT_NO_THROW(opt.reset(new OptionVendor(Option::V6, 2048)));
 
     EXPECT_EQ(Option::V6, opt->getUniverse());
     EXPECT_EQ(D6O_VENDOR_OPTS, opt->getType());
@@ -131,8 +171,52 @@ TEST_F(OptionVendorTest, v6Basic) {
     // Minimal length is 8: 2(type) + 2(length) + 4(vendor-id)
     EXPECT_EQ(8, opt->len());
 
+    EXPECT_EQ(opt->getVendorId(), 2048);
+
     // Check destructor
     EXPECT_NO_THROW(opt.reset());
+}
+
+// Basic test for v6 vendor option functionality
+TEST_F(OptionVendorTest, v6SubOptions) {
+    OptionVendorPtr opt;
+    EXPECT_NO_THROW(opt.reset(new OptionVendor(Option::V6, 2048)));
+
+    EXPECT_EQ(Option::V6, opt->getUniverse());
+    EXPECT_EQ(D6O_VENDOR_OPTS, opt->getType());
+
+    // Minimal length is 8: 2(type) + 2(length) + 4(vendor-id)
+    EXPECT_EQ(8, opt->len());
+
+    EXPECT_EQ(opt->getVendorId(), 2048);
+
+    ASSERT_FALSE(opt->getOption(1));
+    ASSERT_FALSE(opt->getOption(2));
+    ASSERT_FALSE(opt->getOption(3));
+
+    OptionPtr sub(new Option(Option::V6, 1));
+    ASSERT_NO_THROW(opt->addOption(sub));
+    ASSERT_TRUE(opt->getOption(1));
+    ASSERT_FALSE(opt->getOption(2));
+    ASSERT_FALSE(opt->getOption(3));
+
+    sub.reset(new Option(Option::V6, 2));
+    ASSERT_NO_THROW(opt->addOption(sub));
+    ASSERT_TRUE(opt->getOption(1));
+    ASSERT_TRUE(opt->getOption(2));
+    ASSERT_FALSE(opt->getOption(3));
+
+    sub.reset(new Option(Option::V6, 3));
+    ASSERT_NO_THROW(opt->addOption(sub));
+
+    ASSERT_NO_THROW(opt->delOption(3));
+    ASSERT_NO_THROW(opt->delOption(2));
+    ASSERT_NO_THROW(opt->delOption(1));
+    ASSERT_NO_THROW(opt->delOption(3));
+    ASSERT_NO_THROW(opt->delOption(2));
+    ASSERT_NO_THROW(opt->delOption(1));
+
+    ASSERT_NO_THROW(opt->setVendorId(8192));
 }
 
 // Tests whether we can parse v4 vendor options properly
@@ -143,6 +227,16 @@ TEST_F(OptionVendorTest, v4Parse) {
     OptionVendorPtr vendor;
     ASSERT_NO_THROW(vendor.reset(new OptionVendor(Option::V4, binary.begin() + 2,
                                                   binary.end())));
+    ASSERT_EQ(vendor->getVendorId(), VENDOR_ID_CABLE_LABS);
+
+    // We know that there are supposed to be 2 options inside
+    EXPECT_TRUE(vendor->getOption(DOCSIS3_V4_ORO));
+    EXPECT_TRUE(vendor->getOption(5));
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_NO_THROW(vendor->unpack(binary.begin() + 2, binary.end()));
+    ASSERT_EQ(vendor->getVendorId(), VENDOR_ID_CABLE_LABS);
 
     // We know that there are supposed to be 2 options inside
     EXPECT_TRUE(vendor->getOption(DOCSIS3_V4_ORO));
@@ -181,6 +275,7 @@ TEST_F(OptionVendorTest, v6Parse) {
     // (2 bytes) and option length (2 bytes).
     ASSERT_NO_THROW(vendor.reset(new OptionVendor(Option::V6, binary.begin() + 4,
                                                   binary.end())));
+    ASSERT_EQ(vendor->getVendorId(), VENDOR_ID_CABLE_LABS);
 
     OptionPtr opt;
     opt = vendor->getOption(DOCSIS3_V6_ORO);
@@ -209,6 +304,37 @@ TEST_F(OptionVendorTest, v6Parse) {
     for (uint16_t i = 37; i < 65535; ++i) {
         EXPECT_FALSE(vendor->getOption(i));
     }
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_NO_THROW(vendor->unpack(binary.begin() + 4, binary.end()));
+    ASSERT_EQ(vendor->getVendorId(), VENDOR_ID_CABLE_LABS);
+    opt = vendor->getOption(DOCSIS3_V6_ORO);
+    ASSERT_TRUE(opt);
+    oro = boost::dynamic_pointer_cast<OptionUint16Array>(opt);
+
+    // Check that all remaining expected options are there
+    EXPECT_TRUE(vendor->getOption(2));
+    EXPECT_TRUE(vendor->getOption(3));
+    EXPECT_TRUE(vendor->getOption(4));
+    EXPECT_TRUE(vendor->getOption(5));
+    EXPECT_TRUE(vendor->getOption(6));
+    EXPECT_TRUE(vendor->getOption(7));
+    EXPECT_TRUE(vendor->getOption(8));
+    EXPECT_TRUE(vendor->getOption(9));
+    EXPECT_TRUE(vendor->getOption(10));
+    EXPECT_TRUE(vendor->getOption(35));
+    EXPECT_TRUE(vendor->getOption(36));
+
+    // Check that there are no other options there
+    for (uint16_t i = 11; i < 35; ++i) {
+        EXPECT_FALSE(vendor->getOption(i));
+    }
+
+    for (uint16_t i = 37; i < 65535; ++i) {
+        EXPECT_FALSE(vendor->getOption(i));
+    }
+
 }
 
 // Tests whether we can parse and then pack a v6 option.

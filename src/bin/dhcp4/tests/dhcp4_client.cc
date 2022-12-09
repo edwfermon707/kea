@@ -6,6 +6,7 @@
 
 #include <config.h>
 #include <dhcp/dhcp4.h>
+#include <dhcp/docsis3_option_defs.h>
 #include <dhcp/option.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_vendor.h>
