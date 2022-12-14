@@ -1098,16 +1098,21 @@ void TokenVendor::evaluate(Pkt& pkt, ValueStack& values) {
         return;
     }
 
+    uint32_t data = vendor_id_;
+    if (!data) {
+        data = vendor->getVendorIds()[0];
+    }
+
     switch (field_) {
     case ENTERPRISE_ID:
     {
         // Extract enterprise-id
         string txt(sizeof(uint32_t), 0);
-        uint32_t value = htonl(vendor->getVendorIds()[0]);
+        uint32_t value = htonl(data);
         memcpy(&txt[0], &value, sizeof(uint32_t));
         values.push(txt);
         LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_VENDOR_ENTERPRISE_ID)
-            .arg(vendor->getVendorIds()[0])
+            .arg(data)
             .arg(util::encode::encodeHex(std::vector<uint8_t>(txt.begin(),
                                                               txt.end())));
         return;
@@ -1121,7 +1126,7 @@ void TokenVendor::evaluate(Pkt& pkt, ValueStack& values) {
         // We already passed all the checks: the option is there and has specified
         // enterprise-id.
         LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_VENDOR_EXISTS)
-            .arg(vendor->getVendorIds()[0])
+            .arg(data)
             .arg("true");
         values.push("true");
         return;
