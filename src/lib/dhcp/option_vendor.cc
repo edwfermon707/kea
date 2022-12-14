@@ -176,6 +176,12 @@ OptionPtr OptionVendor::getOption(uint32_t vendor_id, uint16_t type) const {
 }
 
 void OptionVendor::addOption(uint32_t vendor_id, OptionPtr opt) {
+    if (std::find(vendor_ids_.begin(), vendor_ids_.end(), vendor_id) == vendor_ids_.end()) {
+        if (vendor_ids_.size() && universe_ == Option::V6) {
+            isc_throw(isc::BadValue, "Invalid enterprise ID for universe type " << universe_);
+        }
+        vendor_ids_.push_back(vendor_id);
+    }
     (*vendor_options_)[vendor_id].insert(std::make_pair(opt->getType(), opt));
 }
 
