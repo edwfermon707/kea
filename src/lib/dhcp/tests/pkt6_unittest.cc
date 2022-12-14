@@ -275,6 +275,28 @@ TEST_F(Pkt6Test, unpack_solicit1) {
     EXPECT_FALSE(sol->getOption(D6O_SERVERID)); // server-id is missing
     EXPECT_FALSE(sol->getOption(D6O_IA_TA));
     EXPECT_FALSE(sol->getOption(D6O_IAADDR));
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_NO_THROW(sol->unpack());
+
+    // Check for length
+    EXPECT_EQ(98, sol->len() );
+
+    // Check for type
+    EXPECT_EQ(DHCPV6_SOLICIT, sol->getType() );
+
+    // Check that all present options are returned
+    EXPECT_TRUE(sol->getOption(D6O_CLIENTID)); // client-id is present
+    EXPECT_TRUE(sol->getOption(D6O_IA_NA));    // IA_NA is present
+    EXPECT_TRUE(sol->getOption(D6O_ELAPSED_TIME));  // elapsed is present
+    EXPECT_TRUE(sol->getOption(D6O_NAME_SERVERS));
+    EXPECT_TRUE(sol->getOption(D6O_ORO));
+
+    // Let's check that non-present options are not returned
+    EXPECT_FALSE(sol->getOption(D6O_SERVERID)); // server-id is missing
+    EXPECT_FALSE(sol->getOption(D6O_IA_TA));
+    EXPECT_FALSE(sol->getOption(D6O_IAADDR));
 }
 
 TEST_F(Pkt6Test, packUnpack) {
@@ -695,109 +717,111 @@ TEST_F(Pkt6Test, getName) {
 TEST_F(Pkt6Test, relayUnpack) {
     Pkt6Ptr msg(capture2());
 
-    EXPECT_NO_THROW(msg->unpack());
+    for (uint8_t i = 0; i < 2; i++) {
+        EXPECT_NO_THROW(msg->unpack());
 
-    EXPECT_EQ(DHCPV6_SOLICIT, msg->getType());
-    EXPECT_EQ(217, msg->len());
+        EXPECT_EQ(DHCPV6_SOLICIT, msg->getType());
+        EXPECT_EQ(217, msg->len());
 
-    ASSERT_EQ(2, msg->relay_info_.size());
+        ASSERT_EQ(2, msg->relay_info_.size());
 
-    OptionPtr opt;
+        OptionPtr opt;
 
-    // Part 1: Check options inserted by the first relay
+        // Part 1: Check options inserted by the first relay
 
-    // There should be 2 options in first relay
-    EXPECT_EQ(2, msg->relay_info_[0].options_.size());
+        // There should be 2 options in first relay
+        EXPECT_EQ(2, msg->relay_info_[0].options_.size());
 
-    // There should be interface-id option
-    EXPECT_EQ(1, msg->getRelayOptions(D6O_INTERFACE_ID, 0).size());
-    ASSERT_TRUE(opt = msg->getRelayOption(D6O_INTERFACE_ID, 0));
-    OptionBuffer data = opt->getData();
-    EXPECT_EQ(32, opt->len()); // 28 bytes of data + 4 bytes header
-    EXPECT_EQ(data.size(), 28);
-    // That's a strange interface-id, but this is a real life example
-    EXPECT_TRUE(0 == memcmp("ISAM144|299|ipv6|nt:vp:1:110", &data[0], 28));
+        // There should be interface-id option
+        EXPECT_EQ(1, msg->getRelayOptions(D6O_INTERFACE_ID, 0).size());
+        ASSERT_TRUE(opt = msg->getRelayOption(D6O_INTERFACE_ID, 0));
+        OptionBuffer data = opt->getData();
+        EXPECT_EQ(32, opt->len()); // 28 bytes of data + 4 bytes header
+        EXPECT_EQ(data.size(), 28);
+        // That's a strange interface-id, but this is a real life example
+        EXPECT_TRUE(0 == memcmp("ISAM144|299|ipv6|nt:vp:1:110", &data[0], 28));
 
-    // Get the remote-id option
-    EXPECT_EQ(1, msg->getRelayOptions(D6O_REMOTE_ID, 0).size());
-    ASSERT_TRUE(opt = msg->getRelayOption(D6O_REMOTE_ID, 0));
-    EXPECT_EQ(22, opt->len()); // 18 bytes of data + 4 bytes header
-    boost::shared_ptr<OptionCustom> custom = boost::dynamic_pointer_cast<OptionCustom>(opt);
+        // Get the remote-id option
+        EXPECT_EQ(1, msg->getRelayOptions(D6O_REMOTE_ID, 0).size());
+        ASSERT_TRUE(opt = msg->getRelayOption(D6O_REMOTE_ID, 0));
+        EXPECT_EQ(22, opt->len()); // 18 bytes of data + 4 bytes header
+        boost::shared_ptr<OptionCustom> custom = boost::dynamic_pointer_cast<OptionCustom>(opt);
 
-    uint32_t vendor_id = custom->readInteger<uint32_t>(0);
-    EXPECT_EQ(6527, vendor_id); // 6527 = Panthera Networks
+        uint32_t vendor_id = custom->readInteger<uint32_t>(0);
+        EXPECT_EQ(6527, vendor_id); // 6527 = Panthera Networks
 
-    uint8_t expected_remote_id[] = { 0x00, 0x01, 0x00, 0x01, 0x18, 0xb0,
-                                     0x33, 0x41, 0x00, 0x00, 0x21, 0x5c,
-                                     0x18, 0xa9 };
-    OptionBuffer remote_id = custom->readBinary(1);
-    ASSERT_EQ(sizeof(expected_remote_id), remote_id.size());
-    ASSERT_EQ(0, memcmp(expected_remote_id, &remote_id[0], remote_id.size()));
+        uint8_t expected_remote_id[] = { 0x00, 0x01, 0x00, 0x01, 0x18, 0xb0,
+                                         0x33, 0x41, 0x00, 0x00, 0x21, 0x5c,
+                                         0x18, 0xa9 };
+        OptionBuffer remote_id = custom->readBinary(1);
+        ASSERT_EQ(sizeof(expected_remote_id), remote_id.size());
+        ASSERT_EQ(0, memcmp(expected_remote_id, &remote_id[0], remote_id.size()));
 
-    // Part 2: Check options inserted by the second relay
+        // Part 2: Check options inserted by the second relay
 
-    // Get the interface-id from the second relay
-    EXPECT_EQ(1, msg->getRelayOptions(D6O_INTERFACE_ID, 1).size());
-    ASSERT_TRUE(opt = msg->getRelayOption(D6O_INTERFACE_ID, 1));
-    data = opt->getData();
-    EXPECT_EQ(25, opt->len()); // 21 bytes + 4 bytes header
-    EXPECT_EQ(data.size(), 21);
-    EXPECT_TRUE(0 == memcmp("ISAM144 eth 1/1/05/01", &data[0], 21));
+        // Get the interface-id from the second relay
+        EXPECT_EQ(1, msg->getRelayOptions(D6O_INTERFACE_ID, 1).size());
+        ASSERT_TRUE(opt = msg->getRelayOption(D6O_INTERFACE_ID, 1));
+        data = opt->getData();
+        EXPECT_EQ(25, opt->len()); // 21 bytes + 4 bytes header
+        EXPECT_EQ(data.size(), 21);
+        EXPECT_TRUE(0 == memcmp("ISAM144 eth 1/1/05/01", &data[0], 21));
 
-    // Get the remote-id option
-    EXPECT_EQ(1, msg->getRelayOptions(D6O_REMOTE_ID, 1).size());
-    ASSERT_TRUE(opt = msg->getRelayOption(D6O_REMOTE_ID, 1));
-    EXPECT_EQ(8, opt->len());
-    custom = boost::dynamic_pointer_cast<OptionCustom>(opt);
+        // Get the remote-id option
+        EXPECT_EQ(1, msg->getRelayOptions(D6O_REMOTE_ID, 1).size());
+        ASSERT_TRUE(opt = msg->getRelayOption(D6O_REMOTE_ID, 1));
+        EXPECT_EQ(8, opt->len());
+        custom = boost::dynamic_pointer_cast<OptionCustom>(opt);
 
-    vendor_id = custom->readInteger<uint32_t>(0);
-    EXPECT_EQ(3561, vendor_id); // 3561 = Broadband Forum
-    // @todo: See if we can validate empty remote-id field
+        vendor_id = custom->readInteger<uint32_t>(0);
+        EXPECT_EQ(3561, vendor_id); // 3561 = Broadband Forum
+        // @todo: See if we can validate empty remote-id field
 
-    // Let's check if there is no leak between options stored in
-    // the SOLICIT message and the relay.
-    EXPECT_TRUE(msg->getRelayOptions(D6O_IA_NA, 1).empty());
-    EXPECT_FALSE(opt = msg->getRelayOption(D6O_IA_NA, 1));
+        // Let's check if there is no leak between options stored in
+        // the SOLICIT message and the relay.
+        EXPECT_TRUE(msg->getRelayOptions(D6O_IA_NA, 1).empty());
+        EXPECT_FALSE(opt = msg->getRelayOption(D6O_IA_NA, 1));
 
 
-    // Part 3: Let's check options in the message itself
-    // This is not redundant compared to other direct messages tests,
-    // as we parsed it differently
-    EXPECT_EQ(DHCPV6_SOLICIT, msg->getType());
-    EXPECT_EQ(0x6b4fe2, msg->getTransid());
+        // Part 3: Let's check options in the message itself
+        // This is not redundant compared to other direct messages tests,
+        // as we parsed it differently
+        EXPECT_EQ(DHCPV6_SOLICIT, msg->getType());
+        EXPECT_EQ(0x6b4fe2, msg->getTransid());
 
-    ASSERT_TRUE(opt = msg->getOption(D6O_CLIENTID));
-    EXPECT_EQ(18, opt->len()); // 14 bytes of data + 4 bytes of header
-    uint8_t expected_client_id[] = { 0x00, 0x01, 0x00, 0x01, 0x18, 0xb0,
-                                     0x33, 0x41, 0x00, 0x00, 0x21, 0x5c,
-                                     0x18, 0xa9 };
-    data = opt->getData();
-    ASSERT_EQ(data.size(), sizeof(expected_client_id));
-    ASSERT_EQ(0, memcmp(&data[0], expected_client_id, data.size()));
+        ASSERT_TRUE(opt = msg->getOption(D6O_CLIENTID));
+        EXPECT_EQ(18, opt->len()); // 14 bytes of data + 4 bytes of header
+        uint8_t expected_client_id[] = { 0x00, 0x01, 0x00, 0x01, 0x18, 0xb0,
+                                         0x33, 0x41, 0x00, 0x00, 0x21, 0x5c,
+                                         0x18, 0xa9 };
+        data = opt->getData();
+        ASSERT_EQ(data.size(), sizeof(expected_client_id));
+        ASSERT_EQ(0, memcmp(&data[0], expected_client_id, data.size()));
 
-    ASSERT_TRUE(opt = msg->getOption(D6O_IA_NA));
-    boost::shared_ptr<Option6IA> ia =
-        boost::dynamic_pointer_cast<Option6IA>(opt);
-    ASSERT_TRUE(ia);
-    EXPECT_EQ(1, ia->getIAID());
-    EXPECT_EQ(0xffffffff, ia->getT1());
-    EXPECT_EQ(0xffffffff, ia->getT2());
+        ASSERT_TRUE(opt = msg->getOption(D6O_IA_NA));
+        boost::shared_ptr<Option6IA> ia =
+            boost::dynamic_pointer_cast<Option6IA>(opt);
+        ASSERT_TRUE(ia);
+        EXPECT_EQ(1, ia->getIAID());
+        EXPECT_EQ(0xffffffff, ia->getT1());
+        EXPECT_EQ(0xffffffff, ia->getT2());
 
-    ASSERT_TRUE(opt = msg->getOption(D6O_ELAPSED_TIME));
-    EXPECT_EQ(6, opt->len()); // 2 bytes of data + 4 bytes of header
-    boost::shared_ptr<OptionInt<uint16_t> > elapsed =
-        boost::dynamic_pointer_cast<OptionInt<uint16_t> > (opt);
-    ASSERT_TRUE(elapsed);
-    EXPECT_EQ(0, elapsed->getValue());
+        ASSERT_TRUE(opt = msg->getOption(D6O_ELAPSED_TIME));
+        EXPECT_EQ(6, opt->len()); // 2 bytes of data + 4 bytes of header
+        boost::shared_ptr<OptionInt<uint16_t> > elapsed =
+            boost::dynamic_pointer_cast<OptionInt<uint16_t> > (opt);
+        ASSERT_TRUE(elapsed);
+        EXPECT_EQ(0, elapsed->getValue());
 
-    ASSERT_TRUE(opt = msg->getOption(D6O_ORO));
-    boost::shared_ptr<OptionIntArray<uint16_t> > oro =
-        boost::dynamic_pointer_cast<OptionIntArray<uint16_t> > (opt);
-    const std::vector<uint16_t> oro_list = oro->getValues();
-    EXPECT_EQ(3, oro_list.size());
-    EXPECT_EQ(23, oro_list[0]);
-    EXPECT_EQ(242, oro_list[1]);
-    EXPECT_EQ(243, oro_list[2]);
+        ASSERT_TRUE(opt = msg->getOption(D6O_ORO));
+        boost::shared_ptr<OptionIntArray<uint16_t> > oro =
+            boost::dynamic_pointer_cast<OptionIntArray<uint16_t> > (opt);
+        const std::vector<uint16_t> oro_list = oro->getValues();
+        EXPECT_EQ(3, oro_list.size());
+        EXPECT_EQ(23, oro_list[0]);
+        EXPECT_EQ(242, oro_list[1]);
+        EXPECT_EQ(243, oro_list[2]);
+    }
 }
 
 // This test verified that message with relay information can be
@@ -848,7 +872,7 @@ TEST_F(Pkt6Test, relayPack) {
                                     parent->getBuffer().getLength()));
 
     // Now recreate options list
-    EXPECT_NO_THROW( clone->unpack() );
+    EXPECT_NO_THROW(clone->unpack());
 
     // transid, message-type should be the same as before
     EXPECT_EQ(parent->getTransid(), parent->getTransid());

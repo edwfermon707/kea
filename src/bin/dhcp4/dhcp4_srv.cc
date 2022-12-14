@@ -1870,12 +1870,8 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
                 for (auto const& desc : desc_list) {
                     // Got it: add it and jump to the outer loop
                     if (desc.option_) {
-                        OutputBuffer opts_buffer(0);
-                        desc.option_->pack(opts_buffer, false);
-                        OptionBuffer buffer(reinterpret_cast<uint8_t*>(const_cast<void*>(opts_buffer.getData())) + 2,
-                                            reinterpret_cast<uint8_t*>(const_cast<void*>(opts_buffer.getData())) + opts_buffer.getLength());
+                        const OptionBuffer& buffer = desc.option_->toBinary();
                         desc.option_->setData(buffer.begin(), buffer.end());
-                        desc.option_->unpack(buffer.begin(), buffer.end());
                         options.insert(std::pair<int, OptionPtr>(desc.option_->getType(), desc.option_));
                     }
                 }
@@ -1883,20 +1879,17 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
                     if (options.size() > 1) {
                         LibDHCP::fuseOptions4(options);
                         OptionPtr fused = options.begin()->second;
-                        OutputBuffer opts_buffer(0);
-                        fused->pack(opts_buffer, false);
-                        OptionBuffer buffer(reinterpret_cast<uint8_t*>(const_cast<void*>(opts_buffer.getData())) + 2,
-                                            reinterpret_cast<uint8_t*>(const_cast<void*>(opts_buffer.getData())) + opts_buffer.getLength());
-                        OptionDefinitionPtr def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE, fused->getType());
+                        const OptionBuffer& buffer = fused->toBinary();
+                        OptionDefinitionPtr def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE, *opt);
                         if (!def) {
-                            def = LibDHCP::getRuntimeOptionDef(DHCP4_OPTION_SPACE, fused->getType());
+                            def = LibDHCP::getRuntimeOptionDef(DHCP4_OPTION_SPACE, *opt);
                         }
                         // Finish by last resort definition
                         if (!def) {
-                            def = LibDHCP::getLastResortOptionDef(DHCP4_OPTION_SPACE, fused->getType());
+                            def = LibDHCP::getLastResortOptionDef(DHCP4_OPTION_SPACE, *opt);
                         }
                         if (def) {
-                            fused = def->optionFactory(Option::V4, fused->getType(), buffer.begin(), buffer.end());
+                            fused = def->optionFactory(Option::V4, *opt, buffer.begin(), buffer.end());
                             resp->addOption(fused);
                             break;
                         }
@@ -2021,18 +2014,16 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
                 }
             }
         }
-        OutputBuffer opts_buffer(0);
-        rsp_opt->pack(opts_buffer, false);
-        OptionBuffer buffer(reinterpret_cast<uint8_t*>(const_cast<void*>(opts_buffer.getData())) + 2,
-                                                       reinterpret_cast<uint8_t*>(const_cast<void*>(opts_buffer.getData())) + opts_buffer.getLength());
+        const OptionBuffer& buffer = rsp_opt->toBinary();
         rsp_opt->setData(buffer.begin(), buffer.end());
-        //rsp_opt->unpack(buffer.begin(), buffer.end());
         vendor_options.insert(std::make_pair(rsp_opt->getType(), rsp_opt));
     }
 
     OptionPtr vendor_result;
     if (vendor_options.size()) {
-        LibDHCP::fuseOptions4(vendor_options);
+        if (vendor_options.size() > 1) {
+            LibDHCP::fuseOptions4(vendor_options);
+        }
         vendor_result = vendor_options.begin()->second;
     } else if (!vendor_rsp) {
         vendor_result.reset(new OptionVendor(Option::V4, vendor_ids));

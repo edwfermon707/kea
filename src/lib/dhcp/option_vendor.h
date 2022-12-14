@@ -50,6 +50,12 @@ public:
     OptionVendor(Option::Universe u, OptionBufferConstIter begin,
                  OptionBufferConstIter end);
 
+    /// @brief Copy constructor.
+    ///
+    /// This constructor makes a deep copy of the option and all of the
+    /// suboptions. It calls @ref getOptionsCopy to deep copy suboptions.
+    ///
+    /// @param source Option to be copied.
     OptionVendor(const OptionVendor& option);
 
     /// @brief Copies this option and returns a pointer to the copy.
@@ -103,6 +109,12 @@ public:
         return (vendor_ids_);
     }
 
+    /// @brief Returns true if the vendor identifier is present in the option.
+    ///
+    /// @param id the vendor identifier which is searched
+    ///
+    /// @return true if the vendor identifier is present in the option, false
+    /// otherwise
     bool hasVendorId(uint32_t id) const {
         for (auto const& vendor_id : vendor_ids_) {
             if (id == vendor_id) {
@@ -126,14 +138,49 @@ public:
     /// @return Vendor option in the textual format.
     virtual std::string toText(int indent = 0) const;
 
+    /// Returns shared_ptr to suboption of specific type
+    ///
+    /// @param vendor_id the vendor identifier suboption belongs to
+    /// @param type type of requested suboption
+    ///
+    /// @return shared_ptr to requested suboption
     OptionPtr getOption(uint32_t vendor_id, uint16_t type) const;
 
+    /// Attempts to delete first suboption of requested type
+    ///
+    /// @param vendor_id the vendor identifier suboption belongs to
+    /// @param type Type of option to be deleted.
+    ///
+    /// @return true if option was deleted, false if no such option existed
     bool delOption(uint32_t vendor_id, uint16_t type);
 
+    /// Adds a sub-option.
+    ///
+    /// Some DHCPv6 options can have suboptions. This method allows adding
+    /// options within options.
+    ///
+    /// Note: option is passed by value. That is very convenient as it allows
+    /// downcasting from any derived classes, e.g. shared_ptr<Option6_IA> type
+    /// can be passed directly, without any casts. That would not be possible
+    /// with passing by reference. addOption() is expected to be used in
+    /// many places. Requiring casting is not feasible.
+    ///
+    /// @param vendor_id the vendor identifier suboption belongs to
+    /// @param opt shared pointer to a suboption that is going to be added.
     void addOption(uint32_t vendor_id, OptionPtr opt);
 
+    /// @brief Returns all encapsulated options for the respective vendor identifier.
+    ///
+    /// @param vendor_id the vendor identifier suboptions belongs to
     const OptionCollection getOptions(uint32_t vendor_id) const;
 
+    /// @brief Assignment operator.
+    ///
+    /// The assignment operator performs a deep copy of the option and
+    /// its suboptions. It calls @ref getOptionsCopy to deep copy
+    /// suboptions.
+    ///
+    /// @param rhs Option to be assigned.
     OptionVendor& operator=(const OptionVendor& rhs);
 
 private:
@@ -160,7 +207,7 @@ private:
     /// This method calls @ref clone method to deep copy each option.
     ///
     /// @param [out] options_copy Container where copied options are stored.
-    void getOptionsCopy(std::shared_ptr<std::map<uint32_t, OptionCollection>>& vendor_options) const;
+    void getOptionsCopy(std::shared_ptr<std::map<uint32_t, OptionCollection>>& options_copy) const;
 
     /// @brief Enterprise-ids
     std::vector<uint32_t> vendor_ids_;
@@ -168,17 +215,20 @@ private:
     /// @brief Specific Enterprise-ids options
     std::shared_ptr<std::map<uint32_t, OptionCollection>> vendor_options_;
 
-    OptionPtr getOption(uint16_t type) const;
+    /// @brief Deleted functions.
+    /// @{
+    OptionPtr getOption(uint16_t type) const = delete;
 
-    bool delOption(uint16_t type);
+    bool delOption(uint16_t type) = delete;
 
-    void addOption(OptionPtr opt);
+    void addOption(OptionPtr opt) = delete;
 
-    void getOptionsCopy(OptionCollection& options_copy) const;
+    void getOptionsCopy(OptionCollection& options_copy) const = delete;
 
-    std::string suboptionsToText(const int indent = 0) const;
+    std::string suboptionsToText(const int indent = 0) const = delete;
 
-    const OptionCollection& getOptions() const;
+    const OptionCollection& getOptions() const = delete;
+    /// @}
 };
 
 /// Pointer to a vendor option

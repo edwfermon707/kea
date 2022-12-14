@@ -70,6 +70,16 @@ public:
         EXPECT_EQ(0x81020304, opt->getT1());
         EXPECT_EQ(0x84030201, opt->getT2());
 
+        // Do it again to check that unpack can be done multiple times with no side
+        // effect.
+        ASSERT_NO_THROW(opt->unpack(buf_.begin(), buf_.begin() + 12));
+
+        EXPECT_EQ(Option::V6, opt->getUniverse());
+        EXPECT_EQ(type, opt->getType());
+        EXPECT_EQ(0xa1a2a3a4, opt->getIAID());
+        EXPECT_EQ(0x81020304, opt->getT1());
+        EXPECT_EQ(0x84030201, opt->getT2());
+
         // Pack this option again in the same buffer, but in
         // different place
 
@@ -293,6 +303,40 @@ TEST_F(Option6IATest, suboptionsUnpack) {
     // Checks for address option
     Option6IAAddrPtr addr =
         boost::dynamic_pointer_cast<Option6IAAddr>(subopt);
+    ASSERT_TRUE(addr);
+
+    EXPECT_EQ(D6O_IAADDR, addr->getType());
+    EXPECT_EQ(28, addr->len());
+    EXPECT_EQ(0x5000, addr->getPreferred());
+    EXPECT_EQ(0x7000, addr->getValid());
+    EXPECT_EQ("2001:db8:1234:5678::abcd", addr->getAddress().toText());
+
+    // Checks for dummy option
+    subopt = ia->getOption(0xcafe);
+    ASSERT_TRUE(subopt); // should be non-NULL
+
+    EXPECT_EQ(0xcafe, subopt->getType());
+    EXPECT_EQ(4, subopt->len());
+    // There should be no data at all
+    EXPECT_EQ(0, subopt->getData().size());
+
+    subopt = ia->getOption(1); // get option 1
+    ASSERT_FALSE(subopt); // should be NULL
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_NO_THROW(ia->unpack(buf_.begin() + 4, buf_.begin() + sizeof(expected)));
+
+    EXPECT_EQ(D6O_IA_NA, ia->getType());
+    EXPECT_EQ(0x13579ace, ia->getIAID());
+    EXPECT_EQ(0x2345, ia->getT1());
+    EXPECT_EQ(0x3456, ia->getT2());
+
+    subopt = ia->getOption(D6O_IAADDR);
+    ASSERT_NE(OptionPtr(), subopt); // non-NULL
+
+    // Checks for address option
+    addr = boost::dynamic_pointer_cast<Option6IAAddr>(subopt);
     ASSERT_TRUE(addr);
 
     EXPECT_EQ(D6O_IAADDR, addr->getType());

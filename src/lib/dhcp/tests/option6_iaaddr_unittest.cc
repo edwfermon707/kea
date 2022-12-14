@@ -68,10 +68,21 @@ TEST_F(Option6IAAddrTest, basic) {
                                                            buf_.begin(),
                                                            buf_.begin() + 24));
 
-    // Pack this option
-    opt->pack(outBuf_);
+    EXPECT_EQ(Option::V6, opt->getUniverse());
 
-    EXPECT_EQ(28, outBuf_.getLength());
+    // 4 bytes header + 4 bytes content
+    EXPECT_EQ("2001:db8:1::dead:beef", opt->getAddress().toText());
+    EXPECT_EQ(1000, opt->getPreferred());
+    EXPECT_EQ(3000000000U, opt->getValid());
+
+    EXPECT_EQ(D6O_IAADDR, opt->getType());
+
+    EXPECT_EQ(Option::OPTION6_HDR_LEN + Option6IAAddr::OPTION6_IAADDR_LEN,
+              opt->len());
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_NO_THROW(opt->unpack(buf_.begin(), buf_.begin() + 24));
 
     EXPECT_EQ(Option::V6, opt->getUniverse());
 
@@ -85,14 +96,18 @@ TEST_F(Option6IAAddrTest, basic) {
     EXPECT_EQ(Option::OPTION6_HDR_LEN + Option6IAAddr::OPTION6_IAADDR_LEN,
               opt->len());
 
+    // Pack this option
+    opt->pack(outBuf_);
+    EXPECT_EQ(28, outBuf_.getLength());
+
     // Check if pack worked properly:
     const uint8_t* out = (const uint8_t*)outBuf_.getData();
 
     // - if option type is correct
-    EXPECT_EQ(D6O_IAADDR, out[0]*256 + out[1]);
+    EXPECT_EQ(D6O_IAADDR, out[0] * 256 + out[1]);
 
     // - if option length is correct
-    EXPECT_EQ(24, out[2]*256 + out[3]);
+    EXPECT_EQ(24, out[2] * 256 + out[3]);
 
     // - if option content is correct
     EXPECT_EQ(0, memcmp(out + 4, &buf_[0], 24));

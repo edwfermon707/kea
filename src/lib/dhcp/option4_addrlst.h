@@ -74,11 +74,10 @@ public:
     /// trimmed (first and last byte removed) myData vector.
     ///
     /// @param type option type (0-255 for V4 and 0-65535 for V6)
-    /// @param first iterator to the first element that should be copied
-    /// @param last iterator to the next element after the last one
-    ///        to be copied.
-    Option4AddrLst(uint8_t type, OptionBufferConstIter first,
-                   OptionBufferConstIter last);
+    /// @param begin iterator to first byte of option data
+    /// @param end iterator to end of option data (first byte after option end)
+    Option4AddrLst(uint8_t type, OptionBufferConstIter begin,
+                   OptionBufferConstIter end);
 
     /// @brief Copies this option and returns a pointer to the copy.
     virtual OptionPtr clone() const;
@@ -90,6 +89,13 @@ public:
     /// @param buf output buffer (option will be stored there)
     /// @param check if set to false, allows options larger than 255 for v4
     virtual void pack(isc::util::OutputBuffer& buf, bool check = true) const;
+
+    /// @brief Parses received data
+    ///
+    /// @param begin iterator to first byte of option data
+    /// @param end iterator to end of option data (first byte after option end)
+    virtual void unpack(OptionBufferConstIter begin,
+                        OptionBufferConstIter end);
 
     /// Returns string representation of the option.
     ///

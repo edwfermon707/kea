@@ -61,6 +61,9 @@ OptionVendorClass::unpack(OptionBufferConstIter begin,
         isc_throw(OutOfRange, "parsed Vendor Class option data truncated to"
                   " size " << std::distance(begin, end));
     }
+
+    tuples_.clear();
+
     // Option must contain at least one enterprise id. It is ok to read 4-byte
     // value here because we have checked that the buffer he minimal length.
     vendor_id_ = isc::util::readUint32(&(*begin), distance(begin, end));

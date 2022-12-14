@@ -141,6 +141,14 @@ TEST_F(OptionVendorTest, v4Parse) {
     // We know that there are supposed to be 2 options inside
     EXPECT_TRUE(vendor->getOption(VENDOR_ID_CABLE_LABS, DOCSIS3_V4_ORO));
     EXPECT_TRUE(vendor->getOption(VENDOR_ID_CABLE_LABS, 5));
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_NO_THROW(vendor->unpack(binary.begin() + 2, binary.end()));
+
+    // We know that there are supposed to be 2 options inside
+    EXPECT_TRUE(vendor->getOption(VENDOR_ID_CABLE_LABS, DOCSIS3_V4_ORO));
+    EXPECT_TRUE(vendor->getOption(VENDOR_ID_CABLE_LABS, 5));
 }
 
 // Tests whether we can parse and then pack a v4 option.
@@ -203,6 +211,36 @@ TEST_F(OptionVendorTest, v6Parse) {
     for (uint16_t i = 37; i < 65535; ++i) {
         EXPECT_FALSE(vendor->getOption(VENDOR_ID_CABLE_LABS, i));
     }
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_NO_THROW(vendor->unpack(binary.begin() + 4, binary.end()));
+    opt = vendor->getOption(VENDOR_ID_CABLE_LABS, DOCSIS3_V6_ORO);
+    ASSERT_TRUE(opt);
+    oro = boost::dynamic_pointer_cast<OptionUint16Array>(opt);
+
+    // Check that all remaining expected options are there
+    EXPECT_TRUE(vendor->getOption(VENDOR_ID_CABLE_LABS, 2));
+    EXPECT_TRUE(vendor->getOption(VENDOR_ID_CABLE_LABS, 3));
+    EXPECT_TRUE(vendor->getOption(VENDOR_ID_CABLE_LABS, 4));
+    EXPECT_TRUE(vendor->getOption(VENDOR_ID_CABLE_LABS, 5));
+    EXPECT_TRUE(vendor->getOption(VENDOR_ID_CABLE_LABS, 6));
+    EXPECT_TRUE(vendor->getOption(VENDOR_ID_CABLE_LABS, 7));
+    EXPECT_TRUE(vendor->getOption(VENDOR_ID_CABLE_LABS, 8));
+    EXPECT_TRUE(vendor->getOption(VENDOR_ID_CABLE_LABS, 9));
+    EXPECT_TRUE(vendor->getOption(VENDOR_ID_CABLE_LABS, 10));
+    EXPECT_TRUE(vendor->getOption(VENDOR_ID_CABLE_LABS, 35));
+    EXPECT_TRUE(vendor->getOption(VENDOR_ID_CABLE_LABS, 36));
+
+    // Check that there are no other options there
+    for (uint16_t i = 11; i < 35; ++i) {
+        EXPECT_FALSE(vendor->getOption(VENDOR_ID_CABLE_LABS, i));
+    }
+
+    for (uint16_t i = 37; i < 65535; ++i) {
+        EXPECT_FALSE(vendor->getOption(VENDOR_ID_CABLE_LABS, i));
+    }
+
 }
 
 // Tests whether we can parse and then pack a v6 option.

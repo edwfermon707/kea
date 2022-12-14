@@ -148,6 +148,8 @@ Option::packOptions(isc::util::OutputBuffer& buf, bool check) const {
 
 void Option::unpack(OptionBufferConstIter begin,
                     OptionBufferConstIter end) {
+    options_.clear();
+
     setData(begin, end);
 }
 

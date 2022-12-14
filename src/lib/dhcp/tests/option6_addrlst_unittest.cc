@@ -120,6 +120,19 @@ TEST_F(Option6AddrLstTest, basic) {
     IOAddress addr = addrs[0];
     EXPECT_EQ("2001:db8:1::dead:beef", addr.toText());
 
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_NO_THROW(opt1->unpack(buf_.begin(), buf_.begin() + 16));
+
+    EXPECT_EQ(Option::V6, opt1->getUniverse());
+
+    EXPECT_EQ(D6O_NAME_SERVERS, opt1->getType());
+    EXPECT_EQ(20, opt1->len());
+    addrs = opt1->getAddresses();
+    ASSERT_EQ(1, addrs.size());
+    addr = addrs[0];
+    EXPECT_EQ("2001:db8:1::dead:beef", addr.toText());
+
     // Pack this option
     opt1->pack(out_buf_);
 
@@ -132,6 +145,17 @@ TEST_F(Option6AddrLstTest, basic) {
         opt2.reset(new Option6AddrLst(D6O_SIP_SERVERS_ADDR,
                                       buf_.begin(), buf_.begin() + 32));
     );
+    EXPECT_EQ(D6O_SIP_SERVERS_ADDR, opt2->getType());
+    EXPECT_EQ(36, opt2->len());
+    addrs = opt2->getAddresses();
+    ASSERT_EQ(2, addrs.size());
+    EXPECT_EQ("2001:db8:1::dead:beef", addrs[0].toText());
+    EXPECT_EQ("ff02::face:b00c", addrs[1].toText());
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_NO_THROW(opt2->unpack(buf_.begin(), buf_.begin() + 32));
+
     EXPECT_EQ(D6O_SIP_SERVERS_ADDR, opt2->getType());
     EXPECT_EQ(36, opt2->len());
     addrs = opt2->getAddresses();
@@ -152,6 +176,18 @@ TEST_F(Option6AddrLstTest, basic) {
         opt3.reset(new Option6AddrLst(D6O_NIS_SERVERS,
                                       buf_.begin(), buf_.begin() + 48));
     );
+
+    EXPECT_EQ(D6O_NIS_SERVERS, opt3->getType());
+    EXPECT_EQ(52, opt3->len());
+    addrs = opt3->getAddresses();
+    ASSERT_EQ(3, addrs.size());
+    EXPECT_EQ("2001:db8:1::dead:beef", addrs[0].toText());
+    EXPECT_EQ("ff02::face:b00c", addrs[1].toText());
+    EXPECT_EQ("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", addrs[2].toText());
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_NO_THROW(opt2->unpack(buf_.begin(), buf_.begin() + 48));
 
     EXPECT_EQ(D6O_NIS_SERVERS, opt3->getType());
     EXPECT_EQ(52, opt3->len());

@@ -307,9 +307,7 @@ TEST_F(Pkt4Test, fixedFieldsPack) {
     boost::shared_ptr<Pkt4> pkt = generateTestPacket1();
     vector<uint8_t> expectedFormat = generateTestPacket2();
 
-    EXPECT_NO_THROW(
-        pkt->pack();
-    );
+    EXPECT_NO_THROW(pkt->pack());
 
     // Minimum packet size is 236 bytes + 3 bytes of mandatory
     // DHCP Message Type Option
@@ -338,35 +336,34 @@ TEST_F(Pkt4Test, fixedFieldsUnpack) {
     boost::shared_ptr<Pkt4> pkt(new Pkt4(&expectedFormat[0],
                                          expectedFormat.size()));;
 
+    for (uint8_t i = 0; i < 2; i++) {
+        EXPECT_NO_THROW(pkt->unpack());
 
-    EXPECT_NO_THROW(
-        pkt->unpack()
-    );
+        // OK, let's check packet values
+        EXPECT_EQ(dummyOp, pkt->getOp());
+        EXPECT_EQ(dummyHtype, pkt->getHtype());
+        EXPECT_EQ(dummyHlen, pkt->getHlen());
+        EXPECT_EQ(dummyHops, pkt->getHops());
+        EXPECT_EQ(dummyTransid, pkt->getTransid());
+        EXPECT_EQ(dummySecs, pkt->getSecs());
+        EXPECT_EQ(dummyFlags, pkt->getFlags());
 
-    // OK, let's check packet values
-    EXPECT_EQ(dummyOp, pkt->getOp());
-    EXPECT_EQ(dummyHtype, pkt->getHtype());
-    EXPECT_EQ(dummyHlen, pkt->getHlen());
-    EXPECT_EQ(dummyHops, pkt->getHops());
-    EXPECT_EQ(dummyTransid, pkt->getTransid());
-    EXPECT_EQ(dummySecs, pkt->getSecs());
-    EXPECT_EQ(dummyFlags, pkt->getFlags());
+        EXPECT_EQ(dummyCiaddr, pkt->getCiaddr());
+        EXPECT_EQ("1.2.3.4", pkt->getYiaddr().toText());
+        EXPECT_EQ("192.0.2.255", pkt->getSiaddr().toText());
+        EXPECT_EQ("255.255.255.255", pkt->getGiaddr().toText());
 
-    EXPECT_EQ(dummyCiaddr, pkt->getCiaddr());
-    EXPECT_EQ("1.2.3.4", pkt->getYiaddr().toText());
-    EXPECT_EQ("192.0.2.255", pkt->getSiaddr().toText());
-    EXPECT_EQ("255.255.255.255", pkt->getGiaddr().toText());
+        // chaddr is always 16 bytes long and contains link-layer addr (MAC)
+        EXPECT_EQ(0, memcmp(dummyChaddr, &pkt->getHWAddr()->hwaddr_[0], dummyHlen));
 
-    // chaddr is always 16 bytes long and contains link-layer addr (MAC)
-    EXPECT_EQ(0, memcmp(dummyChaddr, &pkt->getHWAddr()->hwaddr_[0], dummyHlen));
+        ASSERT_EQ(static_cast<size_t>(Pkt4::MAX_SNAME_LEN), pkt->getSname().size());
+        EXPECT_EQ(0, memcmp(dummySname, &pkt->getSname()[0], Pkt4::MAX_SNAME_LEN));
 
-    ASSERT_EQ(static_cast<size_t>(Pkt4::MAX_SNAME_LEN), pkt->getSname().size());
-    EXPECT_EQ(0, memcmp(dummySname, &pkt->getSname()[0], Pkt4::MAX_SNAME_LEN));
+        ASSERT_EQ(static_cast<size_t>(Pkt4::MAX_FILE_LEN), pkt->getFile().size());
+        EXPECT_EQ(0, memcmp(dummyFile, &pkt->getFile()[0], Pkt4::MAX_FILE_LEN));
 
-    ASSERT_EQ(static_cast<size_t>(Pkt4::MAX_FILE_LEN), pkt->getFile().size());
-    EXPECT_EQ(0, memcmp(dummyFile, &pkt->getFile()[0], Pkt4::MAX_FILE_LEN));
-
-    EXPECT_EQ(DHCPDISCOVER, pkt->getType());
+        EXPECT_EQ(DHCPDISCOVER, pkt->getType());
+    }
 }
 
 // This test is for hardware addresses (htype, hlen and chaddr fields)
@@ -400,9 +397,7 @@ TEST_F(Pkt4Test, hwAddr) {
         EXPECT_EQ(0, memcmp(expectedChaddr, &pkt->getHWAddr()->hwaddr_[0],
                             Pkt4::MAX_CHADDR_LEN));
 
-        EXPECT_NO_THROW(
-            pkt->pack();
-        );
+        EXPECT_NO_THROW(pkt->pack());
 
         // CHADDR starts at offset 28 in DHCP packet
         const uint8_t* ptr =
@@ -476,9 +471,7 @@ TEST_F(Pkt4Test, sname) {
 
         EXPECT_EQ(0, memcmp(sname, &pkt->getSname()[0], Pkt4::MAX_SNAME_LEN));
 
-        EXPECT_NO_THROW(
-            pkt->pack();
-        );
+        EXPECT_NO_THROW(pkt->pack());
 
         // SNAME starts at offset 44 in DHCP packet
         const uint8_t* ptr =
@@ -521,9 +514,7 @@ TEST_F(Pkt4Test, file) {
 
         EXPECT_EQ(0, memcmp(file, &pkt->getFile()[0], Pkt4::MAX_FILE_LEN));
 
-        EXPECT_NO_THROW(
-            pkt->pack();
-        );
+        EXPECT_NO_THROW(pkt->pack());
 
         // FILE starts at offset 108 in DHCP packet.
         const uint8_t* ptr =
@@ -580,9 +571,7 @@ TEST_F(Pkt4Test, options) {
         BadValue
     );
 
-    EXPECT_NO_THROW(
-        pkt->pack();
-    );
+    EXPECT_NO_THROW(pkt->pack());
 
     const OutputBuffer& buf = pkt->getBuffer();
     // Check that all options are stored, they should take sizeof(v4_opts),
@@ -770,9 +759,13 @@ TEST_F(Pkt4Test, unpackOptions) {
     boost::shared_ptr<Pkt4> pkt(new Pkt4(&expectedFormat[0],
                                 expectedFormat.size()));
 
-    EXPECT_NO_THROW(
-        pkt->unpack()
-    );
+    EXPECT_NO_THROW(pkt->unpack());
+
+    verifyParsedOptions(pkt);
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    EXPECT_NO_THROW(pkt->unpack());
 
     verifyParsedOptions(pkt);
 }
@@ -1394,9 +1387,7 @@ TEST_F(Pkt4Test, nullTerminatedOptions) {
     boost::shared_ptr<Pkt4> pkt(new Pkt4(&test_msg[0], test_msg.size()));
 
     // Unpack the onwire packet.
-    EXPECT_NO_THROW(
-        pkt->unpack()
-    );
+    EXPECT_NO_THROW(pkt->unpack());
 
     EXPECT_EQ(DHCPDISCOVER, pkt->getType());
 
@@ -1428,9 +1419,7 @@ TEST_F(Pkt4Test, nullTerminatedOptions) {
 
     // Next we pack the packet, to make sure trailing NULLs have
     // been eliminated, embedded NULLs are intact.
-    EXPECT_NO_THROW(
-        pkt->pack()
-    );
+    EXPECT_NO_THROW(pkt->pack());
 
     // Create a vector of our expected packed option data.
     vector<uint8_t> packed_opts =

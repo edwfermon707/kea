@@ -396,6 +396,12 @@ TEST(OpaqueDataTuple, unpack1Byte) {
     ASSERT_NO_THROW(tuple.unpack(wire_data.begin(), wire_data.end()));
     EXPECT_EQ(11, tuple.getLength());
     EXPECT_EQ("Hello world", tuple.getText());
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_NO_THROW(tuple.unpack(wire_data.begin(), wire_data.end()));
+    EXPECT_EQ(11, tuple.getLength());
+    EXPECT_EQ("Hello world", tuple.getText());
 }
 
 // This test verifies that the tuple having a length of 0, is decoded from
@@ -405,11 +411,14 @@ TEST(OpaqueDataTuple, unpack1ByteZeroLength) {
     EXPECT_NO_THROW(tuple = "Hello world");
     ASSERT_NE(tuple.getLength(), 0);
 
-    OpaqueDataTuple::Buffer wire_data = {
-        0
-    };
-    ASSERT_NO_THROW(tuple.unpack(wire_data.begin(), wire_data.end()));
+    OpaqueDataTuple::Buffer wire_data = {0};
 
+    ASSERT_NO_THROW(tuple.unpack(wire_data.begin(), wire_data.end()));
+    EXPECT_EQ(0, tuple.getLength());
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_NO_THROW(tuple.unpack(wire_data.begin(), wire_data.end()));
     EXPECT_EQ(0, tuple.getLength());
 }
 
@@ -419,6 +428,10 @@ TEST(OpaqueDataTuple, unpack1ByteZeroLengthNoData) {
     OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_1_BYTE);
     OpaqueDataTuple::Buffer wire_data = {0};
     ASSERT_NO_THROW(tuple.unpack(wire_data.begin(), wire_data.end()));
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_NO_THROW(tuple.unpack(wire_data.begin(), wire_data.end()));
 }
 
 // This test verifies that the tuple having a length of 0, followed by no
@@ -426,6 +439,10 @@ TEST(OpaqueDataTuple, unpack1ByteZeroLengthNoData) {
 TEST(OpaqueDataTuple, unpack2ByteZeroLengthNoData) {
     OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES);
     OpaqueDataTuple::Buffer wire_data = {0, 0};
+    ASSERT_NO_THROW(tuple.unpack(wire_data.begin(), wire_data.end()));
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
     ASSERT_NO_THROW(tuple.unpack(wire_data.begin(), wire_data.end()));
 }
 
@@ -436,14 +453,22 @@ TEST(OpaqueDataTuple, unpack1ByteEmptyBuffer) {
     OpaqueDataTuple::Buffer wire_data = {};
     EXPECT_THROW(tuple.unpack(wire_data.begin(), wire_data.end()),
                  OpaqueDataTupleError);
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    EXPECT_THROW(tuple.unpack(wire_data.begin(), wire_data.end()),
+                 OpaqueDataTupleError);
 }
 
 // This test verifies that exception is thrown when parsing truncated buffer.
 TEST(OpaqueDataTuple, unpack1ByteTruncatedBuffer) {
    OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_1_BYTE);
-    OpaqueDataTuple::Buffer wire_data = {
-        10, 2, 3
-    };
+    OpaqueDataTuple::Buffer wire_data = {10, 2, 3};
+    EXPECT_THROW(tuple.unpack(wire_data.begin(), wire_data.end()),
+                 OpaqueDataTupleError);
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
     EXPECT_THROW(tuple.unpack(wire_data.begin(), wire_data.end()),
                  OpaqueDataTupleError);
 }
@@ -466,6 +491,15 @@ TEST(OpaqueDataTuple, unpack2Byte) {
     // And the data should match.
     EXPECT_TRUE(std::equal(wire_data.begin() + 2, wire_data.end(),
                            tuple.getData().begin()));
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_NO_THROW(tuple.unpack(wire_data.begin(), wire_data.end()));
+    // The decoded length should be 400.
+    ASSERT_EQ(400, tuple.getLength());
+    // And the data should match.
+    EXPECT_TRUE(std::equal(wire_data.begin() + 2, wire_data.end(),
+                           tuple.getData().begin()));
 }
 
 // This test verifies that the tuple having a length of 0, is decoded from
@@ -476,10 +510,14 @@ TEST(OpaqueDataTuple, unpack2ByteZeroLength) {
     EXPECT_NO_THROW(tuple = "Hello world");
     ASSERT_NE(tuple.getLength(), 0);
     // The buffer holds just a length field with the value of 0.
-    OpaqueDataTuple::Buffer wire_data = {
-        0, 0
-    };
+    OpaqueDataTuple::Buffer wire_data = {0, 0};
     // The empty tuple should be successfully decoded.
+    ASSERT_NO_THROW(tuple.unpack(wire_data.begin(), wire_data.end()));
+    // The data should be replaced with an empty buffer.
+    EXPECT_EQ(0, tuple.getLength());
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
     ASSERT_NO_THROW(tuple.unpack(wire_data.begin(), wire_data.end()));
     // The data should be replaced with an empty buffer.
     EXPECT_EQ(0, tuple.getLength());
@@ -494,28 +532,39 @@ TEST(OpaqueDataTuple, unpack2ByteEmptyBuffer) {
     // This should not be accepted.
     EXPECT_THROW(tuple.unpack(wire_data.begin(), wire_data.end()),
                  OpaqueDataTupleError);
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    EXPECT_THROW(tuple.unpack(wire_data.begin(), wire_data.end()),
+                 OpaqueDataTupleError);
 }
 
 // This test verifies that exception is thrown when parsing truncated buffer.
 TEST(OpaqueDataTuple, unpack2ByteTruncatedBuffer) {
-   OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES);
-   // Specify the data with the length of 10, but limit the buffer size to
-   // 2 bytes.
-   OpaqueDataTuple::Buffer wire_data = {
-       0, 10, 2, 3
-   };
-   // This should fail because the buffer is truncated.
-   EXPECT_THROW(tuple.unpack(wire_data.begin(), wire_data.end()),
-                OpaqueDataTupleError);
+    OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES);
+    // Specify the data with the length of 10, but limit the buffer size to
+    // 2 bytes.
+    OpaqueDataTuple::Buffer wire_data = {0, 10, 2, 3};
+    // This should fail because the buffer is truncated.
+    EXPECT_THROW(tuple.unpack(wire_data.begin(), wire_data.end()),
+                 OpaqueDataTupleError);
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    EXPECT_THROW(tuple.unpack(wire_data.begin(), wire_data.end()),
+                 OpaqueDataTupleError);
 }
 
 // Test that an exception is not thrown when parsing in lenient mode.
 TEST_F(OpaqueDataTupleLenientParsing, unpack) {
     OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES);
     // Specify the data with the length of 10, but limit the buffer size to 2.
-   OpaqueDataTuple::Buffer wire_data = {
-        0, 10, 2, 3
-    };
+    OpaqueDataTuple::Buffer wire_data = {0, 10, 2, 3};
+    EXPECT_NO_THROW(tuple.unpack(wire_data.begin(), wire_data.end()));
+    EXPECT_EQ(tuple.getData(), OpaqueDataTuple::Buffer({2, 3}));
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
     EXPECT_NO_THROW(tuple.unpack(wire_data.begin(), wire_data.end()));
     EXPECT_EQ(tuple.getData(), OpaqueDataTuple::Buffer({2, 3}));
 }

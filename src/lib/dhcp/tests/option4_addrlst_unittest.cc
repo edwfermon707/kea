@@ -78,7 +78,7 @@ TEST_F(Option4AddrLstTest, parse1) {
     EXPECT_NO_THROW(
         opt1.reset(new Option4AddrLst(DHO_DOMAIN_NAME_SERVERS,
                                       vec_.begin(),
-                                      vec_.begin()+4));
+                                      vec_.begin() + 4));
         // Use just first address (4 bytes), not the whole
         // sampledata
     );
@@ -89,6 +89,20 @@ TEST_F(Option4AddrLstTest, parse1) {
     EXPECT_EQ(6, opt1->len()); // 2 (header) + 4 (1x IPv4 addr)
 
     Option4AddrLst::AddressContainer addrs = opt1->getAddresses();
+    ASSERT_EQ(1, addrs.size());
+
+    EXPECT_EQ("192.0.2.3", addrs[0].toText());
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_NO_THROW(opt1->unpack(vec_.begin(), vec_.begin() + 4));
+
+    EXPECT_EQ(Option::V4, opt1->getUniverse());
+
+    EXPECT_EQ(DHO_DOMAIN_NAME_SERVERS, opt1->getType());
+    EXPECT_EQ(6, opt1->len()); // 2 (header) + 4 (1x IPv4 addr)
+
+    addrs = opt1->getAddresses();
     ASSERT_EQ(1, addrs.size());
 
     EXPECT_EQ("192.0.2.3", addrs[0].toText());
@@ -107,7 +121,7 @@ TEST_F(Option4AddrLstTest, parse4) {
     EXPECT_NO_THROW(
         opt4.reset(new Option4AddrLst(254,
                                       buffer.begin(),
-                                      buffer.begin()+sizeof(sampledata)));
+                                      buffer.begin() + sizeof(sampledata)));
     );
 
     EXPECT_EQ(Option::V4, opt4->getUniverse());
@@ -116,6 +130,23 @@ TEST_F(Option4AddrLstTest, parse4) {
     EXPECT_EQ(18, opt4->len()); // 2 (header) + 16 (4x IPv4 addrs)
 
     Option4AddrLst::AddressContainer addrs = opt4->getAddresses();
+    ASSERT_EQ(4, addrs.size());
+
+    EXPECT_EQ("192.0.2.3", addrs[0].toText());
+    EXPECT_EQ("255.255.255.0", addrs[1].toText());
+    EXPECT_EQ("0.0.0.0", addrs[2].toText());
+    EXPECT_EQ("127.0.0.1", addrs[3].toText());
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_NO_THROW(opt4->unpack(buffer.begin(), buffer.begin() + sizeof(sampledata)));
+
+    EXPECT_EQ(Option::V4, opt4->getUniverse());
+
+    EXPECT_EQ(254, opt4->getType());
+    EXPECT_EQ(18, opt4->len()); // 2 (header) + 16 (4x IPv4 addrs)
+
+    addrs = opt4->getAddresses();
     ASSERT_EQ(4, addrs.size());
 
     EXPECT_EQ("192.0.2.3", addrs[0].toText());
@@ -141,9 +172,7 @@ TEST_F(Option4AddrLstTest, assembly1) {
     EXPECT_EQ("192.0.2.3", addrs[0].toText());
 
     OutputBuffer buf(100);
-    EXPECT_NO_THROW(
-        opt->pack(buf);
-    );
+    EXPECT_NO_THROW(opt->pack(buf));
 
     ASSERT_EQ(6, opt->len());
     ASSERT_EQ(6, buf.getLength());
@@ -177,9 +206,7 @@ TEST_F(Option4AddrLstTest, assembly4) {
     EXPECT_EQ("127.0.0.1", addrs[3].toText());
 
     OutputBuffer buf(100);
-    EXPECT_NO_THROW(
-        opt->pack(buf);
-    );
+    EXPECT_NO_THROW(opt->pack(buf));
 
     ASSERT_EQ(18, opt->len()); // 2(header) + 4xsizeof(IPv4addr)
     ASSERT_EQ(18, buf.getLength());
