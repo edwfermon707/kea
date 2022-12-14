@@ -7,12 +7,12 @@
 // This file is dedicated to testing vendor options in DHCPv6. There
 // are several related options:
 //
-// client-class (15) - this specifies (as a plain string) what kind of
-//                     device this is
-// vendor-class (16) - contains an enterprise-id followed by zero or
-//                     more of vendor-class data.
-// vendor-option (17) - contains an enterprise-id followed by zero or
-//                     more vendor suboptions
+// client-class (15) - this specifies (as a plain string) what kind of device
+//                     this is.
+// vendor-class (16) - contains an enterprise-id followed by zero or more of
+//                     vendor-class data.
+// vendor-option (17) - contains an enterprise-id followed by zero or more
+//                      vendor suboptions.
 
 #include <config.h>
 
