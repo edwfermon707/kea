@@ -108,12 +108,28 @@ TEST(Option6StatusCodeTest, unpack) {
     EXPECT_EQ(STATUS_UnspecFail, status->getStatusCode());
     EXPECT_EQ("xyz", status->getStatusMessage());
 
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_NO_THROW(status->unpack(buf.begin(), buf.end()));
+
+    // Verify that the data was parsed correctly.
+    EXPECT_EQ(STATUS_UnspecFail, status->getStatusCode());
+    EXPECT_EQ("xyz", status->getStatusMessage());
+
     // Remove the status message and leave only the status code.
     buf.resize(2);
     // Modify the status code.
     buf[1] = 0;
 
     ASSERT_NO_THROW(status.reset(new Option6StatusCode(buf.begin(), buf.end())));
+
+    EXPECT_EQ(STATUS_Success, status->getStatusCode());
+    EXPECT_TRUE(status->getStatusMessage().empty());
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_NO_THROW(status->unpack(buf.begin(), buf.end()));
+
     EXPECT_EQ(STATUS_Success, status->getStatusCode());
     EXPECT_TRUE(status->getStatusMessage().empty());
 }

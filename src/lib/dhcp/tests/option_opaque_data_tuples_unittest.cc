@@ -171,6 +171,14 @@ TEST(OptionOpaqueDataTuples, unpack6) {
     ASSERT_EQ(2, data_tuple->getTuplesNum());
     EXPECT_EQ("Hello world", data_tuple->getTuple(0).getText());
     EXPECT_EQ("foo", data_tuple->getTuple(1).getText());
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_NO_THROW(data_tuple->unpack(buf.begin(), buf.end()));
+    EXPECT_EQ(D6O_BOOTFILE_PARAM, data_tuple->getType());
+    ASSERT_EQ(2, data_tuple->getTuplesNum());
+    EXPECT_EQ("Hello world", data_tuple->getTuple(0).getText());
+    EXPECT_EQ("foo", data_tuple->getTuple(1).getText());
 }
 
 // This test checks that the DHCPv6 option with opaque data of size 0
@@ -190,6 +198,13 @@ TEST(OptionOpaqueDataTuples, unpack6EmptyTuple) {
     EXPECT_EQ(D6O_BOOTFILE_PARAM, data_tuple->getType());
     ASSERT_EQ(1, data_tuple->getTuplesNum());
     EXPECT_TRUE(data_tuple->getTuple(0).getText().empty());
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_NO_THROW(data_tuple->unpack(buf.begin(), buf.end()));
+    EXPECT_EQ(D6O_BOOTFILE_PARAM, data_tuple->getType());
+    ASSERT_EQ(1, data_tuple->getTuplesNum());
+    EXPECT_TRUE(data_tuple->getTuple(0).getText().empty());
 }
 
 // This test checks that exception is thrown when parsing truncated DHCPv6
@@ -203,8 +218,19 @@ TEST(OptionOpaqueDataTuples, unpack6Truncated) {
     };
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
 
-    EXPECT_THROW(OptionOpaqueDataTuples (Option::V6, 60, buf.begin(), buf.end()),
+    EXPECT_THROW(OptionOpaqueDataTuples(Option::V6, 60, buf.begin(), buf.end()),
                  isc::dhcp::OpaqueDataTupleError);
+
+    OptionBuffer buf_empty;
+    OptionOpaqueDataTuplesPtr data_tuple;
+    ASSERT_NO_THROW(
+        data_tuple = OptionOpaqueDataTuplesPtr(new OptionOpaqueDataTuples(Option::V6,
+                                                                          60, buf_empty.begin(),
+                                                                          buf_empty.end())));
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    EXPECT_THROW(data_tuple->unpack(buf.begin(), buf.end()), isc::dhcp::OpaqueDataTupleError);
 }
 
 // This test checks that the DHCPv6 bootfile-param option containing no opaque
@@ -222,6 +248,12 @@ TEST(OptionOpaqueDataTuples, unpack6NoTuple) {
                                                                           buf.begin(),
                                                                           buf.end()));
     );
+    EXPECT_EQ(D6O_BOOTFILE_PARAM, data_tuple->getType());
+    EXPECT_EQ(0, data_tuple->getTuplesNum());
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_NO_THROW(data_tuple->unpack(buf.begin(), buf.end()));
     EXPECT_EQ(D6O_BOOTFILE_PARAM, data_tuple->getType());
     EXPECT_EQ(0, data_tuple->getTuplesNum());
 }

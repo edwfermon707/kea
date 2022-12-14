@@ -89,6 +89,16 @@ TEST_F(Option6AuthTest, parseFields) {
     ASSERT_EQ(0xa3, auth->getReplyDetectionMethod());
     ASSERT_EQ(0xa4a5a6a7a8a9aaab, auth->getReplyDetectionValue());
     ASSERT_EQ(test_buf, auth->getAuthInfo());
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    auth->unpack(buff_.begin(), buff_.begin()+27); //26 element is 16 byte offset from 10
+
+    ASSERT_EQ(0xa1, auth->getProtocol());
+    ASSERT_EQ(0xa2, auth->getHashAlgo());
+    ASSERT_EQ(0xa3, auth->getReplyDetectionMethod());
+    ASSERT_EQ(0xa4a5a6a7a8a9aaab, auth->getReplyDetectionValue());
+    ASSERT_EQ(test_buf, auth->getAuthInfo());
 }
 
 //Check of the options are correctly packed and set
@@ -117,14 +127,14 @@ TEST_F(Option6AuthTest, setFields) {
 
 TEST_F(Option6AuthTest, checkHashInput) {
     scoped_ptr<Option6Auth> auth;
-    
+
     std::vector<uint8_t> test_buf(16,0xa8);
     std::vector<uint8_t> hash_op(16,0x00);
     auth.reset(new Option6Auth(1,2,0,0x0102030405060708,test_buf));
 
     isc::util::OutputBuffer buf(31); 
     ASSERT_NO_THROW(auth->packHashInput(buf));
-   //auth info must be 0 for calculating the checksum
+    //auth info must be 0 for calculating the checksum
     const uint8_t ref_data[] = {
         0, 11, 0, 27, 1, 2, 0, //header , proto algo method
         0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, //64 bit rdm field

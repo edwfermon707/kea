@@ -264,6 +264,15 @@ TEST(OptionVendorClass, unpack4) {
     ASSERT_EQ(2, vendor_class->getTuplesNum());
     EXPECT_EQ("Hello world", vendor_class->getTuple(0).getText());
     EXPECT_EQ("foo", vendor_class->getTuple(1).getText());
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_NO_THROW(vendor_class->unpack(buf.begin(), buf.end()));
+    EXPECT_EQ(DHO_VIVCO_SUBOPTIONS, vendor_class->getType());
+    EXPECT_EQ(1234, vendor_class->getVendorId());
+    ASSERT_EQ(2, vendor_class->getTuplesNum());
+    EXPECT_EQ("Hello world", vendor_class->getTuple(0).getText());
+    EXPECT_EQ("foo", vendor_class->getTuple(1).getText());
 }
 
 // This function checks that the DHCPv6 option with two opaque data tuples
@@ -291,6 +300,14 @@ TEST(OptionVendorClass, unpack6) {
     ASSERT_EQ(2, vendor_class->getTuplesNum());
     EXPECT_EQ("Hello world", vendor_class->getTuple(0).getText());
     EXPECT_EQ("foo", vendor_class->getTuple(1).getText());
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_NO_THROW(vendor_class->unpack(buf.begin(), buf.end()));
+    EXPECT_EQ(1234, vendor_class->getVendorId());
+    ASSERT_EQ(2, vendor_class->getTuplesNum());
+    EXPECT_EQ("Hello world", vendor_class->getTuple(0).getText());
+    EXPECT_EQ("foo", vendor_class->getTuple(1).getText());
 }
 
 
@@ -310,6 +327,14 @@ TEST(OptionVendorClass, unpack4EmptyTuple) {
                                                                   buf.begin(),
                                                                   buf.end()));
     );
+    EXPECT_EQ(DHO_VIVCO_SUBOPTIONS, vendor_class->getType());
+    EXPECT_EQ(1234, vendor_class->getVendorId());
+    ASSERT_EQ(1, vendor_class->getTuplesNum());
+    EXPECT_TRUE(vendor_class->getTuple(0).getText().empty());
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_NO_THROW(vendor_class->unpack(buf.begin(), buf.end()));
     EXPECT_EQ(DHO_VIVCO_SUBOPTIONS, vendor_class->getType());
     EXPECT_EQ(1234, vendor_class->getVendorId());
     ASSERT_EQ(1, vendor_class->getTuplesNum());
@@ -336,6 +361,14 @@ TEST(OptionVendorClass, unpack6EmptyTuple) {
     EXPECT_EQ(1234, vendor_class->getVendorId());
     ASSERT_EQ(1, vendor_class->getTuplesNum());
     EXPECT_TRUE(vendor_class->getTuple(0).getText().empty());
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_NO_THROW(vendor_class->unpack(buf.begin(), buf.end()));
+    EXPECT_EQ(D6O_VENDOR_CLASS, vendor_class->getType());
+    EXPECT_EQ(1234, vendor_class->getVendorId());
+    ASSERT_EQ(1, vendor_class->getTuplesNum());
+    EXPECT_TRUE(vendor_class->getTuple(0).getText().empty());
 }
 
 // This test checks that the DHCPv4 option without opaque data is
@@ -353,6 +386,13 @@ TEST(OptionVendorClass, unpack4NoTuple) {
                                                                   buf.begin(),
                                                                   buf.end()));
     );
+    EXPECT_EQ(DHO_VIVCO_SUBOPTIONS, vendor_class->getType());
+    EXPECT_EQ(1234, vendor_class->getVendorId());
+    EXPECT_EQ(0, vendor_class->getTuplesNum());
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_NO_THROW(vendor_class->unpack(buf.begin(), buf.end()));
     EXPECT_EQ(DHO_VIVCO_SUBOPTIONS, vendor_class->getType());
     EXPECT_EQ(1234, vendor_class->getVendorId());
     EXPECT_EQ(0, vendor_class->getTuplesNum());
@@ -376,6 +416,13 @@ TEST(OptionVendorClass, unpack6NoTuple) {
     EXPECT_EQ(D6O_VENDOR_CLASS, vendor_class->getType());
     EXPECT_EQ(1234, vendor_class->getVendorId());
     EXPECT_EQ(0, vendor_class->getTuplesNum());
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_NO_THROW(vendor_class->unpack(buf.begin(), buf.end()));
+    EXPECT_EQ(D6O_VENDOR_CLASS, vendor_class->getType());
+    EXPECT_EQ(1234, vendor_class->getVendorId());
+    EXPECT_EQ(0, vendor_class->getTuplesNum());
 }
 
 // This test checks that exception is thrown when parsing truncated DHCPv4
@@ -391,8 +438,20 @@ TEST(OptionVendorClass, unpack4Truncated) {
     };
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
 
-    EXPECT_THROW(OptionVendorClass (Option::V4, buf.begin(), buf.end()),
+    EXPECT_THROW(OptionVendorClass(Option::V4, buf.begin(), buf.end()),
                  isc::OutOfRange);
+
+    OptionBuffer simple_buf = {0, 0, 0, 0};
+    OptionVendorClassPtr vendor_class;
+    ASSERT_NO_THROW(
+        vendor_class = OptionVendorClassPtr(new OptionVendorClass(Option::V4,
+                                                                  simple_buf.begin(),
+                                                                  simple_buf.end()));
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    EXPECT_THROW(vendor_class->unpack(buf.begin(), buf.end()),
+                 isc::OutOfRange));
 }
 
 // This test checks that exception is thrown when parsing truncated DHCPv6
@@ -407,8 +466,20 @@ TEST(OptionVendorClass, unpack6Truncated) {
     };
     OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
 
-    EXPECT_THROW(OptionVendorClass (Option::V6, buf.begin(), buf.end()),
+    EXPECT_THROW(OptionVendorClass(Option::V6, buf.begin(), buf.end()),
                  isc::dhcp::OpaqueDataTupleError);
+
+    OptionBuffer simple_buf = {0, 0, 0, 0};
+    OptionVendorClassPtr vendor_class;
+    ASSERT_NO_THROW(
+        vendor_class = OptionVendorClassPtr(new OptionVendorClass(Option::V6,
+                                                                  simple_buf.begin(),
+                                                                  simple_buf.end()));
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    EXPECT_THROW(vendor_class->unpack(buf.begin(), buf.end()),
+                 isc::dhcp::OpaqueDataTupleError));
 }
 
 // Verifies correctness of the text representation of the DHCPv4 option.
@@ -482,8 +553,17 @@ TEST_F(OptionVendorClassLenientParsing, unpack6WellFormed) {
     OptionVendorClassPtr vendor_class;
     ASSERT_NO_THROW(
         vendor_class = OptionVendorClassPtr(
-            new OptionVendorClass(Option::V6, buf.begin(), buf.end())););
+            new OptionVendorClass(Option::V6, buf.begin(), buf.end())));
 
+    EXPECT_EQ(D6O_VENDOR_CLASS, vendor_class->getType());
+    EXPECT_EQ(1234, vendor_class->getVendorId());
+    ASSERT_EQ(2, vendor_class->getTuplesNum());
+    EXPECT_EQ("Hello world", vendor_class->getTuple(0).getText());
+    EXPECT_EQ("foo", vendor_class->getTuple(1).getText());
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_NO_THROW(vendor_class->unpack(buf.begin(), buf.end()));
     EXPECT_EQ(D6O_VENDOR_CLASS, vendor_class->getType());
     EXPECT_EQ(1234, vendor_class->getVendorId());
     ASSERT_EQ(2, vendor_class->getTuplesNum());
@@ -511,8 +591,22 @@ TEST_F(OptionVendorClassLenientParsing, unpack6FirstLengthIsBad) {
     OptionVendorClassPtr vendor_class;
     ASSERT_NO_THROW(
         vendor_class = OptionVendorClassPtr(
-            new OptionVendorClass(Option::V6, buf.begin(), buf.end())););
+            new OptionVendorClass(Option::V6, buf.begin(), buf.end())));
 
+    EXPECT_EQ(D6O_VENDOR_CLASS, vendor_class->getType());
+    EXPECT_EQ(1234, vendor_class->getVendorId());
+    ASSERT_EQ(2, vendor_class->getTuplesNum());
+    // The first value will have one extra byte.
+    EXPECT_EQ(std::string("Hello world") + '\0',
+              vendor_class->getTuple(0).getText());
+    // The length would have internally been interpreted as {0x03, 0x66} == 870,
+    // but the parser would have stopped at the end of the option, so the second
+    // value should be "oo".
+    EXPECT_EQ("oo", vendor_class->getTuple(1).getText());
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_NO_THROW(vendor_class->unpack(buf.begin(), buf.end()));
     EXPECT_EQ(D6O_VENDOR_CLASS, vendor_class->getType());
     EXPECT_EQ(1234, vendor_class->getVendorId());
     ASSERT_EQ(2, vendor_class->getTuplesNum());
@@ -542,8 +636,20 @@ TEST_F(OptionVendorClassLenientParsing, unpack6SecondLengthIsBad) {
     OptionVendorClassPtr vendor_class;
     ASSERT_NO_THROW(
         vendor_class = OptionVendorClassPtr(
-            new OptionVendorClass(Option::V6, buf.begin(), buf.end())););
+            new OptionVendorClass(Option::V6, buf.begin(), buf.end())));
 
+    EXPECT_EQ(D6O_VENDOR_CLASS, vendor_class->getType());
+    EXPECT_EQ(1234, vendor_class->getVendorId());
+    ASSERT_EQ(2, vendor_class->getTuplesNum());
+    EXPECT_EQ("Hello world", vendor_class->getTuple(0).getText());
+    // The length would have internally been interpreted as {0x00, 0x04} == 4,
+    // but the parser would have stopped at the end of the option, so the second
+    // value should be "foo" just like normal.
+    EXPECT_EQ("foo", vendor_class->getTuple(1).getText());
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_NO_THROW(vendor_class->unpack(buf.begin(), buf.end()));
     EXPECT_EQ(D6O_VENDOR_CLASS, vendor_class->getType());
     EXPECT_EQ(1234, vendor_class->getVendorId());
     ASSERT_EQ(2, vendor_class->getTuplesNum());
@@ -571,8 +677,22 @@ TEST_F(OptionVendorClassLenientParsing, unpack6BothLengthsAreBad) {
     OptionVendorClassPtr vendor_class;
     ASSERT_NO_THROW(
         vendor_class = OptionVendorClassPtr(
-            new OptionVendorClass(Option::V6, buf.begin(), buf.end())););
+            new OptionVendorClass(Option::V6, buf.begin(), buf.end())));
 
+    EXPECT_EQ(D6O_VENDOR_CLASS, vendor_class->getType());
+    EXPECT_EQ(1234, vendor_class->getVendorId());
+    ASSERT_EQ(2, vendor_class->getTuplesNum());
+    // The first value will have one extra byte.
+    EXPECT_EQ(std::string("Hello world") + '\0',
+              vendor_class->getTuple(0).getText());
+    // The length would have internally been interpreted as {0x04, 0x66} == 1126,
+    // but the parser would have stopped at the end of the option, so the second
+    // value should be "oo".
+    EXPECT_EQ("oo", vendor_class->getTuple(1).getText());
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_NO_THROW(vendor_class->unpack(buf.begin(), buf.end()));
     EXPECT_EQ(D6O_VENDOR_CLASS, vendor_class->getType());
     EXPECT_EQ(1234, vendor_class->getVendorId());
     ASSERT_EQ(2, vendor_class->getTuplesNum());

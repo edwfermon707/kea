@@ -86,7 +86,6 @@ void OptionVendor::packVendorOptions(isc::util::OutputBuffer& buf,
 
 void OptionVendor::unpack(OptionBufferConstIter begin,
                           OptionBufferConstIter end) {
-
     // We throw SkipRemainingOptionsError so callers can
     // abandon further unpacking, if desired.
     if (distance(begin, end) < sizeof(uint32_t)) {
@@ -94,6 +93,8 @@ void OptionVendor::unpack(OptionBufferConstIter begin,
                   "Truncated vendor-specific information option"
                   << ", length=" << distance(begin, end));
     }
+
+    options_.clear();
 
     uint32_t offset = 0;
     while (distance(begin + offset, end)) {

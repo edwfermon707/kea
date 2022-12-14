@@ -44,19 +44,19 @@ public:
             buf_[i] = 0;
         }
 
-        buf_[ 0] = 0x00;
-        buf_[ 1] = 0x00;
-        buf_[ 2] = 0x03;
-        buf_[ 3] = 0xe8; // preferred lifetime = 1000
+        buf_[0] = 0x00;
+        buf_[1] = 0x00;
+        buf_[2] = 0x03;
+        buf_[3] = 0xe8; // preferred lifetime = 1000
 
-        buf_[ 4]  = 0xb2;
-        buf_[ 5] = 0xd0;
-        buf_[ 6] = 0x5e;
-        buf_[ 7] = 0x00; // valid lifetime = 3,000,000,000
+        buf_[4]  = 0xb2;
+        buf_[5] = 0xd0;
+        buf_[6] = 0x5e;
+        buf_[7] = 0x00; // valid lifetime = 3,000,000,000
 
-        buf_[ 8] = 77; // Prefix length = 77
+        buf_[8] = 77; // Prefix length = 77
 
-        buf_[ 9] = 0x20;
+        buf_[9] = 0x20;
         buf_[10] = 0x01;
         buf_[11] = 0x0d;
         buf_[12] = 0xb8;
@@ -69,7 +69,6 @@ public:
         buf_[23] = 0xbe;
         buf_[24] = 0xef; // 2001:db8:1:0:afaf:0:dead:beef
     }
-
 
     /// @brief Checks whether specified IAPREFIX option meets expected values
     ///
@@ -135,13 +134,21 @@ TEST_F(Option6IAPrefixTest, parseShort) {
                                                   buf_.begin() + 25)));
     ASSERT_TRUE(opt);
 
-    // Pack this option
-    opt->pack(out_buf_);
-    EXPECT_EQ(29, out_buf_.getLength());
+    // The non-significant bits (above 77) of the received prefix should be
+    // set to zero.
+    checkOption(*opt, D6O_IAPREFIX, 77, IOAddress("2001:db8:1:0:afa8::"));
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_NO_THROW(opt->unpack(buf_.begin(), buf_.begin() + 25));
 
     // The non-significant bits (above 77) of the received prefix should be
     // set to zero.
     checkOption(*opt, D6O_IAPREFIX, 77, IOAddress("2001:db8:1:0:afa8::"));
+
+    // Pack this option
+    opt->pack(out_buf_);
+    EXPECT_EQ(29, out_buf_.getLength());
 
     // Set non-significant bits in the reference buffer to 0, so as the buffer
     // can be directly compared with the option buffer.
@@ -166,12 +173,19 @@ TEST_F(Option6IAPrefixTest, parseLong) {
                                                   buf_.begin() + 25)));
     ASSERT_TRUE(opt);
 
-    // Pack this option
-    opt->pack(out_buf_);
-    EXPECT_EQ(29, out_buf_.getLength());
+    checkOption(*opt, D6O_IAPREFIX, 128,
+                IOAddress("2001:db8:1:0:afaf:0:dead:beef"));
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_NO_THROW(opt->unpack(buf_.begin(), buf_.begin() + 25));
 
     checkOption(*opt, D6O_IAPREFIX, 128,
                 IOAddress("2001:db8:1:0:afaf:0:dead:beef"));
+
+    // Pack this option
+    opt->pack(out_buf_);
+    EXPECT_EQ(29, out_buf_.getLength());
 
     checkOutputBuffer(D6O_IAPREFIX);
 
@@ -191,11 +205,17 @@ TEST_F(Option6IAPrefixTest, parseZero) {
                                                   buf_.begin() + 25)));
     ASSERT_TRUE(opt);
 
+    checkOption(*opt, D6O_IAPREFIX, 0, IOAddress("::"));
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_NO_THROW(opt->unpack(buf_.begin(), buf_.begin() + 25));
+
+    checkOption(*opt, D6O_IAPREFIX, 0, IOAddress("::"));
+
     // Pack this option
     opt->pack(out_buf_);
     EXPECT_EQ(29, out_buf_.getLength());
-
-    checkOption(*opt, D6O_IAPREFIX, 0, IOAddress("::"));
 
     // Fill the address in the reference buffer with zeros.
     buf_.insert(buf_.begin() + 9, 16, 0);
@@ -204,7 +224,6 @@ TEST_F(Option6IAPrefixTest, parseZero) {
     // Check that option can be disposed safely
     EXPECT_NO_THROW(opt.reset());
 }
-
 
 // Checks whether a new option can be built correctly
 TEST_F(Option6IAPrefixTest, build) {

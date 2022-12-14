@@ -99,21 +99,40 @@ TEST_F(OptionStringTest, constructorFromBuffer) {
     EXPECT_EQ(Option::OPTION4_HDR_LEN + buf_.size(), optv4->len());
     EXPECT_EQ(optv4_value, optv4->getValue());
 
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_NO_THROW(optv4->unpack(buf_.begin(), buf_.end()));
+    // Test the instance of the created option.
+    EXPECT_EQ(Option::V4, optv4->getUniverse());
+    EXPECT_EQ(234, optv4->getType());
+    EXPECT_EQ(Option::OPTION4_HDR_LEN + buf_.size(), optv4->len());
+    EXPECT_EQ(optv4_value, optv4->getValue());
+
     // Do the same test for V6 option.
     boost::scoped_ptr<OptionString> optv6;
     ASSERT_NO_THROW(
         // Let's reduce the size of the buffer by one byte and see if our option
         // will absorb this little change.
-        optv6.reset(new OptionString(Option::V6, 123, buf_.begin(), buf_.end() - 1));
+        optv6.reset(new OptionString(Option::V6, 123, buf_.begin(), buf_.end() - 7));
     );
     // Make sure that it has been initialized to non-NULL value.
     ASSERT_TRUE(optv6);
 
     // Test the instance of the created option.
-    const std::string optv6_value = "This is a test strin";
+    const std::string optv6_value = "This is a test";
     EXPECT_EQ(Option::V6, optv6->getUniverse());
     EXPECT_EQ(123, optv6->getType());
-    EXPECT_EQ(Option::OPTION6_HDR_LEN + buf_.size() - 1, optv6->len());
+    EXPECT_EQ(Option::OPTION6_HDR_LEN + buf_.size() - 7, optv6->len());
+    EXPECT_EQ(optv6_value, optv6->getValue());
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_NO_THROW(optv6->unpack(buf_.begin(), buf_.end() - 7));
+
+    // Test the instance of the created option.
+    EXPECT_EQ(Option::V6, optv6->getUniverse());
+    EXPECT_EQ(123, optv6->getType());
+    EXPECT_EQ(Option::OPTION6_HDR_LEN + buf_.size() - 7, optv6->len());
     EXPECT_EQ(optv6_value, optv6->getValue());
 }
 
@@ -219,8 +238,20 @@ TEST_F(OptionStringTest, unpackNullsHandling) {
     EXPECT_EQ(3, optv4.getValue().length());
     EXPECT_EQ(optv4.getValue(), std::string("one"));
 
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_NO_THROW(optv4.unpack(buffer.begin(), buffer.end()));
+    EXPECT_EQ(3, optv4.getValue().length());
+    EXPECT_EQ(optv4.getValue(), std::string("one"));
+
     // More than one trailing null should trim off.
     buffer = { 't', 'h', 'r', 'e', 'e', 0, 0, 0 };
+    ASSERT_NO_THROW(optv4.unpack(buffer.begin(), buffer.end()));
+    EXPECT_EQ(5, optv4.getValue().length());
+    EXPECT_EQ(optv4.getValue(), std::string("three"));
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
     ASSERT_NO_THROW(optv4.unpack(buffer.begin(), buffer.end()));
     EXPECT_EQ(5, optv4.getValue().length());
     EXPECT_EQ(optv4.getValue(), std::string("three"));
@@ -231,8 +262,20 @@ TEST_F(OptionStringTest, unpackNullsHandling) {
     EXPECT_EQ(6, optv4.getValue().length());
     EXPECT_EQ(optv4.getValue(), (std::string{"em\0bed", 6}));
 
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
+    ASSERT_NO_THROW(optv4.unpack(buffer.begin(), buffer.end()));
+    EXPECT_EQ(6, optv4.getValue().length());
+    EXPECT_EQ(optv4.getValue(), (std::string{"em\0bed", 6}));
+
     // Leading null should be left in place.
     buffer = { 0, 'l', 'e', 'a', 'd', 'i', 'n', 'g' };
+    ASSERT_NO_THROW(optv4.unpack(buffer.begin(), buffer.end()));
+    EXPECT_EQ(8, optv4.getValue().length());
+    EXPECT_EQ(optv4.getValue(), (std::string{"\0leading", 8}));
+
+    // Do it again to check that unpack can be done multiple times with no side
+    // effect.
     ASSERT_NO_THROW(optv4.unpack(buffer.begin(), buffer.end()));
     EXPECT_EQ(8, optv4.getValue().length());
     EXPECT_EQ(optv4.getValue(), (std::string{"\0leading", 8}));

@@ -462,6 +462,10 @@ Pkt6::packTCP() {
 
 void
 Pkt6::unpack() {
+    options_.clear();
+
+    relay_info_.clear();
+
     switch (proto_) {
     case UDP:
         return unpackUDP();

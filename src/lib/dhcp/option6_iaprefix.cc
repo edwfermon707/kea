@@ -73,9 +73,11 @@ void Option6IAPrefix::pack(isc::util::OutputBuffer& buf, bool) const {
 
 void Option6IAPrefix::unpack(OptionBuffer::const_iterator begin,
                       OptionBuffer::const_iterator end) {
-    if ( distance(begin, end) < OPTION6_IAPREFIX_LEN) {
+    if (distance(begin, end) < OPTION6_IAPREFIX_LEN) {
         isc_throw(OutOfRange, "Option " << type_ << " truncated");
     }
+
+    options_.clear();
 
     preferred_ = readUint32(&(*begin), distance(begin, end));
     begin += sizeof(uint32_t);
