@@ -2023,8 +2023,11 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
     if (vendor_options.size()) {
         if (vendor_options.size() > 1) {
             LibDHCP::fuseOptions4(vendor_options);
+            const OptionBuffer& buffer = vendor_options.begin()->second->toBinary();
+            vendor_result.reset(new OptionVendor(Option::V4, buffer.begin(), buffer.end()));
+        } else {
+            vendor_result = vendor_options.begin()->second;
         }
-        vendor_result = vendor_options.begin()->second;
     } else if (!vendor_rsp) {
         vendor_result.reset(new OptionVendor(Option::V4, vendor_ids));
     } else {

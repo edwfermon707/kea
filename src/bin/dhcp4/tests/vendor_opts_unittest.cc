@@ -68,6 +68,9 @@ public:
     /// actually assigned. Also covers negative tests that options are not
     /// provided when a different vendor ID is given.
     ///
+    /// @note  Kea only knows how to process VENDOR_ID_CABLE_LABS DOCSIS3_V4_ORO
+    /// (suboption 1).
+    ///
     /// @param configured_vendor_ids The vendor IDs that are configured in the
     /// server: 4491 or both 4491 and 3561.
     /// @param requested_vendor_ids Then vendor IDs that are present in ORO.
@@ -267,6 +270,9 @@ public:
                     }
                 }
             } else {
+                // If explicitly sending OptionVendor and the vendor is not
+                // requested, options should not be present. Kea only knows how
+                // to process VENDOR_ID_CABLE_LABS DOCSIS3_V4_ORO (suboption 1).
                 // Option 2 should not be present.
                 OptionPtr docsis2 = vendor_resp->getOption(vendor_id, 2);
                 ASSERT_FALSE(docsis2);
@@ -461,61 +467,75 @@ public:
         ASSERT_TRUE(tmp);
 
         // The response should be OptionVendor object
-        // The option is serialized as Option so it needs to be converted to
-        // OptionVendor.
-        auto const& buffer = tmp->toBinary();
-        boost::shared_ptr<OptionVendor> vendor_resp(new OptionVendor(Option::V4, buffer.begin(), buffer.end()));
+        boost::shared_ptr<OptionVendor> vendor_resp =
+            boost::dynamic_pointer_cast<OptionVendor>(tmp);
         ASSERT_TRUE(vendor_resp);
 
-        auto vendor_ids = configured_vendor_ids;
-        // If explicitly requesting for specific vendors, only use those.
-        if (add_vendor_option) {
-            vendor_ids = requested_vendor_ids;
-        }
-
-        for (auto const& vendor_id : vendor_ids) {
+        for (auto const& vendor_id : configured_vendor_ids) {
             for (auto const& option : configured_options) {
-                if (option == DOCSIS3_V4_TFTP_SERVERS) {
-                    // Option 2 should be present.
-                    OptionPtr docsis2 = vendor_resp->getOption(vendor_id, DOCSIS3_V4_TFTP_SERVERS);
-                    ASSERT_TRUE(docsis2);
-
-                    // It should be an Option4AddrLst.
-                    // The option is serialized as Option so it needs to be converted to
-                    // Option4AddrLst.
-                    auto const& buffer = docsis2->toBinary();
-                    Option4AddrLstPtr tftp_srvs(new Option4AddrLst(DOCSIS3_V4_TFTP_SERVERS, buffer.begin(), buffer.end()));
-                    ASSERT_TRUE(tftp_srvs);
-
-                    // Check that the provided addresses match the ones in configuration.
-                    Option4AddrLst::AddressContainer addrs = tftp_srvs->getAddresses();
-                    ASSERT_EQ(2, addrs.size());
-                    if (vendor_id == VENDOR_ID_CABLE_LABS) {
-                        EXPECT_EQ("192.0.2.1", addrs[0].toText());
-                        EXPECT_EQ("192.0.2.2", addrs[1].toText());
-                    } else {
-                        EXPECT_EQ("10.0.2.1", addrs[0].toText());
-                        EXPECT_EQ("10.0.2.2", addrs[1].toText());
+                if (add_vendor_option && std::find(requested_vendor_ids.begin(),
+                                                   requested_vendor_ids.end(),
+                                                   vendor_id) == requested_vendor_ids.end()) {
+                    // If explicitly sending OptionVendor and the vendor is not
+                    // requested, options should not be present.
+                    if (option == DOCSIS3_V4_TFTP_SERVERS) {
+                        // Option 2 should not be present.
+                        OptionPtr docsis2 = vendor_resp->getOption(vendor_id, DOCSIS3_V4_TFTP_SERVERS);
+                        ASSERT_FALSE(docsis2);
                     }
-                }
+                    if (option == 22) {
+                        // Option 22 should not be present.
+                        OptionPtr custom = vendor_resp->getOption(vendor_id, 22);
+                        ASSERT_FALSE(custom);
+                    }
+                } else {
+                    if (option == DOCSIS3_V4_TFTP_SERVERS) {
+                        // Option 2 should be present.
+                        OptionPtr docsis2 = vendor_resp->getOption(vendor_id, DOCSIS3_V4_TFTP_SERVERS);
+                        ASSERT_TRUE(docsis2);
 
-                if (option == 22) {
-                    // Option 22 should be present.
-                    OptionPtr custom = vendor_resp->getOption(vendor_id, 22);
-                    ASSERT_TRUE(custom);
+                        // It should be an Option4AddrLst.
+                        Option4AddrLstPtr tftp_srvs;
+                        if (vendor_id == VENDOR_ID_CABLE_LABS) {
+                            tftp_srvs = boost::dynamic_pointer_cast<Option4AddrLst>(docsis2);
+                        } else {
+                            // The option is serialized as Option so it needs to be converted to
+                            // Option4AddrLst.
+                            auto const& buffer = docsis2->toBinary();
+                            tftp_srvs.reset(new Option4AddrLst(DOCSIS3_V4_TFTP_SERVERS, buffer.begin(), buffer.end()));
+                        }
+                        ASSERT_TRUE(tftp_srvs);
 
-                    // It should be an OptionString.
-                    // The option is serialized as Option so it needs to be converted to
-                    // OptionString.
-                    auto const& buffer = custom->toBinary();
-                    OptionStringPtr tag(new OptionString(Option::V4, 22, buffer.begin(), buffer.end()));
-                    ASSERT_TRUE(tag);
+                        // Check that the provided addresses match the ones in configuration.
+                        Option4AddrLst::AddressContainer addrs = tftp_srvs->getAddresses();
+                        ASSERT_EQ(2, addrs.size());
+                        if (vendor_id == VENDOR_ID_CABLE_LABS) {
+                            EXPECT_EQ("192.0.2.1", addrs[0].toText());
+                            EXPECT_EQ("192.0.2.2", addrs[1].toText());
+                        } else {
+                            EXPECT_EQ("10.0.2.1", addrs[0].toText());
+                            EXPECT_EQ("10.0.2.2", addrs[1].toText());
+                        }
+                    }
 
-                    // Check that the provided value match the ones in configuration.
-                    if (vendor_id == VENDOR_ID_CABLE_LABS) {
-                        EXPECT_EQ(tag->getValue(), "first");
-                    } else {
-                        EXPECT_EQ(tag->getValue(), "last");
+                    if (option == 22) {
+                        // Option 22 should be present.
+                        OptionPtr custom = vendor_resp->getOption(vendor_id, 22);
+                        ASSERT_TRUE(custom);
+
+                        // It should be an OptionString.
+                        // The option is serialized as Option so it needs to be converted to
+                        // OptionString.
+                        auto const& buffer = custom->toBinary();
+                        OptionStringPtr tag(new OptionString(Option::V4, 22, buffer.begin(), buffer.end()));
+                        ASSERT_TRUE(tag);
+
+                        // Check that the provided value match the ones in configuration.
+                        if (vendor_id == VENDOR_ID_CABLE_LABS) {
+                            EXPECT_EQ(tag->getValue(), "first");
+                        } else {
+                            EXPECT_EQ(tag->getValue(), "last");
+                        }
                     }
                 }
             }
