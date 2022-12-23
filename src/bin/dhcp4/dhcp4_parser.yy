@@ -141,6 +141,7 @@ using namespace std;
   SPACE "space"
   CSV_FORMAT "csv-format"
   ALWAYS_SEND "always-send"
+  NEVER_SEND "never-send"
   RECORD_TYPES "record-types"
   ENCAPSULATE "encapsulate"
   ARRAY "array"
@@ -1934,6 +1935,7 @@ option_data_param: option_data_name
                  | option_data_space
                  | option_data_csv_format
                  | option_data_always_send
+                 | option_data_never_send
                  | user_context
                  | comment
                  | unknown_map_entry
@@ -1964,6 +1966,12 @@ option_data_always_send: ALWAYS_SEND COLON BOOLEAN {
     ctx.unique("always-send", ctx.loc2pos(@1));
     ElementPtr persist(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("always-send", persist);
+};
+
+option_data_never_send: NEVER_SEND COLON BOOLEAN {
+    ctx.unique("never-send", ctx.loc2pos(@1));
+    ElementPtr persist(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("never-send", persist);
 };
 
 // ---- pools ------------------------------------
