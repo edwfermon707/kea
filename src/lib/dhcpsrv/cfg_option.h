@@ -54,6 +54,14 @@ public:
     /// sent to the client when requested using ORO or PRL option.
     bool persistent_;
 
+    /// @brief Cancelled flag.
+    ///
+    /// If true, option is never sent to the client. If false, option is
+    /// sent when it should.
+    /// @note: When true the action of this flag is final i.e. it can't be
+    /// overridden at a more specific level and has precedence over persist.
+    bool cancelled_;
+
     /// @brief Option value in textual (CSV) format.
     ///
     /// This field is used to convey option value in human readable format,
@@ -84,13 +92,14 @@ public:
     ///
     /// @param opt option instance.
     /// @param persist if true, option is always sent.
+    /// @param cancel if true, option is never sent.
     /// @param formatted_value option value in the textual format (optional).
     /// @param user_context user context (optional).
-    OptionDescriptor(const OptionPtr& opt, bool persist,
+    OptionDescriptor(const OptionPtr& opt, bool persist, bool cancel,
                      const std::string& formatted_value = "",
                      data::ConstElementPtr user_context = data::ConstElementPtr())
         : data::StampedElement(), option_(opt), persistent_(persist),
-          formatted_value_(formatted_value),
+          cancelled_(cancel), formatted_value_(formatted_value),
           space_name_() {
         setContext(user_context);
     };
@@ -98,9 +107,10 @@ public:
     /// @brief Constructor.
     ///
     /// @param persist if true option is always sent.
-    OptionDescriptor(bool persist)
+    /// @param cancel if true, option is never sent.
+    OptionDescriptor(bool persist, bool cancel)
         : data::StampedElement(), option_(OptionPtr()), persistent_(persist),
-          formatted_value_(), space_name_() {};
+          cancelled_(cancel), formatted_value_(), space_name_() {};
 
     /// @brief Copy constructor.
     ///
@@ -109,6 +119,7 @@ public:
         : data::StampedElement(desc),
           option_(desc.option_),
           persistent_(desc.persistent_),
+          cancelled_(desc.cancelled_),
           formatted_value_(desc.formatted_value_),
           space_name_(desc.space_name_) {
         setContext(desc.getContext());
@@ -123,6 +134,7 @@ public:
             data::StampedElement::operator=(other);
             option_ = other.option_;
             persistent_ = other.persistent_;
+            cancelled_ = other.cancelled_;
             formatted_value_ = other.formatted_value_;
             space_name_ = other.space_name_;
             setContext(other.getContext());
@@ -134,12 +146,14 @@ public:
     ///
     /// @param opt option instance.
     /// @param persist if true, option is always sent.
+    /// @param cancel if true, option is never sent.
     /// @param formatted_value option value in the textual format (optional).
     /// @param user_context user context (optional).
     ///
     /// @return Pointer to the @c OptionDescriptor instance.
     static OptionDescriptorPtr create(const OptionPtr& opt,
                                       bool persist,
+                                      bool cancel,
                                       const std::string& formatted_value = "",
                                       data::ConstElementPtr user_context =
                                       data::ConstElementPtr());
@@ -147,9 +161,10 @@ public:
     /// @brief Factory function creating an instance of the @c OptionDescriptor.
     ///
     /// @param persist if true option is always sent.
+    /// @param cancel if true, option is never sent.
     ///
     /// @return Pointer to the @c OptionDescriptor instance.
-    static OptionDescriptorPtr create(bool persist);
+    static OptionDescriptorPtr create(bool persist, bool cancel);
 
     /// @brief Factory function creating an instance of the @c OptionDescriptor.
     ///
@@ -375,12 +390,14 @@ public:
     /// @param option Pointer to the option being added.
     /// @param persistent Boolean value which specifies if the option should
     /// be sent to the client regardless if requested (true), or nor (false)
+    /// @param cancelled Boolean value which specifies if the option must
+    /// never be sent to the client.
     /// @param option_space Option space name.
     /// @param id Optional database id to be associated with the option.
     ///
     /// @throw isc::BadValue if the option space is invalid.
     void add(const OptionPtr& option, const bool persistent,
-             const std::string& option_space,
+             const bool cancelled, const std::string& option_space,
              const uint64_t id = 0);
 
     /// @brief A variant of the @ref CfgOption::add method which takes option
@@ -552,14 +569,14 @@ public:
         // Check for presence of options.
         OptionContainerPtr options = getAll(key);
         if (!options || options->empty()) {
-            return (OptionDescriptor(false));
+            return (OptionDescriptor(false, false));
         }
 
         // Some options present, locate the one we are interested in.
         const OptionContainerTypeIndex& idx = options->get<1>();
         OptionContainerTypeIndex::const_iterator od_itr = idx.find(option_code);
         if (od_itr == idx.end()) {
-            return (OptionDescriptor(false));
+            return (OptionDescriptor(false, false));
         }
 
         return (*od_itr);

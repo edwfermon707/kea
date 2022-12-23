@@ -510,7 +510,7 @@ public:
                           << subnet_address.toText() << "'. Expected "
                 " at most one option";
         } else if (std::distance(range.first, range.second) == 0) {
-            return (OptionDescriptor(OptionPtr(), false));
+            return (OptionDescriptor(OptionPtr(), false, false));
         }
 
         return (*range.first);
@@ -7625,6 +7625,5 @@ TEST_F(Dhcp4ParserTest, parkedPacketLimit) {
     // Make sure an invalid limit fails to parse.
     ASSERT_THROW(parseDHCP4(bad_limit), std::exception);
 }
-
 
 }  // namespace

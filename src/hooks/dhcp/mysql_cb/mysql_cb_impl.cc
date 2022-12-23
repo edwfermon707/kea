@@ -861,7 +861,8 @@ MySqlConfigBackendImpl::processOptionRow(const Option::Universe& universe,
     // Create option descriptor which encapsulates our option and adds
     // additional information, i.e. whether the option is persistent,
     // its option space and timestamp.
-    OptionDescriptorPtr desc = OptionDescriptor::create(option, persistent, formatted_value);
+    OptionDescriptorPtr desc = OptionDescriptor::create(option, persistent,
+                                                        false, formatted_value);
     desc->space_name_ = space;
     desc->setModificationTime((*(first_binding + 11))->getTimestamp());
 

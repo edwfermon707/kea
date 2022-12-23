@@ -288,7 +288,7 @@ TEST(CfgSubnets4Test, mergeSubnets) {
     std::string value("Yay!");
     OptionPtr option(new Option(Option::V4, 1));
     option->setData(value.begin(), value.end());
-    ASSERT_NO_THROW(subnet1b->getCfgOption()->add(option, false, "isc"));
+    ASSERT_NO_THROW(subnet1b->getCfgOption()->add(option, false, false, "isc"));
 
     // subnet 3b updates subnet 3 with different ID and removes it
     // from network 2
@@ -299,7 +299,7 @@ TEST(CfgSubnets4Test, mergeSubnets) {
     value = "Team!";
     option.reset(new Option(Option::V4, 1));
     option->setData(value.begin(), value.end());
-    ASSERT_NO_THROW(subnet3b->getCfgOption()->add(option, false, "isc"));
+    ASSERT_NO_THROW(subnet3b->getCfgOption()->add(option, false, false, "isc"));
 
     // subnet 4b updates subnet 4 and moves it from network2 to network 1
     Subnet4Ptr subnet4b(new Subnet4(IOAddress("192.0.4.0"),
@@ -317,7 +317,7 @@ TEST(CfgSubnets4Test, mergeSubnets) {
     value = "POOLS";
     option.reset(new Option(Option::V4, 1));
     option->setData(value.begin(), value.end());
-    ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, "isc"));
+    ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, false, "isc"));
     subnet5->addPool(pool);
 
     // Add pool 2
@@ -325,7 +325,7 @@ TEST(CfgSubnets4Test, mergeSubnets) {
     value ="RULE!";
     option.reset(new Option(Option::V4, 1));
     option->setData(value.begin(), value.end());
-    ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, "isc"));
+    ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, false, "isc"));
     subnet5->addPool(pool);
 
     // Add subnets to the merge from config.
@@ -1233,7 +1233,8 @@ TEST(CfgSubnets4Test, hasSubnetWithServerId) {
     OptionCustomPtr opt_server_id(new OptionCustom(*def, Option::V4));
     opt_server_id->writeAddress(IOAddress("1.2.3.4"));
     Subnet4Ptr subnet(new Subnet4(IOAddress("192.0.2.0"), 26, 1, 2, 3, 100));
-    subnet->getCfgOption()->add(opt_server_id, false, DHCP4_OPTION_SPACE);
+    subnet->getCfgOption()->add(opt_server_id, false, false,
+                                DHCP4_OPTION_SPACE);
     cfg.add(subnet);
 
     EXPECT_TRUE(cfg.hasSubnetWithServerId(IOAddress("1.2.3.4")));

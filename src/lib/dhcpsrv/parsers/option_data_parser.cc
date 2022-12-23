@@ -186,6 +186,19 @@ OptionDataParser::extractPersistent(ConstElementPtr parent) const {
     return (Optional<bool>(persist));
 }
 
+Optional<bool>
+OptionDataParser::extractCancelled(ConstElementPtr parent) const {
+    bool cancel = false;
+    try {
+        cancel = getBoolean(parent, "never-send");
+
+    } catch (...) {
+        return (Optional<bool>());
+    }
+
+    return (Optional<bool>(cancel));
+}
+
 OptionDefinitionPtr
 OptionDataParser::findOptionDefinition(const std::string& option_space,
                                        const Optional<uint32_t>& option_code,
@@ -262,6 +275,7 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
     Optional<std::string> name_param = extractName(option_data);
     Optional<bool> csv_format_param = extractCSVFormat(option_data);
     Optional<bool> persist_param = extractPersistent(option_data);
+    Optional<bool> cancel_param = extractCancelled(option_data);
     std::string data_param = extractData(option_data);
     std::string space_param = extractSpace(option_data);
     ConstElementPtr user_context = option_data->get("user-context");
@@ -336,7 +350,7 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
         }
     }
 
-    OptionDescriptor desc(false);
+    OptionDescriptor desc(false, false);
 
     if (!def) {
         // @todo We have a limited set of option definitions initialized at
@@ -349,6 +363,7 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
 
         desc.option_ = option;
         desc.persistent_ = !persist_param.unspecified() && persist_param;
+        desc.cancelled_ = !cancel_param.unspecified() && cancel_param;
     } else {
 
         // Option name is specified it should match the name in the definition.
@@ -370,6 +385,7 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
                 def->optionFactory(universe, def->getCode(), binary);
             desc.option_ = option;
             desc.persistent_ = !persist_param.unspecified() && persist_param;
+            desc.cancelled_ = !cancel_param.unspecified() && cancel_param;
             if (use_csv) {
                 desc.formatted_value_ = data_param;
             }
