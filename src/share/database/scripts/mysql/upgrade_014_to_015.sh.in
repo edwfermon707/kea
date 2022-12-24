@@ -64,7 +64,7 @@ ALTER TABLE dhcp6_options
 
 -- Update the schema version number.
 UPDATE schema_version
-    SET version = '14', minor = '0';
+    SET version = '15', minor = '0';
 
 -- This line concludes the schema upgrade to version 14.
 EOF

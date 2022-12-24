@@ -42,7 +42,7 @@ typedef std::vector<OptionDescriptor> OptionDescriptorList;
 /// Option descriptor holds instance of an option and additional information
 /// for this option. This information comprises whether this option is sent
 /// to DHCP client only on request (persistent = false) or always
-/// (persistent = true).
+/// (persistent = true), or must never send (cancelled = true).
 class OptionDescriptor : public data::StampedElement, public data::UserContext {
 public:
     /// @brief Option instance.
@@ -210,12 +210,14 @@ public:
 /// - persistency flag index: used to search option descriptors with
 /// 'persistent' flag set to true.
 ///
-/// This container is the equivalent of three separate STL containers:
+/// This container is the equivalent of four separate STL containers:
 /// - std::list of all options,
 /// - std::multimap of options with option code used as a multimap key,
 /// - std::multimap of option descriptors with option persistency flag
 /// used as a multimap key.
-/// The major advantage of this container over 3 separate STL containers
+/// - std::multimap of option descriptors with option cancellation flag
+/// used as a multimap key.
+/// The major advantage of this container over 4 separate STL containers
 /// is automatic synchronization of all indexes when elements are added,
 /// removed or modified in the container. With separate containers,
 /// the synchronization would have to be guaranteed by the Subnet class
@@ -283,6 +285,15 @@ typedef boost::multi_index_container<
             boost::multi_index::tag<OptionIdIndexTag>,
             boost::multi_index::const_mem_fun<data::BaseStampedElement, uint64_t,
                                               &data::BaseStampedElement::getId>
+        >,
+        // Start definition of index #5.
+        // Use 'cancelled' struct member as a key.
+        boost::multi_index::hashed_non_unique<
+            boost::multi_index::member<
+                OptionDescriptor,
+                bool,
+                &OptionDescriptor::cancelled_
+            >
         >
     >
 > OptionContainer;
@@ -303,6 +314,13 @@ typedef OptionContainer::nth_index<2>::type OptionContainerPersistIndex;
 /// the beginning of the range, the second element represents the end.
 typedef std::pair<OptionContainerPersistIndex::const_iterator,
                   OptionContainerPersistIndex::const_iterator> OptionContainerPersistRange;
+/// Type of the index #5 - option cancellation flag.
+typedef OptionContainer::nth_index<5>::type OptionContainerCancelIndex;
+/// Pair of iterators to represent the range of options having the
+/// same cancellation flag. The first element in this pair represents
+/// the beginning of the range, the second element represents the end.
+typedef std::pair<OptionContainerCancelIndex::const_iterator,
+                  OptionContainerCancelIndex::const_iterator> OptionContainerCancelRange;
 
 /// @brief Represents option data configuration for the DHCP server.
 ///

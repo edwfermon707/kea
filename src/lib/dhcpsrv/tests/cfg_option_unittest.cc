@@ -1108,6 +1108,45 @@ TEST(Subnet6Test, addPersistentOption) {
     ASSERT_EQ(3, distance(range_non_persistent.first, range_non_persistent.second));
 }
 
+// This test verifies that the option with the cancellation flag can be
+// added to the configuration and that options with the cancellation flags
+// can be retrieved.
+TEST(Subnet6Test, addCancelledOption) {
+    CfgOption cfg;
+
+    // Add 10 options to the subnet with option codes 100 - 109.
+    for (uint16_t code = 100; code < 110; ++code) {
+        OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
+        // We create 10 options and want some of them to be flagged
+        // cancelled and some non-cancelled. Cancelled options are
+        // those that server must never send to clients.
+        // We pick 3 out of 10 options and mark them
+        // non-cancelled and 7 other options cancelled.
+        // Code values: 102, 105 and 108 are divisible by 3
+        // and options with these codes will be flagged non-cancelled.
+        // Options with other codes will be flagged cancelled.
+        bool cancelled = (code % 3) ? true : false;
+        ASSERT_NO_THROW(cfg.add(option, true, cancelled, DHCP6_OPTION_SPACE));
+    }
+
+    // Get added options from the subnet.
+    OptionContainerPtr options = cfg.getAll(DHCP6_OPTION_SPACE);
+
+    // options->get<2> returns reference to container index #5. This
+    // index is used to access options by the 'cancelled' flag.
+    OptionContainerCancelIndex& idx = options->get<5>();
+
+    // Get all cancelled options->
+    OptionContainerCancelRange range_cancelled = idx.equal_range(true);
+    // 7 out of 10 options have been flagged cancelled.
+    ASSERT_EQ(7, distance(range_cancelled.first, range_cancelled.second));
+
+    // Get all non-cancelled options->
+    OptionContainerCancelRange range_non_cancelled = idx.equal_range(false);
+    // 3 out of 10 options have been flagged not cancelled.
+    ASSERT_EQ(3, distance(range_non_cancelled.first, range_non_cancelled.second));
+}
+
 // This test verifies that the vendor option can be added to the configuration.
 TEST_F(CfgOptionTest, addVendorOptions) {
     CfgOption cfg;
