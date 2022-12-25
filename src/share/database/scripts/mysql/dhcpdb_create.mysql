@@ -5077,6 +5077,8 @@ ALTER TABLE dhcp6_options
 UPDATE schema_version
     SET version = '15', minor = '0';
 
+-- This line concludes the schema upgrade to version 15.
+
 # Notes:
 #
 # Indexes

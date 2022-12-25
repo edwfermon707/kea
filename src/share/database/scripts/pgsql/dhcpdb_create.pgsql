@@ -5626,9 +5626,6 @@ UPDATE schema_version
 
 -- This line concludes the schema upgrade to version 13.
 
--- Commit the script transaction.
-COMMIT;
-
 -- This line starts the schema upgrade to version 14.
 
 -- Add cancelled (aka never-send) column to option tables.
@@ -5641,6 +5638,9 @@ UPDATE schema_version
     SET version = '14', minor = '0';
 
 -- This line concludes the schema upgrade to version 14.
+
+-- Commit the script transaction.
+COMMIT;
 
 -- Notes:
 

@@ -291,6 +291,12 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
     // option name.
     OptionDefinitionPtr def = findOptionDefinition(space_param, code_param, name_param);
 
+    // If cancelled sets the CSV format default to false.
+    if (!cancel_param.unspecified() && cancel_param &&
+        csv_format_param.unspecified()) {
+        csv_format_param = false;
+    }
+
     // If there is no definition, the user must not explicitly enable the
     // use of csv-format.
     if (!def) {
