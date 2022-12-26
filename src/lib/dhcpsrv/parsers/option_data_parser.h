@@ -151,7 +151,8 @@ protected:
     /// @param parent A data element holding full option data configuration.
     /// @return Option data as a string. It will return empty string if
     /// option data is unspecified.
-    std::string extractData(data::ConstElementPtr parent) const;
+    util::Optional<std::string>
+    extractData(data::ConstElementPtr parent) const;
 
     /// @brief Retrieves option space name.
     ///

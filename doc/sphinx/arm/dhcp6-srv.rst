@@ -1438,7 +1438,6 @@ Option Request Option (or its equivalent for vendor options), as in:
               "option-data": [
                   {
                       "name": "dns-servers",
-                      "data": "2001:db8:1::cafe, 2001:db8:1::babe",
                       "never-send": true
                   },
                   ...
@@ -1460,15 +1459,6 @@ so if both are true the option is not added.
    for instance it has no effect on options managed by the server itself.
    Both ``always-send`` and ``never-send`` has no effect too on options
    which cannot be requested, for instance from a custom space.
-
-.. note::
-
-   The ``option-data`` entry setting the ``never-send`` flag to ``true``
-   must be valid even it has no other effect then to give the code or
-   name, and space of the option to never send. The ``csv-format`` default
-   is ``false`` when ``never-send`` is ``true`` but it is not enough
-   to avoid errors with invalid entries. In particular some option
-   types require the ``data`` entry to not be empty (the default).
 
 It is possible to override options on a per-subnet basis. If clients
 connected to most subnets are expected to get the same values of

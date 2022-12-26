@@ -1247,6 +1247,8 @@ TEST_F(CfgOptionTest, unparse) {
     cfg.add(opt3, false, false, DHCP6_OPTION_SPACE);
     OptionPtr opt4(new Option(Option::V6, 100, OptionBuffer(4, 0x21)));
     cfg.add(opt4, true, true, "vendor-1234");
+    OptionPtr opt5(new Option(Option::V6, 111));
+    cfg.add(opt5, false, true, "vendor-5678");
 
     // Unparse
     std::string expected = "[\n"
@@ -1279,6 +1281,11 @@ TEST_F(CfgOptionTest, unparse) {
         "    \"csv-format\": false,\n"
         "    \"data\": \"21212121\",\n"
         "    \"always-send\": true,\n"
+        "    \"never-send\": true\n"
+        "},{\n"
+        "    \"code\": 111,\n"
+        "    \"space\": \"vendor-5678\",\n"
+        "    \"always-send\": false,\n"
         "    \"never-send\": true\n"
         "}]\n";
     isc::test::runToElementTest<CfgOption>(expected, cfg);

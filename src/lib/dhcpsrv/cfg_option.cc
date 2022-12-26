@@ -459,10 +459,12 @@ CfgOption::toElementWithMetadata(const bool include_metadata) const {
                 map->set("csv-format", Element::create(true));
                 map->set("data", Element::create(opt.formatted_value_));
             } else {
-                map->set("csv-format", Element::create(false));
                 std::vector<uint8_t> bin = opt.option_->toBinary();
-                std::string repr = util::encode::encodeHex(bin);
-                map->set("data", Element::create(repr));
+                if (!opt.cancelled_ || !bin.empty()) {
+                    map->set("csv-format", Element::create(false));
+                    std::string repr = util::encode::encodeHex(bin);
+                    map->set("data", Element::create(repr));
+                }
             }
             // Set the persistency flag
             map->set("always-send", Element::create(opt.persistent_));
@@ -509,10 +511,12 @@ CfgOption::toElementWithMetadata(const bool include_metadata) const {
                 map->set("csv-format", Element::create(true));
                 map->set("data", Element::create(opt.formatted_value_));
             } else {
-                map->set("csv-format", Element::create(false));
                 std::vector<uint8_t> bin = opt.option_->toBinary();
-                std::string repr = util::encode::encodeHex(bin);
-                map->set("data", Element::create(repr));
+                if (!opt.cancelled_ || !bin.empty()) {
+                    map->set("csv-format", Element::create(false));
+                    std::string repr = util::encode::encodeHex(bin);
+                    map->set("data", Element::create(repr));
+                }
             }
             // Set the persistency flag
             map->set("always-send", Element::create(opt.persistent_));

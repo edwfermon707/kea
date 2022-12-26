@@ -1219,8 +1219,6 @@ TEST_F(ClassifyTest, classNeverSend) {
         "    \"interface\": \"eth1\", "
         "    \"option-data\": ["
         "        {    \"name\": \"ipv6-forwarding\", "
-        "             \"csv-format\": true, "
-        "             \"data\": \"false\", "
         "             \"always-send\": false, "
         "             \"never-send\": true } ] } ] }";
     ASSERT_NO_THROW(configure(config));

@@ -522,7 +522,6 @@ TEST_F(VendorOptsTest, vendorNeverSend) {
         "    \"interface\": \"eth0\","
         "    \"option-data\": [ {"
         "           \"name\": \"config-file\","
-        "           \"data\": \"20\","
         "           \"space\": \"vendor-4491\","
         "           \"never-send\": true"
         "     } ]"
