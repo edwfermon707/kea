@@ -430,13 +430,13 @@ const YRTree subnetOptionsTreeKeaDhcp4 = YangRepr::buildTreeFromVector({
       "pool[start-address='10.0.1.0'][end-address='10.0.1.255']",
       std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/kea-dhcp4-server:config/subnet4[id='111']/"
-      "pool[start-address='10.0.1.0'][end-address='10.0.1.255']/start-address",
+      "pools[start-address='10.0.1.0'][end-address='10.0.1.255']/start-address",
       "10.0.1.0", libyang::LeafBaseType::String, false },
     { "/kea-dhcp4-server:config/subnet4[id='111']/"
-      "pool[start-address='10.0.1.0'][end-address='10.0.1.255']/end-address",
+      "pools[start-address='10.0.1.0'][end-address='10.0.1.255']/end-address",
       "10.0.1.255", libyang::LeafBaseType::String, false },
     { "/kea-dhcp4-server:config/subnet4[id='111']/"
-      "pool[start-address='10.0.1.0'][end-address='10.0.1.255']/prefix",
+      "pools[start-address='10.0.1.0'][end-address='10.0.1.255']/prefix",
       "10.0.1.0/24", libyang::LeafBaseType::String, true },
     { "/kea-dhcp4-server:config/subnet4[id='111']/subnet",
       "10.0.0.0/8", libyang::LeafBaseType::String, true },
@@ -469,42 +469,42 @@ const YRTree subnetOptionsTreeKeaDhcp6 = YangRepr::buildTreeFromVector({
     { "/kea-dhcp6-server:config/subnet6[id='111']/id",
       "111", libyang::LeafBaseType::Uint32, false },
     { "/kea-dhcp6-server:config/subnet6[id='111']/"
-      "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']",
+      "pools[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']",
       std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/kea-dhcp6-server:config/subnet6[id='111']/"
-      "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
+      "pools[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
       "start-address",
       "2001:db8::1:0", libyang::LeafBaseType::String, false },
     { "/kea-dhcp6-server:config/subnet6[id='111']/"
-      "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
+      "pools[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
       "end-address",
       "2001:db8::1:ffff", libyang::LeafBaseType::String, false },
     { "/kea-dhcp6-server:config/subnet6[id='111']/"
-      "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
+      "pools[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
       "prefix",
       "2001:db8::1:0/112", libyang::LeafBaseType::String, true },
     { "/kea-dhcp6-server:config/subnet6[id='111']/"
-      "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
+      "pools[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
       "option-data[code='100'][space='dns']",
       std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/kea-dhcp6-server:config/subnet6[id='111']/"
-      "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
+      "pools[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
       "option-data[code='100'][space='dns']/code",
       "100", libyang::LeafBaseType::Uint16, false },
     { "/kea-dhcp6-server:config/subnet6[id='111']/"
-      "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
+      "pools[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
       "option-data[code='100'][space='dns']/space",
       "dns", libyang::LeafBaseType::String, false },
     { "/kea-dhcp6-server:config/subnet6[id='111']/"
-      "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
+      "pools[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
       "option-data[code='100'][space='dns']/data",
       "12121212", libyang::LeafBaseType::String, true },
     { "/kea-dhcp6-server:config/subnet6[id='111']/"
-      "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
+      "pools[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
       "option-data[code='100'][space='dns']/csv-format",
       "false", libyang::LeafBaseType::Bool, true },
     { "/kea-dhcp6-server:config/subnet6[id='111']/"
-      "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
+      "pools[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
       "option-data[code='100'][space='dns']/always-send",
       "false", libyang::LeafBaseType::Bool, true },
     { "/kea-dhcp6-server:config/subnet6[id='111']/"

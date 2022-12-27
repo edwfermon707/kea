@@ -197,14 +197,14 @@ TEST_F(TranslatorSubnetsTestKeaV6, getPoolsKea) {
     sess_->applyChanges();
 
     // Create the pool 2001:db8::1:0/112.
-    const string& prefix1 = xsub + "/pool[start-address='2001:db8::1:0']" +
+    const string& prefix1 = xsub + "/pools[start-address='2001:db8::1:0']" +
         "[end-address='2001:db8::1:ffff']/prefix";
     string const s_pool1("2001:db8::1:0/112");
     EXPECT_NO_THROW_LOG(sess_->setItem(prefix1, s_pool1));
     sess_->applyChanges();
 
     // Create the pool 2001:db8::2:0/112.
-    const string& prefix2 = xsub + "/pool[start-address='2001:db8::2:0']" +
+    const string& prefix2 = xsub + "/pools[start-address='2001:db8::2:0']" +
         "[end-address='2001:db8::2:ffff']";
     EXPECT_NO_THROW_LOG(sess_->setItem(prefix2, nullopt));
     sess_->applyChanges();

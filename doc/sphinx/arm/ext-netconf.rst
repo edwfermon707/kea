@@ -1050,9 +1050,9 @@ configuration in the ``logging.xml`` file:
      </control-socket>
      <logger>
        <name>kea-dhcp6</name>
-       <output-option>
+       <output_options>
          <output>stderr</output>
-       </output-option>
+       </output_options>
        <debuglevel>99</debuglevel>
        <severity>DEBUG</severity>
      </logger>

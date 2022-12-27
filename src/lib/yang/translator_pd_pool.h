@@ -232,7 +232,8 @@ protected:
     /// @param data_node the YANG node representing the list of PD pools
     ///
     /// @throw NetconfError when sysrepo raises an error.
-    isc::data::ElementPtr getPdPoolsCommon(libyang::DataNode const& data_node);
+    isc::data::ElementPtr getPdPoolsCommon(libyang::DataNode const& data_node,
+                                           std::string const& xpath);
 
     /// @brief setPdPools using pool-id.
     ///

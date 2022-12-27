@@ -58,9 +58,9 @@ TEST_F(TranslatorLoggersTestv4, getEmpty) {
 TEST_F(TranslatorLoggersTestv6, get) {
     // Set a value.
     const string& xpath = "/kea-dhcp6-server:config";
-    const string& xlogger = xpath + "/logger[name='foo']";
+    const string& xlogger = xpath + "/loggers[name='foo']";
     const string& xseverity = xlogger + "/severity";
-    const string& xoption = xlogger + "/output-option[output='/bar']";
+    const string& xoption = xlogger + "/output_options[output='/bar']";
     const string& xmaxver = xoption + "/maxver";
     string const s_severity("WARN");
     EXPECT_NO_THROW_LOG(sess_->setItem(xseverity, s_severity));

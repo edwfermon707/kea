@@ -109,7 +109,7 @@ ElementPtr TranslatorConfig::getHook(DataNode const& data_node) {
 
 ElementPtr
 TranslatorConfig::getHooksKea(DataNode const& data_node) {
-    return getList(data_node, "hook-library", *this, &TranslatorConfig::getHook);
+    return getList(data_node, "hooks-libraries", *this, &TranslatorConfig::getHook);
 }
 
 isc::data::ElementPtr
@@ -592,7 +592,7 @@ TranslatorConfig::setServerKeaDhcpCommon(string const& xpath,
                 continue;
             }
             ostringstream hook_lib;
-            hook_lib << xpath << "/hook-library[library='"
+            hook_lib << xpath << "/hooks-libraries[library='"
                      << name->stringValue() << "']";
             string const hook_xpath(hook_lib.str());
             setItem(hook_xpath, ElementPtr(), LeafBaseType::Unknown);

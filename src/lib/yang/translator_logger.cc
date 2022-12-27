@@ -75,7 +75,7 @@ TranslatorLogger::getOutputOption(DataNode const& data_node) {
 
 ElementPtr
 TranslatorLogger::getOutputOptions(DataNode const& data_node) {
-    return getList(data_node, "output-option", *this,
+    return getList(data_node, "output_options", *this,
                    &TranslatorLogger::getOutputOption);
 }
 
@@ -128,12 +128,12 @@ TranslatorLogger::setOutputOptions(string const& xpath, ConstElementPtr elem) {
     for (size_t i = 0; i < elem->size(); ++i) {
         ElementPtr option = elem->getNonConst(i);
         if (!option->contains("output")) {
-            isc_throw(BadValue, "output-option without output: "
+            isc_throw(BadValue, "output_options without output: "
                       << option->str());
         }
         string output = option->get("output")->stringValue();
         ostringstream key;
-        key << xpath << "/output-option[output='" << output << "']";
+        key << xpath << "/output_options[output='" << output << "']";
         setOutputOption(key.str(), option);
     }
 }
@@ -171,7 +171,7 @@ TranslatorLoggers::getLoggersFromAbsoluteXpath(string const& xpath) {
 
 ElementPtr
 TranslatorLoggers::getLoggersKea(DataNode const& data_node) {
-    return getList<TranslatorLogger>(data_node, "logger", *this,
+    return getList<TranslatorLogger>(data_node, "loggers", *this,
                                      &TranslatorLogger::getLogger);
 }
 
@@ -203,7 +203,7 @@ TranslatorLoggers::setLoggersKea(string const& xpath, ConstElementPtr elem) {
         }
         string name = logger->get("name")->stringValue();
         ostringstream key;
-        key << xpath << "/logger[name='" << name << "']";
+        key << xpath << "/loggers[name='" << name << "']";
         setLogger(key.str(), logger);
     }
 }

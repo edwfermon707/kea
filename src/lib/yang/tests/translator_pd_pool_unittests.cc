@@ -121,7 +121,7 @@ TEST_F(TranslatorPdPoolsTestKeaV6, getKea) {
     // Create the pd-pool 2001:db8:0:1000::/64.
     const string& prefix = "2001:db8:0:1000::/56";
     ostringstream spool;
-    spool << xpath + "/pd-pool[prefix='" << prefix << "']";
+    spool << xpath + "/pd-pools[prefix='" << prefix << "']";
     const string& x_delegated = spool.str() + "/delegated-len";
     uint8_t dl = 64;
     string const s_delegated(to_string(dl));
@@ -264,7 +264,7 @@ TEST_F(TranslatorPdPoolsTestKeaV6, getListKea) {
     // Create the first pd-pool 2001:db8:0:1000::/56.
     const string& prefix = "2001:db8:0:1000::/56";
     ostringstream spool;
-    spool << xpath + "/pd-pool[prefix='" << prefix << "']";
+    spool << xpath + "/pd-pools[prefix='" << prefix << "']";
     const string& x_delegated = spool.str() + "/delegated-len";
     uint8_t dl = 64;
     string const s_delegated(to_string(dl));
@@ -274,7 +274,7 @@ TEST_F(TranslatorPdPoolsTestKeaV6, getListKea) {
     // Create the second pd-pool 2001:db8:0:2000::/56
     const string& prefix2 = "2001:db8:0:2000::/56";
     ostringstream spool2;
-    spool2 << xpath + "/pd-pool[prefix='" << prefix2 << "']";
+    spool2 << xpath + "/pd-pools[prefix='" << prefix2 << "']";
     const string& x_delegated2 = spool2.str() + "/delegated-len";
     uint8_t dl2 = 60;
     string const s_delegated2(to_string(dl2));

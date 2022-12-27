@@ -243,9 +243,10 @@ TranslatorPdPools::TranslatorPdPools(Session session, const string& model)
 ElementPtr
 TranslatorPdPools::getPdPools(DataNode const& data_node) {
     try {
-        if ((model_ == IETF_DHCPV6_SERVER) ||
-            (model_ == KEA_DHCP6_SERVER)) {
-            return (getPdPoolsCommon(data_node));
+        if (model_ == IETF_DHCPV6_SERVER) {
+            return (getPdPoolsCommon(data_node, "pd-pool"));
+        } else if (model_ == KEA_DHCP6_SERVER) {
+            return (getPdPoolsCommon(data_node, "pd-pools"));
         }
     } catch (Error const& ex) {
         isc_throw(NetconfError,
@@ -266,8 +267,8 @@ TranslatorPdPools::getPdPoolsFromAbsoluteXpath(string const& xpath) {
 }
 
 ElementPtr
-TranslatorPdPools::getPdPoolsCommon(DataNode const& data_node) {
-    return getList<TranslatorPdPool>(data_node, "pd-pool", *this,
+TranslatorPdPools::getPdPoolsCommon(DataNode const& data_node, string const& xpath) {
+    return getList<TranslatorPdPool>(data_node, xpath, *this,
                                      &TranslatorPdPool::getPdPool);
 }
 
@@ -309,7 +310,7 @@ TranslatorPdPools::setPdPoolsPrefix(string const& xpath,
                       << pool->str());
         }
         ostringstream prefix;
-        prefix << xpath << "/pd-pool[prefix='"
+        prefix << xpath << "/pd-pools[prefix='"
                << pool->get("prefix")->stringValue() << "/"
                << pool->get("prefix-len")->intValue() << "']";
         setPdPool(prefix.str(), pool);

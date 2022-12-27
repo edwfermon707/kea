@@ -41,7 +41,7 @@ namespace yang {
 /// @code
 /// +--rw logger* [name]
 ///    +--rw name             string
-///    +--rw output-option* [output]
+///    +--rw output_options* [output]
 ///    |  +--rw output        string
 ///    |  +--rw flush?        boolean
 ///    |  +--rw maxsize?      uint32

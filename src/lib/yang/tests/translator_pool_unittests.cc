@@ -126,7 +126,7 @@ TEST_F(TranslatorPoolsTestKeaV6, getKea) {
     EXPECT_EQ("2001:db8::1:0", start_addr);
     EXPECT_EQ("2001:db8::1:ffff", end_addr);
     ostringstream spool;
-    spool << xpath + "/pool[start-address='" << start_addr
+    spool << xpath + "/pools[start-address='" << start_addr
           << "'][end-address='" << end_addr << "']";
     const string& x_prefix = spool.str() + "/prefix";
     string const s_prefix("2001:db8::1:0/112");
