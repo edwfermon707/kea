@@ -935,9 +935,9 @@
                                 // Option name.
                                 "name": "routers",
 
-                               // Boolean flag indicating if the given option is never
-                               // send in response.
-                               "never-send": false,
+                                // Boolean flag indicating if the given option is never
+                                // send in response.
+                                "never-send": false,
 
                                 // Option space. The default value "dhcp4" designates the
                                 // top level option space.

@@ -886,9 +886,9 @@
                                 // Option name.
                                 "name": "preference",
 
-                               // Boolean flag indicating if the given option is never
-                               // send in response.
-                               "never-send": false,
+                                // Boolean flag indicating if the given option is never
+                                // send in response.
+                                "never-send": false,
 
                                 // Option space. The default value "dhcp6" designates the
                                 // top level option space.
