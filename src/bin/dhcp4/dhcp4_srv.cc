@@ -1841,27 +1841,45 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
         }
     }
 
-    // Iterate on the configured option list to add persistent options
-    for (auto const& copts : co_list) {
-        const OptionContainerPtr& opts = copts->getAll(DHCP4_OPTION_SPACE);
+    std::set<uint8_t> cancelled_opts;
+
+    // Iterate on the configured option list to add persistent and
+    // cancelled options.
+    for (CfgOptionList::const_iterator copts = co_list.begin();
+         copts != co_list.end(); ++copts) {
+        const OptionContainerPtr& opts = (*copts)->getAll(DHCP4_OPTION_SPACE);
         if (!opts) {
             continue;
         }
-        // Get persistent options
-        const OptionContainerPersistIndex& idx = opts->get<2>();
-        const OptionContainerPersistRange& range = idx.equal_range(true);
-        for (OptionContainerPersistIndex::const_iterator desc = range.first;
-             desc != range.second; ++desc) {
-            // Add the persistent option code to requested options
+        // Get persistent options.
+        const OptionContainerPersistIndex& pidx = opts->get<2>();
+        const OptionContainerPersistRange& prange = pidx.equal_range(true);
+        for (OptionContainerPersistIndex::const_iterator desc = prange.first;
+             desc != prange.second; ++desc) {
+            // Add the persistent option code to requested options.
             if (desc->option_) {
                 static_cast<void>(requested_opts.insert(desc->option_->getType()));
+            }
+        }
+        // Get cancelled options.
+        const OptionContainerCancelIndex& cidx = opts->get<5>();
+        const OptionContainerCancelRange& crange = cidx.equal_range(true);
+        for (OptionContainerCancelIndex::const_iterator desc = crange.first;
+             desc != crange.second; ++desc) {
+            // Add the cancelled option code to cancelled options.
+            if (desc->option_) {
+                uint8_t code = static_cast<uint8_t>(desc->option_->getType());
+                static_cast<void>(cancelled_opts.insert(code));
             }
         }
     }
 
     // For each requested option code get the first instance of the option
     // to be returned to the client.
-    for (auto const& opt : requested_opts) {
+    for (uint8_t opt : requested_opts) {
+        if (cancelled_opts.count(opt) > 0) {
+            continue;
+        }
         // Add nothing when it is already there.
         // Skip special cases: DHO_VIVSO_SUBOPTIONS.
         if (opt == DHO_VIVSO_SUBOPTIONS) {
@@ -2033,56 +2051,63 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
         }
     }
 
-    // Iterate on the configured option list to add persistent options
-    for (uint32_t vendor_id : vendor_ids) {
-        for (auto const& copts : co_list) {
-            const OptionContainerPtr& opts = copts->getAll(vendor_id);
-            if (!opts) {
-                continue;
-            }
-            // Get persistent options
-            const OptionContainerPersistIndex& idx = opts->get<2>();
-            const OptionContainerPersistRange& range = idx.equal_range(true);
-            for (OptionContainerPersistIndex::const_iterator desc = range.first;
-                 desc != range.second; ++desc) {
-                if (!desc->option_) {
-                    continue;
-                }
-                // Add the persistent option code to requested options
-                static_cast<void>(requested_opts[vendor_id].insert(desc->option_->getType()));
-            }
-        }
+    std::set<uint8_t> cancelled_opts;
 
-        // If there is nothing to add don't do anything with this vendor.
-        // This will explicitly not echo back vendor options from the request
-        // that either correspond to a vendor not known to Kea even if the
-        // option encapsulates data or there are no persistent options
-        // configured for this vendor so Kea does not send any option back.
-        if (requested_opts[vendor_id].empty()) {
+    // Iterate on the configured option list to add persistent and
+    // cancelled options,
+    for (CfgOptionList::const_iterator copts = co_list.begin();
+         copts != co_list.end(); ++copts) {
+        const OptionContainerPtr& opts = (*copts)->getAll(vendor_id);
+        if (!opts) {
             continue;
         }
 
-        // It's possible that the vendor opts option was inserted already
-        // by client class or a hook. If that is so, let's use it.
-        OptionVendorPtr vendor_rsp;
-        if (vendor_rsps.count(vendor_id) > 0) {
-            vendor_rsp = vendor_rsps[vendor_id];
-        } else {
-            vendor_rsp.reset(new OptionVendor(Option::V4, vendor_id));
+        // Get persistent options.
+        const OptionContainerPersistIndex& pidx = opts->get<2>();
+        const OptionContainerPersistRange& prange = pidx.equal_range(true);
+        for (OptionContainerPersistIndex::const_iterator desc = prange.first;
+             desc != prange.second; ++desc) {
+            // Add the persistent option code to requested options.
+            if (desc->option_) {
+                uint8_t code = static_cast<uint8_t>(desc->option_->getType());
+                requested_opts.push_back(code);
+            }
         }
 
-        // Get the list of options that client requested.
-        bool added = false;
+        // Get cancelled options.
+        const OptionContainerCancelIndex& cidx = opts->get<5>();
+        const OptionContainerCancelRange& crange = cidx.equal_range(true);
+        for (OptionContainerCancelIndex::const_iterator desc = crange.first;
+             desc != crange.second; ++desc) {
+            // Add the cancelled option code to cancelled options.
+            if (desc->option_) {
+                uint8_t code = static_cast<uint8_t>(desc->option_->getType());
+                static_cast<void>(cancelled_opts.insert(code));
+            }
+        }
 
-        for (uint8_t opt : requested_opts[vendor_id]) {
-            if (!vendor_rsp->getOption(opt)) {
-                for (auto const& copts : co_list) {
-                    OptionDescriptor desc = copts->get(vendor_id, opt);
-                    if (desc.option_) {
-                        vendor_rsp->addOption(desc.option_);
-                        added = true;
-                        break;
-                    }
+    }
+
+    if (!vendor_rsp) {
+        // It's possible that vivso was inserted already by client class or
+        // a hook. If that is so, let's use it.
+        vendor_rsp.reset(new OptionVendor(Option::V4, vendor_id));
+    }
+
+    // Get the list of options that client requested.
+    bool added = false;
+    for (uint8_t code : requested_opts) {
+        if (cancelled_opts.count(code) > 0) {
+            continue;
+        }
+        if (!vendor_rsp->getOption(code)) {
+            for (CfgOptionList::const_iterator copts = co_list.begin();
+                 copts != co_list.end(); ++copts) {
+                OptionDescriptor desc = (*copts)->get(vendor_id, code);
+                if (desc.option_) {
+                    vendor_rsp->addOption(desc.option_);
+                    added = true;
+                    break;
                 }
             }
         }
