@@ -420,17 +420,8 @@ public:
                         break;
                     }
                     // Don't add if sub-option is already there.
-                    if (opt) {
-                        if (!vendor_id) {
-                            if (opt->getOption(sub_code)) {
-                                break;
-                            }
-                        } else {
-                            isc::dhcp::OptionVendorPtr vendor_opt = boost::dynamic_pointer_cast<isc::dhcp::OptionVendor>(opt);
-                            if (vendor_opt->getOption(vendor_id, sub_code)) {
-                                break;
-                            }
-                        }
+                    if (opt && opt->getOption(sub_code)) {
+                        break;
                     }
                     // Set the value.
                     if (def) {
@@ -450,7 +441,7 @@ public:
                                                             opt_code));
                         } else {
                             opt.reset(new isc::dhcp::OptionVendor(universe,
-                                                                  { vendor_id }));
+                                                                  vendor_id));
                         }
                         response->addOption(opt);
                         if (vendor_id) {
@@ -460,12 +451,7 @@ public:
                         }
                     }
                     // Add the sub-option.
-                    if (!vendor_id) {
-                        opt->addOption(sub);
-                    } else {
-                        isc::dhcp::OptionVendorPtr vendor_opt = boost::dynamic_pointer_cast<isc::dhcp::OptionVendor>(opt);
-                        vendor_opt->addOption(vendor_id, sub);
-                    }
+                    opt->addOption(sub);
                     logSubAction(ADD, sub_code, opt_code, value);
                     break;
                 case SUPERSEDE:
@@ -496,15 +482,8 @@ public:
                     }
                     // Remove the sub-option if already there.
                     if (opt) {
-                        if (!vendor_id) {
-                            while (opt->getOption(sub_code)) {
-                                opt->delOption(sub_code);
-                            }
-                        } else {
-                            isc::dhcp::OptionVendorPtr vendor_opt = boost::dynamic_pointer_cast<isc::dhcp::OptionVendor>(opt);
-                            while (vendor_opt->getOption(vendor_id, sub_code)) {
-                                vendor_opt->delOption(vendor_id, sub_code);
-                            }
+                        while (opt->getOption(sub_code)) {
+                            opt->delOption(sub_code);
                         }
                     }
                     // If the container does not exist add it.
@@ -514,7 +493,7 @@ public:
                                                             opt_code));
                         } else {
                             opt.reset(new isc::dhcp::OptionVendor(universe,
-                                                                  { vendor_id }));
+                                                                  vendor_id));
                         }
                         response->addOption(opt);
                         if (vendor_id) {
@@ -524,12 +503,7 @@ public:
                         }
                     }
                     // Add the sub-option.
-                    if (!vendor_id) {
-                        opt->addOption(sub);
-                    } else {
-                        isc::dhcp::OptionVendorPtr vendor_opt = boost::dynamic_pointer_cast<isc::dhcp::OptionVendor>(opt);
-                        vendor_opt->addOption(vendor_id, sub);
-                    }
+                    opt->addOption(sub);
                     logSubAction(SUPERSEDE, sub_code, opt_code, value);
                     break;
                 case REMOVE:
@@ -537,12 +511,7 @@ public:
                     if (!opt) {
                         break;
                     }
-                    if (!vendor_id) {
-                        sub = opt->getOption(sub_code);
-                    } else {
-                        isc::dhcp::OptionVendorPtr vendor_opt = boost::dynamic_pointer_cast<isc::dhcp::OptionVendor>(opt);
-                        sub = vendor_opt->getOption(vendor_id, sub_code);
-                    }
+                    sub = opt->getOption(sub_code);
                     // Nothing to remove if sub-option is not present.
                     if (!sub) {
                         break;
@@ -556,15 +525,8 @@ public:
                         break;
                     }
                     // Remove the sub-option.
-                    if (!vendor_id) {
-                        while (opt->getOption(sub_code)) {
-                            opt->delOption(sub_code);
-                        }
-                    } else {
-                        isc::dhcp::OptionVendorPtr vendor_opt = boost::dynamic_pointer_cast<isc::dhcp::OptionVendor>(opt);
-                        while (vendor_opt->getOption(vendor_id, sub_code)) {
-                            vendor_opt->delOption(vendor_id, sub_code);
-                        }
+                    while (opt->getOption(sub_code)) {
+                        opt->delOption(sub_code);
                     }
                     logSubAction(REMOVE, sub_code, opt_code, "");
                     // Remove the empty container when wanted.

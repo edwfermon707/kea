@@ -512,16 +512,17 @@ TEST_F(LibDhcpTest, unpackOptions6) {
 
     OptionVendorPtr vendor = boost::dynamic_pointer_cast<OptionVendor>(x->second);
     ASSERT_TRUE(vendor);
+    ASSERT_EQ(vendor->getVendorId(), VENDOR_ID_CABLE_LABS);
 
     // CM MAC Address Option
-    OptionPtr cm_mac = vendor->getOption(VENDOR_ID_CABLE_LABS, OPTION_CM_MAC);
+    OptionPtr cm_mac = vendor->getOption(OPTION_CM_MAC);
     ASSERT_TRUE(cm_mac);
     EXPECT_EQ(OPTION_CM_MAC, cm_mac->getType());
     ASSERT_EQ(10, cm_mac->len());
     EXPECT_EQ(0, memcmp(&cm_mac->getData()[0], v6packed + 54, 6));
 
     // CMTS Capabilities
-    OptionPtr cmts_caps = vendor->getOption(VENDOR_ID_CABLE_LABS, OPTION_CMTS_CAPS);
+    OptionPtr cmts_caps = vendor->getOption(OPTION_CMTS_CAPS);
     ASSERT_TRUE(cmts_caps);
     EXPECT_EQ(OPTION_CMTS_CAPS, cmts_caps->getType());
     ASSERT_EQ(8, cmts_caps->len());
@@ -1097,9 +1098,9 @@ TEST_F(LibDhcpTest, packOptions4) {
     OptionPtr opt5(new Option(Option::V4, 128, payload[4]));
 
     // Create vendor option instance with DOCSIS3.0 enterprise id.
-    OptionVendorPtr vivsi(new OptionVendor(Option::V4, { VENDOR_ID_CABLE_LABS }));
-    vivsi->addOption(VENDOR_ID_CABLE_LABS, OptionPtr(new Option4AddrLst(DOCSIS3_V4_TFTP_SERVERS,
-                                                                        IOAddress("10.0.0.10"))));
+    OptionVendorPtr vivsi(new OptionVendor(Option::V4, VENDOR_ID_CABLE_LABS));
+    vivsi->addOption(OptionPtr(new Option4AddrLst(DOCSIS3_V4_TFTP_SERVERS,
+                                                  IOAddress("10.0.0.10"))));
 
     OptionPtr vsi(new Option(Option::V4, DHO_VENDOR_ENCAPSULATED_OPTIONS,
                              OptionBuffer()));
@@ -1248,8 +1249,8 @@ TEST_F(LibDhcpTest, unpackOptions4) {
     OptionVendorPtr vivsi = boost::dynamic_pointer_cast<OptionVendor>(x->second);
     ASSERT_TRUE(vivsi);
     EXPECT_EQ(DHO_VIVSO_SUBOPTIONS, vivsi->getType());
-    EXPECT_EQ(VENDOR_ID_CABLE_LABS, vivsi->getVendorIds()[0]);
-    OptionCollection suboptions = vivsi->getOptions(VENDOR_ID_CABLE_LABS);
+    EXPECT_EQ(VENDOR_ID_CABLE_LABS, vivsi->getVendorId());
+    OptionCollection suboptions = vivsi->getOptions();
 
     // There should be one suboption of V-I VSI.
     ASSERT_EQ(1, suboptions.size());

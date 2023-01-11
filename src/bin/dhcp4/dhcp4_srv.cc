@@ -1836,10 +1836,10 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
     if (option_prl) {
         requested_opts = option_prl->getValues();
     }
+
     // Iterate on the configured option list to add persistent options
-    for (CfgOptionList::const_iterator copts = co_list.begin();
-         copts != co_list.end(); ++copts) {
-        const OptionContainerPtr& opts = (*copts)->getAll(DHCP4_OPTION_SPACE);
+    for (auto const& copts : co_list) {
+        const OptionContainerPtr& opts = copts->getAll(DHCP4_OPTION_SPACE);
         if (!opts) {
             continue;
         }
@@ -1850,53 +1850,28 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
              desc != range.second; ++desc) {
             // Add the persistent option code to requested options
             if (desc->option_) {
-                uint8_t code = static_cast<uint8_t>(desc->option_->getType());
-                requested_opts.push_back(code);
+                requested_opts.push_back(static_cast<uint8_t>(desc->option_->getType()));
             }
         }
     }
 
     // For each requested option code get the instance of the option
     // to be returned to the client.
-    for (std::vector<uint8_t>::const_iterator opt = requested_opts.begin();
-         opt != requested_opts.end(); ++opt) {
+    for (auto const& opt : requested_opts) {
         // Add nothing when it is already there
-        if (!resp->getOption(*opt)) {
+        if (!resp->getOption(opt)) {
             // Iterate on the configured option list
-            for (CfgOptionList::const_iterator copts = co_list.begin();
-                 copts != co_list.end(); ++copts) {
-                OptionDescriptorList desc_list = (*copts)->getList(DHCP4_OPTION_SPACE, *opt);
-                OptionCollection options;
+            for (auto const& copts : co_list) {
+                bool added = false;
+                OptionDescriptorList desc_list = copts->getList(DHCP4_OPTION_SPACE, opt);
                 for (auto const& desc : desc_list) {
-                    // Got it: add it and jump to the outer loop
                     if (desc.option_) {
-                        const OptionBuffer& buffer = desc.option_->toBinary();
-                        desc.option_->setData(buffer.begin(), buffer.end());
-                        options.insert(std::pair<int, OptionPtr>(desc.option_->getType(), desc.option_));
+                        resp->Pkt::addOption(desc.option_);
+                        added = true;
                     }
                 }
-                if (options.size()) {
-                    if (options.size() > 1) {
-                        LibDHCP::fuseOptions4(options);
-                        OptionPtr fused = options.begin()->second;
-                        const OptionBuffer& buffer = fused->toBinary();
-                        OptionDefinitionPtr def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE, *opt);
-                        if (!def) {
-                            def = LibDHCP::getRuntimeOptionDef(DHCP4_OPTION_SPACE, *opt);
-                        }
-                        // Finish by last resort definition
-                        if (!def) {
-                            def = LibDHCP::getLastResortOptionDef(DHCP4_OPTION_SPACE, *opt);
-                        }
-                        if (def) {
-                            fused = def->optionFactory(Option::V4, *opt, buffer.begin(), buffer.end());
-                            resp->addOption(fused);
-                            break;
-                        }
-                    } else {
-                        resp->addOption(options.begin()->second);
-                        break;
-                    }
+                if (added) {
+                    break;
                 }
             }
         }
@@ -1922,25 +1897,22 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
         return;
     }
 
+    bool requested = false;
+
+    // It's possible that the server already inserted vivso in the response
+    // message, (e.g. by using client classification or perhaps a hook inserted
+    // it).
+    OptionCollection vendor_ids = ex.getResponse()->getOptions(DHO_VIVSO_SUBOPTIONS);
+
     // Try to get the vendor option from the client packet. This is how it's
     // supposed to be done. Client sends vivso, we look at the vendor-id and
     // then send back the vendor options specific to that client.
-    vector<uint32_t> vendor_ids;
-    OptionVendorPtr vendor_req = boost::dynamic_pointer_cast<OptionVendor>(ex.getQuery()->getOption(DHO_VIVSO_SUBOPTIONS));
-    if (vendor_req) {
-        vendor_ids = vendor_req->getVendorIds();
+    if (vendor_ids.empty()) {
+        vendor_ids = ex.getQuery()->getOptions(DHO_VIVSO_SUBOPTIONS);
+        requested = true;
     }
 
-    // Something is fishy. Client was supposed to send vivso, but didn't.
-    // Let's try an alternative. It's possible that the server already
-    // inserted vivso in the response message, (e.g. by using client
-    // classification or perhaps a hook inserted it).
-    OptionVendorPtr vendor_rsp = boost::dynamic_pointer_cast<OptionVendor>(ex.getResponse()->getOption(DHO_VIVSO_SUBOPTIONS));
-    if (vendor_rsp) {
-        vendor_ids = vendor_rsp->getVendorIds();
-    }
-
-    if (!vendor_req && !vendor_rsp) {
+    if (vendor_ids.empty()) {
         // Ok, we're out of luck today. Neither client nor server packets
         // have vivso.  There is no way to figure out vendor-id here.
         // We give up.
@@ -1949,15 +1921,18 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
 
     bool added = false;
     OptionCollection vendor_options;
-    for (auto const& vendor_id : vendor_ids) {
-
+    for (auto const& option : vendor_ids) {
+        OptionVendorPtr vendor_opt = boost::dynamic_pointer_cast<OptionVendor>(option.second);
+        if (!vendor_opt) {
+            continue;
+        }
         std::vector<uint8_t> requested_opts;
         // Let's try to get ORO within that vendor-option.
         // This is specific to vendor-id=4491 (Cable Labs). Other vendors may have
         // different policies.
         OptionUint8ArrayPtr oro;
-        if (vendor_id == VENDOR_ID_CABLE_LABS && vendor_req) {
-            OptionPtr oro_generic = vendor_req->getOption(VENDOR_ID_CABLE_LABS, DOCSIS3_V4_ORO);
+        if (vendor_opt->getVendorId() == VENDOR_ID_CABLE_LABS && requested) {
+            OptionPtr oro_generic = vendor_opt->getOption(DOCSIS3_V4_ORO);
             if (oro_generic) {
                 // Vendor ID 4491 makes Kea look at DOCSIS3_V4_OPTION_DEFINITIONS
                 // when parsing options. Based on that, oro_generic will have been
@@ -1972,9 +1947,8 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
         }
 
         // Iterate on the configured option list to add persistent options
-        for (CfgOptionList::const_iterator copts = co_list.begin();
-             copts != co_list.end(); ++copts) {
-            const OptionContainerPtr& opts = (*copts)->getAll(vendor_id);
+        for (auto const& copt : co_list) {
+            const OptionContainerPtr& opts = copt->getAll(vendor_opt->getVendorId());
             if (!opts) {
                 continue;
             }
@@ -1986,61 +1960,48 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
                  desc != range.second; ++desc) {
                 // Add the persistent option code to requested options
                 if (desc->option_) {
-                    uint8_t code = static_cast<uint8_t>(desc->option_->getType());
-                    requested_opts.push_back(code);
+                    requested_opts.push_back(desc->option_->getType());
                 }
             }
         }
 
         // If there is nothing to add don't do anything then.
+        // This will explicitly not echo back vendor options from the request
+        // that either correspond to a vendor not known to Kea even if the
+        // option encapsulates data or there are no persistent options
+        // configured for this vendor so Kea does not send any option back.
         if (requested_opts.empty()) {
             continue;
         }
 
-        OptionVendorPtr rsp_opt(new OptionVendor(Option::V4, { vendor_id }));
+        OptionVendorPtr rsp_opt(new OptionVendor(Option::V4, vendor_opt->getVendorId()));
+        vendor_options.insert(std::make_pair(rsp_opt->getType(), rsp_opt));
 
         // Get the list of options that client requested.
-        for (std::vector<uint8_t>::const_iterator code = requested_opts.begin();
-             code != requested_opts.end(); ++code) {
-            if (!rsp_opt->getOption(vendor_id, *code)) {
-                for (CfgOptionList::const_iterator copts = co_list.begin();
-                     copts != co_list.end(); ++copts) {
-                    OptionDescriptor desc = (*copts)->get(vendor_id, *code);
+        for (auto const& code : requested_opts) {
+            if (!rsp_opt->getOption(code)) {
+                for (auto const& copts : co_list) {
+                    OptionDescriptor desc = copts->get(vendor_opt->getVendorId(), code);
                     if (desc.option_) {
-                        rsp_opt->addOption(vendor_id, desc.option_);
+                        rsp_opt->addOption(desc.option_);
                         added = true;
                         break;
                     }
                 }
             }
         }
-        const OptionBuffer& buffer = rsp_opt->toBinary();
-        rsp_opt->setData(buffer.begin(), buffer.end());
-        vendor_options.insert(std::make_pair(rsp_opt->getType(), rsp_opt));
-    }
-
-    OptionPtr vendor_result;
-    if (vendor_options.size()) {
-        if (vendor_options.size() > 1) {
-            LibDHCP::fuseOptions4(vendor_options);
-            const OptionBuffer& buffer = vendor_options.begin()->second->toBinary();
-            vendor_result.reset(new OptionVendor(Option::V4, buffer.begin(), buffer.end()));
-        } else {
-            vendor_result = vendor_options.begin()->second;
-        }
-    } else if (!vendor_rsp) {
-        vendor_result.reset(new OptionVendor(Option::V4, vendor_ids));
-    } else {
-        // It's possible that vivso was inserted already by client class or
-        // a hook. If that is so, let's use it.
-        vendor_result = vendor_rsp;
     }
 
     // If we added some sub-options and the vivso option is not in
     // the response already, then add it.
     if (added) {
-        ex.getResponse()->delOption(DHO_VIVSO_SUBOPTIONS);
-        ex.getResponse()->addOption(vendor_result);
+        auto const& options = ex.getResponse()->getOptions(DHO_VIVSO_SUBOPTIONS);
+        for (uint8_t i = 0; i < options.size(); i++) {
+            ex.getResponse()->delOption(DHO_VIVSO_SUBOPTIONS);
+        }
+        for (auto const& option : vendor_options) {
+            ex.getResponse()->Pkt::addOption(option.second);
+        }
     }
 }
 
@@ -2048,14 +2009,11 @@ void
 Dhcpv4Srv::appendBasicOptions(Dhcpv4Exchange& ex) {
     // Identify options that we always want to send to the
     // client (if they are configured).
-    static const uint16_t required_options[] = {
+    static const std::vector<uint16_t> required_options = {
         DHO_ROUTERS,
         DHO_DOMAIN_NAME_SERVERS,
         DHO_DOMAIN_NAME,
         DHO_DHCP_SERVER_IDENTIFIER };
-
-    static size_t required_options_size =
-        sizeof(required_options) / sizeof(required_options[0]);
 
     // Get the subnet.
     Subnet4Ptr subnet = ex.getContext()->subnet_;
@@ -2073,14 +2031,12 @@ Dhcpv4Srv::appendBasicOptions(Dhcpv4Exchange& ex) {
 
     // Try to find all 'required' options in the outgoing
     // message. Those that are not present will be added.
-    for (int i = 0; i < required_options_size; ++i) {
-        OptionPtr opt = resp->getOption(required_options[i]);
+    for (auto const& required : required_options) {
+        OptionPtr opt = resp->getOption(required);
         if (!opt) {
             // Check whether option has been configured.
-            for (CfgOptionList::const_iterator copts = co_list.begin();
-                 copts != co_list.end(); ++copts) {
-                OptionDescriptor desc = (*copts)->get(DHCP4_OPTION_SPACE,
-                                                      required_options[i]);
+            for (auto const& copts : co_list) {
+                OptionDescriptor desc = copts->get(DHCP4_OPTION_SPACE, required);
                 if (desc.option_) {
                     resp->addOption(desc.option_);
                     break;

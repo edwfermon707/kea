@@ -82,7 +82,7 @@ public:
         ASSERT_TRUE(configured_vendor_ids.size());
         ASSERT_EQ(configured_vendor_ids[0], VENDOR_ID_CABLE_LABS);
         for (const auto& req : requested_vendor_ids) {
-            if (std::find(configured_vendor_ids.begin(), configured_vendor_ids.end(), req) != configured_vendor_ids.end()) {
+            if (req == VENDOR_ID_CABLE_LABS) {
                 result_vendor_ids.push_back(req);
             }
         }
@@ -211,11 +211,12 @@ public:
         for (auto const& option : requested_options) {
             vendor_oro->addValue(option);
         }
-        OptionVendorPtr vendor(new OptionVendor(Option::V4, { requested_vendor_ids }));
+
         for (auto const& vendor_id : requested_vendor_ids) {
-            vendor->addOption(vendor_id, vendor_oro);
+            OptionVendorPtr vendor(new OptionVendor(Option::V4, vendor_id));
+            vendor->addOption(vendor_oro);
+            dis->Pkt::addOption(vendor);
         }
-        dis->addOption(vendor);
 
         // Need to process DHCPDISCOVER again after requesting new option.
         offer = srv.processDiscover(dis);
@@ -225,24 +226,30 @@ public:
         // vendor ID was provided in the request. Otherwise, check that there is
         // no vendor and stop processing since the following checks are built on
         // top of the now-absent options.
-        OptionPtr tmp = offer->getOption(DHO_VIVSO_SUBOPTIONS);
+        OptionCollection tmp = offer->getOptions(DHO_VIVSO_SUBOPTIONS);
+        ASSERT_EQ(tmp.size(), result_vendor_ids.size());
         if (!result_vendor_ids.size()) {
-            EXPECT_FALSE(tmp);
             return;
         }
-        ASSERT_TRUE(tmp);
 
-        // The response should be an OptionVendor.
-        boost::shared_ptr<OptionVendor> vendor_resp =
-            boost::dynamic_pointer_cast<OptionVendor>(tmp);
-        ASSERT_TRUE(vendor_resp);
+        for (const auto& opt : tmp) {
+            // The response should be an OptionVendor.
+            OptionVendorPtr vendor_resp;
 
-        for (auto const& vendor_id : result_vendor_ids) {
-            if (vendor_id == VENDOR_ID_CABLE_LABS) {
+            for (auto const& vendor_id : result_vendor_ids) {
+                vendor_resp = boost::dynamic_pointer_cast<OptionVendor>(opt.second);
+                ASSERT_TRUE(vendor_resp);
+                if (vendor_resp->getVendorId() == vendor_id) {
+                    break;
+                }
+                vendor_resp.reset();
+            }
+            ASSERT_TRUE(vendor_resp);
+            if (vendor_resp->getVendorId() == VENDOR_ID_CABLE_LABS) {
                 for (auto const& option : requested_options) {
                     if (option == DOCSIS3_V4_TFTP_SERVERS) {
                         // Option 2 should be present.
-                        OptionPtr docsis2 = vendor_resp->getOption(vendor_id, DOCSIS3_V4_TFTP_SERVERS);
+                        OptionPtr docsis2 = vendor_resp->getOption(DOCSIS3_V4_TFTP_SERVERS);
                         ASSERT_TRUE(docsis2);
 
                         // It should be an Option4AddrLst.
@@ -258,7 +265,7 @@ public:
 
                     if (option == 22) {
                         // Option 22 should be present.
-                        OptionPtr custom = vendor_resp->getOption(vendor_id, 22);
+                        OptionPtr custom = vendor_resp->getOption(22);
                         ASSERT_TRUE(custom);
 
                         // It should be an OptionString.
@@ -274,11 +281,11 @@ public:
                 // requested, options should not be present. Kea only knows how
                 // to process VENDOR_ID_CABLE_LABS DOCSIS3_V4_ORO (suboption 1).
                 // Option 2 should not be present.
-                OptionPtr docsis2 = vendor_resp->getOption(vendor_id, 2);
+                OptionPtr docsis2 = vendor_resp->getOption(2);
                 ASSERT_FALSE(docsis2);
 
                 // Option 22 should not be present.
-                OptionPtr custom = vendor_resp->getOption(vendor_id, 22);
+                OptionPtr custom = vendor_resp->getOption(22);
                 ASSERT_FALSE(custom);
             }
         }
@@ -302,10 +309,14 @@ public:
         std::vector<uint32_t> result_vendor_ids;
         ASSERT_TRUE(configured_vendor_ids.size());
         ASSERT_EQ(configured_vendor_ids[0], VENDOR_ID_CABLE_LABS);
-        for (const auto& req : requested_vendor_ids) {
-            if (std::find(configured_vendor_ids.begin(), configured_vendor_ids.end(), req) != configured_vendor_ids.end()) {
-                result_vendor_ids.push_back(req);
+        if (add_vendor_option) {
+            for (const auto& req : requested_vendor_ids) {
+                if (std::find(configured_vendor_ids.begin(), configured_vendor_ids.end(), req) != configured_vendor_ids.end()) {
+                    result_vendor_ids.push_back(req);
+                }
             }
+        } else {
+            result_vendor_ids = configured_vendor_ids;
         }
         ASSERT_TRUE(configured_options.size());
         ASSERT_EQ(configured_options[0], DOCSIS3_V4_TFTP_SERVERS);
@@ -451,9 +462,12 @@ public:
         dis->addOption(clientid);
 
         if (add_vendor_option) {
-            // Let's add a vendor-option (vendor-id=4491).
-            OptionVendorPtr vendor(new OptionVendor(Option::V4, { requested_vendor_ids }));
-            dis->addOption(vendor);
+            for (auto const& vendor_id : requested_vendor_ids) {
+                // Let's add a vendor-option (vendor-id=4491).
+                OptionVendorPtr vendor(new OptionVendor(Option::V4, vendor_id));
+
+                dis->Pkt::addOption(vendor);
+            }
         }
 
         // Pass it to the server and get an advertise
@@ -463,40 +477,47 @@ public:
         ASSERT_TRUE(offer);
 
         // Check if there is a vendor option response
-        OptionPtr tmp = offer->getOption(DHO_VIVSO_SUBOPTIONS);
-        ASSERT_TRUE(tmp);
+        OptionCollection tmp = offer->getOptions(DHO_VIVSO_SUBOPTIONS);
+        ASSERT_EQ(tmp.size(), result_vendor_ids.size());
 
-        // The response should be OptionVendor object
-        boost::shared_ptr<OptionVendor> vendor_resp =
-            boost::dynamic_pointer_cast<OptionVendor>(tmp);
-        ASSERT_TRUE(vendor_resp);
+        for (const auto& opt : tmp) {
+            // The response should be an OptionVendor.
+            OptionVendorPtr vendor_resp;
 
-        for (auto const& vendor_id : configured_vendor_ids) {
+            for (auto const& vendor_id : result_vendor_ids) {
+                vendor_resp = boost::dynamic_pointer_cast<OptionVendor>(opt.second);
+                ASSERT_TRUE(vendor_resp);
+                if (vendor_resp->getVendorId() == vendor_id) {
+                    break;
+                }
+            }
+            ASSERT_TRUE(vendor_resp);
+
             for (auto const& option : configured_options) {
-                if (add_vendor_option && std::find(requested_vendor_ids.begin(),
-                                                   requested_vendor_ids.end(),
-                                                   vendor_id) == requested_vendor_ids.end()) {
+                if (add_vendor_option &&
+                    std::find(requested_vendor_ids.begin(), requested_vendor_ids.end(),
+                              vendor_resp->getVendorId()) == requested_vendor_ids.end()) {
                     // If explicitly sending OptionVendor and the vendor is not
                     // requested, options should not be present.
                     if (option == DOCSIS3_V4_TFTP_SERVERS) {
                         // Option 2 should not be present.
-                        OptionPtr docsis2 = vendor_resp->getOption(vendor_id, DOCSIS3_V4_TFTP_SERVERS);
+                        OptionPtr docsis2 = vendor_resp->getOption(DOCSIS3_V4_TFTP_SERVERS);
                         ASSERT_FALSE(docsis2);
                     }
                     if (option == 22) {
                         // Option 22 should not be present.
-                        OptionPtr custom = vendor_resp->getOption(vendor_id, 22);
+                        OptionPtr custom = vendor_resp->getOption(22);
                         ASSERT_FALSE(custom);
                     }
                 } else {
                     if (option == DOCSIS3_V4_TFTP_SERVERS) {
                         // Option 2 should be present.
-                        OptionPtr docsis2 = vendor_resp->getOption(vendor_id, DOCSIS3_V4_TFTP_SERVERS);
+                        OptionPtr docsis2 = vendor_resp->getOption(DOCSIS3_V4_TFTP_SERVERS);
                         ASSERT_TRUE(docsis2);
 
                         // It should be an Option4AddrLst.
                         Option4AddrLstPtr tftp_srvs;
-                        if (vendor_id == VENDOR_ID_CABLE_LABS) {
+                        if (vendor_resp->getVendorId() == VENDOR_ID_CABLE_LABS) {
                             tftp_srvs = boost::dynamic_pointer_cast<Option4AddrLst>(docsis2);
                         } else {
                             // The option is serialized as Option so it needs to be converted to
@@ -509,7 +530,7 @@ public:
                         // Check that the provided addresses match the ones in configuration.
                         Option4AddrLst::AddressContainer addrs = tftp_srvs->getAddresses();
                         ASSERT_EQ(2, addrs.size());
-                        if (vendor_id == VENDOR_ID_CABLE_LABS) {
+                        if (vendor_resp->getVendorId() == VENDOR_ID_CABLE_LABS) {
                             EXPECT_EQ("192.0.2.1", addrs[0].toText());
                             EXPECT_EQ("192.0.2.2", addrs[1].toText());
                         } else {
@@ -520,7 +541,7 @@ public:
 
                     if (option == 22) {
                         // Option 22 should be present.
-                        OptionPtr custom = vendor_resp->getOption(vendor_id, 22);
+                        OptionPtr custom = vendor_resp->getOption(22);
                         ASSERT_TRUE(custom);
 
                         // It should be an OptionString.
@@ -531,7 +552,7 @@ public:
                         ASSERT_TRUE(tag);
 
                         // Check that the provided value match the ones in configuration.
-                        if (vendor_id == VENDOR_ID_CABLE_LABS) {
+                        if (vendor_resp->getVendorId() == VENDOR_ID_CABLE_LABS) {
                             EXPECT_EQ(tag->getValue(), "first");
                         } else {
                             EXPECT_EQ(tag->getValue(), "last");
@@ -609,12 +630,12 @@ TEST_F(VendorOptsTest, vendorOptionsDocsis) {
     ASSERT_TRUE(vendor_opt_response);
 
     // Check if it's of a correct type
-    boost::shared_ptr<OptionVendor> vendor_opt =
-        boost::dynamic_pointer_cast<OptionVendor>(vendor_opt_response);
+    OptionVendorPtr vendor_opt = boost::dynamic_pointer_cast<OptionVendor>(vendor_opt_response);
     ASSERT_TRUE(vendor_opt);
+    ASSERT_EQ(vendor_opt->getVendorId(), VENDOR_ID_CABLE_LABS);
 
     // Get Relay Agent Info from response...
-    OptionPtr tftp_servers_generic = vendor_opt->getOption(VENDOR_ID_CABLE_LABS, DOCSIS3_V4_TFTP_SERVERS);
+    OptionPtr tftp_servers_generic = vendor_opt->getOption(DOCSIS3_V4_TFTP_SERVERS);
     ASSERT_TRUE(tftp_servers_generic);
 
     Option4AddrLstPtr tftp_servers =
@@ -638,17 +659,18 @@ TEST_F(VendorOptsTest, docsisVendorOptionsParse) {
     OptionPtr opt = dis->getOption(DHO_VIVSO_SUBOPTIONS);
     ASSERT_TRUE(opt);
 
-    boost::shared_ptr<OptionVendor> vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
+    OptionVendorPtr vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
     ASSERT_TRUE(vendor);
+    ASSERT_EQ(vendor->getVendorId(), VENDOR_ID_CABLE_LABS);
 
     // This particular capture that we have included options 1 and 5
-    EXPECT_TRUE(vendor->getOption(VENDOR_ID_CABLE_LABS, 1));
-    EXPECT_TRUE(vendor->getOption(VENDOR_ID_CABLE_LABS, 5));
+    EXPECT_TRUE(vendor->getOption(1));
+    EXPECT_TRUE(vendor->getOption(5));
 
     // It did not include options any other options
-    EXPECT_FALSE(vendor->getOption(VENDOR_ID_CABLE_LABS, 2));
-    EXPECT_FALSE(vendor->getOption(VENDOR_ID_CABLE_LABS, 3));
-    EXPECT_FALSE(vendor->getOption(VENDOR_ID_CABLE_LABS, 17));
+    EXPECT_FALSE(vendor->getOption(2));
+    EXPECT_FALSE(vendor->getOption(3));
+    EXPECT_FALSE(vendor->getOption(17));
 }
 
 // Checks if server is able to parse incoming docsis option and extract suboption 1 (docsis ORO)
@@ -662,10 +684,11 @@ TEST_F(VendorOptsTest, docsisVendorORO) {
     OptionPtr opt = dis->getOption(DHO_VIVSO_SUBOPTIONS);
     ASSERT_TRUE(opt);
 
-    boost::shared_ptr<OptionVendor> vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
+    OptionVendorPtr vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
     ASSERT_TRUE(vendor);
+    ASSERT_EQ(vendor->getVendorId(), VENDOR_ID_CABLE_LABS);
 
-    opt = vendor->getOption(VENDOR_ID_CABLE_LABS, DOCSIS3_V4_ORO);
+    opt = vendor->getOption(DOCSIS3_V4_ORO);
     ASSERT_TRUE(opt);
 
     OptionUint8ArrayPtr oro = boost::dynamic_pointer_cast<OptionUint8Array>(opt);
@@ -953,10 +976,10 @@ TEST_F(VendorOptsTest, vivsoInResponseOnly) {
     // Check that it includes vivso with vendor-id = 25167
     OptionVendorPtr rsp_vivso = boost::dynamic_pointer_cast<OptionVendor>(rsp);
     ASSERT_TRUE(rsp_vivso);
-    EXPECT_EQ(25167, rsp_vivso->getVendorIds()[0]);
+    EXPECT_EQ(rsp_vivso->getVendorId(), 25167);
 
     // Now check that it contains suboption 2 with appropriate content.
-    OptionPtr subopt2 = rsp_vivso->getOption(25167, 2);
+    OptionPtr subopt2 = rsp_vivso->getOption(2);
     ASSERT_TRUE(subopt2);
     vector<uint8_t> subopt2bin = subopt2->toBinary(false);
     string txt(subopt2bin.begin(), subopt2bin.end());

@@ -1087,20 +1087,15 @@ void TokenVendor::evaluate(Pkt& pkt, ValueStack& values) {
         return;
     }
 
-    if (vendor_id_ && !vendor->hasVendorId(vendor_id_)) {
+    if (vendor_id_ && (vendor_id_ != vendor->getVendorId())) {
         // There is vendor option, but it has other vendor-id value
         // than we're looking for. (0 means accept any vendor-id)
         std::string txt = pushFailure(values);
         LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_VENDOR_ENTERPRISE_ID_MISMATCH)
             .arg(vendor_id_)
-            .arg(vendor->getVendorIds()[0])
+            .arg(vendor->getVendorId())
             .arg(txt);
         return;
-    }
-
-    uint32_t data = vendor_id_;
-    if (!data) {
-        data = vendor->getVendorIds()[0];
     }
 
     switch (field_) {
@@ -1108,11 +1103,11 @@ void TokenVendor::evaluate(Pkt& pkt, ValueStack& values) {
     {
         // Extract enterprise-id
         string txt(sizeof(uint32_t), 0);
-        uint32_t value = htonl(data);
+        uint32_t value = htonl(vendor->getVendorId());
         memcpy(&txt[0], &value, sizeof(uint32_t));
         values.push(txt);
         LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_VENDOR_ENTERPRISE_ID)
-            .arg(data)
+            .arg(vendor->getVendorId())
             .arg(util::encode::encodeHex(std::vector<uint8_t>(txt.begin(),
                                                               txt.end())));
         return;
@@ -1126,7 +1121,7 @@ void TokenVendor::evaluate(Pkt& pkt, ValueStack& values) {
         // We already passed all the checks: the option is there and has specified
         // enterprise-id.
         LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_VENDOR_EXISTS)
-            .arg(data)
+            .arg(vendor->getVendorId())
             .arg("true");
         values.push("true");
         return;
@@ -1154,15 +1149,9 @@ OptionPtr TokenVendor::getOption(Pkt& pkt) {
         return (opt);
     }
 
-    OptionVendorPtr vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
-    if (!vendor) {
-        // If vendor option is not found, return NULL
-        return (vendor);
-    }
-
     // If vendor option is found, try to return its
     // encapsulated option.
-    return (vendor->getOption(vendor_id_, option_code_));
+    return (opt->getOption(option_code_));
 }
 
 TokenVendorClass::TokenVendorClass(Option::Universe u, uint32_t vendor_id,

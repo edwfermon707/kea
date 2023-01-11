@@ -306,7 +306,7 @@ public:
     /// @param u universe (V4 or V6)
     /// @param vendor_id specifies enterprise-id value.
     void setVendorOption(Option::Universe u, uint32_t vendor_id) {
-        vendor_.reset(new OptionVendor(u, { vendor_id }));
+        vendor_.reset(new OptionVendor(u, vendor_id));
         switch (u) {
         case Option::V4:
             pkt4_->delOption(DHO_VIVSO_SUBOPTIONS);
@@ -498,7 +498,7 @@ public:
             if (option_code) {
                 ASSERT_TRUE(vendor_);
                 OptionPtr subopt(new OptionString(u, option_code, "alpha"));
-                vendor_->addOption(option_vendor_id, subopt);
+                vendor_->addOption(subopt);
             }
         }
 

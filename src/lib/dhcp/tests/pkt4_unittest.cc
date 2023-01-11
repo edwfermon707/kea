@@ -1338,7 +1338,7 @@ TEST_F(Pkt4Test, truncatedVendorLength) {
     ASSERT_EQ(DHO_VIVSO_SUBOPTIONS, x->getType());
     OptionVendorPtr vivso = boost::dynamic_pointer_cast<OptionVendor>(x);
     ASSERT_TRUE(vivso);
-    EXPECT_EQ(133+2, vivso->len()); // data + opt code + len
+    EXPECT_EQ(133 + 2, vivso->len()); // data + opt code + len
 
     // Build a bad discover packet
     pkt = dhcp::test::PktCaptures::discoverWithTruncatedVIVSO();

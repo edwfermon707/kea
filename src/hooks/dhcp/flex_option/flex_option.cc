@@ -597,12 +597,12 @@ FlexOptionImpl::logSubAction(Action action, uint16_t code,
 bool
 FlexOptionImpl::checkVendor(OptionPtr opt, uint32_t vendor_id) {
     OptionVendorPtr vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
-    bool ret = (!vendor || vendor->hasVendorId(vendor_id));
+    bool ret = (!vendor || (vendor->getVendorId() == vendor_id));
     if (!ret) {
         LOG_DEBUG(flex_option_logger, DBGLVL_TRACE_BASIC,
                   FLEX_OPTION_PROCESS_VENDOR_ID_MISMATCH)
             .arg(opt->getType())
-            .arg(vendor->getVendorIds()[0])
+            .arg(vendor->getVendorId())
             .arg(vendor_id);
     }
     return (ret);

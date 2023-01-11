@@ -90,15 +90,10 @@ void testCopyAssign(const OpType& op_type,
     // Create two sub options of different types to later check that they
     // are copied.
     OptionUint16Ptr sub1 = OptionUint16Ptr(new OptionUint16(Option::V4, 10, 234));
-    Option4AddrLstPtr sub2 = Option4AddrLstPtr(new Option4AddrLst(11, IOAddress("192.0.2.3")));
-    OptionVendorPtr vendor = boost::dynamic_pointer_cast<OptionVendor>(option);
-    if (vendor) {
-        vendor->addOption(vendor->getVendorIds()[0], sub1);
-        vendor->addOption(vendor->getVendorIds()[0], sub2);
-    } else {
-        option->Option::addOption(sub1);
-        option->Option::addOption(sub2);
-    }
+    Option4AddrLstPtr sub2 =
+        Option4AddrLstPtr(new Option4AddrLst(11, IOAddress("192.0.2.3")));
+    option->addOption(sub1);
+    option->addOption(sub2);
 
     // Copy option by copy construction, cloning or assignment.
     switch (op_type) {
@@ -126,21 +121,9 @@ void testCopyAssign(const OpType& op_type,
     EXPECT_TRUE(std::equal(option->getData().begin(), option->getData().end(),
                            option_copy->getData().begin()));
 
-    OptionCollection option_subs;
-    OptionCollection option_copy_subs;
     // Retrieve sub options so as they can be compared.
-    vendor = boost::dynamic_pointer_cast<OptionVendor>(option);
-    if (vendor) {
-        option_subs = vendor->getOptions(vendor->getVendorIds()[0]);
-    } else {
-        option_subs = option->Option::getOptions();
-    }
-    vendor = boost::dynamic_pointer_cast<OptionVendor>(option_copy);
-    if (vendor) {
-        option_copy_subs = vendor->getOptions(vendor->getVendorIds()[0]);
-    } else {
-        option_copy_subs = option_copy->Option::getOptions();
-    }
+    const OptionCollection& option_subs = option->getOptions();
+    const OptionCollection& option_copy_subs = option_copy->getOptions();
     ASSERT_EQ(option_subs.size(), option_copy_subs.size());
 
     // Iterate over source options.
@@ -537,16 +520,16 @@ TEST(OptionCopyTest, optionStringAssignment) {
 ///
 /// @param op_type Copy operation type.
 void testOptionVendor(const OpType& op_type) {
-    OptionVendorPtr option(new OptionVendor(Option::V4, { 2986 }));
-    OptionVendorPtr option_copy(new OptionVendor(Option::V6, { 1111 }));
+    OptionVendorPtr option(new OptionVendor(Option::V4, 2986));
+    OptionVendorPtr option_copy(new OptionVendor(Option::V6, 1111));
 
     ASSERT_NO_FATAL_FAILURE(testCopyAssign(op_type, option, option_copy));
 
     // Modify the vendor id in the original option.
-    option->setVendorIds({ 2222 });
+    option->setVendorId(2222);
 
     // The vendor id in the copy should not be affected.
-    EXPECT_EQ(2986, option_copy->getVendorIds()[0]);
+    EXPECT_EQ(2986, option_copy->getVendorId());
 }
 
 TEST(OptionCopyTest, optionVendorConstructor) {

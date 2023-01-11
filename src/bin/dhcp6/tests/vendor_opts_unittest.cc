@@ -134,8 +134,8 @@ public:
         boost::shared_ptr<OptionUint16Array> vendor_oro(new OptionUint16Array(Option::V6,
                                                                               DOCSIS3_V6_ORO));
         vendor_oro->addValue(DOCSIS3_V6_CONFIG_FILE); // Request option 33
-        OptionVendorPtr vendor(new OptionVendor(Option::V6, { vendor_id }));
-        vendor->addOption(vendor_id, vendor_oro);
+        OptionVendorPtr vendor(new OptionVendor(Option::V6, vendor_id));
+        vendor->addOption(vendor_oro);
         sol->addOption(vendor);
 
         // Need to process SOLICIT again after requesting new option.
@@ -161,7 +161,7 @@ public:
         ASSERT_TRUE(vendor_resp);
 
         // Option 33 should be present.
-        OptionPtr docsis33 = vendor_resp->getOption(vendor_id, DOCSIS3_V6_CONFIG_FILE);
+        OptionPtr docsis33 = vendor_resp->getOption(DOCSIS3_V6_CONFIG_FILE);
         ASSERT_TRUE(docsis33);
 
         // Check that the provided content match the one in configuration.
@@ -192,7 +192,7 @@ public:
                                                           vendor_id_);
                 should_yield_response = true;
             } else if (i == D6O_VENDOR_OPTS) {
-                vendor_option.reset(new OptionVendor(Option::V6, { vendor_id_ }));
+                vendor_option.reset(new OptionVendor(Option::V6, vendor_id_));
                 should_yield_response = true;
             } else {
                 continue;
@@ -220,11 +220,10 @@ public:
         OptionVendorPtr response_vendor_options(
             boost::dynamic_pointer_cast<OptionVendor>(response));
         ASSERT_TRUE(response_vendor_options);
-        EXPECT_EQ(vendor_id_, response_vendor_options->getVendorIds()[0]);
+        EXPECT_EQ(vendor_id_, response_vendor_options->getVendorId());
 
         // Check that it contains requested option with the appropriate content.
-        OptionPtr suboption(
-            response_vendor_options->getOption(vendor_id_, option_));
+        OptionPtr suboption(response_vendor_options->getOption(option_));
         ASSERT_TRUE(suboption);
         vector<uint8_t> binary_suboption = suboption->toBinary(false);
         string text(binary_suboption.begin(), binary_suboption.end());
@@ -315,24 +314,25 @@ TEST_F(VendorOptsTest, docsisVendorOptionsParse) {
 
     boost::shared_ptr<OptionVendor> vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
     ASSERT_TRUE(vendor);
+    ASSERT_EQ(vendor->getVendorId(), VENDOR_ID_CABLE_LABS);
 
-    EXPECT_TRUE(vendor->getOption(VENDOR_ID_CABLE_LABS, DOCSIS3_V6_ORO));
-    EXPECT_TRUE(vendor->getOption(VENDOR_ID_CABLE_LABS, 36));
-    EXPECT_TRUE(vendor->getOption(VENDOR_ID_CABLE_LABS, 35));
-    EXPECT_TRUE(vendor->getOption(VENDOR_ID_CABLE_LABS, DOCSIS3_V6_DEVICE_TYPE));
-    EXPECT_TRUE(vendor->getOption(VENDOR_ID_CABLE_LABS, 3));
-    EXPECT_TRUE(vendor->getOption(VENDOR_ID_CABLE_LABS, 4));
-    EXPECT_TRUE(vendor->getOption(VENDOR_ID_CABLE_LABS, 5));
-    EXPECT_TRUE(vendor->getOption(VENDOR_ID_CABLE_LABS, 6));
-    EXPECT_TRUE(vendor->getOption(VENDOR_ID_CABLE_LABS, 7));
-    EXPECT_TRUE(vendor->getOption(VENDOR_ID_CABLE_LABS, 8));
-    EXPECT_TRUE(vendor->getOption(VENDOR_ID_CABLE_LABS, 9));
-    EXPECT_TRUE(vendor->getOption(VENDOR_ID_CABLE_LABS, DOCSIS3_V6_VENDOR_NAME));
-    EXPECT_TRUE(vendor->getOption(VENDOR_ID_CABLE_LABS, 15));
+    EXPECT_TRUE(vendor->getOption(DOCSIS3_V6_ORO));
+    EXPECT_TRUE(vendor->getOption(36));
+    EXPECT_TRUE(vendor->getOption(35));
+    EXPECT_TRUE(vendor->getOption(DOCSIS3_V6_DEVICE_TYPE));
+    EXPECT_TRUE(vendor->getOption(3));
+    EXPECT_TRUE(vendor->getOption(4));
+    EXPECT_TRUE(vendor->getOption(5));
+    EXPECT_TRUE(vendor->getOption(6));
+    EXPECT_TRUE(vendor->getOption(7));
+    EXPECT_TRUE(vendor->getOption(8));
+    EXPECT_TRUE(vendor->getOption(9));
+    EXPECT_TRUE(vendor->getOption(DOCSIS3_V6_VENDOR_NAME));
+    EXPECT_TRUE(vendor->getOption(15));
 
-    EXPECT_FALSE(vendor->getOption(VENDOR_ID_CABLE_LABS, 20));
-    EXPECT_FALSE(vendor->getOption(VENDOR_ID_CABLE_LABS, 11));
-    EXPECT_FALSE(vendor->getOption(VENDOR_ID_CABLE_LABS, 17));
+    EXPECT_FALSE(vendor->getOption(20));
+    EXPECT_FALSE(vendor->getOption(11));
+    EXPECT_FALSE(vendor->getOption(17));
 }
 
 // Checks if server is able to parse incoming docsis option and extract suboption 1 (docsis ORO)
@@ -350,8 +350,9 @@ TEST_F(VendorOptsTest, docsisVendorORO) {
 
     boost::shared_ptr<OptionVendor> vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
     ASSERT_TRUE(vendor);
+    ASSERT_EQ(vendor->getVendorId(), VENDOR_ID_CABLE_LABS);
 
-    opt = vendor->getOption(VENDOR_ID_CABLE_LABS, DOCSIS3_V6_ORO);
+    opt = vendor->getOption(DOCSIS3_V6_ORO);
     ASSERT_TRUE(opt);
 
     OptionUint16ArrayPtr oro = boost::dynamic_pointer_cast<OptionUint16Array>(opt);
@@ -414,7 +415,7 @@ TEST_F(VendorOptsTest, vendorPersistentOptions) {
     sol->addOption(clientid);
 
     // Let's add a vendor-option (vendor-id=4491).
-    OptionPtr vendor(new OptionVendor(Option::V6, { VENDOR_ID_CABLE_LABS }));
+    OptionPtr vendor(new OptionVendor(Option::V6, VENDOR_ID_CABLE_LABS));
     sol->addOption(vendor);
 
     // Pass it to the server and get an advertise
@@ -436,8 +437,9 @@ TEST_F(VendorOptsTest, vendorPersistentOptions) {
     boost::shared_ptr<OptionVendor> vendor_resp =
         boost::dynamic_pointer_cast<OptionVendor>(tmp);
     ASSERT_TRUE(vendor_resp);
+    ASSERT_EQ(vendor_resp->getVendorId(), VENDOR_ID_CABLE_LABS);
 
-    OptionPtr docsis33 = vendor_resp->getOption(VENDOR_ID_CABLE_LABS, 33);
+    OptionPtr docsis33 = vendor_resp->getOption(33);
     ASSERT_TRUE(docsis33);
 
     OptionStringPtr config_file = boost::dynamic_pointer_cast<OptionString>(docsis33);
@@ -450,8 +452,8 @@ TEST_F(VendorOptsTest, vendorPersistentOptions) {
     boost::shared_ptr<OptionUint16Array> vendor_oro(new OptionUint16Array(Option::V6,
                                                                           DOCSIS3_V6_ORO));
     vendor_oro->addValue(DOCSIS3_V6_CONFIG_FILE); // Request option 33
-    OptionVendorPtr vendor2(new OptionVendor(Option::V6, { VENDOR_ID_CABLE_LABS }));
-    vendor2->addOption(VENDOR_ID_CABLE_LABS, vendor_oro);
+    OptionVendorPtr vendor2(new OptionVendor(Option::V6, VENDOR_ID_CABLE_LABS));
+    vendor2->addOption(vendor_oro);
     sol->addOption(vendor2);
 
     // Need to process SOLICIT again after requesting new option.
@@ -473,7 +475,7 @@ TEST_F(VendorOptsTest, vendorPersistentOptions) {
 
     // There should be only one suboption despite config-file is both
     // requested and has the always-send flag.
-    const OptionCollection& opts = vendor_resp->getOptions(VENDOR_ID_CABLE_LABS);
+    const OptionCollection& opts = vendor_resp->getOptions();
     ASSERT_EQ(1, opts.size());
 }
 
@@ -629,10 +631,10 @@ TEST_F(VendorOptsTest, vendorOpsInResponseOnly) {
     // Check that it includes vendor opts with vendor-id = 25167
     OptionVendorPtr rsp_vopts = boost::dynamic_pointer_cast<OptionVendor>(rsp);
     ASSERT_TRUE(rsp_vopts);
-    EXPECT_EQ(25167, rsp_vopts->getVendorIds()[0]);
+    EXPECT_EQ(25167, rsp_vopts->getVendorId());
 
     // Now check that it contains suboption 2 with appropriate content.
-    OptionPtr subopt2 = rsp_vopts->getOption(25167, 2);
+    OptionPtr subopt2 = rsp_vopts->getOption(2);
     ASSERT_TRUE(subopt2);
     vector<uint8_t> subopt2bin = subopt2->toBinary(false);
     string txt(subopt2bin.begin(), subopt2bin.end());
@@ -759,7 +761,7 @@ TEST_F(VendorOptsTest, twoVendors) {
         OptionVendorPtr opt_opts =
             boost::dynamic_pointer_cast<OptionVendor>(opt.second);
         ASSERT_TRUE(opt_opts);
-        uint32_t vendor_id = opt_opts->getVendorIds()[0];
+        uint32_t vendor_id = opt_opts->getVendorId();
         if (vendor_id == 1234) {
             ASSERT_FALSE(opt_opts1234);
             opt_opts1234 = opt_opts;
@@ -772,7 +774,7 @@ TEST_F(VendorOptsTest, twoVendors) {
 
     // Verify first vendor-opts option.
     ASSERT_TRUE(opt_opts1234);
-    OptionCollection subs1234 = opt_opts1234->getOptions(1234);
+    OptionCollection subs1234 = opt_opts1234->getOptions();
     ASSERT_EQ(1, subs1234.size());
     OptionPtr sub1234 = subs1234.begin()->second;
     ASSERT_TRUE(sub1234);
@@ -784,7 +786,7 @@ TEST_F(VendorOptsTest, twoVendors) {
 
     // Verify second vendor-opts option.
     ASSERT_TRUE(opt_opts5678);
-    OptionCollection subs5678 = opt_opts5678->getOptions(5678);
+    OptionCollection subs5678 = opt_opts5678->getOptions();
     ASSERT_EQ(1, subs5678.size());
     OptionPtr sub5678 = subs5678.begin()->second;
     ASSERT_TRUE(sub5678);
@@ -875,8 +877,8 @@ TEST_F(VendorOptsTest, threeVendors) {
     // Add a DOCSIS vendor-opts with an ORO.
     OptionUint16ArrayPtr oro(new OptionUint16Array(Option::V6, DOCSIS3_V6_ORO));
     oro->addValue(DOCSIS3_V6_CONFIG_FILE); // Request option 33.
-    OptionVendorPtr vendor(new OptionVendor(Option::V6, { VENDOR_ID_CABLE_LABS }));
-    vendor->addOption(VENDOR_ID_CABLE_LABS, oro);
+    OptionVendorPtr vendor(new OptionVendor(Option::V6, VENDOR_ID_CABLE_LABS));
+    vendor->addOption(oro);
     client.addExtraOption(vendor);
 
     // Let's check whether the server is not able to process this packet.
@@ -895,7 +897,7 @@ TEST_F(VendorOptsTest, threeVendors) {
         OptionVendorPtr opt_opts =
             boost::dynamic_pointer_cast<OptionVendor>(opt.second);
         ASSERT_TRUE(opt_opts);
-        uint32_t vendor_id = opt_opts->getVendorIds()[0];
+        uint32_t vendor_id = opt_opts->getVendorId();
         if (vendor_id == 1234) {
             ASSERT_FALSE(opt_opts1234);
             opt_opts1234 = opt_opts;
@@ -913,7 +915,7 @@ TEST_F(VendorOptsTest, threeVendors) {
 
     // Verify first vendor-opts option.
     ASSERT_TRUE(opt_opts1234);
-    OptionCollection subs1234 = opt_opts1234->getOptions(1234);
+    OptionCollection subs1234 = opt_opts1234->getOptions();
     ASSERT_EQ(1, subs1234.size());
     OptionPtr sub1234 = subs1234.begin()->second;
     ASSERT_TRUE(sub1234);
@@ -925,7 +927,7 @@ TEST_F(VendorOptsTest, threeVendors) {
 
     // Verify DOCSIS vendor-opts option.
     ASSERT_TRUE(opt_docsis);
-    OptionCollection subs_docsis = opt_docsis->getOptions(VENDOR_ID_CABLE_LABS);
+    OptionCollection subs_docsis = opt_docsis->getOptions();
     ASSERT_EQ(1, subs_docsis.size());
     OptionPtr cfile = subs_docsis.begin()->second;
     ASSERT_TRUE(cfile);
@@ -936,7 +938,7 @@ TEST_F(VendorOptsTest, threeVendors) {
 
     // Verify last vendor-opts option.
     ASSERT_TRUE(opt_opts5678);
-    OptionCollection subs5678 = opt_opts5678->getOptions(5678);
+    OptionCollection subs5678 = opt_opts5678->getOptions();
     ASSERT_EQ(1, subs5678.size());
     OptionPtr sub5678 = subs5678.begin()->second;
     ASSERT_TRUE(sub5678);

@@ -33,7 +33,7 @@ public:
     ///
     /// @param u universe (V4 or V6)
     /// @param vendor_id vendor enterprise-id (unique 32 bit integer)
-    OptionVendor(Option::Universe u, const std::vector<uint32_t> vendor_ids);
+    OptionVendor(Option::Universe u, const uint32_t vendor_id);
 
     /// @brief Constructor.
     ///
@@ -85,43 +85,15 @@ public:
     /// @brief Sets enterprise identifier
     ///
     /// @param vendor_id vendor identifier
-    void setVendorIds(const std::vector<uint32_t> vendor_ids) {
-        if (universe_ == Option::V6 && vendor_ids.size() > 1) {
-            isc_throw(isc::BadValue, "Invalid number of enterprise IDs for universe type " << universe_);
-        }
-        if (vendor_ids.size() == 0) {
-            isc_throw(isc::BadValue, "Empty set of enterprise IDs for universe type " << universe_);
-        }
-        vendor_ids_ = vendor_ids;
-        // erase options which are not correlated to any Enterprise ID
-        auto vendor_options_copy = *vendor_options_;
-        for (auto const& vendor : vendor_options_copy) {
-            if (std::find(vendor_ids_.begin(), vendor_ids_.end(), vendor.first) == vendor_ids_.end()) {
-                vendor_options_->erase(vendor.first);
-            }
-        }
+    void setVendorId(const uint32_t vendor_id) {
+        vendor_id_ = vendor_id;
     }
 
     /// @brief Returns enterprise identifier
     ///
     /// @return enterprise identifier
-    std::vector<uint32_t> getVendorIds() const {
-        return (vendor_ids_);
-    }
-
-    /// @brief Returns true if the vendor identifier is present in the option.
-    ///
-    /// @param id the vendor identifier which is searched
-    ///
-    /// @return true if the vendor identifier is present in the option, false
-    /// otherwise
-    bool hasVendorId(uint32_t id) const {
-        for (auto const& vendor_id : vendor_ids_) {
-            if (id == vendor_id) {
-                return (true);
-            }
-        }
-        return (false);
+    uint32_t getVendorId() const {
+        return (vendor_id_);
     }
 
     /// @brief returns complete length of option
@@ -138,42 +110,6 @@ public:
     /// @return Vendor option in the textual format.
     virtual std::string toText(int indent = 0) const;
 
-    /// Returns shared_ptr to suboption of specific type
-    ///
-    /// @param vendor_id the vendor identifier suboption belongs to
-    /// @param type type of requested suboption
-    ///
-    /// @return shared_ptr to requested suboption
-    OptionPtr getOption(uint32_t vendor_id, uint16_t type) const;
-
-    /// Attempts to delete first suboption of requested type
-    ///
-    /// @param vendor_id the vendor identifier suboption belongs to
-    /// @param type Type of option to be deleted.
-    ///
-    /// @return true if option was deleted, false if no such option existed
-    bool delOption(uint32_t vendor_id, uint16_t type);
-
-    /// Adds a sub-option.
-    ///
-    /// Some DHCPv6 options can have suboptions. This method allows adding
-    /// options within options.
-    ///
-    /// Note: option is passed by value. That is very convenient as it allows
-    /// downcasting from any derived classes, e.g. shared_ptr<Option6_IA> type
-    /// can be passed directly, without any casts. That would not be possible
-    /// with passing by reference. addOption() is expected to be used in
-    /// many places. Requiring casting is not feasible.
-    ///
-    /// @param vendor_id the vendor identifier suboption belongs to
-    /// @param opt shared pointer to a suboption that is going to be added.
-    void addOption(uint32_t vendor_id, OptionPtr opt);
-
-    /// @brief Returns all encapsulated options for the respective vendor identifier.
-    ///
-    /// @param vendor_id the vendor identifier suboptions belongs to
-    const OptionCollection getOptions(uint32_t vendor_id) const;
-
     /// @brief Assignment operator.
     ///
     /// The assignment operator performs a deep copy of the option and
@@ -185,50 +121,8 @@ public:
 
 private:
 
-    /// @brief Store sub options in a buffer.
-    ///
-    /// This method stores all sub-options defined for a particular
-    /// option in a on-wire format in output buffer provided.
-    /// This function is called by pack function in this class or
-    /// derived classes that override pack.
-    ///
-    /// @param [out] buf output buffer.
-    /// @param check if set to false, allows options larger than 255 for v4
-    ///
-    /// @todo The set of exceptions thrown by this function depend on
-    /// exceptions thrown by pack methods invoked on objects
-    /// representing sub options. We should consider whether to aggregate
-    /// those into one exception which can be documented here.
-    void packVendorOptions(isc::util::OutputBuffer& buf, uint32_t vendor_id,
-                           bool check = true) const;
-
-    /// @brief Performs deep copy of suboptions.
-    ///
-    /// This method calls @ref clone method to deep copy each option.
-    ///
-    /// @param [out] options_copy Container where copied options are stored.
-    void getOptionsCopy(std::shared_ptr<std::map<uint32_t, OptionCollection>>& options_copy) const;
-
-    /// @brief Enterprise-ids
-    std::vector<uint32_t> vendor_ids_;
-
-    /// @brief Specific Enterprise-ids options
-    std::shared_ptr<std::map<uint32_t, OptionCollection>> vendor_options_;
-
-    /// @brief Deleted functions.
-    /// @{
-    OptionPtr getOption(uint16_t type) const = delete;
-
-    bool delOption(uint16_t type) = delete;
-
-    void addOption(OptionPtr opt) = delete;
-
-    void getOptionsCopy(OptionCollection& options_copy) const = delete;
-
-    std::string suboptionsToText(const int indent = 0) const = delete;
-
-    const OptionCollection& getOptions() const = delete;
-    /// @}
+    /// @brief Enterprise-id
+    uint32_t vendor_id_;
 };
 
 /// Pointer to a vendor option

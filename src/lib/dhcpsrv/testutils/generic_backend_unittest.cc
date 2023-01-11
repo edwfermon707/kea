@@ -44,7 +44,7 @@ GenericBackendTest::createVendorOption(const Option::Universe& universe,
                                        const bool persist,
                                        const bool formatted,
                                        const uint32_t vendor_id) const {
-    OptionVendorPtr option(new OptionVendor(universe, { vendor_id }));
+    OptionVendorPtr option(new OptionVendor(universe, vendor_id));
 
     std::ostringstream s;
     if (formatted) {

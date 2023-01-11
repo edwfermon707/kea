@@ -1769,7 +1769,8 @@ TEST_F(Pkt6Test, getMAC_DOCSIS_Modem) {
     OptionVendorPtr vendor = boost::dynamic_pointer_cast<
         OptionVendor>(pkt->getOption(D6O_VENDOR_OPTS));
     ASSERT_TRUE(vendor);
-    ASSERT_TRUE(vendor->delOption(VENDOR_ID_CABLE_LABS, DOCSIS3_V6_DEVICE_ID));
+    ASSERT_EQ(vendor->getVendorId(), VENDOR_ID_CABLE_LABS);
+    ASSERT_TRUE(vendor->delOption(DOCSIS3_V6_DEVICE_ID));
 
     // Ok, there's no more suboption 36. Now getMAC() should fail.
     EXPECT_FALSE(pkt->getMAC(HWAddr::HWADDR_SOURCE_DOCSIS_MODEM));
@@ -1800,7 +1801,8 @@ TEST_F(Pkt6Test, getMAC_DOCSIS_CMTS) {
         OptionVendor>(pkt->getAnyRelayOption(D6O_VENDOR_OPTS,
                                              isc::dhcp::Pkt6::RELAY_SEARCH_FROM_CLIENT));
     ASSERT_TRUE(vendor);
-    EXPECT_TRUE(vendor->delOption(VENDOR_ID_CABLE_LABS, DOCSIS3_V6_CMTS_CM_MAC));
+    ASSERT_EQ(vendor->getVendorId(), VENDOR_ID_CABLE_LABS);
+    EXPECT_TRUE(vendor->delOption(DOCSIS3_V6_CMTS_CM_MAC));
 
     EXPECT_FALSE(pkt->getMAC(HWAddr::HWADDR_SOURCE_DOCSIS_CMTS));
 }
