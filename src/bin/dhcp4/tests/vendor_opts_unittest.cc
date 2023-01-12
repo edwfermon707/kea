@@ -86,7 +86,7 @@ public:
                 result_vendor_ids.push_back(req);
             }
         }
-        // Create a config with a custom options.
+        // Create a config with custom options.
         string config = R"(
             {
                 "interfaces-config": {
@@ -121,7 +121,7 @@ public:
                         "code": 22,
                         "csv-format": true,
                         "data": "last",
-                        "name": "tag",
+                        "name": "special",
                         "space": "vendor-3561"
             )";
         }
@@ -147,7 +147,7 @@ public:
                     },
                     {
                         "code": 22,
-                        "name": "tag",
+                        "name": "special",
                         "space": "vendor-3561",
                         "type": "string"
             )";
@@ -194,7 +194,7 @@ public:
         OptionPtr clientid = generateClientId();
         dis->addOption(clientid);
 
-        // Pass it to the server and get an advertise
+        // Pass it to the server and get an offer
         Pkt4Ptr offer = srv.processDiscover(dis);
 
         // Check if we get a response at all.
@@ -376,7 +376,7 @@ public:
                         "code": 22,
                         "csv-format": true,
                         "data": "last",
-                        "name": "tag",
+                        "name": "special",
                         "space": "vendor-3561"
                 )";
             }
@@ -413,7 +413,7 @@ public:
                     },
                     {
                         "code": 22,
-                        "name": "tag",
+                        "name": "special",
                         "space": "vendor-3561",
                         "type": "string"
             )";
@@ -470,7 +470,7 @@ public:
             }
         }
 
-        // Pass it to the server and get an advertise
+        // Pass it to the server and get an offer
         Pkt4Ptr offer = srv.processDiscover(dis);
 
         // check if we get response at all
@@ -678,7 +678,7 @@ TEST_F(VendorOptsTest, docsisVendorORO) {
 
     // Let's get a traffic capture from DOCSIS3.0 modem
     Pkt4Ptr dis = PktCaptures::captureRelayedDiscover();
-    EXPECT_NO_THROW(dis->unpack());
+    ASSERT_NO_THROW(dis->unpack());
 
     // Check if the packet contains vendor specific information option
     OptionPtr opt = dis->getOption(DHO_VIVSO_SUBOPTIONS);

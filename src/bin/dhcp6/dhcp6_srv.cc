@@ -1423,15 +1423,13 @@ Dhcpv6Srv::buildCfgOptionList(const Pkt6Ptr& question,
                 co_list.push_back(pool->getCfgOption());
             }
         }
-    };
 
-    if (ctx.subnet_) {
-        // Next, subnet configured options.
+        // Thirdly, subnet configured options.
         if (!ctx.subnet_->getCfgOption()->empty()) {
             co_list.push_back(ctx.subnet_->getCfgOption());
         }
 
-        // Then, shared network specific options.
+        // Fourthly, shared network specific options.
         SharedNetwork6Ptr network;
         ctx.subnet_->getSharedNetwork(network);
         if (network && !network->getCfgOption()->empty()) {
@@ -1474,7 +1472,6 @@ Dhcpv6Srv::buildCfgOptionList(const Pkt6Ptr& question,
 void
 Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
                                   const CfgOptionList& co_list) {
-
     // Unlikely short cut
     if (co_list.empty()) {
         return;
@@ -1484,9 +1481,8 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
 
     // Client requests some options using ORO option. Try to
     // get this option from client's message.
-    boost::shared_ptr<OptionIntArray<uint16_t> > option_oro =
-        boost::dynamic_pointer_cast<OptionIntArray<uint16_t> >
-        (question->getOption(D6O_ORO));
+    OptionUint16ArrayPtr option_oro = boost::dynamic_pointer_cast<
+        OptionUint16Array>(question->getOption(D6O_ORO));
 
     // Get the list of options that client requested.
     if (option_oro) {
@@ -1513,6 +1509,8 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
         }
     }
 
+    // For each requested option code get the instance of the option
+    // to be returned to the client.
     for (auto const& opt : requested_opts) {
         // Add nothing when it is already there.
         // Skip special cases: D6O_VENDOR_CLASS and D6O_VENDOR_OPTS
