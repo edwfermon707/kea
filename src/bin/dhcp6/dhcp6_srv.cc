@@ -1512,7 +1512,7 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
 
     // For each requested option code get the first instance of the option
     // to be returned to the client.
-    for (uint16_t opt : requested_opts) {
+    for (auto const& opt : requested_opts) {
         // Add nothing when it is already there.
         // Skip special cases: D6O_VENDOR_OPTS
         if (opt == D6O_VENDOR_OPTS) {
