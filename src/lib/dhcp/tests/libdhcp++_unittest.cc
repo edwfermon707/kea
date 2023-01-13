@@ -1080,6 +1080,72 @@ TEST_F(LibDhcpTest, fuseLongOptionWithLongSuboption) {
     }
 }
 
+TEST_F(LibDhcpTest, extentVendorOptions4) {
+    OptionPtr suboption;
+    OptionVendorPtr opt1(new OptionVendor(Option::V4, 1));
+    suboption.reset(new OptionString(Option::V4, 16, "first"));
+    opt1->addOption(suboption);
+    OptionVendorPtr opt2(new OptionVendor(Option::V4, 1));
+    suboption.reset(new OptionString(Option::V4, 32, "second"));
+    opt2->addOption(suboption);
+    OptionVendorPtr opt3(new OptionVendor(Option::V4, 2));
+    suboption.reset(new OptionString(Option::V4, 128, "extra"));
+    opt3->addOption(suboption);
+    OptionVendorPtr opt4(new OptionVendor(Option::V4, 1));
+    suboption.reset(new OptionString(Option::V4, 64, "third"));
+    opt4->addOption(suboption);
+    OptionCollection container;
+    container.insert(make_pair(1, opt1));
+    container.insert(make_pair(1, opt2));
+    OptionCollection options;
+    for (auto const& option : container) {
+        const OptionBuffer& buffer = option.second->toBinary();
+        options.insert(make_pair(option.second->getType(),
+                                 OptionPtr(new Option(Option::V4,
+                                                      option.second->getType(),
+                                                      buffer))));
+    }
+    ASSERT_NO_THROW(LibDHCP::fuseOptions4(options));
+    ASSERT_EQ(options.size(), 1);
+    container.clear();
+    container.insert(make_pair(1, options.begin()->second));
+    container.insert(make_pair(2, opt3));
+    container.insert(make_pair(1, opt4));
+    ASSERT_EQ(container.size(), 3);
+    options.clear();
+    for (auto const& option : container) {
+        const OptionBuffer& buffer = option.second->toBinary();
+        options.insert(make_pair(option.second->getType(),
+                                 OptionPtr(new Option(Option::V4,
+                                                      option.second->getType(),
+                                                      buffer))));
+    }
+    ASSERT_EQ(options.size(), 3);
+    LibDHCP::extendVendorOptions4(options);
+    ASSERT_EQ(options.size(), 2);
+    for (auto const& option : options) {
+        OptionCollection suboptions = option.second->getOptions();
+        OptionPtr suboption;
+        OptionVendorPtr vendor = boost::dynamic_pointer_cast<OptionVendor>(option.second);
+        ASSERT_TRUE(vendor);
+        if (vendor->getVendorId() == 1) {
+            ASSERT_EQ(suboptions.size(), 3);
+            suboption = option.second->getOption(16);
+            ASSERT_TRUE(suboption);
+            suboption = option.second->getOption(32);
+            ASSERT_TRUE(suboption);
+            suboption = option.second->getOption(64);
+            ASSERT_TRUE(suboption);
+        } else if (vendor->getVendorId() == 2) {
+            ASSERT_EQ(suboptions.size(), 1);
+            suboption = option.second->getOption(128);
+            ASSERT_TRUE(suboption);
+        } else {
+            FAIL() << "unexpected vendor type: " << vendor->getVendorId();
+        }
+    }
+}
+
 // This test verifies that pack options for v4 is working correctly.
 TEST_F(LibDhcpTest, packOptions4) {
 
@@ -1202,6 +1268,8 @@ TEST_F(LibDhcpTest, unpackOptions4) {
         LibDHCP::unpackOptions4(v4packed, DHCP4_OPTION_SPACE, options,
                                 deferred, false);
     );
+
+    ASSERT_NO_THROW(LibDHCP::extendVendorOptions4(options));
 
     isc::dhcp::OptionCollection::const_iterator x = options.find(12);
     ASSERT_FALSE(x == options.end()); // option 1 should exist
@@ -2097,7 +2165,6 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
 
     LibDhcpTest::testStdOptionDefs4(DHO_VIVCO_SUBOPTIONS, vivco_buf.begin(),
                                     vivco_buf.end(), typeid(OptionVendorClass));
-
 
     LibDhcpTest::testStdOptionDefs4(DHO_VIVSO_SUBOPTIONS, vivsio_buf.begin(),
                                     vivsio_buf.end(), typeid(OptionVendor));
