@@ -74,20 +74,20 @@ TEST_F(CfgMultiThreadingTest, extract) {
     content_json = "{}";
     ASSERT_NO_THROW(param = Element::fromJSON(content_json))
                             << "invalid context_json, test is broken";
-    //check empty config
+    // Check empty config
     ASSERT_NO_THROW(CfgMultiThreading::extract(param, enabled, thread_count,
                     queue_size));
-    EXPECT_EQ(enabled, false);
+    EXPECT_EQ(enabled, true);
     EXPECT_EQ(thread_count, 0);
     EXPECT_EQ(queue_size, 0);
 
     enabled = true;
     thread_count = 4;
     queue_size = 64;
-    // check empty data
+    // Check empty data
     ASSERT_NO_THROW(CfgMultiThreading::extract(ConstElementPtr(), enabled,
                     thread_count, queue_size));
-    EXPECT_EQ(enabled, false);
+    EXPECT_EQ(enabled, true);
     EXPECT_EQ(thread_count, 0);
     EXPECT_EQ(queue_size, 0);
 }

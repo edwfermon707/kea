@@ -1,3 +1,7 @@
+2091.	[perf]		dupont
+	Multi threading is now enabled by default.
+	(Gitlab #2402)
+
 2090.	[build]		andrei
 	Fixed the --with-site-packages configure flag which had no effect
 	previously.
