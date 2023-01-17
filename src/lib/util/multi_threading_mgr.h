@@ -13,6 +13,7 @@
 
 #include <boost/noncopyable.hpp>
 
+#include <atomic>
 #include <stdint.h>
 
 namespace isc {
@@ -306,7 +307,7 @@ private:
     ///
     /// The multi-threading flag: true if multi-threading is enabled, false
     /// otherwise.
-    bool enabled_;
+    std::atomic<bool> enabled_;
 
     /// @brief The critical section count.
     ///
