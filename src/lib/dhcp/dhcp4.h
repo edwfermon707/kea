@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2023 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -221,7 +221,7 @@ enum DHCPOptionType {
     DHO_V4_ACCESS_DOMAIN             = 213, /* RFC5986 */
     // 214-219 are removed/unassigned
 //  DHO_SUBNET_ALLOC                 = 220,
-//  DHO_VSS                          = 221, /* RFC6607 */
+    DHO_VSS                          = 221, /* RFC6607 */
     // 222-223 are removed/unassigned
     // 224-254 are reserved for private use
 
