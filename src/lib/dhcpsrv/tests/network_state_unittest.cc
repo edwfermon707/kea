@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 #include <asiolink/io_service.h>
 #include <dhcpsrv/network_state.h>
 #include <dhcpsrv/timer_mgr.h>
+#include <testutils/multi_threading_utils.h>
 #include <util/multi_threading_mgr.h>
 #include <gtest/gtest.h>
 #include <functional>
@@ -16,6 +17,7 @@
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
+using namespace isc::test;
 using namespace isc::util;
 
 namespace  {
@@ -633,7 +635,7 @@ TEST_F(NetworkStateTest, defaultTest) {
 }
 
 TEST_F(NetworkStateTest, defaultTestMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     defaultTest();
 }
 
@@ -642,7 +644,7 @@ TEST_F(NetworkStateTest, disableEnableService4UsingUserCommandOriginTest) {
 }
 
 TEST_F(NetworkStateTest, disableEnableService4UsingUserCommandOriginTestMultilThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     disableEnableService4UsingUserCommandOriginTest();
 }
 
@@ -651,7 +653,7 @@ TEST_F(NetworkStateTest, disableEnableService4UsingHACommandOriginTest) {
 }
 
 TEST_F(NetworkStateTest, disableEnableService4UsingHACommandOriginTestMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     disableEnableService4UsingHACommandOriginTest();
 }
 
@@ -660,7 +662,7 @@ TEST_F(NetworkStateTest, disableEnableService4UsingDBConnectionOriginTest) {
 }
 
 TEST_F(NetworkStateTest, disableEnableService4UsingDBConnectionOriginTestMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     disableEnableService4UsingDBConnectionOriginTest();
 }
 
@@ -669,7 +671,7 @@ TEST_F(NetworkStateTest, disableEnableService4UsingMultipleOriginsTest) {
 }
 
 TEST_F(NetworkStateTest, disableEnableService4UsingMultipleOriginsTestMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     disableEnableService4UsingMultipleOriginsTest();
 }
 
@@ -678,7 +680,7 @@ TEST_F(NetworkStateTest, disableEnableService6UsingUserCommandOriginTest) {
 }
 
 TEST_F(NetworkStateTest, disableEnableService6UsingUserCommandOriginTestMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     disableEnableService6UsingUserCommandOriginTest();
 }
 
@@ -687,7 +689,7 @@ TEST_F(NetworkStateTest, disableEnableService6UsingHACommandOriginTest) {
 }
 
 TEST_F(NetworkStateTest, disableEnableService6UsingHACommandOriginTestMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     disableEnableService6UsingHACommandOriginTest();
 }
 
@@ -696,7 +698,7 @@ TEST_F(NetworkStateTest, disableEnableService6UsingDBConnectionOriginTest) {
 }
 
 TEST_F(NetworkStateTest, disableEnableService6UsingDBConnectionOriginTestMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     disableEnableService6UsingDBConnectionOriginTest();
 }
 
@@ -705,7 +707,7 @@ TEST_F(NetworkStateTest, disableEnableService6UsingMultipleOriginsTest) {
 }
 
 TEST_F(NetworkStateTest, disableEnableService6UsingMultipleOriginsTestMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     disableEnableService6UsingMultipleOriginsTest();
 }
 
@@ -714,7 +716,7 @@ TEST_F(NetworkStateTest, resetUsingUserCommandOriginTest) {
 }
 
 TEST_F(NetworkStateTest, resetUsingUserCommandOriginTestMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     resetUsingUserCommandOriginTest();
 }
 
@@ -723,7 +725,7 @@ TEST_F(NetworkStateTest, resetUsingDBConnectionOriginTest) {
 }
 
 TEST_F(NetworkStateTest, resetUsingDBConnectionOriginTestMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     resetUsingDBConnectionOriginTest();
 }
 
@@ -732,7 +734,7 @@ TEST_F(NetworkStateTest, resetUsingHACommandOriginTest) {
 }
 
 TEST_F(NetworkStateTest, resetUsingHACommandOriginTestMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     resetUsingHACommandOriginTest();
 }
 
@@ -741,7 +743,7 @@ TEST_F(NetworkStateTest, enableAllTest) {
 }
 
 TEST_F(NetworkStateTest, enableAllTestMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     enableAllTest();
 }
 
@@ -750,7 +752,7 @@ TEST_F(NetworkStateTest, delayedEnableAllTest) {
 }
 
 TEST_F(NetworkStateTest, delayedEnableAllTestMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     delayedEnableAllTest();
 }
 
@@ -759,7 +761,7 @@ TEST_F(NetworkStateTest, earlyEnableAllTest) {
 }
 
 TEST_F(NetworkStateTest, earlyEnableAllTestMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     earlyEnableAllTest();
 }
 
@@ -768,7 +770,7 @@ TEST_F(NetworkStateTest, multipleDelayedEnableAllTest) {
 }
 
 TEST_F(NetworkStateTest, multipleDelayedEnableAllTestMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     multipleDelayedEnableAllTest();
 }
 
@@ -777,7 +779,7 @@ TEST_F(NetworkStateTest, multipleDifferentOriginsDelayedEnableAllTest) {
 }
 
 TEST_F(NetworkStateTest, multipleDifferentOriginsDelayedEnableAllTestMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     multipleDifferentOriginsDelayedEnableAllTest();
 }
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -3181,25 +3181,15 @@ TEST_F(LoadUnloadDhcpv4SrvTest, failLoadIncompatibleLibraries) {
     ASSERT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));
     ASSERT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
 
-    // Load the test libraries
+
+    // The library is not multi threading compatible so loading should fail
     HookLibsCollection libraries;
-    libraries.push_back(make_pair(std::string(CALLOUT_LIBRARY_2),
-                                  ConstElementPtr()));
-
-    ASSERT_FALSE(HooksManager::loadLibraries(libraries));
-
-    // The library is missing multi_threading_compatible function so loading
-    // should fail
-    EXPECT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));
-    EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
-
-    libraries.clear();
     libraries.push_back(make_pair(std::string(CALLOUT_LIBRARY_3),
                                   ConstElementPtr()));
 
     ASSERT_FALSE(HooksManager::loadLibraries(libraries));
 
-    // The library is not multi threading compatible so loading should fail
+
     EXPECT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));
     EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
 

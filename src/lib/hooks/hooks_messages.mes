@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2013-2023 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -94,13 +94,13 @@ HOOKS_LIBRARY_LOADED informational message.
 
 % HOOKS_LIBRARY_MULTI_THREADING_COMPATIBLE hooks library %1 reports its multi-threading compatibility as %2
 A debug message issued when the "multi_threading_compatible" function was
-called. The returned value (0 means not compatible, others compatible)
-is displayed.
+called. The returned value (0 means not compatible, others compatible
+including not implemented) is displayed.
 
 % HOOKS_LIBRARY_MULTI_THREADING_NOT_COMPATIBLE hooks library %1 is not compatible with multi-threading
 When multi-threading is enabled and the library is not compatible (either
-because the "multi_threading_compatible" function returned 0 or was not
-implemented) this error message is issued. The library must be removed
+because the "multi_threading_compatible" function returned 0
+this error message is issued. The library must be removed
 from the configuration or the multi-threading disabled.
 
 % HOOKS_LIBRARY_UNLOADED hooks library %1 successfully unloaded

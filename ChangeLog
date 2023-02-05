@@ -1,4 +1,4 @@
-2091.	[perf]		dupont
+2091.	[perf]		fdupont
 	Multi threading is now enabled by default.
 	(Gitlab #2402)
 

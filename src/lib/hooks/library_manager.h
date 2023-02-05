@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -194,8 +194,8 @@ protected:
     ///
     /// If the multi-threading mode is false returns true, else with
     /// the library open, accesses the "multi_threading_compatible()"
-    /// function and returns false if not exists or has value 0, returns
-    /// true otherwise.
+    /// function and returns false has value 0, returns true if does not
+    /// exist or has value different from 0.
     ///
     /// @return bool true if the check succeeded
     bool checkMultiThreadingCompatible() const;

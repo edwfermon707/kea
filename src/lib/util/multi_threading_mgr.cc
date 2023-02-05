@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,7 +12,7 @@ namespace isc {
 namespace util {
 
 MultiThreadingMgr::MultiThreadingMgr()
-    : enabled_(false), critical_section_count_(0), thread_pool_size_(0) {
+    : enabled_(true), critical_section_count_(0), thread_pool_size_(0) {
 }
 
 MultiThreadingMgr::~MultiThreadingMgr() {

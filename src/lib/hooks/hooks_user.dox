@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -271,9 +271,9 @@ with AF_INET and AF_INET6 values.
 
 "multi_threading_compatible" is used by the hooks framework to check
 if the libraries it is loading are compatible with the DHCPv4 or DHCPv6
-server multi-threading configuration. The value 0 means not compatible
-and is the default when the function is not implemented. Non 0 values
-mean compatible.
+server multi-threading configuration. The value 0 means not compatible.
+Non 0 values mean compatible and is the default when the function is
+not implemented.
 
 If your code implements it and returns the value 0 it is recommended
 to document the reason so someone revisiting the code will not by

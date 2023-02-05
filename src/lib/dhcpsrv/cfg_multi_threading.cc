@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -19,7 +19,8 @@ namespace dhcp {
 
 void
 CfgMultiThreading::apply(ConstElementPtr value) {
-    bool enabled = false;
+    // Note the default values are set by extract, not here!
+    bool enabled = true;
     uint32_t thread_count = 0;
     uint32_t queue_size = 0;
     CfgMultiThreading::extract(value, enabled, thread_count, queue_size);
@@ -29,7 +30,6 @@ CfgMultiThreading::apply(ConstElementPtr value) {
 void
 CfgMultiThreading::extract(ConstElementPtr value, bool& enabled,
                            uint32_t& thread_count, uint32_t& queue_size) {
-    // #2402 changed the default to true.
     enabled = true;
     thread_count = 0;
     queue_size = 0;

@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,10 +15,10 @@
 using namespace isc::util;
 using namespace isc;
 
-/// @brief Verifies that the default mode is false (MT disabled).
+/// @brief Verifies that the default mode is true (MT enabled).
 TEST(MultiThreadingMgrTest, defaultMode) {
-    // MT should be disabled
-    EXPECT_FALSE(MultiThreadingMgr::instance().getMode());
+    // MT should be enabled
+    EXPECT_TRUE(MultiThreadingMgr::instance().getMode());
 }
 
 /// @brief Verifies that the mode setter works.

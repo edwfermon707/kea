@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,6 +13,7 @@
 #include <dhcp_ddns/ncr_udp.h>
 #include <util/multi_threading_mgr.h>
 #include <util/time_utilities.h>
+#include <testutils/multi_threading_utils.h>
 #include <test_utils.h>
 
 #include <boost/asio/ip/udp.hpp>
@@ -26,6 +27,7 @@ using namespace std;
 using namespace isc;
 using namespace isc::util;
 using namespace isc::dhcp_ddns;
+using namespace isc::test;
 
 namespace {
 
@@ -345,7 +347,7 @@ TEST_F(NameChangeUDPSenderBasicTest, constructionTests) {
 /// 4. Construction with a custom max queue size works
 TEST_F(NameChangeUDPSenderBasicTest, constructionTestsMultiThreading) {
     // Enable multi-threading
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
 
     isc::asiolink::IOAddress ip_address(TEST_ADDRESS);
     uint32_t port = SENDER_PORT;
@@ -502,7 +504,7 @@ TEST_F(NameChangeUDPSenderBasicTest, basicSendTests) {
 /// @brief Tests NameChangeUDPSender basic send functionality
 TEST_F(NameChangeUDPSenderBasicTest, basicSendTestsMultiThreading) {
     // Enable multi-threading
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
 
     isc::asiolink::IOAddress ip_address(TEST_ADDRESS);
     isc::asiolink::IOService io_service;
@@ -683,7 +685,7 @@ TEST_F(NameChangeUDPSenderBasicTest, autoStart) {
 /// when startSending is called.
 TEST_F(NameChangeUDPSenderBasicTest, autoStartMultiThreading) {
     // Enable multi-threading
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
 
     isc::asiolink::IOAddress ip_address(TEST_ADDRESS);
     isc::asiolink::IOService io_service;
@@ -772,7 +774,7 @@ TEST_F(NameChangeUDPSenderBasicTest, anyAddressSend) {
 /// @brief Tests NameChangeUDPSender basic send  with INADDR_ANY and port 0.
 TEST_F(NameChangeUDPSenderBasicTest, anyAddressSendMultiThreading) {
     // Enable multi-threading
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
 
     isc::asiolink::IOAddress ip_address(TEST_ADDRESS);
     isc::asiolink::IOAddress any_address("0.0.0.0");
@@ -879,7 +881,7 @@ TEST_F(NameChangeUDPSenderBasicTest, assumeQueue) {
 /// @brief Test the NameChangeSender::assumeQueue method.
 TEST_F(NameChangeUDPSenderBasicTest, assumeQueueMultiThreading) {
     // Enable multi-threading
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
 
     isc::asiolink::IOAddress ip_address(TEST_ADDRESS);
     uint32_t port = SENDER_PORT;
@@ -1128,7 +1130,7 @@ TEST_F(NameChangeUDPTest, roundTripTest) {
 /// was received both in quantity and in content.
 TEST_F(NameChangeUDPTest, roundTripTestMultiThreading) {
     // Enable multi-threading
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
 
     // Place the listener into listening state.
     ASSERT_NO_THROW(listener_->startListening(io_service_));
@@ -1213,7 +1215,7 @@ TEST_F(NameChangeUDPSenderBasicTest, watchClosedBeforeSendRequest) {
 // sendRequest() is called.
 TEST_F(NameChangeUDPSenderBasicTest, watchClosedBeforeSendRequestMultiThreading) {
     // Enable multi-threading
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
 
     isc::asiolink::IOAddress ip_address(TEST_ADDRESS);
     isc::asiolink::IOService io_service;
@@ -1287,7 +1289,7 @@ TEST_F(NameChangeUDPSenderBasicTest, watchClosedAfterSendRequest) {
 // sendNext() is called during completion handling.
 TEST_F(NameChangeUDPSenderBasicTest, watchClosedAfterSendRequestMultiThreading) {
     // Enable multi-threading
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
 
     isc::asiolink::IOAddress ip_address(TEST_ADDRESS);
     isc::asiolink::IOService io_service;
@@ -1378,7 +1380,7 @@ TEST_F(NameChangeUDPSenderBasicTest, watchSocketBadRead) {
 // completion handling.
 TEST_F(NameChangeUDPSenderBasicTest, watchSocketBadReadMultiThreading) {
     // Enable multi-threading
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
 
     isc::asiolink::IOAddress ip_address(TEST_ADDRESS);
     isc::asiolink::IOService io_service;

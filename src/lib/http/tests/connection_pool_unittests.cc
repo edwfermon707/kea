@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,6 +14,7 @@
 #include <http/response_creator.h>
 #include <http/response_json.h>
 #include <http/tests/response_test.h>
+#include <testutils/multi_threading_utils.h>
 #include <util/multi_threading_mgr.h>
 
 #include <boost/shared_ptr.hpp>
@@ -23,6 +24,7 @@
 using namespace isc::asiolink;
 using namespace isc::http;
 using namespace isc::http::test;
+using namespace isc::test;
 using namespace isc::util;
 
 namespace {
@@ -233,7 +235,7 @@ TEST_F(HttpConnectionPoolTest, startStopTest) {
 // Verifies that connections can be added to the pool and removed
 // with MultiThreading enabled.
 TEST_F(HttpConnectionPoolTest, startStopTestMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     startStopTest();
 }
 
@@ -247,7 +249,7 @@ TEST_F(HttpConnectionPoolTest, stopAll) {
 // Check that all connections can be remove with a single call
 // with MultiThreading enabled.
 TEST_F(HttpConnectionPoolTest, stopAllMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     ASSERT_TRUE(MultiThreadingMgr::instance().getMode());
     stopAllTest();
 }
@@ -262,7 +264,7 @@ TEST_F(HttpConnectionPoolTest, stopInvalid) {
 // Check that stopping non-existing connection is no-op.
 // with MultiThreading enabled.
 TEST_F(HttpConnectionPoolTest, stopInvalidMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     ASSERT_TRUE(MultiThreadingMgr::instance().getMode());
     stopInvalidTest();
 }

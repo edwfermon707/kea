@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -21,7 +21,7 @@
 
 #include <string>
 #include <vector>
-
+#include <sstream>
 #include <dlfcn.h>
 
 using namespace std;
@@ -148,25 +148,34 @@ LibraryManager::checkMultiThreadingCompatible() const {
 
     // Get the pointer to the "multi_threading_compatible" function.
     PointerConverter pc(dlsym(dl_handle_, MULTI_THREADING_COMPATIBLE_FUNCTION_NAME));
-    int compatible = 0;
+    int compatible = 1;
+    bool compatible_was_set = false;
     if (pc.multiThreadingCompatiblePtr()) {
         try {
             compatible = (*pc.multiThreadingCompatiblePtr())();
+            compatible_was_set = true;
         } catch (...) {
             LOG_ERROR(hooks_logger, HOOKS_MULTI_THREADING_COMPATIBLE_EXCEPTION)
                 .arg(library_name_);
             return (false);
         }
-
-        LOG_DEBUG(hooks_logger, HOOKS_DBG_CALLS,
-                  HOOKS_LIBRARY_MULTI_THREADING_COMPATIBLE)
-            .arg(library_name_)
-            .arg(compatible);
     }
     if (compatible == 0) {
         LOG_ERROR(hooks_logger, HOOKS_LIBRARY_MULTI_THREADING_NOT_COMPATIBLE)
             .arg(library_name_);
+    } else {
+        ostringstream val;
+        if (compatible_was_set) {
+            val << compatible;
+        } else {
+            val << "(not implemented)";
+        }
+        LOG_DEBUG(hooks_logger, HOOKS_DBG_CALLS,
+                  HOOKS_LIBRARY_MULTI_THREADING_COMPATIBLE)
+            .arg(library_name_)
+            .arg(val.str());
     }
+
     return (compatible != 0);
 }
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -4250,40 +4250,6 @@ TEST_F(Dhcp4ParserTest, LibrariesSpecified) {
 
 // Verify the configuration of hooks libraries which are not compatible with
 // multi threading is rejected.
-TEST_F(Dhcp4ParserTest, IncompatibleLibrary2Specified) {
-    // Marker files should not be present.
-    EXPECT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));
-    EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
-
-    std::vector<std::string> libraries;
-    libraries.push_back(string(CALLOUT_LIBRARY_2));
-
-    // Set up the configuration with two libraries and load them.
-    string config = buildHooksLibrariesConfig(libraries, true);
-    ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseDHCP4(config));
-    ConstElementPtr status;
-    ASSERT_NO_THROW(status = configureDhcp4Server(*srv_, json));
-
-    // The status object must not be NULL
-    ASSERT_TRUE(status);
-
-    // Returned value should not be 0
-    comment_ = parseAnswer(rcode_, status);
-    EXPECT_NE(0, rcode_);
-
-    // Expect the library to be rejected by the server (no load marker file, no
-    // unload marker file).
-    EXPECT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));
-    EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
-
-    // Expect the hooks system to say that none are loaded.
-    libraries = HooksManager::getLibraryNames();
-    EXPECT_TRUE(libraries.empty());
-}
-
-// Verify the configuration of hooks libraries which are not compatible with
-// multi threading is rejected.
 TEST_F(Dhcp4ParserTest, IncompatibleLibrary3Specified) {
     // Marker files should not be present.
     EXPECT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));
@@ -7248,6 +7214,8 @@ TEST_F(Dhcp4ParserTest, dhcpQueueControl) {
                os << ",\n \"dhcp-queue-control\": "  <<  scenario.json_;
             }
 
+            os << ",\n \"multi-threading\": { ";
+            os << "\"enable-multi-threading\": false } ";
             os << "} \n";
 
             // Configure the server. This should succeed.
@@ -7331,6 +7299,8 @@ TEST_F(Dhcp4ParserTest, dhcpQueueControlInvalid) {
             std::stringstream os;
             os << "{ " + genIfaceConfig();
             os << ",\n \"dhcp-queue-control\": "  <<  scenario.json_;
+            os << ",\n \"multi-threading\": { ";
+            os << "\"enable-multi-threading\": false } ";
             os << "} \n";
 
             std::string error_msg = "";
@@ -7546,7 +7516,7 @@ TEST_F(Dhcp4ParserTest, multiThreadingDefaultSettings) {
 
     std::string content_json =
         "{"
-        "    \"enable-multi-threading\": false,\n"
+        "    \"enable-multi-threading\": true,\n"
         "    \"thread-pool-size\": 0,\n"
         "    \"packet-queue-size\": 64\n"
         "}";
@@ -7562,7 +7532,7 @@ TEST_F(Dhcp4ParserTest, multiThreadingDefaultSettings) {
 TEST_F(Dhcp4ParserTest, multiThreadingSettings) {
     std::string content_json =
         "{"
-        "    \"enable-multi-threading\": true,\n"
+        "    \"enable-multi-threading\": false,\n"
         "    \"thread-pool-size\": 48,\n"
         "    \"packet-queue-size\": 1024\n"
         "}";
@@ -7630,6 +7600,5 @@ TEST_F(Dhcp4ParserTest, parkedPacketLimit) {
     // Make sure an invalid limit fails to parse.
     ASSERT_THROW(parseDHCP4(bad_limit), std::exception);
 }
-
 
 }  // namespace

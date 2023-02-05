@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,6 +17,7 @@
 #include <http/tests/test_http_client.h>
 #include <util/multi_threading_mgr.h>
 #include <testutils/gtest_utils.h>
+#include <testutils/multi_threading_utils.h>
 
 #include <gtest/gtest.h>
 
@@ -31,6 +32,7 @@ using namespace isc::config;
 using namespace isc::data;
 using namespace boost::asio::ip;
 using namespace isc::http;
+using namespace isc::test;
 using namespace isc::util;
 namespace ph = std::placeholders;
 
@@ -763,7 +765,7 @@ TEST_F(CmdHttpListenerTest, basics) {
     EXPECT_EQ(listener_->getThreadCount(), 0);
 
     // Enable multi-threading.
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
 
     // Make sure we can start it and it's listening with 1 thread.
     ASSERT_NO_THROW_LOG(listener_->start());

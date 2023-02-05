@@ -220,8 +220,6 @@ Note the library always opens this file in append mode and does not limit its si
 
 @section libdhcp_user_chkMTCompatibility Multi-Threading Compatibility
 
-The user_chk hooks library does not define a multi_threading_compatible()
-C function so is considered as not compatible with multi-threading
-(and the current code should be in fact really not compatible).
+The user_chk hooks library is not compatible with multi-threading.
 
 */

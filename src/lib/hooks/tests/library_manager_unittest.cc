@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -250,19 +250,19 @@ TEST_F(LibraryManagerTest, CorrectVersionReturned) {
 // Checks that the code handles the case of a library with no
 // multi_threading_compatible function.
 
-TEST_F(LibraryManagerTest, NoMultiThreadingCompatible) {
+TEST_F(LibraryManagerTest, multiThreadingCompatibleNotImplemented) {
     PublicLibraryManager lib_manager(std::string(BASIC_CALLOUT_LIBRARY),
                                      0, callout_manager_);
 
     // Open should succeed.
     EXPECT_TRUE(lib_manager.openLibrary());
 
-    // Not multi-threading compatible: does not matter without MT.
+    // Multi-threading compatible: does not matter without MT.
     EXPECT_TRUE(lib_manager.checkMultiThreadingCompatible());
 
-    // Not multi-threading compatible: does matter with MT.
+    // Multi-threading compatible: does matter with MT.
     MultiThreadingMgr::instance().setMode(true);
-    EXPECT_FALSE(lib_manager.checkMultiThreadingCompatible());
+    EXPECT_TRUE(lib_manager.checkMultiThreadingCompatible());
 
     // Tidy up.
     EXPECT_TRUE(lib_manager.closeLibrary());
@@ -311,7 +311,7 @@ TEST_F(LibraryManagerTest, multiThreadingCompatible) {
 }
 
 // Checks that the code handles the case of a library with a
-// multi_threading_compatible function returning 1 (compatible)
+// multi_threading_compatible function throwing an exception
 
 TEST_F(LibraryManagerTest, multiThreadingCompatibleException) {
     PublicLibraryManager lib_manager(std::string(FRAMEWORK_EXCEPTION_LIBRARY),
@@ -697,16 +697,16 @@ TEST_F(LibraryManagerTest, validateLibraries) {
 
     MultiThreadingMgr::instance().setMode(true);
 
-    EXPECT_FALSE(LibraryManager::validateLibrary(BASIC_CALLOUT_LIBRARY));
+    EXPECT_TRUE(LibraryManager::validateLibrary(BASIC_CALLOUT_LIBRARY));
     EXPECT_TRUE(LibraryManager::validateLibrary(FULL_CALLOUT_LIBRARY));
     EXPECT_FALSE(LibraryManager::validateLibrary(FRAMEWORK_EXCEPTION_LIBRARY));
     EXPECT_FALSE(LibraryManager::validateLibrary(INCORRECT_VERSION_LIBRARY));
-    EXPECT_FALSE(LibraryManager::validateLibrary(LOAD_CALLOUT_LIBRARY));
+    EXPECT_TRUE(LibraryManager::validateLibrary(LOAD_CALLOUT_LIBRARY));
     EXPECT_FALSE(LibraryManager::validateLibrary(LOAD_ERROR_CALLOUT_LIBRARY));
     EXPECT_FALSE(LibraryManager::validateLibrary(NOT_PRESENT_LIBRARY));
     EXPECT_FALSE(LibraryManager::validateLibrary(NO_VERSION_LIBRARY));
-    EXPECT_FALSE(LibraryManager::validateLibrary(UNLOAD_CALLOUT_LIBRARY));
-    EXPECT_FALSE(LibraryManager::validateLibrary(CALLOUT_PARAMS_LIBRARY));
+    EXPECT_TRUE(LibraryManager::validateLibrary(UNLOAD_CALLOUT_LIBRARY));
+    EXPECT_TRUE(LibraryManager::validateLibrary(CALLOUT_PARAMS_LIBRARY));
 }
 
 // Check that log messages are properly registered and unregistered.

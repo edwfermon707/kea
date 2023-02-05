@@ -21,6 +21,7 @@
 #include <http/tests/response_test.h>
 #include <http/url.h>
 #include <util/multi_threading_mgr.h>
+#include <testutils/multi_threading_utils.h>
 
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/ip/tcp.hpp>
@@ -37,6 +38,7 @@ using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::http;
 using namespace isc::http::test;
+using namespace isc::test;
 using namespace isc::util;
 namespace ph = std::placeholders;
 
@@ -1878,7 +1880,7 @@ TEST_F(HttpClientTest, consecutiveRequests) {
 // Test that two consecutive requests can be sent over the same (persistent)
 // connection.
 TEST_F(HttpClientTest, consecutiveRequestsMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     ASSERT_NO_FATAL_FAILURE(testConsecutiveRequests(HttpVersion(1, 1)));
 }
 
@@ -1895,7 +1897,7 @@ TEST_F(HttpClientTest, closeBetweenRequests) {
 // default. The client should close the connection right after receiving a response
 // from the server.
 TEST_F(HttpClientTest, closeBetweenRequestsMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     ASSERT_NO_FATAL_FAILURE(testConsecutiveRequests(HttpVersion(1, 0)));
 }
 
@@ -1908,7 +1910,7 @@ TEST_F(HttpClientTest, multipleDestinations) {
 // Test that the client can communicate with two different destinations
 // simultaneously.
 TEST_F(HttpClientTest, multipleDestinationsMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     ASSERT_NO_FATAL_FAILURE(testMultipleDestinations());
 }
 
@@ -1921,7 +1923,7 @@ TEST_F(HttpClientTest, multipleTlsContexts) {
 // Test that the client can use two different TLS contexts to the same
 // destination address and port simultaneously.
 TEST_F(HttpClientTest, multipleTlsContextsMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     ASSERT_NO_FATAL_FAILURE(testMultipleTlsContexts());
 }
 
@@ -1932,7 +1934,7 @@ TEST_F(HttpClientTest, idleConnection) {
 
 // Test that idle connection can be resumed for second request.
 TEST_F(HttpClientTest, idleConnectionMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     ASSERT_NO_FATAL_FAILURE(testIdleConnection());
 }
 
@@ -1945,7 +1947,7 @@ TEST_F(HttpClientTest, unreachable) {
 // This test verifies that the client returns IO error code when the
 // server is unreachable.
 TEST_F(HttpClientTest, unreachableMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     ASSERT_NO_FATAL_FAILURE(testUnreachable());
 }
 
@@ -1958,7 +1960,7 @@ TEST_F(HttpClientTest, malformedResponse) {
 // Test that an error is returned by the client if the server response is
 // malformed.
 TEST_F(HttpClientTest, malformedResponseMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     ASSERT_NO_FATAL_FAILURE(testMalformedResponse());
 }
 
@@ -1971,7 +1973,7 @@ TEST_F(HttpClientTest, clientRequestTimeout) {
 // Test that client times out when it doesn't receive the entire response
 // from the server within a desired time.
 TEST_F(HttpClientTest, clientRequestTimeoutMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     ASSERT_NO_FATAL_FAILURE(testClientRequestTimeout());
 }
 
@@ -1986,7 +1988,7 @@ TEST_F(HttpClientTest, clientRequestLateStartNoQueue) {
 // (and unexpected) timeout occurs. The premature timeout may be caused
 // by the system clock move.
 TEST_F(HttpClientTest, clientRequestLateStartNoQueueMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testClientRequestLateStart(false);
 }
 
@@ -2001,7 +2003,7 @@ TEST_F(HttpClientTest, clientRequestLateStartQueue) {
 // timeout occurs and there are requests queued after the request which
 // times out.
 TEST_F(HttpClientTest, clientRequestLateStartQueueMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     testClientRequestLateStart(true);
 }
 
@@ -2012,7 +2014,7 @@ TEST_F(HttpClientTest, clientConnectTimeout) {
 
 // Test that client times out when connection takes too long.
 TEST_F(HttpClientTest, clientConnectTimeoutMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     ASSERT_NO_FATAL_FAILURE(testClientConnectTimeout());
 }
 
@@ -2023,7 +2025,7 @@ TEST_F(HttpClientTest, connectCloseCallbacks) {
 
 /// Tests that connect and close callbacks work correctly.
 TEST_F(HttpClientTest, connectCloseCallbacksMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     ASSERT_NO_FATAL_FAILURE(testConnectCloseCallbacks(HttpVersion(1, 1)));
 }
 
@@ -2034,7 +2036,7 @@ TEST_F(HttpClientTest, closeIfOutOfBand) {
 
 /// Tests that HttpClient::closeIfOutOfBand works correctly.
 TEST_F(HttpClientTest, closeIfOutOfBandMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     ASSERT_NO_FATAL_FAILURE(testCloseIfOutOfBand(HttpVersion(1, 1)));
 }
 

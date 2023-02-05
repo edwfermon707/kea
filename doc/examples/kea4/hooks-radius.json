@@ -73,6 +73,11 @@
     "interfaces": [ "eth1961" ]
   },
 
+  // Multi-threading is not compatible so must be disabled.
+  "multi-threading": {
+    "enable-multi-threading": false
+  },
+
   // Set up the storage for leases.
   "lease-database": {
     "type": "memfile"

@@ -485,6 +485,9 @@ TEST_F(CtrlChannelDhcpv4SrvTest, libreload) {
 TEST_F(CtrlChannelDhcpv4SrvTest, libreloadFailMultiThreading) {
     createUnixChannelServer();
 
+    // Disable multi-threading.
+    MultiThreadingMgr::instance().setMode(false);
+
     // Ensure no marker files to start with.
     ASSERT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));
     ASSERT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
@@ -492,7 +495,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, libreloadFailMultiThreading) {
     // Load two libraries
     HookLibsCollection libraries;
     libraries.push_back(make_pair(CALLOUT_LIBRARY_1, ConstElementPtr()));
-    libraries.push_back(make_pair(CALLOUT_LIBRARY_2, ConstElementPtr()));
+    libraries.push_back(make_pair(CALLOUT_LIBRARY_3, ConstElementPtr()));
     HooksManager::loadLibraries(libraries);
 
     // Check they are loaded.
@@ -501,10 +504,10 @@ TEST_F(CtrlChannelDhcpv4SrvTest, libreloadFailMultiThreading) {
     ASSERT_TRUE(libraries == loaded_libraries);
 
     // ... which also included checking that the marker file created by the
-    // load functions exists and holds the correct value (of "12" - the
-    // first library appends "1" to the file, the second appends "2"). Also
+    // load functions exists and holds the correct value (of "13" - the
+    // first library appends "1" to the file, the second appends "3"). Also
     // check that the unload marker file does not yet exist.
-    EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "12"));
+    EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "13"));
     EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
 
     // Enable multi-threading before libreload command which should now fail
@@ -525,8 +528,8 @@ TEST_F(CtrlChannelDhcpv4SrvTest, libreloadFailMultiThreading) {
     // When they load, they should append information to the loading marker
     // file.  Failing to load the second library will also unload the first
     // library.
-    EXPECT_TRUE(checkMarkerFile(UNLOAD_MARKER_FILE, "211"));
-    EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "121"));
+    EXPECT_TRUE(checkMarkerFile(UNLOAD_MARKER_FILE, "311"));
+    EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "131"));
 }
 
 // This test checks which commands are registered by the DHCPv4 server.
@@ -1110,6 +1113,10 @@ TEST_F(CtrlChannelDhcpv4SrvTest, statusGet) {
 
     std::string response_txt;
 
+    // Set multi-threading parameters.
+    MultiThreadingMgr::instance().setThreadPoolSize(4);
+    MultiThreadingMgr::instance().setPacketQueueSize(64);
+
     // Send the status-get command.
     sendUnixCommand("{ \"command\": \"status-get\" }", response_txt);
     ConstElementPtr response;
@@ -1144,63 +1151,17 @@ TEST_F(CtrlChannelDhcpv4SrvTest, statusGet) {
 
     auto found_multi_threading = arguments->get("multi-threading-enabled");
     ASSERT_TRUE(found_multi_threading);
-    EXPECT_FALSE(found_multi_threading->boolValue());
-
-    auto found_thread_count = arguments->get("thread-pool-size");
-    ASSERT_FALSE(found_thread_count);
-
-    auto found_queue_size = arguments->get("packet-queue-size");
-    ASSERT_FALSE(found_queue_size);
-
-    auto found_queue_stats = arguments->get("packet-queue-statistics");
-    ASSERT_FALSE(found_queue_stats);
-
-    MultiThreadingMgr::instance().setMode(true);
-    MultiThreadingMgr::instance().setThreadPoolSize(4);
-    MultiThreadingMgr::instance().setPacketQueueSize(64);
-    sendUnixCommand("{ \"command\": \"status-get\" }", response_txt);
-    ASSERT_NO_THROW(response = Element::fromJSON(response_txt));
-    ASSERT_TRUE(response);
-    ASSERT_EQ(Element::map, response->getType());
-    EXPECT_EQ(2, response->size());
-    result = response->get("result");
-    ASSERT_TRUE(result);
-    ASSERT_EQ(Element::integer, result->getType());
-    EXPECT_EQ(0, result->intValue());
-    arguments = response->get("arguments");
-    ASSERT_EQ(Element::map, arguments->getType());
-
-    // The returned pid should be the pid of our process.
-    found_pid = arguments->get("pid");
-    ASSERT_TRUE(found_pid);
-    EXPECT_EQ(static_cast<int64_t>(getpid()), found_pid->intValue());
-
-    // It is hard to check the actual uptime (and reload) as it is based
-    // on current time. Let's just make sure it is within a reasonable
-    // range.
-    found_uptime = arguments->get("uptime");
-    ASSERT_TRUE(found_uptime);
-    EXPECT_LE(found_uptime->intValue(), 5);
-    EXPECT_GE(found_uptime->intValue(), 0);
-
-    found_reload = arguments->get("reload");
-    ASSERT_TRUE(found_reload);
-    EXPECT_LE(found_reload->intValue(), 5);
-    EXPECT_GE(found_reload->intValue(), 0);
-
-    found_multi_threading = arguments->get("multi-threading-enabled");
-    ASSERT_TRUE(found_multi_threading);
     EXPECT_TRUE(found_multi_threading->boolValue());
 
-    found_thread_count = arguments->get("thread-pool-size");
+    auto found_thread_count = arguments->get("thread-pool-size");
     ASSERT_TRUE(found_thread_count);
     EXPECT_EQ(found_thread_count->intValue(), 4);
 
-    found_queue_size = arguments->get("packet-queue-size");
+    auto found_queue_size = arguments->get("packet-queue-size");
     ASSERT_TRUE(found_queue_size);
     EXPECT_EQ(found_queue_size->intValue(), 64);
 
-    found_queue_stats = arguments->get("packet-queue-statistics");
+    auto found_queue_stats = arguments->get("packet-queue-statistics");
     ASSERT_TRUE(found_queue_stats);
     ASSERT_EQ(Element::list, found_queue_stats->getType());
     EXPECT_EQ(3, found_queue_stats->size());

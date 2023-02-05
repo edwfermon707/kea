@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,6 +18,7 @@
 #include <http/url.h>
 #include <util/multi_threading_mgr.h>
 #include <testutils/gtest_utils.h>
+#include <testutils/multi_threading_utils.h>
 
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/pointer_cast.hpp>
@@ -31,6 +32,7 @@ using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::http;
+using namespace isc::test;
 using namespace isc::util;
 namespace ph = std::placeholders;
 
@@ -847,7 +849,7 @@ TEST_F(MultiThreadingHttpClientTest, basics) {
     ASSERT_FALSE(client);
 
     // Enable Kea core multi-threading.
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
 
     // Multi-threaded construction should work now.
     ASSERT_NO_THROW_LOG(client.reset(new HttpClient(io_service_, 3)));
@@ -894,7 +896,7 @@ TEST_F(MultiThreadingHttpClientTest, basics) {
 
 // Verifies we can construct with deferred start.
 TEST_F(MultiThreadingHttpClientTest, deferredStart) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     HttpClientPtr client;
     size_t thread_pool_size = 3;
 
@@ -938,7 +940,7 @@ TEST_F(MultiThreadingHttpClientTest, deferredStart) {
 
 // Verifies we can restart after stop.
 TEST_F(MultiThreadingHttpClientTest, restartAfterStop) {
-    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingTest mt(true);
     HttpClientPtr client;
     size_t thread_pool_size = 3;
 
