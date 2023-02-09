@@ -331,6 +331,12 @@ Option::getHeaderLen() const {
 }
 
 void Option::addOption(OptionPtr opt) {
+    // Do not allow options to be added to themselves as this
+    // can lead to infinite recursion.
+    if (this == opt.get()) {
+        return;
+    }
+
     options_.insert(make_pair(opt->getType(), opt));
 }
 
