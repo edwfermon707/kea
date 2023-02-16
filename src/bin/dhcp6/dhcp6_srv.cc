@@ -1514,8 +1514,8 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
     // to be returned to the client.
     for (uint16_t opt : requested_opts) {
         // Add nothing when it is already there.
-        // Skip special cases: D6O_VENDOR_CLASS and D6O_VENDOR_OPTS
-        if (opt == D6O_VENDOR_CLASS || opt == D6O_VENDOR_OPTS) {
+        // Skip special cases: D6O_VENDOR_OPTS
+        if (opt == D6O_VENDOR_OPTS) {
             continue;
         }
         if (!answer->getOption(opt)) {
@@ -1594,8 +1594,10 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
                 if (vendor_ids.count(vendor_id) > 0) {
                     continue;
                 }
-                // Got it: add it.
-                answer->addOption(desc.option_);
+                // Append a fresh vendor option as the next method should
+                // add suboptions to it.
+                vendor_opts.reset(new OptionVendor(Option::V6, vendor_id));
+                answer->addOption(vendor_opts);
                 static_cast<void>(vendor_ids.insert(vendor_id));
             }
         }
