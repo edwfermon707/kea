@@ -645,7 +645,7 @@ allocator: ALLOCATOR {
     ctx.leave();
 };
 
-exclude_first_last_24: exclude-first-last-24 COLON BOOLEAN {
+exclude_first_last_24: EXCLUDE_FIRST_LAST_24 COLON BOOLEAN {
     ctx.unique("exclude-first-last-24", ctx.loc2pos(@1));
     ElementPtr exfl(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("exclude-first-last-24", exfl);
