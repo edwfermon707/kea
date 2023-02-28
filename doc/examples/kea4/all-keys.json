@@ -266,6 +266,12 @@
         // stated that Client Identifier must not be sent back.
         "echo-client-id": true,
 
+        // Boolean flag indicating whether or not .0 and .255 addresses
+        // must be considered as never free in subnets with prefix length
+        // less than 24. The default is false as these addresses are not
+        // special: only the first and the last addresses are.
+        "exclude-first-last-24": false,
+
         // Collection of Kea DHCPv4 server parameters configuring how
         // the server should process expired DHCP leases.
         "expired-leases-processing": {
