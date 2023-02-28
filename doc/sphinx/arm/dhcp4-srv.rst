@@ -1288,6 +1288,15 @@ address) address from that pool. In the aforementioned example of pool
 assigned as well. This may be invalid in some network configurations. To
 avoid this, use the ``min-max`` notation.
 
+In some cases in a subnet with a prefix length less than 24 one may want
+to exclude all addresses in .0 and .255 even only the first and the last
+addresses are special, for instance in 10.0.0.0/8 exclude 10.x.y.0 and
+10.x.y.255 for all x and y even only 10.0.0.0 and 10.255.255.255 must
+be excluded according to standards. The `exclude-first-last-24`` global
+configuration flag was introduced in Kea version 2.3.6 to do this
+without to have to configure a lot of pools. Of course its default value
+is false and it applies only to subnets up to 24 bit length.
+
 .. note::
 
     Here are some liberties and limits to the values that subnets and pools can
