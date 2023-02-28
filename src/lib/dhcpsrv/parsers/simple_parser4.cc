@@ -100,6 +100,7 @@ const SimpleKeywords SimpleParser4::GLOBAL4_PARAMETERS = {
     { "compatibility",                    Element::map },
     { "parked-packet-limit",              Element::integer },
     { "allocator",                        Element::string },
+    { "exclude-first-last-24",            Element::boolean },
 };
 
 /// @brief This table defines default global values for DHCPv4
@@ -142,6 +143,7 @@ const SimpleDefaults SimpleParser4::GLOBAL4_DEFAULTS = {
     { "ddns-use-conflict-resolution",     Element::boolean, "true" },
     { "parked-packet-limit",              Element::integer, "256" },
     { "allocator",                        Element::string,  "iterative" },
+    { "exclude-first-last-24",            Element::boolean, "false" },
 };
 
 /// @brief This table defines all option definition parameters.

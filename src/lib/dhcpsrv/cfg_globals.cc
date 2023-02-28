@@ -59,6 +59,7 @@ CfgGlobals::nameToIndex = {
     { "next-server", NEXT_SERVER },
     { "server-hostname", SERVER_HOSTNAME },
     { "boot-file-name", BOOT_FILE_NAME },
+    { "exclude-first-last-24", EXCLUDE_FIRST_LAST_24 },
 
     // DHCPv6 specific parameters.
     { "data-directory", DATA_DIRECTORY },

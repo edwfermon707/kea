@@ -149,6 +149,7 @@ using namespace std;
   ARRAY "array"
   PARKED_PACKET_LIMIT "parked-packet-limit"
   ALLOCATOR "allocator"
+  EXCLUDE_FIRST_LAST_24 "exclude-first-last-24"
 
   SHARED_NETWORKS "shared-networks"
 
@@ -550,6 +551,7 @@ global_param: valid_lifetime
             | compatibility
             | parked_packet_limit
             | allocator
+            | exclude_first_last_24
             | unknown_map_entry
             ;
 
@@ -641,6 +643,12 @@ allocator: ALLOCATOR {
     ElementPtr al(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("allocator", al);
     ctx.leave();
+};
+
+exclude_first_last_24: exclude-first-last-24 COLON BOOLEAN {
+    ctx.unique("exclude-first-last-24", ctx.loc2pos(@1));
+    ElementPtr exfl(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("exclude-first-last-24", exfl);
 };
 
 echo_client_id: ECHO_CLIENT_ID COLON BOOLEAN {
