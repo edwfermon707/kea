@@ -1294,8 +1294,13 @@ addresses are special, for instance in 10.0.0.0/8 exclude 10.x.y.0 and
 10.x.y.255 for all x and y even only 10.0.0.0 and 10.255.255.255 must
 be excluded according to standards. The `exclude-first-last-24`` global
 configuration flag was introduced in Kea version 2.3.6 to do this
-without to have to configure a lot of pools. Of course its default value
-is false and it applies only to subnets up to 24 bit length.
+without to have to configure a lot of pools or reservations to fake hosts.
+Of course its default value is false and it applies only to subnets up
+to 24 bit length.
+
+Note that here exclude means to skip them in the free address pickup
+routine of the allocation engine: if a client explicitly requests or
+has a host reservation for an address in .0 or .255 it will get it.
 
 .. note::
 
