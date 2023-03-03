@@ -4330,9 +4330,14 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
         }
 
         // Should we exclude .0 and .255 addresses?
-        bool exclude_first_last_24 = ((subnet->get().second <= 24) &&
-            CfgMgr::instance().getCurrentCfg()->
-            getConfiguredGlobals()->get(CfgGlobals::EXCLUDE_FIRST_LAST_24));
+        bool exclude_first_last_24 = false;
+        if (subnet->get().second <= 24) {
+            ConstElementPtr flag =  CfgMgr::instance().getCurrentCfg()->
+                getConfiguredGlobals()->get(CfgGlobals::EXCLUDE_FIRST_LAST_24);
+            if (flag && (flag->getType() == Element::boolean)) {
+                exclude_first_last_24 = flag->boolValue();
+            }
+        }
 
         CalloutHandle::CalloutNextStep callout_status = CalloutHandle::NEXT_STEP_CONTINUE;
 
