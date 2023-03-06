@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,7 +20,6 @@
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcp4/tests/get_config_unittest.h>
 #include <testutils/gtest_utils.h>
-#include <testutils/test_to_element.h>
 
 #include <boost/algorithm/string.hpp>
 #include <gtest/gtest.h>
@@ -2344,7 +2343,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "            \"re-detect\": false\n"
 "        },\n"
 "        \"multi-threading\": {\n"
-"            \"enable-multi-threading\": false,\n"
+"            \"enable-multi-threading\": true,\n"
 "            \"packet-queue-size\": 1024,\n"
 "            \"thread-pool-size\": 48\n"
 "        },\n"
@@ -5407,6 +5406,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"csv-format\": false,\n"
 "                \"data\": \"ABCDEF0105\",\n"
 "                \"name\": \"dhcp-message\",\n"
+"                \"never-send\": false,\n"
 "                \"space\": \"dhcp4\"\n"
 "            },\n"
 "            {\n"
@@ -5415,6 +5415,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"csv-format\": false,\n"
 "                \"data\": \"01\",\n"
 "                \"name\": \"default-ip-ttl\",\n"
+"                \"never-send\": false,\n"
 "                \"space\": \"dhcp4\"\n"
 "            }\n"
 "        ],\n"
@@ -5566,6 +5567,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                        \"csv-format\": false,\n"
 "                        \"data\": \"ABCDEF0105\",\n"
 "                        \"name\": \"dhcp-message\",\n"
+"                        \"never-send\": false,\n"
 "                        \"space\": \"dhcp4\"\n"
 "                    },\n"
 "                    {\n"
@@ -5574,6 +5576,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                        \"csv-format\": false,\n"
 "                        \"data\": \"01\",\n"
 "                        \"name\": \"default-ip-ttl\",\n"
+"                        \"never-send\": false,\n"
 "                        \"space\": \"dhcp4\"\n"
 "                    }\n"
 "                ],\n"
@@ -5667,6 +5670,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"csv-format\": false,\n"
 "                \"data\": \"ABCDEF0105\",\n"
 "                \"name\": \"dhcp-message\",\n"
+"                \"never-send\": false,\n"
 "                \"space\": \"dhcp4\"\n"
 "            },\n"
 "            {\n"
@@ -5675,6 +5679,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"csv-format\": true,\n"
 "                \"data\": \"1234\",\n"
 "                \"name\": \"foo\",\n"
+"                \"never-send\": false,\n"
 "                \"space\": \"isc\"\n"
 "            }\n"
 "        ],\n"
@@ -5807,6 +5812,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"csv-format\": true,\n"
 "                \"data\": \"1234\",\n"
 "                \"name\": \"foo\",\n"
+"                \"never-send\": false,\n"
 "                \"space\": \"isc\"\n"
 "            },\n"
 "            {\n"
@@ -5815,6 +5821,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"csv-format\": true,\n"
 "                \"data\": \"192.168.2.1\",\n"
 "                \"name\": \"foo2\",\n"
+"                \"never-send\": false,\n"
 "                \"space\": \"isc\"\n"
 "            }\n"
 "        ],\n"
@@ -5927,6 +5934,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"csv-format\": true,\n"
 "                \"data\": \"11\",\n"
 "                \"name\": \"base-option\",\n"
+"                \"never-send\": false,\n"
 "                \"space\": \"dhcp4\"\n"
 "            },\n"
 "            {\n"
@@ -5935,6 +5943,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"csv-format\": true,\n"
 "                \"data\": \"1234\",\n"
 "                \"name\": \"foo\",\n"
+"                \"never-send\": false,\n"
 "                \"space\": \"isc\"\n"
 "            },\n"
 "            {\n"
@@ -5943,6 +5952,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"csv-format\": true,\n"
 "                \"data\": \"192.168.2.1\",\n"
 "                \"name\": \"foo2\",\n"
+"                \"never-send\": false,\n"
 "                \"space\": \"isc\"\n"
 "            }\n"
 "        ],\n"
@@ -6093,6 +6103,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"csv-format\": false,\n"
 "                \"data\": \"AB\",\n"
 "                \"name\": \"dhcp-message\",\n"
+"                \"never-send\": false,\n"
 "                \"space\": \"dhcp4\"\n"
 "            }\n"
 "        ],\n"
@@ -6131,6 +6142,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                        \"csv-format\": false,\n"
 "                        \"data\": \"ABCDEF0105\",\n"
 "                        \"name\": \"dhcp-message\",\n"
+"                        \"never-send\": false,\n"
 "                        \"space\": \"dhcp4\"\n"
 "                    },\n"
 "                    {\n"
@@ -6139,6 +6151,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                        \"csv-format\": false,\n"
 "                        \"data\": \"01\",\n"
 "                        \"name\": \"default-ip-ttl\",\n"
+"                        \"never-send\": false,\n"
 "                        \"space\": \"dhcp4\"\n"
 "                    }\n"
 "                ],\n"
@@ -6261,6 +6274,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                        \"csv-format\": false,\n"
 "                        \"data\": \"0102030405060708090A\",\n"
 "                        \"name\": \"dhcp-message\",\n"
+"                        \"never-send\": false,\n"
 "                        \"space\": \"dhcp4\"\n"
 "                    }\n"
 "                ],\n"
@@ -6298,6 +6312,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                        \"csv-format\": false,\n"
 "                        \"data\": \"FF\",\n"
 "                        \"name\": \"default-ip-ttl\",\n"
+"                        \"never-send\": false,\n"
 "                        \"space\": \"dhcp4\"\n"
 "                    }\n"
 "                ],\n"
@@ -6423,6 +6438,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                                \"csv-format\": false,\n"
 "                                \"data\": \"ABCDEF0105\",\n"
 "                                \"name\": \"dhcp-message\",\n"
+"                                \"never-send\": false,\n"
 "                                \"space\": \"dhcp4\"\n"
 "                            },\n"
 "                            {\n"
@@ -6431,6 +6447,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                                \"csv-format\": false,\n"
 "                                \"data\": \"01\",\n"
 "                                \"name\": \"default-ip-ttl\",\n"
+"                                \"never-send\": false,\n"
 "                                \"space\": \"dhcp4\"\n"
 "                            }\n"
 "                        ],\n"
@@ -6553,6 +6570,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                                \"csv-format\": false,\n"
 "                                \"data\": \"ABCDEF0105\",\n"
 "                                \"name\": \"dhcp-message\",\n"
+"                                \"never-send\": false,\n"
 "                                \"space\": \"dhcp4\"\n"
 "                            }\n"
 "                        ],\n"
@@ -6566,6 +6584,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                                \"csv-format\": false,\n"
 "                                \"data\": \"01\",\n"
 "                                \"name\": \"default-ip-ttl\",\n"
+"                                \"never-send\": false,\n"
 "                                \"space\": \"dhcp4\"\n"
 "                            }\n"
 "                        ],\n"
@@ -6656,6 +6675,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"csv-format\": true,\n"
 "                \"data\": \"true, 10.0.0.3, 127.0.0.1\",\n"
 "                \"name\": \"slp-directory-agent\",\n"
+"                \"never-send\": false,\n"
 "                \"space\": \"dhcp4\"\n"
 "            },\n"
 "            {\n"
@@ -6664,6 +6684,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"csv-format\": true,\n"
 "                \"data\": \"false, \",\n"
 "                \"name\": \"slp-service-scope\",\n"
+"                \"never-send\": false,\n"
 "                \"space\": \"dhcp4\"\n"
 "            }\n"
 "        ],\n"
@@ -6786,6 +6807,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"csv-format\": true,\n"
 "                \"data\": \"1234\",\n"
 "                \"name\": \"foo\",\n"
+"                \"never-send\": false,\n"
 "                \"space\": \"vendor-encapsulated-options-space\"\n"
 "            },\n"
 "            {\n"
@@ -6794,6 +6816,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"csv-format\": true,\n"
 "                \"data\": \"192.168.2.1\",\n"
 "                \"name\": \"foo2\",\n"
+"                \"never-send\": false,\n"
 "                \"space\": \"vendor-encapsulated-options-space\"\n"
 "            }\n"
 "        ],\n"
@@ -6906,6 +6929,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"csv-format\": false,\n"
 "                \"data\": \"0104000004D20204C0A80201\",\n"
 "                \"name\": \"vendor-encapsulated-options\",\n"
+"                \"never-send\": false,\n"
 "                \"space\": \"dhcp4\"\n"
 "            },\n"
 "            {\n"
@@ -6914,6 +6938,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"csv-format\": true,\n"
 "                \"data\": \"1234\",\n"
 "                \"name\": \"foo\",\n"
+"                \"never-send\": false,\n"
 "                \"space\": \"vendor-encapsulated-options-space\"\n"
 "            },\n"
 "            {\n"
@@ -6922,6 +6947,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"csv-format\": true,\n"
 "                \"data\": \"192.168.2.1\",\n"
 "                \"name\": \"foo2\",\n"
+"                \"never-send\": false,\n"
 "                \"space\": \"vendor-encapsulated-options-space\"\n"
 "            }\n"
 "        ],\n"
@@ -7062,6 +7088,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"code\": 100,\n"
 "                \"csv-format\": false,\n"
 "                \"data\": \"1234\",\n"
+"                \"never-send\": false,\n"
 "                \"space\": \"vendor-1234\"\n"
 "            },\n"
 "            {\n"
@@ -7069,6 +7096,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"code\": 100,\n"
 "                \"csv-format\": false,\n"
 "                \"data\": \"ABCDEF0105\",\n"
+"                \"never-send\": false,\n"
 "                \"space\": \"vendor-4491\"\n"
 "            }\n"
 "        ],\n"
@@ -7191,6 +7219,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"csv-format\": true,\n"
 "                \"data\": \"this is a string vendor-opt\",\n"
 "                \"name\": \"foo\",\n"
+"                \"never-send\": false,\n"
 "                \"space\": \"vendor-4491\"\n"
 "            }\n"
 "        ],\n"
@@ -8461,6 +8490,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                                \"csv-format\": true,\n"
 "                                \"data\": \"192.0.3.95\",\n"
 "                                \"name\": \"name-servers\",\n"
+"                                \"never-send\": false,\n"
 "                                \"space\": \"dhcp4\"\n"
 "                            },\n"
 "                            {\n"
@@ -8469,6 +8499,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                                \"csv-format\": true,\n"
 "                                \"data\": \"11\",\n"
 "                                \"name\": \"default-ip-ttl\",\n"
+"                                \"never-send\": false,\n"
 "                                \"space\": \"dhcp4\"\n"
 "                            }\n"
 "                        ],\n"
@@ -8488,6 +8519,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                                \"csv-format\": true,\n"
 "                                \"data\": \"192.0.3.15\",\n"
 "                                \"name\": \"name-servers\",\n"
+"                                \"never-send\": false,\n"
 "                                \"space\": \"dhcp4\"\n"
 "                            },\n"
 "                            {\n"
@@ -8496,6 +8528,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                                \"csv-format\": true,\n"
 "                                \"data\": \"32\",\n"
 "                                \"name\": \"default-ip-ttl\",\n"
+"                                \"never-send\": false,\n"
 "                                \"space\": \"dhcp4\"\n"
 "                            }\n"
 "                        ],\n"
@@ -8564,6 +8597,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                                \"csv-format\": true,\n"
 "                                \"data\": \"192.0.4.11\",\n"
 "                                \"name\": \"name-servers\",\n"
+"                                \"never-send\": false,\n"
 "                                \"space\": \"dhcp4\"\n"
 "                            },\n"
 "                            {\n"
@@ -8572,6 +8606,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                                \"csv-format\": true,\n"
 "                                \"data\": \"95\",\n"
 "                                \"name\": \"default-ip-ttl\",\n"
+"                                \"never-send\": false,\n"
 "                                \"space\": \"dhcp4\"\n"
 "                            }\n"
 "                        ],\n"
@@ -8715,6 +8750,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                                \"csv-format\": true,\n"
 "                                \"data\": \"123\",\n"
 "                                \"name\": \"foo\",\n"
+"                                \"never-send\": false,\n"
 "                                \"space\": \"isc\"\n"
 "                            }\n"
 "                        ],\n"
@@ -11142,6 +11178,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"csv-format\": false,\n"
 "                \"data\": \"ABCDEF0105\",\n"
 "                \"name\": \"dhcp-message\",\n"
+"                \"never-send\": false,\n"
 "                \"space\": \"dhcp4\",\n"
 "                \"user-context\": {\n"
 "                    \"comment\": \"Set option value\"\n"
@@ -11222,6 +11259,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                                        \"csv-format\": true,\n"
 "                                        \"data\": \"example.com\",\n"
 "                                        \"name\": \"domain-name\",\n"
+"                                        \"never-send\": false,\n"
 "                                        \"space\": \"dhcp4\",\n"
 "                                        \"user-context\": {\n"
 "                                            \"comment\": \"An option in a reservation\"\n"
@@ -11342,6 +11380,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                        \"csv-format\": true,\n"
 "                        \"data\": \"192.0.3.95\",\n"
 "                        \"name\": \"name-servers\",\n"
+"                        \"never-send\": false,\n"
 "                        \"space\": \"dhcp4\"\n"
 "                    },\n"
 "                    {\n"
@@ -11350,6 +11389,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                        \"csv-format\": true,\n"
 "                        \"data\": \"11\",\n"
 "                        \"name\": \"default-ip-ttl\",\n"
+"                        \"never-send\": false,\n"
 "                        \"space\": \"dhcp4\"\n"
 "                    }\n"
 "                ],\n"
@@ -11369,6 +11409,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                        \"csv-format\": true,\n"
 "                        \"data\": \"192.0.3.15\",\n"
 "                        \"name\": \"name-servers\",\n"
+"                        \"never-send\": false,\n"
 "                        \"space\": \"dhcp4\"\n"
 "                    },\n"
 "                    {\n"
@@ -11377,6 +11418,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                        \"csv-format\": true,\n"
 "                        \"data\": \"32\",\n"
 "                        \"name\": \"default-ip-ttl\",\n"
+"                        \"never-send\": false,\n"
 "                        \"space\": \"dhcp4\"\n"
 "                    }\n"
 "                ],\n"
@@ -12141,7 +12183,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        },\n"
 "        \"match-client-id\": true,\n"
 "        \"multi-threading\": {\n"
-"            \"enable-multi-threading\": false,\n"
+"            \"enable-multi-threading\": true,\n"
 "            \"packet-queue-size\": 1024,\n"
 "            \"thread-pool-size\": 48\n"
 "        },\n"
@@ -12419,17 +12461,9 @@ TEST_P(Dhcp4GetConfigTest, run) {
         // get the expected config using the generic JSON syntax parser
         ASSERT_NO_THROW_LOG(jsonj = parseJSON(expected));
         // the generic JSON parser does not handle comments
-        EXPECT_TRUE(isEquivalent(jsond, moveComments(jsonj)))
-#ifdef HAVE_CREATE_UNIFIED_DIFF
-            << "\nDiff:\n" << generateDiff(prettyPrint(jsond), prettyPrint(jsonj)) << "\n"
-#endif
-        ;
+        EXPECT_TRUE(isEquivalent(jsond, moveComments(jsonj)));
         // check that unparsed and expected values match
-        EXPECT_TRUE(isEquivalent(dhcp, jsonj))
-#ifdef HAVE_CREATE_UNIFIED_DIFF
-            << "\nDiff:\n" << generateDiff(prettyPrint(dhcp), prettyPrint(jsonj)) << "\n"
-#endif
-        ;
+        EXPECT_TRUE(isEquivalent(dhcp, jsonj));
         // check on pretty prints too
         std::string current = prettyPrint(dhcp, 4, 4) + "\n";
         EXPECT_EQ(expected, current);
@@ -12448,11 +12482,7 @@ TEST_P(Dhcp4GetConfigTest, run) {
     ConstElementPtr unparsed2;
     ASSERT_NO_THROW_LOG(unparsed2 = extracted2->toElement());
     ASSERT_TRUE(unparsed2);
-    EXPECT_TRUE(isEquivalent(unparsed, unparsed2))
-#ifdef HAVE_CREATE_UNIFIED_DIFF
-        << "\nDiff:\n" << generateDiff(prettyPrint(unparsed), prettyPrint(unparsed2)) << "\n"
-#endif
-    ;
+    EXPECT_TRUE(isEquivalent(unparsed, unparsed2));
 }
 
 class IntToString {
