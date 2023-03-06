@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1790,13 +1790,13 @@ public:
             // Create our own private IOService.
             thread_io_service_.reset(new IOService());
 
-            // Create the thread pool.
-            thread_pool_.reset(new IoServiceThreadPool(thread_io_service_, thread_pool_size_,
-                                                       defer_thread_start));
-
             // Create the connection pool. Note that we use the thread_pool_size
             // as the maximum connections per URL value.
             conn_pool_.reset(new ConnectionPool(*thread_io_service_, thread_pool_size_));
+
+            // Create the thread pool.
+            thread_pool_.reset(new IoServiceThreadPool(thread_io_service_, thread_pool_size_,
+                                                       defer_thread_start));
 
             LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC, HTTP_CLIENT_MT_STARTED)
                      .arg(thread_pool_size_);

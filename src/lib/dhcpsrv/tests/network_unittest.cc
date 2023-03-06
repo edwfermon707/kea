@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -180,6 +180,7 @@ TEST_F(NetworkTest, inheritanceSupport4) {
     globals_->set("cache-max-age", Element::create(20));
     globals_->set("ddns-update-on-renew", Element::create(true));
     globals_->set("ddns-use-conflict-resolution", Element::create(true));
+    globals_->set("allocator", Element::create("random"));
 
     // For each parameter for which inheritance is supported run
     // the test that checks if the values are inherited properly.
@@ -352,6 +353,12 @@ TEST_F(NetworkTest, inheritanceSupport4) {
                                              &Network4::setDdnsUseConflictResolution,
                                              false, true);
     }
+    {
+        SCOPED_TRACE("allocator");
+        testNetworkInheritance<TestNetwork4>(&Network4::getAllocatorType,
+                                             &Network4::setAllocatorType,
+                                             "iterative", "random");
+    }
 }
 
 // This test verifies that the inheritance is supported for DHCPv6
@@ -371,6 +378,8 @@ TEST_F(NetworkTest, inheritanceSupport6) {
     globals_->set("store-extended-info", Element::create(true));
     globals_->set("ddns-update-on-renew", Element::create(true));
     globals_->set("ddns-use-conflict-resolution", Element::create(true));
+    globals_->set("allocator", Element::create("random"));
+    globals_->set("pd-allocator", Element::create("random"));
 
     // For each parameter for which inheritance is supported run
     // the test that checks if the values are inherited properly.
@@ -448,6 +457,18 @@ TEST_F(NetworkTest, inheritanceSupport6) {
         testNetworkInheritance<TestNetwork6>(&Network6::getDdnsUseConflictResolution,
                                              &Network6::setDdnsUseConflictResolution,
                                              false, true);
+    }
+    {
+        SCOPED_TRACE("allocator");
+        testNetworkInheritance<TestNetwork6>(&Network6::getAllocatorType,
+                                             &Network6::setAllocatorType,
+                                             "iterative", "random");
+    }
+    {
+        SCOPED_TRACE("pd-allocator");
+        testNetworkInheritance<TestNetwork6>(&Network6::getPdAllocatorType,
+                                             &Network6::setPdAllocatorType,
+                                             "iterative", "random");
     }
 
     // Interface-id requires special type of test.

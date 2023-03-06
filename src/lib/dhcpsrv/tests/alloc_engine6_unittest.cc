@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -27,6 +27,10 @@ using namespace isc::util;
 namespace isc {
 namespace dhcp {
 namespace test {
+
+// Convenience values to improve readibility.
+const bool IN_SUBNET = true;
+const bool IN_POOL = true;
 
 // Test convenience method adding hints to IA context.
 TEST(ClientContext6Test, addHint) {
@@ -283,541 +287,6 @@ TEST_F(AllocEngine6Test, allocateAddress6Nulls) {
     EXPECT_EQ(0, getStatistics("v6-allocation-fail-subnet", 1));
     EXPECT_EQ(0, getStatistics("v6-allocation-fail-no-pools", 1));
     EXPECT_EQ(0, getStatistics("v6-allocation-fail-classes", 1));
-}
-
-// This test verifies that the allocator picks addresses that belong to the
-// pool
-TEST_F(AllocEngine6Test, IterativeAllocator) {
-    boost::scoped_ptr<Allocator> alloc(new NakedIterativeAllocator(Lease::TYPE_NA, subnet_));
-
-    for (int i = 0; i < 1000; ++i) {
-        IOAddress candidate = alloc->pickAddress(cc_, duid_, IOAddress("::"));
-        EXPECT_TRUE(subnet_->inPool(Lease::TYPE_NA, candidate));
-    }
-}
-
-// This test verifies that the allocator picks addresses that belong to the
-// pool using classification
-TEST_F(AllocEngine6Test, IterativeAllocator_class) {
-    boost::scoped_ptr<Allocator> alloc(new NakedIterativeAllocator(Lease::TYPE_NA, subnet_));
-
-    // Restrict pool_ to the foo class. Add a second pool with bar class.
-    pool_->allowClientClass("foo");
-    Pool6Ptr pool(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1::100"),
-                            IOAddress("2001:db8:1::109")));
-    pool->allowClientClass("bar");
-    subnet_->addPool(pool);
-
-    // Clients are in bar
-    cc_.insert("bar");
-
-    for (int i = 0; i < 1000; ++i) {
-        IOAddress candidate = alloc->pickAddress(cc_, duid_, IOAddress("::"));
-        EXPECT_TRUE(subnet_->inPool(Lease::TYPE_NA, candidate));
-        EXPECT_TRUE(subnet_->inPool(Lease::TYPE_NA, candidate, cc_));
-    }
-}
-
-TEST_F(AllocEngine6Test, IterativeAllocatorAddrStep) {
-    subnet_->delPools(Lease::TYPE_NA); // Get rid of default pool
-
-    Pool6Ptr pool1(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"),
-                             IOAddress("2001:db8:1::5")));
-    Pool6Ptr pool2(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1::100"),
-                             IOAddress("2001:db8:1::100")));
-    Pool6Ptr pool3(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1::105"),
-                             IOAddress("2001:db8:1::106")));
-    subnet_->addPool(pool1);
-    subnet_->addPool(pool2);
-    subnet_->addPool(pool3);
-
-    NakedIterativeAllocator alloc(Lease::TYPE_NA, subnet_);
-
-    // Let's check the first pool (5 addresses here)
-    EXPECT_EQ("2001:db8:1::1",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:1::2",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:1::3",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:1::4",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:1::5",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-
-    // The second pool is easy - only one address here
-    EXPECT_EQ("2001:db8:1::100",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-
-    // This is the third and last pool, with 2 addresses in it
-    EXPECT_EQ("2001:db8:1::105",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:1::106",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-
-    // We iterated over all addresses and reached to the end of the last pool.
-    // Let's wrap around and start from the beginning
-    EXPECT_EQ("2001:db8:1::1",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:1::2",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-}
-
-TEST_F(AllocEngine6Test, IterativeAllocatorAddrStepInClass) {
-    subnet_->delPools(Lease::TYPE_NA); // Get rid of default pool
-
-    Pool6Ptr pool1(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"),
-                             IOAddress("2001:db8:1::5")));
-    Pool6Ptr pool2(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1::100"),
-                             IOAddress("2001:db8:1::100")));
-    Pool6Ptr pool3(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1::105"),
-                             IOAddress("2001:db8:1::106")));
-    // Set pool1 and pool3 but not pool2 in foo class
-    pool1->allowClientClass("foo");
-    pool3->allowClientClass("foo");
-    subnet_->addPool(pool1);
-    subnet_->addPool(pool2);
-    subnet_->addPool(pool3);
-
-    NakedIterativeAllocator alloc(Lease::TYPE_NA, subnet_);
-
-    // Clients are in foo
-    cc_.insert("foo");
-
-    // Let's check the first pool (5 addresses here)
-    EXPECT_EQ("2001:db8:1::1",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:1::2",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:1::3",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:1::4",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:1::5",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-
-    // The second pool is easy - only one address here
-    EXPECT_EQ("2001:db8:1::100",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-
-    // This is the third and last pool, with 2 addresses in it
-    EXPECT_EQ("2001:db8:1::105",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:1::106",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-
-    // We iterated over all addresses and reached to the end of the last pool.
-    // Let's wrap around and start from the beginning
-    EXPECT_EQ("2001:db8:1::1",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:1::2",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-}
-
-TEST_F(AllocEngine6Test, IterativeAllocatorAddrStepOutClass) {
-    subnet_->delPools(Lease::TYPE_NA); // Get rid of default pool
-
-    Pool6Ptr pool1(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"),
-                             IOAddress("2001:db8:1::5")));
-    Pool6Ptr pool2(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1::100"),
-                             IOAddress("2001:db8:1::100")));
-    Pool6Ptr pool3(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1::105"),
-                             IOAddress("2001:db8:1::106")));
-    // Set pool2 in foo
-    pool2->allowClientClass("foo");
-    subnet_->addPool(pool1);
-    subnet_->addPool(pool2);
-    subnet_->addPool(pool3);
-
-    NakedIterativeAllocator alloc(Lease::TYPE_NA, subnet_);
-
-    // Let's check the first pool (5 addresses here)
-    EXPECT_EQ("2001:db8:1::1",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:1::2",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:1::3",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:1::4",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:1::5",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-
-    // The second pool is skipped
-
-    // This is the third and last pool, with 2 addresses in it
-    EXPECT_EQ("2001:db8:1::105",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:1::106",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-
-    // We iterated over all addresses and reached to the end of the last pool.
-    // Let's wrap around and start from the beginning
-    EXPECT_EQ("2001:db8:1::1",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:1::2",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-}
-
-TEST_F(AllocEngine6Test, IterativeAllocatorPrefixStep) {
-    subnet_ = Subnet6::create(IOAddress("2001:db8::"), 32, 1, 2, 3, 4);
-
-    Pool6Ptr pool1(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8::"), 56, 60));
-    Pool6Ptr pool2(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1::"), 48, 48));
-    Pool6Ptr pool3(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:2::"), 56, 64));
-    subnet_->addPool(pool1);
-    subnet_->addPool(pool2);
-    subnet_->addPool(pool3);
-
-    NakedIterativeAllocator alloc(Lease::TYPE_PD, subnet_);
-
-    // We have a 2001:db8::/48 subnet that has 3 pools defined in it:
-    // 2001:db8::/56 split into /60 prefixes (16 leases) (or 2001:db8:0:X0::)
-    // 2001:db8:1::/48 split into a single /48 prefix (just 1 lease)
-    // 2001:db8:2::/56 split into /64 prefixes (256 leases) (or 2001:db8:2:XX::)
-
-    // First pool check (Let's check over all 16 leases)
-    EXPECT_EQ("2001:db8::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:10::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:20::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:30::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:40::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:50::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:60::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:70::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:80::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:90::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:a0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:b0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:c0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:d0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:e0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:f0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-
-    // Second pool (just one lease here)
-    EXPECT_EQ("2001:db8:1::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-
-    // Third pool (256 leases, let's check first and last explicitly and the
-    // rest over in a pool
-    EXPECT_EQ("2001:db8:2::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    for (int i = 1; i < 255; i++) {
-        stringstream exp;
-        exp << "2001:db8:2:" << hex << i << dec << "::";
-        EXPECT_EQ(exp.str(),
-                  alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-
-    }
-    EXPECT_EQ("2001:db8:2:ff::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-
-    // Ok, we've iterated over all prefixes in all pools. We now wrap around.
-    // We're looping over now (iterating over first pool again)
-    EXPECT_EQ("2001:db8::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:10::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-}
-
-TEST_F(AllocEngine6Test, IterativeAllocatorPrefixStepInClass) {
-    subnet_ = Subnet6::create(IOAddress("2001:db8::"), 32, 1, 2, 3, 4);
-
-    Pool6Ptr pool1(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8::"), 56, 60));
-    Pool6Ptr pool2(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1::"), 48, 48));
-    Pool6Ptr pool3(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:2::"), 56, 64));
-    // Set pool1 and pool3 but not pool2 in foo class
-    pool1->allowClientClass("foo");
-    pool3->allowClientClass("foo");
-    subnet_->addPool(pool1);
-    subnet_->addPool(pool2);
-    subnet_->addPool(pool3);
-
-    NakedIterativeAllocator alloc(Lease::TYPE_PD, subnet_);
-
-    // Clients are in foo
-    cc_.insert("foo");
-
-    // We have a 2001:db8::/48 subnet that has 3 pools defined in it:
-    // 2001:db8::/56 split into /60 prefixes (16 leases) (or 2001:db8:0:X0::)
-    // 2001:db8:1::/48 split into a single /48 prefix (just 1 lease)
-    // 2001:db8:2::/56 split into /64 prefixes (256 leases) (or 2001:db8:2:XX::)
-
-    // First pool check (Let's check over all 16 leases)
-    EXPECT_EQ("2001:db8::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:10::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:20::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:30::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:40::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:50::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:60::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:70::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:80::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:90::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:a0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:b0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:c0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:d0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:e0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:f0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-
-    // Second pool (just one lease here)
-    EXPECT_EQ("2001:db8:1::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-
-    // Third pool (256 leases, let's check first and last explicitly and the
-    // rest over in a pool
-    EXPECT_EQ("2001:db8:2::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    for (int i = 1; i < 255; i++) {
-        stringstream exp;
-        exp << "2001:db8:2:" << hex << i << dec << "::";
-        EXPECT_EQ(exp.str(),
-                  alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-
-    }
-    EXPECT_EQ("2001:db8:2:ff::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-
-    // Ok, we've iterated over all prefixes in all pools. We now wrap around.
-    // We're looping over now (iterating over first pool again)
-    EXPECT_EQ("2001:db8::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:10::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-}
-
-TEST_F(AllocEngine6Test, IterativeAllocatorPrefixStepOutClass) {
-    subnet_ = Subnet6::create(IOAddress("2001:db8::"), 32, 1, 2, 3, 4);
-
-    Pool6Ptr pool1(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8::"), 56, 60));
-    Pool6Ptr pool2(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1::"), 48, 48));
-    Pool6Ptr pool3(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:2::"), 56, 64));
-    // Set pool2 in foo
-    pool2->allowClientClass("foo");
-    subnet_->addPool(pool1);
-    subnet_->addPool(pool2);
-    subnet_->addPool(pool3);
-
-    NakedIterativeAllocator alloc(Lease::TYPE_PD, subnet_);
-
-    // We have a 2001:db8::/48 subnet that has 3 pools defined in it:
-    // 2001:db8::/56 split into /60 prefixes (16 leases) (or 2001:db8:0:X0::)
-    // 2001:db8:1::/48 split into a single /48 prefix (just 1 lease)
-    // 2001:db8:2::/56 split into /64 prefixes (256 leases) (or 2001:db8:2:XX::)
-
-    // First pool check (Let's check over all 16 leases)
-    EXPECT_EQ("2001:db8::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:10::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:20::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:30::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:40::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:50::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:60::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:70::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:80::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:90::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:a0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:b0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:c0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:d0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:e0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:f0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-
-    // The second pool is skipped
-
-    // Third pool (256 leases, let's check first and last explicitly and the
-    // rest over in a pool
-    EXPECT_EQ("2001:db8:2::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    for (int i = 1; i < 255; i++) {
-        stringstream exp;
-        exp << "2001:db8:2:" << hex << i << dec << "::";
-        EXPECT_EQ(exp.str(),
-                  alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-
-    }
-    EXPECT_EQ("2001:db8:2:ff::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-
-    // Ok, we've iterated over all prefixes in all pools. We now wrap around.
-    // We're looping over now (iterating over first pool again)
-    EXPECT_EQ("2001:db8::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:10::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
-}
-
-// This test verifies that the iterative allocator can step over addresses
-TEST_F(AllocEngine6Test, IterativeAllocatorAddressIncrease) {
-    NakedIterativeAllocator alloc(Lease::TYPE_NA, subnet_);
-
-    // Let's pick the first address
-    IOAddress addr1 = alloc.pickAddress(cc_, duid_, IOAddress("2001:db8:1::10"));
-
-    // Check that we can indeed pick the first address from the pool
-    EXPECT_EQ("2001:db8:1::10", addr1.toText());
-
-    // Check that addresses can be increased properly
-    checkAddrIncrease(alloc, "2001:db8::9", "2001:db8::a");
-    checkAddrIncrease(alloc, "2001:db8::f", "2001:db8::10");
-    checkAddrIncrease(alloc, "2001:db8::10", "2001:db8::11");
-    checkAddrIncrease(alloc, "2001:db8::ff", "2001:db8::100");
-    checkAddrIncrease(alloc, "2001:db8::ffff", "2001:db8::1:0");
-    checkAddrIncrease(alloc, "::", "::1");
-    checkAddrIncrease(alloc, "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "::");
-}
-
-// This test verifies that the allocator can step over prefixes
-TEST_F(AllocEngine6Test, IterativeAllocatorPrefixIncrease) {
-    NakedIterativeAllocator alloc(Lease::TYPE_PD, subnet_);
-
-    // For /128 prefix, increasePrefix should work the same as addressIncrease
-    checkPrefixIncrease(alloc, "2001:db8::9", 128, "2001:db8::a");
-    checkPrefixIncrease(alloc, "2001:db8::f", 128, "2001:db8::10");
-    checkPrefixIncrease(alloc, "2001:db8::10", 128, "2001:db8::11");
-    checkPrefixIncrease(alloc, "2001:db8::ff", 128, "2001:db8::100");
-    checkPrefixIncrease(alloc, "2001:db8::ffff", 128, "2001:db8::1:0");
-    checkPrefixIncrease(alloc, "::", 128, "::1");
-    checkPrefixIncrease(alloc, "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", 128, "::");
-
-    // Check that /64 prefixes can be generated
-    checkPrefixIncrease(alloc, "2001:db8::", 64, "2001:db8:0:1::");
-
-    // Check that prefix length not divisible by 8 are working
-    checkPrefixIncrease(alloc, "2001:db8::", 128, "2001:db8::1");
-    checkPrefixIncrease(alloc, "2001:db8::", 127, "2001:db8::2");
-    checkPrefixIncrease(alloc, "2001:db8::", 126, "2001:db8::4");
-    checkPrefixIncrease(alloc, "2001:db8::", 125, "2001:db8::8");
-    checkPrefixIncrease(alloc, "2001:db8::", 124, "2001:db8::10");
-    checkPrefixIncrease(alloc, "2001:db8::", 123, "2001:db8::20");
-    checkPrefixIncrease(alloc, "2001:db8::", 122, "2001:db8::40");
-    checkPrefixIncrease(alloc, "2001:db8::", 121, "2001:db8::80");
-    checkPrefixIncrease(alloc, "2001:db8::", 120, "2001:db8::100");
-
-    // These are not really useful cases, because there are bits set
-    // int the last (128 - prefix_len) bits. Nevertheless, it shows
-    // that the algorithm is working even in such cases
-    checkPrefixIncrease(alloc, "2001:db8::1", 128, "2001:db8::2");
-    checkPrefixIncrease(alloc, "2001:db8::1", 127, "2001:db8::3");
-    checkPrefixIncrease(alloc, "2001:db8::1", 126, "2001:db8::5");
-    checkPrefixIncrease(alloc, "2001:db8::1", 125, "2001:db8::9");
-    checkPrefixIncrease(alloc, "2001:db8::1", 124, "2001:db8::11");
-    checkPrefixIncrease(alloc, "2001:db8::1", 123, "2001:db8::21");
-    checkPrefixIncrease(alloc, "2001:db8::1", 122, "2001:db8::41");
-    checkPrefixIncrease(alloc, "2001:db8::1", 121, "2001:db8::81");
-    checkPrefixIncrease(alloc, "2001:db8::1", 120, "2001:db8::101");
-
-    // Let's try out couple real life scenarios
-    checkPrefixIncrease(alloc, "2001:db8:1:abcd::", 64, "2001:db8:1:abce::");
-    checkPrefixIncrease(alloc, "2001:db8:1:abcd::", 60, "2001:db8:1:abdd::");
-    checkPrefixIncrease(alloc, "2001:db8:1:abcd::", 56, "2001:db8:1:accd::");
-    checkPrefixIncrease(alloc, "2001:db8:1:abcd::", 52, "2001:db8:1:bbcd::");
-
-    // And now let's try something over the top
-    checkPrefixIncrease(alloc, "::", 1, "8000::");
-}
-
-// This test verifies that the iterative allocator really walks over all addresses
-// in all pools in specified subnet. It also must not pick the same address twice
-// unless it runs out of pool space and must start over.
-TEST_F(AllocEngine6Test, IterativeAllocator_manyPools6) {
-    NakedIterativeAllocator alloc(Lease::TYPE_NA, subnet_);
-
-    // let's start from 2, as there is 2001:db8:1::10 - 2001:db8:1::20 pool already.
-    for (int i = 2; i < 10; ++i) {
-        stringstream min, max;
-
-        min << "2001:db8:1::" << hex << i*16 + 1;
-        max << "2001:db8:1::" << hex << i*16 + 9;
-
-        Pool6Ptr pool(new Pool6(Lease::TYPE_NA, IOAddress(min.str()),
-                                IOAddress(max.str())));
-        subnet_->addPool(pool);
-    }
-
-    int total = 17 + 8 * 9; // First pool (::10 - ::20) has 17 addresses in it,
-                            // there are 8 extra pools with 9 addresses in each.
-
-    // Let's keep picked addresses here and check their uniqueness.
-    std::set<IOAddress> generated_addrs;
-    int cnt = 0;
-    while (++cnt) {
-        IOAddress candidate = alloc.pickAddress(cc_, duid_, IOAddress("::"));
-        EXPECT_TRUE(subnet_->inPool(Lease::TYPE_NA, candidate));
-
-        // One way to easily verify that the iterative allocator really works is
-        // to uncomment the following line and observe its output that it
-        // covers all defined pools.
-        // cout << candidate.toText() << endl;
-
-        if (generated_addrs.find(candidate) == generated_addrs.end()) {
-            // We haven't had this.
-            generated_addrs.insert(candidate);
-        } else {
-            // We have seen this address before. That should mean that we
-            // iterated over all addresses.
-            if (generated_addrs.size() == total) {
-                // We have exactly the number of address in all pools.
-                break;
-            }
-            ADD_FAILURE() << "Too many or not enough unique addresses generated.";
-            break;
-        }
-
-        if ( cnt>total ) {
-            ADD_FAILURE() << "Too many unique addresses generated.";
-            break;
-        }
-    }
 }
 
 // This test checks if really small pools are working
@@ -1153,7 +622,7 @@ TEST_F(AllocEngine6Test, maxReuseExpiredLease6) {
 
     // Asking specifically for this address with zero lifetimes
     AllocEngine::ClientContext6 ctx2(subnet_, duid_, false, false, "", true,
-                                     Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234)));
+                    Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234)));
     ctx2.currentIA().iaid_ = iaid_;
     ctx2.currentIA().addHint(addr, 128, 500, 600);
 
@@ -1167,6 +636,65 @@ TEST_F(AllocEngine6Test, maxReuseExpiredLease6) {
     EXPECT_EQ(400, lease->preferred_lft_);
     EXPECT_EQ(500, lease->valid_lft_);
 }
+
+// This test checks if an expired lease can be reused using class lifetimes.
+// Verifies getLifetimes() is invoked by v6 resuseExpiredLease().
+TEST_F(AllocEngine6Test, classReuseExpiredLease6) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(100)));
+    ASSERT_TRUE(engine);
+
+    IOAddress addr("2001:db8:1::ad");
+
+    // Let's make a classes with valid-lifetime and add it to the dictionary.
+    ClientClassDictionaryPtr dictionary = CfgMgr::instance().getStagingCfg()->getClientClassDictionary();
+
+    ClientClassDefPtr class_def(new ClientClassDef("valid_one", ExpressionPtr()));
+    Triplet<uint32_t> valid_one(600, 700, 800);
+    class_def->setValid(valid_one);
+    dictionary->addClass(class_def);
+
+    // Create one subnet with a pool holding one address.
+    initSubnet(IOAddress("2001:db8:1::"), addr, addr);
+    subnet_->setPreferred(Triplet<uint32_t>(100, 200, 300));
+    subnet_->setValid(Triplet<uint32_t>(300, 400, 500));
+
+    // Initialize FQDN data for the lease.
+    initFqdn("myhost.example.com", true, true);
+
+    // Just a different duid
+    DuidPtr other_duid = DuidPtr(new DUID(vector<uint8_t>(12, 0xff)));
+    const uint32_t other_iaid = 3568;
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, other_duid, other_iaid,
+                               501, 502, subnet_->getID(),
+                               HWAddrPtr(), 0));
+    lease->cltt_ = time(NULL) - 500; // Allocated 500 seconds ago
+    lease->valid_lft_ = 495; // Lease was valid for 495 seconds
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // Make sure that we really created expired lease
+    ASSERT_TRUE(lease->expired());
+
+    // Asking specifically for this address with zero lifetimes
+    AllocEngine::ClientContext6 ctx2(subnet_, duid_, false, false, "", true,
+                                     Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234)));
+    ctx2.currentIA().iaid_ = iaid_;
+    ctx2.currentIA().addHint(addr, 128, 0, 0);
+
+    // Add the class name to the context.
+    ctx2.query_->addClass("valid_one");
+
+    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx2)));
+
+    // Check that we got that single lease
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(addr, lease->addr_);
+
+    // Check lifetimes: specified values are expected.
+    EXPECT_EQ(200, lease->preferred_lft_);
+    EXPECT_EQ(700, lease->valid_lft_);
+}
+
 
 // This test checks if an expired lease can be reused in REQUEST (actual allocation)
 TEST_F(AllocEngine6Test, requestReuseExpiredLease6) {
@@ -1327,7 +855,7 @@ TEST_F(AllocEngine6Test, renewExtendLeaseLifetime) {
     hints.push_back(AllocEngine::Resource(IOAddress("2001:db8:1::15"), 128));
 
     // Client should receive a lease.
-    Lease6Collection renewed = renewTest(engine, pool_, hints, true);
+    Lease6Collection renewed = renewTest(engine, pool_, hints, IN_SUBNET, IN_POOL);
     ASSERT_EQ(1, renewed.size());
 
     // And the lease lifetime should be extended.
@@ -1358,7 +886,7 @@ TEST_F(AllocEngine6Test, defaultRenewLeaseLifetime) {
                                           128, 0, 0));
 
     // Client should receive a lease.
-    Lease6Collection renewed = renewTest(engine, pool_, hints, true);
+    Lease6Collection renewed = renewTest(engine, pool_, hints, IN_SUBNET, IN_POOL);
     ASSERT_EQ(1, renewed.size());
 
     // And the lease lifetime should be extended.
@@ -1393,7 +921,7 @@ TEST_F(AllocEngine6Test, hintRenewLeaseLifetime) {
                                           128, 301, 399));
 
     // Client should receive a lease.
-    Lease6Collection renewed = renewTest(engine, pool_, hints, true);
+    Lease6Collection renewed = renewTest(engine, pool_, hints, IN_SUBNET, IN_POOL);
     ASSERT_EQ(1, renewed.size());
 
     // And the lease lifetime should be extended.
@@ -1428,7 +956,7 @@ TEST_F(AllocEngine6Test, minRenewLeaseLifetime) {
                                           128, 100, 200));
 
     // Client should receive a lease.
-    Lease6Collection renewed = renewTest(engine, pool_, hints, true);
+    Lease6Collection renewed = renewTest(engine, pool_, hints, IN_SUBNET, IN_POOL);
     ASSERT_EQ(1, renewed.size());
 
     // And the lease lifetime should be extended.
@@ -1463,7 +991,7 @@ TEST_F(AllocEngine6Test, maxRenewLeaseLifetime) {
                                           128, 500, 600));
 
     // Client should receive a lease.
-    Lease6Collection renewed = renewTest(engine, pool_, hints, true);
+    Lease6Collection renewed = renewTest(engine, pool_, hints, IN_SUBNET, IN_POOL);
     ASSERT_EQ(1, renewed.size());
 
     // And the lease lifetime should be extended.
@@ -1475,7 +1003,57 @@ TEST_F(AllocEngine6Test, maxRenewLeaseLifetime) {
     EXPECT_EQ(500, renewed[0]->valid_lft_);
 }
 
-// Checks if the lease lifetime is extended when the client sends the
+// Verifies renewal uses class life times via getLifetimes() in invoked by
+// extendLease6().
+TEST_F(AllocEngine6Test, renewClassLeaseLifetime) {
+    // Create a lease for the client.
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::15"),
+                               duid_, iaid_, 300, 400,
+                               subnet_->getID(), HWAddrPtr(), 128));
+    // Allocated 200 seconds ago - half of the lifetime.
+    time_t lease_cltt = time(NULL) - 200;
+    lease->cltt_ = lease_cltt;
+
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    AllocEngine engine(100);
+
+    // This is what the client will send in his renew message.
+    AllocEngine::HintContainer hints;
+    hints.push_back(AllocEngine::Resource(IOAddress("2001:db8:1::15"), 128));
+
+    Lease::Type type = Lease::TYPE_NA;
+
+    Pkt6Ptr query(new Pkt6(DHCPV6_RENEW, 1234));
+    AllocEngine::ClientContext6 ctx(subnet_, duid_, false, false, "",
+                                    false, query);
+    ctx.currentIA().hints_ = hints;
+    ctx.currentIA().iaid_ = iaid_;
+    ctx.currentIA().type_ = type;
+
+    // Add a client class with both valid and preferred lifetime values.
+    ClientClassDefPtr class_def(new ClientClassDef("lft_class", ExpressionPtr()));
+    Triplet<uint32_t> valid_lft(600, 700, 800);
+    class_def->setValid(valid_lft);
+    Triplet<uint32_t> preferred_lft(650, 750, 850);
+    class_def->setPreferred(preferred_lft);
+    CfgMgr::instance().getCurrentCfg()->getClientClassDictionary()->addClass(class_def);
+    ctx.query_->addClass(class_def->getName());
+
+
+    findReservation(engine, ctx);
+    Lease6Collection renewed = engine.renewLeases6(ctx);
+    ASSERT_EQ(1, renewed.size());
+
+    // And the lease lifetime should be extended.
+    EXPECT_GT(renewed[0]->cltt_, lease_cltt)
+        << "Lease lifetime was not extended, but it should";
+
+    // Verify life times came from the class.
+    EXPECT_EQ(renewed[0]->preferred_lft_, 750);
+    EXPECT_EQ(renewed[0]->valid_lft_, 700);
+}
+
 // Renew and the client has a reservation for the lease.
 TEST_F(AllocEngine6Test, renewExtendLeaseLifetimeForReservation) {
     // Create reservation for the client. This is in-pool reservation,
@@ -1500,7 +1078,7 @@ TEST_F(AllocEngine6Test, renewExtendLeaseLifetimeForReservation) {
     hints.push_back(AllocEngine::Resource(IOAddress("2001:db8:1::15"), 128));
 
     // Client should receive a lease.
-    Lease6Collection renewed = renewTest(engine, pool_, hints, true);
+    Lease6Collection renewed = renewTest(engine, pool_, hints, IN_SUBNET, IN_POOL);
     ASSERT_EQ(1, renewed.size());
 
     // And the lease lifetime should be extended.
@@ -2276,7 +1854,7 @@ TEST_F(AllocEngine6Test, addressRenewal) {
     AllocEngine::HintContainer hints;
     hints.push_back(AllocEngine::Resource(leases[0]->addr_, 128));
 
-    Lease6Collection renewed = renewTest(engine, pool_, hints, true);
+    Lease6Collection renewed = renewTest(engine, pool_, hints, IN_SUBNET, IN_POOL);
     ASSERT_EQ(1, renewed.size());
 
     // Check that the lease was indeed renewed and hasn't changed
@@ -2329,7 +1907,7 @@ TEST_F(AllocEngine6Test, reservedAddressRenewal) {
     AllocEngine::HintContainer hints;
     hints.push_back(AllocEngine::Resource(leases[0]->addr_, 128));
 
-    Lease6Collection renewed = renewTest(engine, pool_, hints, true);
+    Lease6Collection renewed = renewTest(engine, pool_, hints, IN_SUBNET, IN_POOL);
     ASSERT_EQ(1, renewed.size());
     ASSERT_EQ("2001:db8:1::1c", leases[0]->addr_.toText());
 
@@ -2475,7 +2053,7 @@ TEST_F(AllocEngine6Test, reservedAddressRenewChange) {
     // as the pool is 2001:db8:1::10 - 2001:db8:1::20.
     createHost6(true, IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::1c"), 128);
 
-    Lease6Collection renewed = renewTest(engine, pool_, hints, true);
+    Lease6Collection renewed = renewTest(engine, pool_, hints, IN_SUBNET, IN_POOL);
     ASSERT_EQ(1, renewed.size());
     ASSERT_EQ("2001:db8:1::1c", renewed[0]->addr_.toText());
 }
@@ -2506,7 +2084,7 @@ TEST_F(AllocEngine6Test, reservedAddressRenewReserved) {
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
-    Lease6Collection renewed = renewTest(engine, pool_, hints, true);
+    Lease6Collection renewed = renewTest(engine, pool_, hints, IN_SUBNET, IN_POOL);
     ASSERT_EQ(1, renewed.size());
 
     // Check that we no longer have the reserved address.
@@ -2631,13 +2209,13 @@ TEST_F(AllocEngine6Test, reservedAddressByMacInPoolRequestValidHint) {
 // to allocate the prefix for high capacity pools is equal to the capacity
 // value. This test verifies that the prefix can be allocated in that
 // case.
-TEST_F(AllocEngine6Test, largePDPool) {
+TEST_F(AllocEngine6Test, largePdPool) {
     AllocEngine engine(0);
 
     // Remove the default PD pool.
     subnet_->delPools(Lease::TYPE_PD);
 
-    // Configure the PD pool with the prefix length of /64 and the delegated
+    // Configure the PD pool with the prefix length of /80 and the delegated
     // length /96.
     Pool6Ptr pool(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"), 80, 96));
     subnet_->addPool(pool);
@@ -2645,6 +2223,166 @@ TEST_F(AllocEngine6Test, largePDPool) {
     // We should have got exactly one lease.
     Lease6Collection leases = allocateTest(engine, pool, IOAddress("::"),
                                            false, true);
+    ASSERT_EQ(1, leases.size());
+}
+
+// This test checks that the allocation engine can pick a pool which has smaller
+// delegated prefix length than the hint.
+TEST_F(AllocEngine6Test, largePdPoolPreferLower) {
+    AllocEngine engine(0);
+
+    // Remove the default PD pool.
+    subnet_->delPools(Lease::TYPE_PD);
+
+    // Configure the PD pool with the prefix length of /80 and the delegated
+    // length /96.
+    Pool6Ptr pool(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"), 80, 96));
+    subnet_->addPool(pool);
+
+    Pool6Ptr pool2(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1:3::"), 72, 80));
+    subnet_->addPool(pool2);
+
+    // We should have got exactly one lease.
+    // Even though the hint is from the first pool, the second pool is preferred.
+    Lease6Collection leases = allocateTest(engine, pool2, IOAddress("2001:db8:1:2::"),
+                                           false, true, 92);
+    ASSERT_EQ(1, leases.size());
+}
+
+// This test checks that the allocation engine can pick a pool which has smaller
+// delegated prefix length than the hint. However the already present lease in
+// the database is used and the hint delegated length is ignored.
+TEST_F(AllocEngine6Test, largePdPoolPreferExistingInsteadOfLower) {
+    AllocEngine engine(0);
+
+    // Remove the default PD pool.
+    subnet_->delPools(Lease::TYPE_PD);
+
+    // Configure the PD pool with the prefix length of /80 and the delegated
+    // length /96.
+    Pool6Ptr pool(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"), 80, 96));
+    subnet_->addPool(pool);
+
+    Pool6Ptr pool2(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1:3::"), 72, 80));
+    subnet_->addPool(pool2);
+
+    // Let's create a lease and put it in the LeaseMgr
+    // Even if the prefix length in the hint does not match, the allocation
+    // engine should use the existing lease.
+    Lease6Ptr used(new Lease6(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"),
+                              duid_, iaid_, 300, 400, subnet_->getID(), HWAddrPtr(), 96));
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
+
+    // We should have got exactly one lease.
+    Lease6Collection leases = allocateTest(engine, pool, IOAddress("2001:db8:1:3::"),
+                                           false, true, 92);
+    ASSERT_EQ(1, leases.size());
+}
+
+// This test checks that the allocation engine can pick a pool which has exact
+// delegated prefix length as the hint.
+TEST_F(AllocEngine6Test, largePdPoolPreferEqual) {
+    AllocEngine engine(0);
+
+    // Remove the default PD pool.
+    subnet_->delPools(Lease::TYPE_PD);
+
+    // Configure the PD pool with the prefix length of /80 and the delegated
+    // length /96.
+    Pool6Ptr pool(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"), 80, 96));
+    subnet_->addPool(pool);
+
+    Pool6Ptr pool2(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1:3::"), 72, 80));
+    subnet_->addPool(pool2);
+
+    // We should have got exactly one lease.
+    // Even though the hint is from the first pool, the second pool is preferred.
+    Lease6Collection leases = allocateTest(engine, pool2, IOAddress("2001:db8:1:2::"),
+                                           false, true, 80);
+    ASSERT_EQ(1, leases.size());
+}
+
+// This test checks that the allocation engine can pick a pool which has exact
+// delegated prefix length as the hint. However the already present lease in
+// the database is used and the hint delegated length is ignored.
+TEST_F(AllocEngine6Test, largePdPoolPreferExistingInsteadOfEqual) {
+    AllocEngine engine(0);
+
+    // Remove the default PD pool.
+    subnet_->delPools(Lease::TYPE_PD);
+
+    // Configure the PD pool with the prefix length of /80 and the delegated
+    // length /96.
+    Pool6Ptr pool(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"), 80, 96));
+    subnet_->addPool(pool);
+
+    Pool6Ptr pool2(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1:3::"), 72, 80));
+    subnet_->addPool(pool2);
+
+    // Let's create a lease and put it in the LeaseMgr
+    // Even if the prefix length in the hint does not match, the allocation
+    // engine should use the existing lease.
+    Lease6Ptr used(new Lease6(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"),
+                              duid_, iaid_, 300, 400, subnet_->getID(), HWAddrPtr(), 96));
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
+
+    // We should have got exactly one lease.
+    Lease6Collection leases = allocateTest(engine, pool, IOAddress("2001:db8:1:3::"),
+                                           false, true, 80);
+    ASSERT_EQ(1, leases.size());
+}
+
+// This test checks that the allocation engine can pick a pool which has greater
+// delegated prefix length than the hint.
+TEST_F(AllocEngine6Test, largePdPoolPreferHigher) {
+    AllocEngine engine(0);
+
+    // Remove the default PD pool.
+    subnet_->delPools(Lease::TYPE_PD);
+
+    // Configure the PD pool with the prefix length of /80 and the delegated
+    // length /96.
+    Pool6Ptr pool(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"), 80, 96));
+    subnet_->addPool(pool);
+
+    Pool6Ptr pool2(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1:3::"), 72, 80));
+    subnet_->addPool(pool2);
+
+    // We should have got exactly one lease.
+    // Even though the first pool also matches the condition, because of the hint,
+    // the second pool is preferred.
+    Lease6Collection leases = allocateTest(engine, pool2, IOAddress("2001:db8:1:3::"),
+                                           false, true, 64);
+    ASSERT_EQ(1, leases.size());
+}
+
+// This test checks that the allocation engine can pick a pool which has greater
+// delegated prefix length than the hint. However the already present lease in
+// the database is used and the hint delegated length is ignored.
+TEST_F(AllocEngine6Test, largePdPoolPreferExistingInsteadOfHigher) {
+    AllocEngine engine(0);
+
+    // Remove the default PD pool.
+    subnet_->delPools(Lease::TYPE_PD);
+
+    // Configure the PD pool with the prefix length of /80 and the delegated
+    // length /96.
+    Pool6Ptr pool(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"), 80, 96));
+    subnet_->addPool(pool);
+
+    Pool6Ptr pool2(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1:3::"), 72, 80));
+    subnet_->addPool(pool2);
+
+    // Let's create a lease and put it in the LeaseMgr
+    // Even if the prefix length in the hint does not match, the allocation
+    // engine should use the existing lease.
+    Lease6Ptr used(new Lease6(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"),
+                              duid_, iaid_, 300, 400, subnet_->getID(), HWAddrPtr(), 96));
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
+
+    // We should have got exactly one lease.
+    Lease6Collection leases = allocateTest(engine, pool, IOAddress("2001:db8:1:3::"),
+                                           false, true, 64);
     ASSERT_EQ(1, leases.size());
 }
 
@@ -3514,7 +3252,7 @@ TEST_F(AllocEngine6Test, hostDynamicAddress) {
     hostname_ = "host1";
 
     // Client should receive a lease.
-    Lease6Collection renewed = renewTest(*engine, pool_, hints, true);
+    Lease6Collection renewed = renewTest(*engine, pool_, hints, IN_SUBNET, IN_POOL);
     ASSERT_EQ(1, renewed.size());
 
     Lease6Ptr renewed_lease = renewed[0];
@@ -3604,7 +3342,7 @@ TEST_F(AllocEngine6Test, globalHostDynamicAddress) {
     hostname_ = "ghost1";
 
     // Client should receive a lease.
-    Lease6Collection renewed = renewTest(*engine, pool_, hints, true);
+    Lease6Collection renewed = renewTest(*engine, pool_, hints, IN_SUBNET, IN_POOL);
     ASSERT_EQ(1, renewed.size());
 
     // And the lease lifetime should be extended.
@@ -3642,8 +3380,8 @@ TEST_F(AllocEngine6Test, globalHostDynamicAddress) {
         << "Lease lifetime was not extended, but it should";
 }
 
-// Verifies that client with a global address reservation can get and
-// renew a lease for an arbitrary address.
+// Verifies that client with a globally reserved address that is
+// outside the selected subnet is given a dynamic address instead.
 TEST_F(AllocEngine6Test, globalHostReservedAddress) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(100)));
@@ -3673,11 +3411,74 @@ TEST_F(AllocEngine6Test, globalHostReservedAddress) {
     ASSERT_TRUE(current);
     ASSERT_EQ("ghost1", current->getHostname());
 
+    // Check that we have been allocated a dynamic address.
+    Lease6Ptr lease;
+    ASSERT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
+    ASSERT_TRUE(lease);
+    EXPECT_NE("3001::1", lease->addr_.toText());
+    EXPECT_TRUE(subnet_->inRange(lease->addr_))
+                << " address not in range: " << lease->addr_.toText();
+
+    ASSERT_NO_FATAL_FAILURE(rollbackPersistedCltt(lease));
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().updateLease6(lease));
+
+    // This is what the client will send in his renew message.
+    AllocEngine::HintContainer hints;
+    hints.push_back(AllocEngine::Resource(IOAddress(lease->addr_.toText()), 128));
+
+    // Set test fixture hostname_ to the expected value. This gets checked in
+    // renewTest.
+    hostname_ = "ghost1";
+
+    // Client should receive a lease.
+    Lease6Collection renewed = renewTest(*engine, pool_, hints, IN_SUBNET, IN_POOL);
+    ASSERT_EQ(1, renewed.size());
+
+    // And the lease lifetime should be extended.
+    EXPECT_GT(renewed[0]->cltt_, lease->cltt_)
+        << "Lease lifetime was not extended, but it should";
+}
+
+// Verifies that client with a globally reserved address that is
+// inside the selected subnet is given that address.
+TEST_F(AllocEngine6Test, globalHostReservedMatchingAddress) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(100)));
+    ASSERT_TRUE(engine);
+
+    HostPtr host(new Host(&duid_->getDuid()[0], duid_->getDuid().size(),
+                          Host::IDENT_DUID, SUBNET_ID_UNUSED, SUBNET_ID_GLOBAL,
+                          asiolink::IOAddress("0.0.0.0")));
+    host->setHostname("ghost1");
+    IPv6Resrv resv(IPv6Resrv::TYPE_NA, asiolink::IOAddress("2001:db8:1::a"), 128);
+    host->addReservation(resv);
+
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    CfgMgr::instance().commit();
+
+    subnet_->setReservationsGlobal(true);
+
+    // Create context which will be used to try to allocate leases
+    Pkt6Ptr query(new Pkt6(DHCPV6_REQUEST, 1234));
+    AllocEngine::ClientContext6 ctx(subnet_, duid_, false, false, "", false, query);
+    ctx.currentIA().iaid_ = iaid_;
+
+    // Look up the reservation.
+    findReservation(*engine, ctx);
+    // Make sure we found our host.
+    ConstHostPtr current = ctx.currentHost();
+    ASSERT_TRUE(current);
+    ASSERT_EQ("ghost1", current->getHostname());
+
     // Check that we have been allocated the fixed address.
     Lease6Ptr lease;
     ASSERT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
     ASSERT_TRUE(lease);
-    EXPECT_EQ("3001::1", lease->addr_.toText());
+    EXPECT_EQ("2001:db8:1::a", lease->addr_.toText());
+
+    // We're going to rollback the clock a little so we can verify a renewal.
+    //--lease->cltt_;
+    ASSERT_NO_FATAL_FAILURE(rollbackPersistedCltt(lease));
 
     // We're going to rollback the clock a little so we can verify a renewal.
     --lease->cltt_;
@@ -3685,14 +3486,14 @@ TEST_F(AllocEngine6Test, globalHostReservedAddress) {
 
     // This is what the client will send in his renew message.
     AllocEngine::HintContainer hints;
-    hints.push_back(AllocEngine::Resource(IOAddress("3001::1"), 128));
+    hints.push_back(AllocEngine::Resource(IOAddress("2008:db8:1::a"), 128));
 
     // Set test fixture hostname_ to the expected value. This gets checked in
     // renewTest.
     hostname_ = "ghost1";
 
     // Client should receive a lease.
-    Lease6Collection renewed = renewTest(*engine, pool_, hints, false);
+    Lease6Collection renewed = renewTest(*engine, pool_, hints, IN_SUBNET, !IN_POOL);
     ASSERT_EQ(1, renewed.size());
 
     // And the lease lifetime should be extended.
@@ -3754,7 +3555,72 @@ TEST_F(AllocEngine6Test, globalHostReservedPrefix) {
     Pool6Ptr dummy_pool(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8::"), 64, 64));
 
     // Client should receive a lease.
-    Lease6Collection renewed = renewTest(*engine, dummy_pool, hints, false);
+    Lease6Collection renewed = renewTest(*engine, dummy_pool, hints, !IN_SUBNET, !IN_POOL);
+    ASSERT_EQ(1, renewed.size());
+
+    // And the lease lifetime should be extended.
+    EXPECT_GT(renewed[0]->cltt_, lease->cltt_)
+        << "Lease lifetime was not extended, but it should";
+}
+
+// Verifies that client with a global prefix reservation can get and
+// renew a lease for an arbitrary prefix even if using a wrong hint prefix
+// length.
+TEST_F(AllocEngine6Test, globalHostReservedPrefixDifferentPrefixLen) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(100)));
+    ASSERT_TRUE(engine);
+
+    HostPtr host(new Host(&duid_->getDuid()[0], duid_->getDuid().size(),
+                          Host::IDENT_DUID, SUBNET_ID_UNUSED, SUBNET_ID_GLOBAL,
+                          asiolink::IOAddress("0.0.0.0")));
+    host->setHostname("ghost1");
+    IPv6Resrv resv(IPv6Resrv::TYPE_PD, asiolink::IOAddress("3001::"), 64);
+    host->addReservation(resv);
+
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    CfgMgr::instance().commit();
+
+    subnet_->setReservationsGlobal(true);
+
+    // Create context which will be used to try to allocate leases
+    Pkt6Ptr query(new Pkt6(DHCPV6_REQUEST, 1234));
+    AllocEngine::ClientContext6 ctx(subnet_, duid_, false, false, "", false, query);
+    ctx.currentIA().type_ = Lease::TYPE_PD;
+    ctx.currentIA().iaid_ = iaid_;
+    // Using a different prefix length in the hint should have no effect
+    ctx.currentIA().addHint(asiolink::IOAddress("3001::"), 32);
+
+    // Look up the reservation.
+    findReservation(*engine, ctx);
+    // Make sure we found our host.
+    ConstHostPtr current = ctx.currentHost();
+    ASSERT_TRUE(current);
+    ASSERT_EQ("ghost1", current->getHostname());
+
+    // Check that we have been allocated the fixed address.
+    Lease6Ptr lease;
+    ASSERT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("3001::", lease->addr_.toText());
+
+    // We're going to rollback the clock a little so we can verify a renewal.
+    --lease->cltt_;
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().updateLease6(lease));
+
+    // This is what the client will send in his renew message.
+    AllocEngine::HintContainer hints;
+    hints.push_back(AllocEngine::Resource(IOAddress("3001::"), 64));
+
+    // Set test fixture hostname_ to the expected value. This gets checked via
+    // renewTest.
+    hostname_ = "ghost1";
+
+    // We need a PD pool to fake renew_test
+    Pool6Ptr dummy_pool(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8::"), 64, 64));
+
+    // Client should receive a lease.
+    Lease6Collection renewed = renewTest(*engine, dummy_pool, hints, !IN_SUBNET, !IN_POOL);
     ASSERT_EQ(1, renewed.size());
 
     // And the lease lifetime should be extended.
@@ -3814,7 +3680,73 @@ TEST_F(AllocEngine6Test, mixedHostReservedAddress) {
     hostname_ = "mhost1";
 
     // Client should receive a lease.
-    Lease6Collection renewed = renewTest(*engine, pool_, hints, true);
+    Lease6Collection renewed = renewTest(*engine, pool_, hints, IN_SUBNET, IN_POOL);
+    ASSERT_EQ(1, renewed.size());
+
+    // And the lease lifetime should be extended.
+    EXPECT_GT(renewed[0]->cltt_, lease->cltt_)
+        << "Lease lifetime was not extended, but it should";
+}
+
+// Verifies that client with a subnet prefix reservation can get and
+// renew a lease for a prefix in the subnet even if using a wrong hint prefix
+// length.
+TEST_F(AllocEngine6Test, mixedHostReservedPrefix) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(100)));
+    ASSERT_TRUE(engine);
+
+    HostPtr host(new Host(&duid_->getDuid()[0], duid_->getDuid().size(),
+                          Host::IDENT_DUID, SUBNET_ID_UNUSED, subnet_->getID(),
+                          asiolink::IOAddress("0.0.0.0")));
+    host->setHostname("mhost1");
+    IPv6Resrv resv(IPv6Resrv::TYPE_PD, asiolink::IOAddress("2001:db8:1:2::"), 64);
+    host->addReservation(resv);
+
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    CfgMgr::instance().commit();
+
+    subnet_->setReservationsGlobal(true);
+    subnet_->setReservationsInSubnet(true);
+
+    // Create context which will be used to try to allocate leases
+    Pkt6Ptr query(new Pkt6(DHCPV6_REQUEST, 1234));
+    AllocEngine::ClientContext6 ctx(subnet_, duid_, false, false, "", false, query);
+    ctx.currentIA().type_ = Lease::TYPE_PD;
+    ctx.currentIA().iaid_ = iaid_;
+    // Using a different prefix length in the hint should have no effect
+    ctx.currentIA().addHint(asiolink::IOAddress("2001:db8:1:2::"), 32);
+
+    // Look up the reservation.
+    findReservation(*engine, ctx);
+    // Make sure we found our host.
+    ConstHostPtr current = ctx.currentHost();
+    ASSERT_TRUE(current);
+    ASSERT_EQ("mhost1", current->getHostname());
+
+    // Check that we have been allocated the fixed prefix.
+    Lease6Ptr lease;
+    ASSERT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("2001:db8:1:2::", lease->addr_.toText());
+
+    // We're going to rollback the clock a little so we can verify a renewal.
+    --lease->cltt_;
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().updateLease6(lease));
+
+    // This is what the client will send in his renew message.
+    AllocEngine::HintContainer hints;
+    hints.push_back(AllocEngine::Resource(IOAddress("2001:db8:1:2::"), 64));
+
+    // Set test fixture hostname_ to the expected value. This gets checked via
+    // renewTest.
+    hostname_ = "mhost1";
+
+    // We need a PD pool to fake renew_test
+    Pool6Ptr dummy_pool(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8::"), 64, 64));
+
+    // Client should receive a lease.
+    Lease6Collection renewed = renewTest(*engine, dummy_pool, hints, IN_SUBNET, IN_POOL);
     ASSERT_EQ(1, renewed.size());
 
     // And the lease lifetime should be extended.
@@ -3824,7 +3756,7 @@ TEST_F(AllocEngine6Test, mixedHostReservedAddress) {
 
 // Verifies that client with a subnet prefix reservation can get and
 // renew a lease for a prefix in the subnet.
-TEST_F(AllocEngine6Test, mixedHostReservedPrefix) {
+TEST_F(AllocEngine6Test, mixedHostReservedPrefixDifferentPrefixLen) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(100)));
     ASSERT_TRUE(engine);
@@ -3877,7 +3809,7 @@ TEST_F(AllocEngine6Test, mixedHostReservedPrefix) {
     Pool6Ptr dummy_pool(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8::"), 64, 64));
 
     // Client should receive a lease.
-    Lease6Collection renewed = renewTest(*engine, dummy_pool, hints, true);
+    Lease6Collection renewed = renewTest(*engine, dummy_pool, hints, IN_SUBNET, IN_POOL);
     ASSERT_EQ(1, renewed.size());
 
     // And the lease lifetime should be extended.
@@ -3946,7 +3878,7 @@ TEST_F(AllocEngine6Test, bothHostReservedAddress) {
     hostname_ = "mhost1";
 
     // Client should receive a lease.
-    Lease6Collection renewed = renewTest(*engine, pool_, hints, true);
+    Lease6Collection renewed = renewTest(*engine, pool_, hints, IN_SUBNET, IN_POOL);
     ASSERT_EQ(1, renewed.size());
 
     // And the lease lifetime should be extended.
@@ -4018,7 +3950,82 @@ TEST_F(AllocEngine6Test, bothHostReservedPrefix) {
     Pool6Ptr dummy_pool(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8::"), 64, 64));
 
     // Client should receive a lease.
-    Lease6Collection renewed = renewTest(*engine, dummy_pool, hints, true);
+    Lease6Collection renewed = renewTest(*engine, dummy_pool, hints, IN_SUBNET, IN_POOL);
+    ASSERT_EQ(1, renewed.size());
+
+    // And the lease lifetime should be extended.
+    EXPECT_GT(renewed[0]->cltt_, lease->cltt_)
+        << "Lease lifetime was not extended, but it should";
+}
+
+// Verifies that client with a subnet and a global prefix reservation
+// can get and renew a lease for a prefix in the subnet even if using a wrong
+// hint prefix length.
+TEST_F(AllocEngine6Test, bothHostReservedPrefixDifferentPrefixLen) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(100)));
+    ASSERT_TRUE(engine);
+
+    HostPtr ghost(new Host(&duid_->getDuid()[0], duid_->getDuid().size(),
+                           Host::IDENT_DUID, SUBNET_ID_UNUSED, SUBNET_ID_GLOBAL,
+                           asiolink::IOAddress("0.0.0.0")));
+    ghost->setHostname("ghost1");
+    IPv6Resrv gresv(IPv6Resrv::TYPE_PD, asiolink::IOAddress("3001::"), 64);
+    ghost->addReservation(gresv);
+
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(ghost);
+
+    HostPtr host(new Host(&duid_->getDuid()[0], duid_->getDuid().size(),
+                          Host::IDENT_DUID, SUBNET_ID_UNUSED, subnet_->getID(),
+                          asiolink::IOAddress("0.0.0.0")));
+    host->setHostname("mhost1");
+    IPv6Resrv resv(IPv6Resrv::TYPE_PD, asiolink::IOAddress("2001:db8:1:2::"), 64);
+    host->addReservation(resv);
+
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    CfgMgr::instance().commit();
+
+    subnet_->setReservationsGlobal(true);
+    subnet_->setReservationsInSubnet(true);
+
+    // Create context which will be used to try to allocate leases
+    Pkt6Ptr query(new Pkt6(DHCPV6_REQUEST, 1234));
+    AllocEngine::ClientContext6 ctx(subnet_, duid_, false, false, "", false, query);
+    ctx.currentIA().type_ = Lease::TYPE_PD;
+    ctx.currentIA().iaid_ = iaid_;
+    // Using a different prefix length in the hint should have no effect
+    ctx.currentIA().addHint(asiolink::IOAddress("2001:db8:1:2::"), 32);
+
+    // Look up the reservation.
+    findReservation(*engine, ctx);
+    // Make sure we found our host.
+    ConstHostPtr current = ctx.currentHost();
+    ASSERT_TRUE(current);
+    ASSERT_EQ("mhost1", current->getHostname());
+
+    // Check that we have been allocated the fixed prefix.
+    Lease6Ptr lease;
+    ASSERT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("2001:db8:1:2::", lease->addr_.toText());
+
+    // We're going to rollback the clock a little so we can verify a renewal.
+    --lease->cltt_;
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().updateLease6(lease));
+
+    // This is what the client will send in his renew message.
+    AllocEngine::HintContainer hints;
+    hints.push_back(AllocEngine::Resource(IOAddress("2001:db8:1:2::"), 64));
+
+    // Set test fixture hostname_ to the expected value. This gets checked via
+    // renewTest.
+    hostname_ = "mhost1";
+
+    // We need a PD pool to fake renew_test
+    Pool6Ptr dummy_pool(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8::"), 64, 64));
+
+    // Client should receive a lease.
+    Lease6Collection renewed = renewTest(*engine, dummy_pool, hints, IN_SUBNET, IN_POOL);
     ASSERT_EQ(1, renewed.size());
 
     // And the lease lifetime should be extended.
@@ -4228,7 +4235,7 @@ TEST_F(AllocEngine6ExtendedInfoTest, updateExtendedInfo6) {
         " \"peer\": \"2001:db8::6\" } ] } }",
         true
     }
-};
+    };
 
     // Allocate a lease.
     Lease6Ptr lease;
@@ -4280,9 +4287,9 @@ TEST_F(AllocEngine6ExtendedInfoTest, updateExtendedInfo6) {
 
         // Call AllocEngine::updateLease6ExtendeInfo().
         ASSERT_NO_THROW_LOG(engine_.callUpdateLease6ExtendedInfo(lease, ctx));
-        bool ret = (lease->extended_info_action_ == Lease::ACTION_UPDATE);
+        bool ret = (lease->extended_info_action_ == Lease6::ACTION_UPDATE);
         // Reset the lease action.
-        lease->extended_info_action_ = Lease::ACTION_IGNORE;
+        lease->extended_info_action_ = Lease6::ACTION_IGNORE;
         ASSERT_EQ(scenario.exp_ret, ret);
 
         // Verify the lease has the expected user context content.
@@ -5524,7 +5531,7 @@ TEST_F(AllocEngine6Test, getValidLifetime) {
             // Add hint
             ctx.currentIA().iaid_ = iaid_;
 
-            // prefix,prefixlen, preferred, valid
+            // prefix, prefixlen, preferred, valid
             ctx.currentIA().addHint(IOAddress("::"), 128, 0, scenario.requested_lft_);
 
             Lease6Ptr lease;
@@ -5662,7 +5669,7 @@ TEST_F(AllocEngine6Test, getTemplateClassValidLifetime) {
             // Add hint
             ctx.currentIA().iaid_ = iaid_;
 
-            // prefix,prefixlen, preferred, valid
+            // prefix, prefixlen, preferred, valid
             ctx.currentIA().addHint(IOAddress("::"), 128, 0, scenario.requested_lft_);
 
             Lease6Ptr lease;
@@ -5792,7 +5799,7 @@ TEST_F(AllocEngine6Test, getPreferredLifetime) {
             // Add hint
             ctx.currentIA().iaid_ = iaid_;
 
-            // prefix,prefixlen, preferred, preferred
+            // prefix, prefixlen, preferred, valid
             ctx.currentIA().addHint(IOAddress("::"), 128, scenario.requested_lft_, 0);
 
             Lease6Ptr lease;
@@ -5933,7 +5940,7 @@ TEST_F(AllocEngine6Test, getTemplateClassPreferredLifetime) {
             // Add hint
             ctx.currentIA().iaid_ = iaid_;
 
-            // prefix,prefixlen, preferred, preferred
+            // prefix, prefixlen, preferred, valid
             ctx.currentIA().addHint(IOAddress("::"), 128, scenario.requested_lft_, 0);
 
             Lease6Ptr lease;

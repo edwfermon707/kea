@@ -1,4 +1,4 @@
-/* Copyright (C) 2016-2022 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2016-2023 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -708,6 +708,39 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"read-timeout\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::LEASE_DATABASE:
+    case isc::dhcp::Parser6Context::HOSTS_DATABASE:
+    case isc::dhcp::Parser6Context::CONFIG_DATABASE:
+        return isc::dhcp::Dhcp6Parser::make_READ_TIMEOUT(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("read-timeout", driver.loc_);
+    }
+}
+
+\"write-timeout\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::LEASE_DATABASE:
+    case isc::dhcp::Parser6Context::HOSTS_DATABASE:
+    case isc::dhcp::Parser6Context::CONFIG_DATABASE:
+        return isc::dhcp::Dhcp6Parser::make_WRITE_TIMEOUT(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("write-timeout", driver.loc_);
+    }
+}
+
+\"tcp-user-timeout\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::LEASE_DATABASE:
+    case isc::dhcp::Parser6Context::HOSTS_DATABASE:
+    case isc::dhcp::Parser6Context::CONFIG_DATABASE:
+        return isc::dhcp::Dhcp6Parser::make_TCP_USER_TIMEOUT(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("tcp-user-timeout", driver.loc_);
+    }
+}
+
 \"reconnect-wait-time\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::LEASE_DATABASE:
@@ -939,6 +972,28 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
         return isc::dhcp::Dhcp6Parser::make_PARKED_PACKET_LIMIT(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("parked-packet-limit", driver.loc_);
+    }
+}
+
+\"allocator\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+    case isc::dhcp::Parser6Context::SUBNET6:
+    case isc::dhcp::Parser6Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp6Parser::make_ALLOCATOR(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("allocator", driver.loc_);
+    }
+}
+
+\"pd-allocator\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+    case isc::dhcp::Parser6Context::SUBNET6:
+    case isc::dhcp::Parser6Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp6Parser::make_PD_ALLOCATOR(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("pd-allocator", driver.loc_);
     }
 }
 

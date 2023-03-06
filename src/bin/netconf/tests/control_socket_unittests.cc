@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -551,6 +551,11 @@ public:
     ///
     /// Run IO in a thread.
     void start() {
+        // If the thread is ready to go, start the listener.
+        if (listener_) {
+            ASSERT_NO_THROW_LOG(listener_->start());
+        }
+
         thread_.reset(new thread([this]() {
             // The thread is ready to go. Signal it to the main
             // thread so it can start the actual test.
@@ -571,11 +576,6 @@ public:
 
         // Main thread waits here for the thread to start.
         waitReady();
-
-        // If the thread is ready to go, start the listener.
-        if (listener_) {
-            ASSERT_NO_THROW_LOG(listener_->start());
-        }
     }
 
     /// @brief Stop listener.

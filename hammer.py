@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -335,7 +335,7 @@ def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False
         quiet = True
     if cwd and "~/" in cwd:
         # replace relative home directory
-        cwd = cwd.replace('~', execute('cd ~ && pwd', capture=True, super_quiet=True)[1].rstrip())
+        cwd = cwd.replace('~', os.environ['HOME'])
     if not super_quiet:
         log.info('>>>>> Executing %s in %s', cmd, cwd if cwd else os.getcwd())
     if not check_times:
@@ -361,9 +361,8 @@ def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False
             if capture:
                 output = ''
             t0 = time.time()
-            t1 = time.time()
             # repeat until process is running or timeout not occurred
-            while p.poll() is None and (timeout is None or t1 - t0 < timeout):
+            while True:
                 line = p.stdout.readline()
                 if line:
                     line_decoded = line.decode(encoding='ascii', errors='ignore').rstrip() + '\r'
@@ -374,6 +373,8 @@ def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False
                     if log_file_path:
                         log_file.write(line)
                 t1 = time.time()
+                if p.poll() is not None or (timeout is not None and timeout < t1 - t0):
+                    break
 
             # If no exitcode yet, ie. process is still running then it means that timeout occurred.
             # In such case terminate the process and raise an exception.
@@ -1114,7 +1115,7 @@ def _install_libyang_from_sources(ignore_errors = False):
 def _install_sysrepo_from_sources(ignore_errors = False):
     """Install sysrepo from sources."""
     for prefix in ['/usr', '/usr/local']:
-        sysrepo_so = f'{prefix}/lib/libsysrepo.so.h'
+        sysrepo_so = f'{prefix}/lib/libsysrepo.so'
         sysrepo_header = f'{prefix}/include/sysrepo/version.h'
         if (os.path.exists(sysrepo_so) and os.path.exists(sysrepo_header) and
             execute(f"grep -F '#define SR_VERSION_MAJOR 7' '{sysrepo_header}'", raise_error=False) == 0):

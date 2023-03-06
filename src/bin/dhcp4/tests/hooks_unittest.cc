@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1710,7 +1710,7 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectSimple) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
     ASSERT_TRUE(status);
     comment_ = parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -1793,7 +1793,7 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectChange) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
     ASSERT_TRUE(status);
     comment_ = parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -2262,15 +2262,15 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedParkRequests) {
 
     // Receive and check the first response.
     ASSERT_NO_THROW(client1.receiveResponse());
-    ASSERT_TRUE(client1.getContext().response_);
     Pkt4Ptr rsp = client1.getContext().response_;
+    ASSERT_TRUE(rsp);
     EXPECT_EQ(DHCPACK, rsp->getType());
     EXPECT_EQ("192.0.2.100", rsp->getYiaddr().toText());
 
     // Receive and check the second response.
     ASSERT_NO_THROW(client2.receiveResponse());
-    ASSERT_TRUE(client2.getContext().response_);
     rsp = client2.getContext().response_;
+    ASSERT_TRUE(rsp);
     EXPECT_EQ(DHCPACK, rsp->getType());
     EXPECT_EQ("192.0.2.101", rsp->getYiaddr().toText());
 
@@ -3020,7 +3020,7 @@ TEST_F(HooksDhcpv4SrvTest, host4Identifier) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
     ASSERT_TRUE(status);
     comment_ = parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -3091,7 +3091,7 @@ TEST_F(HooksDhcpv4SrvTest, host4IdentifierHWAddr) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
     ASSERT_TRUE(status);
     comment_ = parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -3232,7 +3232,8 @@ TEST_F(LoadUnloadDhcpv4SrvTest, Dhcpv4SrvConfigured) {
 
         // Minimal valid configuration for the server. It includes the
         // section which loads the callout library #3, which implements
-        // dhcp4_srv_configured callout.
+        // dhcp4_srv_configured callout. MT needs to be disabled
+        // since the library is single-threaded.
         string config_str =
             "{"
             "    \"interfaces-config\": {"
@@ -3251,8 +3252,11 @@ TEST_F(LoadUnloadDhcpv4SrvTest, Dhcpv4SrvConfigured) {
             "            \"library\": \"" + std::string(CALLOUT_LIBRARY_3) + "\""
             + parameters +
             "        }"
-            "    ]"
-            "}";
+          R"(    ],
+                 "multi-threading": {
+                    "enable-multi-threading": false
+                }
+            })";
 
         ConstElementPtr config = Element::fromJSON(config_str);
 
@@ -3302,7 +3306,6 @@ TEST_F(LoadUnloadDhcpv4SrvTest, Dhcpv4SrvConfigured) {
 TEST_F(HooksDhcpv4SrvTest, leases4ParkedPacketLimit) {
     IfaceMgrTestConfig test_config(true);
 
-    // Configure 1 directly reachable subnet, parked-packet-limit of 1.
     string config = "{ \"interfaces-config\": {"
         "    \"interfaces\": [ \"*\" ]"
         "},"
@@ -3314,14 +3317,15 @@ TEST_F(HooksDhcpv4SrvTest, leases4ParkedPacketLimit) {
         "    \"subnet\": \"192.0.2.0/24\", "
         "    \"interface\": \"eth1\" "
         " } ],"
-        "\"valid-lifetime\": 4000 }";
+        "\"valid-lifetime\": 4000"
+        "}";
 
     ConstElementPtr json;
     EXPECT_NO_THROW(json = parseDHCP4(config));
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
     ASSERT_TRUE(status);
     comment_ = parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -3385,8 +3389,8 @@ TEST_F(HooksDhcpv4SrvTest, leases4ParkedPacketLimit) {
 
     // Receive and check the first response.
     ASSERT_NO_THROW(client.receiveResponse());
-    ASSERT_TRUE(client.getContext().response_);
     Pkt4Ptr rsp = client.getContext().response_;
+    ASSERT_TRUE(rsp);
     EXPECT_EQ(DHCPACK, rsp->getType());
     EXPECT_EQ("192.0.2.100", rsp->getYiaddr().toText());
 
@@ -3412,8 +3416,8 @@ TEST_F(HooksDhcpv4SrvTest, leases4ParkedPacketLimit) {
 
     // Receive and check the first response.
     ASSERT_NO_THROW(client2.receiveResponse());
-    ASSERT_TRUE(client2.getContext().response_);
     rsp = client2.getContext().response_;
+    ASSERT_TRUE(rsp);
     EXPECT_EQ(DHCPACK, rsp->getType());
     EXPECT_EQ("192.0.2.101", rsp->getYiaddr().toText());
 

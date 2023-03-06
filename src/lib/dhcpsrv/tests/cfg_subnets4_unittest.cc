@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <cc/data.h>
 #include <dhcp/classify.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option_custom.h>
@@ -25,6 +26,7 @@
 #include <dhcpsrv/cfg_hosts.h>
 #include <stats/stats_mgr.h>
 #include <testutils/gtest_utils.h>
+#include <testutils/log_utils.h>
 #include <testutils/test_to_element.h>
 #include <util/doubles.h>
 
@@ -33,6 +35,7 @@
 
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::stats;
@@ -285,7 +288,7 @@ TEST(CfgSubnets4Test, mergeSubnets) {
     std::string value("Yay!");
     OptionPtr option(new Option(Option::V4, 1));
     option->setData(value.begin(), value.end());
-    ASSERT_NO_THROW(subnet1b->getCfgOption()->add(option, false, "isc"));
+    ASSERT_NO_THROW(subnet1b->getCfgOption()->add(option, false, false, "isc"));
 
     // subnet 3b updates subnet 3 with different ID and removes it
     // from network 2
@@ -296,7 +299,7 @@ TEST(CfgSubnets4Test, mergeSubnets) {
     value = "Team!";
     option.reset(new Option(Option::V4, 1));
     option->setData(value.begin(), value.end());
-    ASSERT_NO_THROW(subnet3b->getCfgOption()->add(option, false, "isc"));
+    ASSERT_NO_THROW(subnet3b->getCfgOption()->add(option, false, false, "isc"));
 
     // subnet 4b updates subnet 4 and moves it from network2 to network 1
     Subnet4Ptr subnet4b(new Subnet4(IOAddress("192.0.4.0"),
@@ -314,7 +317,7 @@ TEST(CfgSubnets4Test, mergeSubnets) {
     value = "POOLS";
     option.reset(new Option(Option::V4, 1));
     option->setData(value.begin(), value.end());
-    ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, "isc"));
+    ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, false, "isc"));
     subnet5->addPool(pool);
 
     // Add pool 2
@@ -322,7 +325,7 @@ TEST(CfgSubnets4Test, mergeSubnets) {
     value ="RULE!";
     option.reset(new Option(Option::V4, 1));
     option->setData(value.begin(), value.end());
-    ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, "isc"));
+    ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, false, "isc"));
     subnet5->addPool(pool);
 
     // Add subnets to the merge from config.
@@ -1230,7 +1233,8 @@ TEST(CfgSubnets4Test, hasSubnetWithServerId) {
     OptionCustomPtr opt_server_id(new OptionCustom(*def, Option::V4));
     opt_server_id->writeAddress(IOAddress("1.2.3.4"));
     Subnet4Ptr subnet(new Subnet4(IOAddress("192.0.2.0"), 26, 1, 2, 3, 100));
-    subnet->getCfgOption()->add(opt_server_id, false, DHCP4_OPTION_SPACE);
+    subnet->getCfgOption()->add(opt_server_id, false, false,
+                                DHCP4_OPTION_SPACE);
     cfg.add(subnet);
 
     EXPECT_TRUE(cfg.hasSubnetWithServerId(IOAddress("1.2.3.4")));
@@ -2174,6 +2178,45 @@ TEST(CfgSubnets4Test, getLinks) {
     expected = { 111 };
     EXPECT_EQ(expected, links);
     EXPECT_EQ(24, link_len);
+}
+
+/// @brief Test fixture for parsing v4 Subnets that can verify log output.
+class Subnet4ParserTest : public LogContentTest {
+public:
+
+    /// @brief virtual destructor
+    virtual ~Subnet4ParserTest() = default;
+};
+
+// This test verifies that subnet parser for IPv4 works properly
+// when using invalid renew and rebind timers.
+TEST_F(Subnet4ParserTest, parseWithInvalidRenewRebind) {
+    std::string config =
+        "{\n"
+        "    \"id\": 1,\n"
+        "    \"subnet\": \"10.1.2.0/24\",\n"
+        "    \"valid-lifetime\": 399,\n"
+        "    \"rebind-timer\": 199,\n"
+        "    \"renew-timer\": 200\n"
+        "}";
+
+    // Basic configuration for subnet4 but with a renew-timer value
+    // larger than rebind-timer.
+    ElementPtr config_element = Element::fromJSON(config);
+
+    // Parse configuration specified above.
+    Subnet4ConfigParser parser(false);
+    Subnet4Ptr subnet;
+
+    // Parser should not throw.
+    ASSERT_NO_THROW(subnet = parser.parse(config_element));
+    ASSERT_TRUE(subnet);
+
+    // Veriy we emitted the proper log message.
+    addString("DHCPSRV_CFGMGR_RENEW_GTR_REBIND in subnet-id 1,"
+              " the value of renew-timer 200 is greater than the value"
+              " of rebind-timer 199, ignoring renew-timer");
+    EXPECT_TRUE(checkFile());
 }
 
 } // end of anonymous namespace

@@ -1,4 +1,4 @@
-// Copyright (C) 2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2022-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -80,7 +80,7 @@ public:
 
     /// @brief Replaces the test's listener with a new listener
     ///
-    /// @param num_threads Number of threads the  listener should use.
+    /// @param num_threads Number of threads the listener should use.
     /// @param response_handler Response handler connections should use
     void createMtTcpListenerMgr(size_t num_threads,
                                 TcpTestConnection::ResponseHandler response_handler = 0) {
@@ -99,13 +99,13 @@ public:
     AuditTrailPtr getAuditTrail() {
         TcpListenerPtr l = mt_listener_mgr_->getTcpListener();
         if (!l) {
-            isc_throw(Unexpected,  "Test is broken? Listener is null?");
+            isc_throw(Unexpected, "Test is broken? Listener is null?");
         }
 
         TcpTestListenerPtr listener = boost::dynamic_pointer_cast<TcpTestListener>(
                                         mt_listener_mgr_->getTcpListener());
         if (!listener) {
-            isc_throw(Unexpected,  "Test is broken? Listener is not a TcpTestListener");
+            isc_throw(Unexpected, "Test is broken? Listener is not a TcpTestListener");
         }
 
         return (listener->audit_trail_);
@@ -151,6 +151,7 @@ public:
         // Instantiate the client.
         TcpTestClientPtr client(new TcpTestClient(io_service_,
                                                   std::bind(&MtTcpListenerMgrTest::clientDone, this),
+                                                  TlsContextPtr(),
                                                   SERVER_ADDRESS, SERVER_PORT));
         // Add it to the list of clients.
         clients_.push_back(client);
@@ -179,6 +180,7 @@ public:
         // Create a new client.
         TcpTestClientPtr client(new TcpTestClient(io_service_,
                                                   std::bind(&MtTcpListenerMgrTest::clientDone, this),
+                                                  TlsContextPtr(),
                                                   SERVER_ADDRESS, SERVER_PORT));
 
         // Construct the "thread" command post including the argument,
@@ -277,7 +279,6 @@ public:
                 }
             }
         }
-
 
         // Create the map of response arguments.
         ElementPtr arguments = Element::createMap();
@@ -424,7 +425,7 @@ public:
             chunk_size_ = num_clients_;
         }
 
-        // Create an  MtTcpListenerMgr with prescribed number of threads.
+        // Create an MtTcpListenerMgr with prescribed number of threads.
         createMtTcpListenerMgr(num_threads,
                                std::bind(&MtTcpListenerMgrTest::synchronizedCommandHandler,
                                           this, ph::_1));
@@ -559,7 +560,7 @@ public:
         num_threads_ = num_threads;
         num_clients_ = num_clients;
 
-        // Create an  MtTcpListenerMgr with prescribed number of threads and the
+        // Create an MtTcpListenerMgr with prescribed number of threads and the
         // simple handler.
         createMtTcpListenerMgr(num_threads,
                                std::bind(&MtTcpListenerMgrTest::simpleCommandHandler,
@@ -960,7 +961,7 @@ TEST_F(MtTcpListenerMgrTest, tls) {
 
 /// Verifies that idle timeout can be passed down to the internal listener.
 TEST_F(MtTcpListenerMgrTest, idleTimeout) {
-    // Create an  MtTcpListenerMgr.
+    // Create an MtTcpListenerMgr.
     createMtTcpListenerMgr(1, std::bind(&MtTcpListenerMgrTest::synchronizedCommandHandler,
                                         this, ph::_1));
     // Verify the default timeout value.
@@ -979,6 +980,5 @@ TEST_F(MtTcpListenerMgrTest, idleTimeout) {
     ASSERT_TRUE(tcp_listener);
     EXPECT_EQ(200, tcp_listener->getIdleTimeout());
 }
-
 
 } // end of anonymous namespace

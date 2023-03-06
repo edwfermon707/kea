@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -86,13 +86,13 @@ public:
         /// @brief Default constructor.
         ///
         /// @param address the address or prefix
-        /// @param prefix_len the prefix length (128 for addresses)
+        /// @param prefix_len the prefix length (defaults to 128)
         /// @param preferred the optional preferred lifetime,
         /// defaults to 0, meaning not specified
         /// @param valid the optional valid lifetime,
         /// defaults to 0, meaning not specified
         Resource(const isc::asiolink::IOAddress& address,
-                 const uint8_t prefix_len,
+                 const uint8_t prefix_len = 128,
                  const uint32_t preferred = 0,
                  const uint32_t valid = 0)
             : address_(address), prefix_len_(prefix_len),
@@ -653,6 +653,23 @@ public:
                                const bool remove_lease,
                                const uint16_t max_unwarned_cycles = 0);
 
+    /// @brief Body of reclaimExpiredLeases6.
+    ///
+    /// @param max_leases Maximum number of leases to be reclaimed.
+    /// @param timeout Maximum amount of time that the reclamation routine
+    /// may be processing expired leases, expressed in milliseconds.
+    /// @param remove_lease A boolean value indicating if the lease should
+    /// be removed when it is reclaimed (if true) or it should be left in the
+    /// database in the "expired-reclaimed" state (if false).
+    /// @param max_unwarned_cycles A number of consecutive processing cycles
+    /// of expired leases, after which the system issues a warning if there
+    /// are still expired leases in the database. If this value is 0, the
+    /// warning is never issued.
+    void reclaimExpiredLeases6Internal(const size_t max_leases,
+                                       const uint16_t timeout,
+                                       const bool remove_lease,
+                                       const uint16_t max_unwarned_cycles = 0);
+
     /// @brief Deletes reclaimed leases expired more than specified amount
     /// of time ago.
     ///
@@ -711,6 +728,23 @@ public:
     void reclaimExpiredLeases4(const size_t max_leases, const uint16_t timeout,
                                const bool remove_lease,
                                const uint16_t max_unwarned_cycles = 0);
+
+    /// @brief Body of reclaimExpiredLeases4.
+    ///
+    /// @param max_leases Maximum number of leases to be reclaimed.
+    /// @param timeout Maximum amount of time that the reclamation routine
+    /// may be processing expired leases, expressed in milliseconds.
+    /// @param remove_lease A boolean value indicating if the lease should
+    /// be removed when it is reclaimed (if true) or it should be left in the
+    /// database in the "expired-reclaimed" state (if false).
+    /// @param max_unwarned_cycles A number of consecutive processing cycles
+    /// of expired leases, after which the system issues a warning if there
+    /// are still expired leases in the database. If this value is 0, the
+    /// warning is never issued.
+    void reclaimExpiredLeases4Internal(const size_t max_leases,
+                                       const uint16_t timeout,
+                                       const bool remove_lease,
+                                       const uint16_t max_unwarned_cycles = 0);
 
     /// @brief Deletes reclaimed leases expired more than specified amount
     /// of time ago.
@@ -836,6 +870,59 @@ private:
     ///
     /// @return collection of newly allocated leases
     Lease6Collection allocateUnreservedLeases6(ClientContext6& ctx);
+
+    /// @brief Allocates a normal, in-pool, unreserved lease from the pool.
+    ///
+    /// @note This function is called by allocateUnreservedLeases6 and it tries
+    /// to allocate a lease matching hint prefix length if explicitly required.
+    ///
+    /// @param ctx client context that passes all necessary information. See
+    ///        @ref ClientContext6 for details.
+    /// @param hint_lease the hint lease that is stored in the database. It is
+    ///        updated according to search_hint_lease flag.
+    /// @param search_hint_lease flag which indicates if hint_lease should be
+    ///        retrieved from the lease storage or if it is already retrieved.
+    /// @param hint the hint address that the client provided.
+    /// @param hint_prefix_length The hint prefix length that the client
+    ///        provided. For NAs this value is always 128. For PDs, 0 means that
+    ///        there is no hint and that any pool will suffice. The value 128
+    ///        for PDs is most likely a bug in the code when calling the addHint
+    ///        function with the default value for prefix_len parameter. This
+    ///        value is not a valid delegated prefix length anyway so it is
+    ///        treated the same as when there is no hint provided.
+    /// @param original_subnet the initial subnet selected for this client
+    /// @param network the shared network selected for this client (if any)
+    /// @param total_attempts the total number of attempt to allocate an address
+    ///        for this client. This parameter contains the accumulative value
+    ///        for previous calls and current call of this function for the
+    ///        lease allocation for this client (current IAID).
+    /// @param subnets_with_unavail_leases the number of subnets which have no
+    ///        address available for this client. This parameter contains the
+    ///        accumulative value for previous calls and current call of this
+    ///        function for the lease allocation for this client (current IAID).
+    /// @param subnets_with_unavail_pools the number of pools which have no
+    ///        address available for the client. This parameter contains the
+    ///        accumulative value for previous calls and current call of this
+    ///        function for the lease allocation for this client (current IAID).
+    /// @param [out] callout_status callout returned by the lease6_select
+    /// @param prefix_length_match type which indicates the selection criteria
+    ///        for the pools relative to the provided hint prefix length. It is
+    ///        used for allocating PDs only and it is ignored for any non PD
+    ///        type.
+    ///
+    /// @return a new allocated address or null pointer if none is available
+    Lease6Ptr allocateBestMatch(ClientContext6& ctx,
+                                Lease6Ptr& hint_lease,
+                                bool& search_hint_lease,
+                                const isc::asiolink::IOAddress& hint,
+                                uint8_t hint_prefix_length,
+                                Subnet6Ptr original_subnet,
+                                SharedNetwork6Ptr& network,
+                                uint64_t& total_attempts,
+                                uint64_t& subnets_with_unavail_leases,
+                                uint64_t& subnets_with_unavail_pools,
+                                hooks::CalloutHandle::CalloutNextStep& callout_status,
+                                Allocator::PrefixLenMatchType prefix_length_match);
 
     /// @brief Creates new leases based on reservations.
     ///
@@ -1657,7 +1744,9 @@ protected:
     /// @param [out] lease A pointer to the lease to be updated.
     /// @param ctx A context containing information from the server about the
     /// client and its message.
-    void updateLease4ExtendedInfo(const Lease4Ptr& lease,
+    /// @return True if there was a significant (e.g. other than cltt) change,
+    /// false otherwise.
+    bool updateLease4ExtendedInfo(const Lease4Ptr& lease,
                                   const ClientContext4& ctx) const;
 
     /// @brief Stores additional client query parameters on a V6 lease
@@ -1677,6 +1766,16 @@ protected:
     /// client and its message.
     void updateLease6ExtendedInfo(const Lease6Ptr& lease,
                                   const ClientContext6& ctx) const;
+
+    /// @brief Clear extended info from a reclaimed V4 lease
+    ///
+    /// @param [out] lease A pointer to the reclaimed lease.
+    void clearReclaimedExtendedInfo(const Lease4Ptr& lease) const;
+
+    /// @brief Clear extended info from a reclaimed V6 lease
+    ///
+    /// @param [out] lease A pointer to the reclaimed lease.
+    void clearReclaimedExtendedInfo(const Lease6Ptr& lease) const;
 
 private:
 
@@ -1737,6 +1836,16 @@ public:
 
     /// @brief The read-write mutex.
     isc::util::ReadWriteMutex rw_mutex_;
+
+    /// @brief Generates a label for subnet or shared-network from subnet
+    ///
+    /// Creates a string for the subnet and its ID for stand alone subnets
+    /// or the shared-network and its name if the given subnet belongs to a
+    /// shared-network.
+    ///
+    /// @param subnet pointer to the source subnet
+    /// @return string contaning the generated label
+    static std::string labelNetworkOrSubnet(SubnetPtr subnet);
 };
 
 /// @brief A pointer to the @c AllocEngine object.

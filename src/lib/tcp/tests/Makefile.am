@@ -24,23 +24,18 @@ run_unittests_SOURCES += tcp_test_client.h tcp_test_listener.h
 run_unittests_SOURCES += tcp_listener_unittests.cc
 run_unittests_SOURCES += mt_tcp_listener_mgr_unittests.cc
 
-# @todo These tests will be needed. These are here as a reminder.
-#if HAVE_OPENSSL
-#run_unittests_SOURCES += tls_unittest.cc
-#run_unittests_SOURCES += tls_acceptor_unittest.cc
-#run_unittests_SOURCES += tls_socket_unittest.cc
-#endif
-#if HAVE_BOTAN_BOOST
-#run_unittests_SOURCES += tls_unittest.cc
-#run_unittests_SOURCES += tls_acceptor_unittest.cc
-#run_unittests_SOURCES += tls_socket_unittest.cc
-#endif
+if HAVE_OPENSSL
+run_unittests_SOURCES += tls_listener_unittests.cc
+endif
+if HAVE_BOTAN_BOOST
+run_unittests_SOURCES += tls_listener_unittests.cc
+endif
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 
-run_unittests_LDADD = $(top_builddir)/src/lib/tcp/libkea-tcp.la
-run_unittests_LDADD += $(top_builddir)/src/lib/asiolink/testutils/libasiolinktest.la
+run_unittests_LDADD  = $(top_builddir)/src/lib/tcp/libkea-tcp.la
 run_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
+run_unittests_LDADD += $(top_builddir)/src/lib/asiolink/testutils/libasiolinktest.la
 run_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 run_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la

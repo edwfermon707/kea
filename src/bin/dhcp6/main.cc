@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,7 +7,6 @@
 #include <config.h>
 #include <kea_version.h>
 
-#include <cfgrpt/config_report.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcp6/dhcp6_log.h>
 #include <dhcp6/parser_context.h>
@@ -17,6 +16,7 @@
 #include <log/logger_support.h>
 #include <log/logger_manager.h>
 #include <log/output_option.h>
+#include <process/cfgrpt/config_report.h>
 #include <process/daemon.h>
 
 #include <boost/lexical_cast.hpp>

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -818,7 +818,9 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
                  (config_pair.first == "early-global-reservations-lookup") ||
                  (config_pair.first == "ip-reservations-unique") ||
                  (config_pair.first == "reservations-lookup-first") ||
-                 (config_pair.first == "parked-packet-limit")) {
+                 (config_pair.first == "parked-packet-limit") ||
+                 (config_pair.first == "allocator") ||
+                 (config_pair.first == "pd-allocator") ) {
                 CfgMgr::instance().getStagingCfg()->addConfiguredGlobal(config_pair.first,
                                                                         config_pair.second);
                 continue;

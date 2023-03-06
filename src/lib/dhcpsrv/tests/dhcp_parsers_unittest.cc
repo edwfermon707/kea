@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,10 +18,14 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/cfg_mac_source.h>
+#include <dhcpsrv/iterative_allocator.h>
+#include <dhcpsrv/iterative_allocation_state.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/parsers/option_data_parser.h>
 #include <dhcpsrv/parsers/shared_network_parser.h>
 #include <dhcpsrv/parsers/shared_networks_list_parser.h>
+#include <dhcpsrv/random_allocator.h>
+#include <dhcpsrv/random_allocation_state.h>
 #include <dhcpsrv/tests/test_libraries.h>
 #include <dhcpsrv/testutils/config_result_check.h>
 #include <exceptions/exceptions.h>
@@ -507,14 +511,16 @@ const SimpleDefaults ParseConfigTest::OPTION4_DEF_DEFAULTS = {
 const SimpleDefaults ParseConfigTest::OPTION6_DEFAULTS = {
     { "space",        Element::string,  "dhcp6"},
     { "csv-format",   Element::boolean, "true"},
-    { "always-send",  Element::boolean,"false"}
+    { "always-send",  Element::boolean,"false"},
+    { "never-send",   Element::boolean,"false"}
 };
 
 /// This table defines default values for options in DHCPv4
 const SimpleDefaults ParseConfigTest::OPTION4_DEFAULTS = {
     { "space",        Element::string,  "dhcp4"},
     { "csv-format",   Element::boolean, "true"},
-    { "always-send",  Element::boolean, "false"}
+    { "always-send",  Element::boolean, "false"},
+    { "never-send",   Element::boolean, "false"}
 };
 
 /// This table defines default values for both DHCPv4 and DHCPv6
@@ -2803,8 +2809,11 @@ TEST_F(ParseConfigTest, defaultSubnet4) {
     EXPECT_TRUE(subnet->getDdnsUseConflictResolution().unspecified());
     EXPECT_FALSE(subnet->getDdnsUseConflictResolution().get());
 
-    EXPECT_TRUE(subnet->getAllocationState());
+    EXPECT_TRUE(subnet->getAllocationState(Lease::TYPE_V4));
     EXPECT_TRUE(subnet->getAllocator(Lease::TYPE_V4));
+
+    auto allocator = subnet->getAllocator(Lease::TYPE_V4);
+    EXPECT_TRUE(boost::dynamic_pointer_cast<IterativeAllocator>(allocator));
 }
 
 // This test verifies that it is possible to parse an IPv6 subnet for which
@@ -2898,10 +2907,18 @@ TEST_F(ParseConfigTest, defaultSubnet6) {
     EXPECT_TRUE(subnet->getDdnsUseConflictResolution().unspecified());
     EXPECT_FALSE(subnet->getDdnsUseConflictResolution().get());
 
-    EXPECT_TRUE(subnet->getAllocationState());
-    EXPECT_TRUE(subnet->getAllocator(Lease::TYPE_NA));
-    EXPECT_TRUE(subnet->getAllocator(Lease::TYPE_TA));
-    EXPECT_TRUE(subnet->getAllocator(Lease::TYPE_PD));
+    EXPECT_TRUE(subnet->getAllocationState(Lease::TYPE_NA));
+    EXPECT_TRUE(subnet->getAllocationState(Lease::TYPE_TA));
+    EXPECT_TRUE(subnet->getAllocationState(Lease::TYPE_PD));
+
+    auto allocator = subnet->getAllocator(Lease::TYPE_NA);
+    EXPECT_TRUE(boost::dynamic_pointer_cast<IterativeAllocator>(allocator));
+
+    allocator = subnet->getAllocator(Lease::TYPE_TA);
+    EXPECT_TRUE(boost::dynamic_pointer_cast<IterativeAllocator>(allocator));
+
+    allocator = subnet->getAllocator(Lease::TYPE_PD);
+    EXPECT_TRUE(boost::dynamic_pointer_cast<IterativeAllocator>(allocator));
 }
 
 // This test verifies that it is possible to parse an IPv4 shared network
@@ -2988,6 +3005,9 @@ TEST_F(ParseConfigTest, defaultSharedNetwork4) {
 
     EXPECT_TRUE(network->getDdnsUseConflictResolution().unspecified());
     EXPECT_FALSE(network->getDdnsUseConflictResolution().get());
+
+    EXPECT_TRUE(network->getAllocatorType().unspecified());
+    EXPECT_TRUE(network->getAllocatorType().get().empty());
 }
 
 // This test verifies that it is possible to parse an IPv6 shared network
@@ -3075,6 +3095,12 @@ TEST_F(ParseConfigTest, defaultSharedNetwork6) {
 
     EXPECT_TRUE(network->getDdnsUseConflictResolution().unspecified());
     EXPECT_FALSE(network->getDdnsUseConflictResolution().get());
+
+    EXPECT_TRUE(network->getAllocatorType().unspecified());
+    EXPECT_TRUE(network->getAllocatorType().get().empty());
+
+    EXPECT_TRUE(network->getPdAllocatorType().unspecified());
+    EXPECT_TRUE(network->getPdAllocatorType().get().empty());
 }
 
 // This test verifies a negative value for the subnet ID is rejected (v4).
@@ -3177,8 +3203,220 @@ TEST_F(ParseConfigTest, reservedSubnetId6) {
     EXPECT_EQ(expected, comment->stringValue());
 }
 
+// This test verifies that random allocator can be selected for
+// a subnet.
+TEST_F(ParseConfigTest, randomSubnetAllocator4) {
+    std::string config =
+        "{"
+        "    \"subnet4\": [ {"
+        "        \"subnet\": \"192.0.2.0/24\","
+        "        \"id\": 1,"
+        "        \"allocator\": \"random\""
+        "    } ]"
+        "}";
+
+    ElementPtr json = Element::fromJSON(config);
+    EXPECT_TRUE(json);
+    ConstElementPtr status = parseElementSet(json, false);
+    int rcode = 0;
+    ConstElementPtr comment = parseAnswer(rcode, status);
+    ASSERT_EQ(0, rcode);
+
+    auto subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->getBySubnetId(1);
+    ASSERT_TRUE(subnet);
+
+    EXPECT_EQ("random", subnet->getAllocatorType().get());
+    auto allocator = subnet->getAllocator(Lease::TYPE_V4);
+    ASSERT_TRUE(allocator);
+    EXPECT_TRUE(boost::dynamic_pointer_cast<RandomAllocator>(allocator));
+}
+
+// This test verifies that unknown allocator is rejected.
+TEST_F(ParseConfigTest, invalidSubnetAllocator4) {
+    std::string config =
+        "{"
+        "    \"subnet4\": [ {"
+        "        \"subnet\": \"192.0.2.0/24\","
+        "        \"id\": 1,"
+        "        \"allocator\": \"unsupported\""
+        "    } ]"
+        "}";
+
+    ElementPtr json = Element::fromJSON(config);
+    EXPECT_TRUE(json);
+    ConstElementPtr status = parseElementSet(json, false);
+    int rcode = 0;
+    ConstElementPtr comment = parseAnswer(rcode, status);
+    ASSERT_TRUE(comment);
+    ASSERT_EQ(comment->getType(), Element::string);
+    EXPECT_EQ(1, rcode);
+    std::string expected = "Configuration parsing failed: ";
+    expected += "supported allocators are: iterative and random";
+    EXPECT_EQ(expected, comment->stringValue());
+}
+
+// This test verifies that random allocator can be selected for
+// a subnet.
+TEST_F(ParseConfigTest, randomSubnetAllocator6) {
+    std::string config =
+        "{"
+        "    \"subnet6\": [ {"
+        "        \"subnet\": \"2001:db8:1::/64\","
+        "        \"id\": 1,"
+        "        \"allocator\": \"random\""
+        "    } ]"
+        "}";
+
+    ElementPtr json = Element::fromJSON(config);
+    EXPECT_TRUE(json);
+    ConstElementPtr status = parseElementSet(json, false);
+    int rcode = 0;
+    ConstElementPtr comment = parseAnswer(rcode, status);
+    ASSERT_EQ(0, rcode);
+
+    auto subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->getBySubnetId(1);
+    ASSERT_TRUE(subnet);
+
+    EXPECT_EQ("random", subnet->getAllocatorType().get());
+    auto allocator = subnet->getAllocator(Lease::TYPE_NA);
+    ASSERT_TRUE(allocator);
+    EXPECT_TRUE(boost::dynamic_pointer_cast<RandomAllocator>(allocator));
+    allocator = subnet->getAllocator(Lease::TYPE_TA);
+    ASSERT_TRUE(allocator);
+    EXPECT_TRUE(boost::dynamic_pointer_cast<RandomAllocator>(allocator));
+    // PD allocator should be iterative.
+    allocator = subnet->getAllocator(Lease::TYPE_PD);
+    ASSERT_TRUE(allocator);
+    EXPECT_TRUE(boost::dynamic_pointer_cast<IterativeAllocator>(allocator));
+}
+
+// This test verifies that unknown allocator is rejected.
+TEST_F(ParseConfigTest, invalidSubnetAllocator6) {
+    std::string config =
+        "{"
+        "    \"subnet6\": [ {"
+        "        \"subnet\": \"2001:db8:1::/64\","
+        "        \"id\": 1,"
+        "        \"allocator\": \"unsupported\""
+        "    } ]"
+        "}";
+
+    ElementPtr json = Element::fromJSON(config);
+    EXPECT_TRUE(json);
+    ConstElementPtr status = parseElementSet(json, false);
+    int rcode = 0;
+    ConstElementPtr comment = parseAnswer(rcode, status);
+    ASSERT_TRUE(comment);
+    ASSERT_EQ(comment->getType(), Element::string);
+    EXPECT_EQ(1, rcode);
+    std::string expected = "Configuration parsing failed: ";
+    expected += "supported allocators are: iterative and random";
+    EXPECT_EQ(expected, comment->stringValue());
+}
+
+// This test verifies that random allocator can be selected for
+// a subnet.
+TEST_F(ParseConfigTest, randomSubnetPdAllocator6) {
+    std::string config =
+        "{"
+        "    \"subnet6\": [ {"
+        "        \"subnet\": \"2001:db8:1::/64\","
+        "        \"id\": 1,"
+        "        \"pd-allocator\": \"random\""
+        "    } ]"
+        "}";
+
+    ElementPtr json = Element::fromJSON(config);
+    EXPECT_TRUE(json);
+    ConstElementPtr status = parseElementSet(json, false);
+    int rcode = 0;
+    ConstElementPtr comment = parseAnswer(rcode, status);
+    ASSERT_EQ(0, rcode);
+
+    auto subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->getBySubnetId(1);
+    ASSERT_TRUE(subnet);
+
+    EXPECT_EQ("random", subnet->getPdAllocatorType().get());
+
+    // Address allocators should be iterative.
+    auto allocator = subnet->getAllocator(Lease::TYPE_NA);
+    ASSERT_TRUE(allocator);
+    EXPECT_TRUE(boost::dynamic_pointer_cast<IterativeAllocator>(allocator));
+    allocator = subnet->getAllocator(Lease::TYPE_TA);
+    ASSERT_TRUE(allocator);
+    EXPECT_TRUE(boost::dynamic_pointer_cast<IterativeAllocator>(allocator));
+    // PD allocator should be random.
+    allocator = subnet->getAllocator(Lease::TYPE_PD);
+    ASSERT_TRUE(allocator);
+    EXPECT_TRUE(boost::dynamic_pointer_cast<RandomAllocator>(allocator));
+}
+
+// This test verifies that unknown prefix delegation allocator is rejected.
+TEST_F(ParseConfigTest, invalidSubnetPdAllocator6) {
+    std::string config =
+        "{"
+        "    \"subnet6\": [ {"
+        "        \"subnet\": \"2001:db8:1::/64\","
+        "        \"id\": 1,"
+        "        \"pd-allocator\": \"unsupported\""
+        "    } ]"
+        "}";
+
+    ElementPtr json = Element::fromJSON(config);
+    EXPECT_TRUE(json);
+    ConstElementPtr status = parseElementSet(json, false);
+    int rcode = 0;
+    ConstElementPtr comment = parseAnswer(rcode, status);
+    ASSERT_TRUE(comment);
+    ASSERT_EQ(comment->getType(), Element::string);
+    EXPECT_EQ(1, rcode);
+    std::string expected = "Configuration parsing failed: ";
+    expected += "supported allocators are: iterative and random";
+    EXPECT_EQ(expected, comment->stringValue());
+}
+
 // There's no test for ControlSocketParser, as it is tested in the DHCPv4 code
 // (see CtrlDhcpv4SrvTest.commandSocketBasic in
 // src/bin/dhcp4/tests/ctrl_dhcp4_srv_unittest.cc).
+
+
+// Verifies that parsing an option which encapsulates its own option space
+// is detected.
+TEST_F(ParseConfigTest, selfEncapsulationTest) {
+    // Verify that the option definition can be retrieved.
+    OptionDefinitionPtr def = LibDHCP::getOptionDef(DHCP6_OPTION_SPACE, 45);
+    ASSERT_TRUE(def);
+
+    // Configuration string.
+    std::string config =
+        "{"
+        " \"option-data\": ["
+        "{"
+        "    \"name\": \"client-data\","
+        "    \"code\": 45,"
+        "    \"csv-format\": false,"
+        "    \"space\": \"dhcp6\","
+        "    \"data\": \"0001000B0102020202030303030303\""
+        "}"
+        "]}";
+
+    // Verify that the configuration string parses.
+    family_ = AF_INET6;
+
+    int rcode = parseConfiguration(config, true, true);
+    ASSERT_EQ(0, rcode);
+
+    // Verify that the option can be retrieved.
+    OptionCustomPtr opt = boost::dynamic_pointer_cast<OptionCustom>
+                          (getOptionPtr(DHCP6_OPTION_SPACE, D6O_CLIENT_DATA));
+    ASSERT_TRUE(opt);
+
+    // Verify length is correct and doesn't infinitely recurse.
+    EXPECT_EQ(19, opt->len());
+
+    // Check if it can be unparsed.
+    CfgOptionsTest cfg(CfgMgr::instance().getStagingCfg());
+    cfg.runCfgOptionsTest(family_, config);
+}
 
 }  // Anonymous namespace

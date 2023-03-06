@@ -1,3 +1,196 @@
+2107.	[func]		fdupont
+	The Kea DHCPv4 server can now handle multiple vivco-suboptions
+	options with different enterprise IDs.
+	(Gitlab #467)
+
+2106.	[bug]		tmark
+	Corrected code that allowed lease6-get-* commands to return
+	IA_NA leases with prefix length values of zero and logic in
+	kea-dhcp6 that was incorrectly generating duplicate iaaddr
+	options with lifetimes of zero for such leases in REPLYs to
+	RENEWs.
+	(Gitlab #2660)
+
+2105.	[bug]		tmark
+	kea-dhcp6 now consistently uses valid and preferred lifetime
+	values provided via classes.  Prior to this it was not
+	utilizing class-supplied lifetimes when renewing existing
+	leases or when reusing expired leases.
+	(Gitlab #2739)
+
+Kea 2.3.5 (development) released on February 22, 2023
+
+2104.	[build]		andrei
+	The library version numbers have been bumped up for the Kea 2.3.5
+	development release.
+	(Gitlab #2768)
+
+2103.	[perf]		andrei
+	When not explicitly configured, multi-threading is now enabled by
+	default for the core Kea DHCP service ("enable-multi-threading"
+	set to true). For now, HA+MT is still disabled by default
+	("enable-multi-threading" and "http-dedicated-listener" both
+	still set to false in the high-availability library parameters).
+	(Gitlab #2402)
+
+2102.	[func]*		tmark
+	The logger to which kea-dhcp4 now logs EVAL_RESULT log
+	messages issued during packet classification has been
+	changed from "options4" to "dhcp4".  This corrects an
+	inconsistency between kea-dhcp6 and kea-dhcp4 behavior.
+	(Gitlab #2720)
+
+2101.	[build]		andrei
+	Shell tests and python tests no longer run if gtest is disabled.
+	This provides the ability to run distcheck without tests.
+	(Gitlab #2742)
+
+2100.	[doc]		Kevin P. Fleming
+	Fixed several JSON examples in the Kea ARM.
+	(Gitlab #2494)
+
+2099.	[func]*		tmark
+	An address reserved in a global reservation must now lie
+	within the range of the subnet or shared-network selected
+	by Kea. If it does not, the server will attempt to allocate an
+	address dynamically. This change applies to both kea-dhcp4 and
+	kea-dhcp6. Previously, the servers would grant a lease for any
+	globally reserved address without regard for its feasibility
+	within the selected subnet. Thanks to Kyle Birkeland for
+	reporting the issue and contributing the patch.
+	(Gitlab #2631, #2632)
+
+2098.	[doc]		razvan
+	Updated client classification examples in the ARM with a case
+	where both operands of the evaluated expression are computed at
+	runtime.
+	(Gitlab #2664)
+
+2097.	[func]		tmark
+	kea-dhcp4 and kea-dhcp6 will now accept renew-timer values that
+	exceed rebind-timer values but will ignore them and issue a
+	warning. Previously, the servers treated those values as a fatal
+	configuration error.
+	(Gitlab #2677)
+
+2096.	[bug]		tmark
+	Corrected a bug which allowed options to be added to themselves
+	as suboptions.
+	(Gitlab #2538)
+
+2095.	[bug]		marcin, tmark
+	Added a compile-time check of whether the PostgreSQL version
+	supports the "tcp-user-timeout" parameter. This parameter
+	is available in PostgreSQL version 12 and later. It is now
+	ignored for earlier versions and a suitable warning message
+	is issued.
+	(Gitlab #2734)
+
+2094.	[bug]		razvan
+	Fixed a bug which caused the Kea server to crash when
+	using the high-availability hooks library and running reconfigure
+	commands. Thanks to Caciano Machado for reporting this bug and
+	providing detailed steps on how to replicate it.
+	(Gitlab #2575)
+
+2093.	[func]		fdupont
+	It is now possible to add an "empty" host reservation without any
+	attribute (e.g. no address, no hostname, no client classes,
+	etc.). This is useful for determining the KNOWN class.
+	(Gitlab #2723)
+
+2092.	[bug]		fdupont
+	Added logic to kea-dhcp4 and kea-dhcp6 to catch and log
+	database connection errors that occur during lease
+	reclamation. Previously, such errors caused the
+	reclamation timer to not get rescheduled.
+	(Gitlab #2682)
+
+2091.	[bug]		marcin
+	Fixed a bug that caused a response to a config-get command
+	to lack the configured read-timeout, write-timeout, and
+	tcp-user-timeout parameters.
+	(Gitlab #2741)
+
+2090.	[build]		andrei
+	Fixed the --with-site-packages configure flag, which previously
+	had no effect.
+	(Gitlab #2669)
+
+Kea 2.3.4 (development) released on January 25, 2022
+
+2089.	[build]		razvan
+	The library version numbers have been bumped for the Kea 2.3.4
+	development release.
+	(Gitlab #2726)
+
+2088.	[func]*		tomek
+	The libreload command is now deprecated. The code is still there,
+	but it will be removed in the future versions.
+	(Gitlab #2693)
+
+2087.	[func]		razvan
+	The Kea DHCPv4 server can now handle multiple vendor options
+	with different enterprise IDs and multiple vivso-suboptions.
+	(Gitlab #1518)
+
+2086.	[bug]		andrei
+	A spacing issue in a prepared statement that prevented Config
+	Backend from working with PostgreSQL 15 and above has been fixed.
+	(Gitlab #2724)
+
+2085.	[func]		tmark
+	kea-dhcp-ddns uses new log messages to clearly distinguish
+	between timeouts and other IO errors when communicating with
+	DNS servers.
+	(Gitlab #2589)
+
+2084.	[func]		razvan
+	When the client adds a prefix length in the hint, the server
+	will try to select a pool with the delegated prefix length
+	equal to the respective value. If no pool is found, the server
+	will try to select a pool with a lower delegated prefix length
+	(a larger address space) and if none is found, it will try to
+	select a pool with a higher delegated prefix length (a smaller
+	address space).
+	(Gitlab #1958)
+
+2083.	[func]		marcin
+	New database connection parameters, "read-timeout" and
+	"write-timeout", control the timeouts in communication with the
+	MySQL database. The "tcp-user-timeout" controls the timeout in
+	communication with the PostgreSQL database. Setting these
+	timeouts can prevent occasional Kea hangs due to issues with
+	the database connectivity.
+	(Gitlab #2688)
+
+2082.	[bug]		razvan
+	The prefix address provided in the prefix and prefix length pair
+	from the pool configuration is now checked to match the first
+	address in the pool.
+	(Gitlab #2612)
+
+2081.	[func]		tmark
+	The default value for the kea-dhcp-ddns parameter,
+	dns-server-timeout, has been increased from 100 ms to
+	500 ms.  This was done to improve the out-of-the-box
+	user experience.
+	(Gitlab #2590)
+
+2080.	[func]		tmark
+	Bulk Lease Query results can now include delegated prefixes.
+	Memfile queries used by Bulk Lease Query (BLQ) were modified
+	to include delegated prefixes when appropriate. Prior to
+	this they were returning only address leases.
+	(Gitlab #2713)
+
+2079.	[func]		marcin
+	The lease allocation strategy is now configurable. It is possible
+	to select between iterative and random lease selection for the
+	address assignment and prefix delegation, respectively, at the
+	global, shared network, and subnet levels.
+	(Gitlab #2348, #969)
+
 Kea 2.3.3 (development) released on November 30, 2022
 
 2078.	[build]		andrei

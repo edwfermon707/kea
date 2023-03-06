@@ -11,6 +11,14 @@
 {
     // Kea DHCPv6 server configuration begins here.
     "Dhcp6": {
+        // Global flag selecting an IP address allocation strategy for all
+        // subnets.
+        "allocator": "iterative",
+
+        // Global flag selecting a delegated prefix allocation strategy
+        // for all subnets.
+        "pd-allocator": "random",
+
         // Ordered list of client classes used by the DHCPv6 server.
         "client-classes": [
             {
@@ -324,7 +332,11 @@
                 "type": "postgresql",
 
                 // User name to be used to access the database.
-                "user": "keatest"
+                "user": "keatest",
+
+                // TCP user timeout while communicating with the database.
+                // It is specified in seconds.
+                "tcp-user-timeout": 100
             },
             {
                 // Name of the database to connect to.
@@ -356,8 +368,14 @@
                 // serve-retry-continue
                 "on-fail": "stop-retry-exit",
 
-                // Connection connect timeout.
-                "connect-timeout": 100
+                // Connection connect timeout in seconds.
+                "connect-timeout": 100,
+
+                // Data read from the database timeout in seconds.
+                "read-timeout": 120,
+
+                // Data write to the database timeout in seconds.
+                "write-timeout": 180
             }
         ],
 
@@ -499,6 +517,13 @@
                 // Option name. It is not required of the option code is
                 // provided.
                 "name": "dns-servers",
+
+                // Boolean flag indicating if the given option is never
+                // send in response. The default value of false indicates
+                // that it is sent when it should. When true the option
+                // is not sent despite of any other setting, i.e. it is
+                // a final flag.
+                "never-send": false,
 
                 // Option space. The default is the "dhcp6" option space which
                 // groups top level DHCPv6 options.
@@ -650,6 +675,14 @@
         // networks group subnets together.
         "shared-networks": [
             {
+                // A flag selecting an IP address allocation strategy for all
+                // subnets in this shared network.
+                "allocator": "random",
+
+                // A flag selecting a delegated prefix allocation strategy for
+                // all subnets in this shared network.
+                "pd-allocator": "iterative",
+
                 // Restricts this shared network to allow only clients
                 // that belong to the particular client class. If an
                 // empty string is provided, no restriction is applied.
@@ -773,6 +806,14 @@
                 // List of IPv6 subnets belonging to this shared network.
                 "subnet6": [
                     {
+                        // A flag selecting an IP address allocation strategy for
+                        // the subnet.
+                        "allocator": "iterative",
+
+                        // A flag selecting a delegated prefix allocation strategy
+                        // for the subnet.
+                        "pd-allocator": "iterative",
+
                         // Restricts this subnet to allow only clients that belong
                         // to the particular client class. If an empty string is
                         // provided, no restriction is applied.
@@ -844,6 +885,10 @@
 
                                 // Option name.
                                 "name": "preference",
+
+                                // Boolean flag indicating if the given option is never
+                                // send in response.
+                                "never-send": false,
 
                                 // Option space. The default value "dhcp6" designates the
                                 // top level option space.

@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,10 +6,10 @@
 
 #include <config.h>
 
-#include <cfgrpt/config_report.h>
 #include <netconf/netconf_controller.h>
 #include <netconf/netconf_process.h>
 #include <netconf/parser_context.h>
+#include <process/cfgrpt/config_report.h>
 
 #include <signal.h>
 
@@ -67,9 +67,6 @@ NetconfProcessPtr
 NetconfController::getNetconfProcess() {
     return (boost::dynamic_pointer_cast<NetconfProcess>(getProcess()));
 }
-
-// Refer to config_report so it will be embedded in the binary.
-const char* const* netconf_config_report = isc::detail::config_report;
 
 }  // namespace netconf
 }  // namespace isc

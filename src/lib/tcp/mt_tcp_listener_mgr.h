@@ -1,4 +1,4 @@
-// Copyright (C) 2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2022-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -160,7 +160,7 @@ public:
 
     /// @brief Sets the idle time per connection.
     ///
-    /// @param timeout Amount of time in milliseconds
+    /// @param milliseconds Amount of time in milliseconds
     void setIdleTimeout(long milliseconds) {
         idle_timeout_ = TcpListener::IdleTimeout(milliseconds);
     }

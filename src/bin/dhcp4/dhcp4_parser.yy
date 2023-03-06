@@ -1,4 +1,4 @@
-/* Copyright (C) 2016-2022 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2016-2023 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -94,6 +94,9 @@ using namespace std;
   LFC_INTERVAL "lfc-interval"
   READONLY "readonly"
   CONNECT_TIMEOUT "connect-timeout"
+  READ_TIMEOUT "read-timeout"
+  WRITE_TIMEOUT "write-timeout"
+  TCP_USER_TIMEOUT "tcp-user-timeout"
   MAX_RECONNECT_TRIES "max-reconnect-tries"
   RECONNECT_WAIT_TIME "reconnect-wait-time"
   ON_FAIL "on-fail"
@@ -146,6 +149,7 @@ using namespace std;
   ENCAPSULATE "encapsulate"
   ARRAY "array"
   PARKED_PACKET_LIMIT "parked-packet-limit"
+  ALLOCATOR "allocator"
 
   SHARED_NETWORKS "shared-networks"
 
@@ -546,6 +550,7 @@ global_param: valid_lifetime
             | reservations_lookup_first
             | compatibility
             | parked_packet_limit
+            | allocator
             | unknown_map_entry
             ;
 
@@ -628,6 +633,15 @@ parked_packet_limit: PARKED_PACKET_LIMIT COLON INTEGER {
     ctx.unique("parked-packet-limit", ctx.loc2pos(@1));
     ElementPtr ppl(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("parked-packet-limit", ppl);
+};
+
+allocator: ALLOCATOR {
+    ctx.unique("allocator", ctx.loc2pos(@1));
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr al(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("allocator", al);
+    ctx.leave();
 };
 
 echo_client_id: ECHO_CLIENT_ID COLON BOOLEAN {
@@ -1012,6 +1026,9 @@ database_map_param: database_type
                   | lfc_interval
                   | readonly
                   | connect_timeout
+                  | read_timeout
+                  | write_timeout
+                  | tcp_user_timeout
                   | max_reconnect_tries
                   | reconnect_wait_time
                   | on_fail
@@ -1100,6 +1117,24 @@ connect_timeout: CONNECT_TIMEOUT COLON INTEGER {
     ctx.unique("connect-timeout", ctx.loc2pos(@1));
     ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("connect-timeout", n);
+};
+
+read_timeout: READ_TIMEOUT COLON INTEGER {
+    ctx.unique("read-timeout", ctx.loc2pos(@1));
+    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("read-timeout", n);
+};
+
+write_timeout: WRITE_TIMEOUT COLON INTEGER {
+    ctx.unique("write-timeout", ctx.loc2pos(@1));
+    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("write-timeout", n);
+};
+
+tcp_user_timeout: TCP_USER_TIMEOUT COLON INTEGER {
+    ctx.unique("tcp-user-timeout", ctx.loc2pos(@1));
+    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("tcp-user-timeout", n);
 };
 
 max_reconnect_tries: MAX_RECONNECT_TRIES COLON INTEGER {
@@ -1523,6 +1558,7 @@ subnet4_param: valid_lifetime
              | hostname_char_set
              | hostname_char_replacement
              | store_extended_info
+             | allocator
              | unknown_map_entry
              ;
 
@@ -1709,6 +1745,7 @@ shared_network_param: name
                     | hostname_char_set
                     | hostname_char_replacement
                     | store_extended_info
+                    | allocator
                     | unknown_map_entry
                     ;
 

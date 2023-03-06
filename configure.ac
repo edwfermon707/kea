@@ -6,7 +6,7 @@ AC_PREREQ([2.69])
 # For released versions, this is in x.y.z format.
 # For GIT versions, this is x.y.z-git, where x.y.z denotes the next development
 # version that is worked on and that is to be released.
-AC_INIT(kea,2.3.4-git, kea-dev@lists.isc.org)
+AC_INIT(kea, 2.3.6-git, kea-dev@lists.isc.org)
 AC_CONFIG_SRCDIR(README)
 
 # serial-tests is not available in automake version before 1.13, so
@@ -722,7 +722,7 @@ if test "$MYSQL_CONFIG" != "" ; then
     # Note that MYSQL is present in the config.h file
     AC_DEFINE([HAVE_MYSQL], [1], [MySQL is present])
 
-    # Check is my_bool is defined.
+    # Check if my_bool is defined.
     AC_COMPILE_IFELSE(
         [AC_LANG_PROGRAM([#include <mysql.h>
                           const my_bool MLM_FALSE = 0;]
@@ -731,9 +731,27 @@ if test "$MYSQL_CONFIG" != "" ; then
          AC_DEFINE([HAVE_MYSQL_MY_BOOL], [1], [MySQL uses my_bool])],
         [AC_MSG_RESULT([checking for MySQL my_bool... no])])
 
+    # Check if mysql_get_option is defined.
+    AC_MSG_CHECKING([for MySQL mysql_get_option])
+    AC_LINK_IFELSE(
+        [AC_LANG_PROGRAM(
+            [#include <mysql.h>],
+            [MYSQL handle;
+             unsigned int timeout;
+             mysql_get_option(&handle, MYSQL_OPT_CONNECT_TIMEOUT, &timeout);]
+        )],
+        [AC_MSG_RESULT([yes])
+         AC_DEFINE([HAVE_MYSQL_GET_OPTION], [true], [MySQL has mysql_get_option defined.])],
+        [AC_MSG_RESULT([no])
+         AC_MSG_WARN([mysql_get_option program failed to build:
+
+$(cat conftest.cpp)
+
+$(cat conftest.err)])]
+    )
+
     CPPFLAGS=$CPPFLAGS_SAVED
     LIBS=$LIBS_SAVED
-
 fi
 
 # Solaris puts FIONREAD in filio.h
@@ -784,6 +802,7 @@ if test "$PG_CONFIG" != "" ; then
     PGSQL_LIBS=`$PG_CONFIG --libdir`
     PGSQL_LIBS="-L$PGSQL_LIBS -lpq"
     PGSQL_VERSION=`$PG_CONFIG --version`
+    PGSQL_MAJOR_VERSION=`$PG_CONFIG --version | cut -f2 -d' ' | cut -f1 -d'.'`
 
     AC_SUBST(PGSQL_CPPFLAGS)
     AC_SUBST(PGSQL_LIBS)
@@ -813,6 +832,10 @@ if test "$PG_CONFIG" != "" ; then
 
     # Note that PostgreSQL is present in the config.h file
     AC_DEFINE([HAVE_PGSQL], [1], [PostgreSQL is present])
+
+if test $PGSQL_MAJOR_VERSION -ge 12; then
+   AC_DEFINE([HAVE_PGSQL_TCP_USER_TIMEOUT], [1], [PostgreSQL connection parameter tcp_user_timeout supported])
+fi
 fi
 
 # ... and at the shell level, so Makefile.am can take action depending on this.
@@ -1130,38 +1153,61 @@ AC_ARG_ENABLE(generate_docs,
 
 DISTCHECK_KEA_SHELL_CONFIGURE_FLAG=
 PKGPYTHONDIR=
+PYTHON_PREFIX=
+PYTHON_EXEC_PREFIX=
 shell_report=no
-m4_define_default([_AM_PYTHON_INTERPRETER_LIST],
- [python3 python3.9 python3.8 python3.7 python3.6 python3.5 python3.4 dnl
-  python3.3 python3.2 python3.1 python3.0 python python2 python2.7])
 if test "x$enable_shell" != xno -o "x$enable_generate_docs" != xno; then
-# If kea-shell is enabled, we really need python. 2.7 or anything newer will do.
-# We try to find 3.x first. If not found, we can do with 2.7.
-  AM_PATH_PYTHON([2.7])
 
-  AC_ARG_WITH(site-packages,
-           [AS_HELP_STRING([--with-site-packages],
-                          [place to install Kea Python module])],
-           [pythondir=$withval;
-            pkgpythondir=${pythondir}/$PACKAGE_NAME])
-  if test "$pythondir" = "yes"; then
-     AC_MSG_ERROR([If enabled, site-packages must be specified explicitly, e.g. --site-packages=/usr/lib/python3/dist-packages])
-  fi
-
-  # pkgpythondir needs to be expanded
+  # Temporarily replace NONE with the default prefix while --enable-shell is parsed.
   saved_prefix="$prefix"
   if test "$prefix" = "NONE"; then
     prefix=$ac_default_prefix
   fi
-  PKGPYTHONDIR="$pkgpythondir"
-  OLD=
-  while test "x$OLD" != "x$PKGPYTHONDIR"; do
-    OLD="$PKGPYTHONDIR"
-    eval PKGPYTHONDIR="\"$OLD\""
+
+  # If kea-shell is enabled, we really need python. 2.7 or anything newer will do.
+  # We try to find 3.x first. If not found, we can do with 2.7.
+  m4_define_default([_AM_PYTHON_INTERPRETER_LIST],
+                    [python3 python python2])
+  AM_PATH_PYTHON([2.7])
+
+  # Determine if the --with-site-packages flag was provided.
+  AC_ARG_WITH(site-packages,
+              [AS_HELP_STRING([--with-site-packages],
+                              [place to install Kea Python module])],
+              [with_site_packages="${withval}"])
+
+  if test -z "${with_site_packages}"; then
+    # --with-site-packages not provided. Set a default location explicitly to
+    # make sure it doesn't change based on external factors. The path resembles
+    # what python set by default at the time of this writing.
+    pythondir="${prefix}/lib/python${PYTHON_VERSION}/site-packages"
+
+  elif test "${with_site_packages}" = 'yes'; then
+    # --with-site-packages provided, but without a value. It's not clear what is meant.
+    AC_MSG_ERROR([If enabled, site-packages must be specified explicitly, e.g. --with-site-packages=/usr/lib/python3/dist-packages])
+
+  else
+    # --with-site-packages provided with value. Override pythondir.
+    pythondir="${with_site_packages}"
+  fi
+
+  # pythondir needs to be expanded.
+  old=
+  while test "${old}" != "${pythondir}"; do
+    old="${pythondir}"
+    eval pythondir="\"${old}\""
   done
-  prefix="$saved_prefix"
+
+  # Set variables used in makefiles.
   DISTCHECK_KEA_SHELL_CONFIGURE_FLAG="--enable-shell"
-  shell_report="yes, install to $pythondir"
+  PKGPYTHONDIR="${pythondir}/${PACKAGE_NAME}"
+  PYTHON_PREFIX="${prefix}"
+  PYTHON_EXEC_PREFIX="${prefix}"
+
+  # Restore prefix.
+  prefix="$saved_prefix"
+
+  shell_report='yes'
 else
   PYTHON=no
 fi
@@ -1170,6 +1216,8 @@ fi
 AM_CONDITIONAL(KEA_SHELL, test x$enable_shell != xno)
 AC_SUBST(DISTCHECK_KEA_SHELL_CONFIGURE_FLAG)
 AC_SUBST(PKGPYTHONDIR)
+AC_SUBST(PYTHON_PREFIX)
+AC_SUBST(PYTHON_EXEC_PREFIX)
 
 # Decide if TLS is supported.
 tls_support=no
@@ -1512,8 +1560,6 @@ AC_CONFIG_FILES([src/lib/asiolink/tests/process_spawn_app.sh],
                 [chmod +x src/lib/asiolink/tests/process_spawn_app.sh])
 AC_CONFIG_FILES([src/lib/cc/Makefile])
 AC_CONFIG_FILES([src/lib/cc/tests/Makefile])
-AC_CONFIG_FILES([src/lib/cfgrpt/Makefile])
-AC_CONFIG_FILES([src/lib/cfgrpt/tests/Makefile])
 AC_CONFIG_FILES([src/lib/config/Makefile])
 AC_CONFIG_FILES([src/lib/config/tests/Makefile])
 AC_CONFIG_FILES([src/lib/config/tests/data_def_unittests_config.h])
@@ -1578,6 +1624,8 @@ AC_CONFIG_FILES([src/lib/pgsql/Makefile])
 AC_CONFIG_FILES([src/lib/pgsql/tests/Makefile])
 AC_CONFIG_FILES([src/lib/pgsql/testutils/Makefile])
 AC_CONFIG_FILES([src/lib/process/Makefile])
+AC_CONFIG_FILES([src/lib/process/cfgrpt/Makefile])
+AC_CONFIG_FILES([src/lib/process/cfgrpt/tests/Makefile])
 AC_CONFIG_FILES([src/lib/process/tests/Makefile])
 AC_CONFIG_FILES([src/lib/process/testutils/Makefile])
 AC_CONFIG_FILES([src/lib/stats/Makefile])
@@ -1654,6 +1702,8 @@ AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_012_to_013.sh],
                 [chmod +x src/share/database/scripts/mysql/upgrade_012_to_013.sh])
 AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_013_to_014.sh],
                 [chmod +x src/share/database/scripts/mysql/upgrade_013_to_014.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_014_to_015.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_014_to_015.sh])
 AC_CONFIG_FILES([src/share/database/scripts/mysql/wipe_data.sh],
                 [chmod +x src/share/database/scripts/mysql/wipe_data.sh])
 AC_CONFIG_FILES([src/share/database/scripts/pgsql/Makefile])
@@ -1693,6 +1743,8 @@ AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_011_to_012.sh],
                 [chmod +x src/share/database/scripts/pgsql/upgrade_011_to_012.sh])
 AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_012_to_013.sh],
                 [chmod +x src/share/database/scripts/pgsql/upgrade_012_to_013.sh])
+AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_013_to_014.sh],
+                [chmod +x src/share/database/scripts/pgsql/upgrade_013_to_014.sh])
 AC_CONFIG_FILES([src/share/database/scripts/pgsql/wipe_data.sh],
                 [chmod +x src/share/database/scripts/pgsql/wipe_data.sh])
 AC_CONFIG_FILES([src/share/yang/Makefile])
@@ -1786,8 +1838,11 @@ if test "$PYTHON" != "no" ; then
 cat >> config.report << END
 
 Python:
-  PYTHON:          ${PYTHON}
-  PYTHON_VERSION:  ${PYTHON_VERSION}
+  PYTHON:               ${PYTHON}
+  PYTHON_VERSION:       ${PYTHON_VERSION}
+  PYTHON_PREFIX:        ${PYTHON_PREFIX}
+  PYTHON_EXEC_PREFIX:   ${PYTHON_EXEC_PREFIX}
+  PKGPYTHONDIR:         ${PKGPYTHONDIR}
 
 END
 else

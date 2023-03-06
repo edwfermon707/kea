@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -159,14 +159,15 @@ TEST(Pool4Test, addOptions) {
     // Differentiate options by their codes (100-109)
     for (uint16_t code = 100; code < 110; ++code) {
         OptionPtr option(new Option(Option::V4, code, OptionBuffer(10, 0xFF)));
-        ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, "dhcp4"));
+        ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, false,
+                                                  "dhcp4"));
     }
 
     // Add 7 options to another option space. The option codes partially overlap
     // with option codes that we have added to dhcp4 option space.
     for (uint16_t code = 105; code < 112; ++code) {
         OptionPtr option(new Option(Option::V4, code, OptionBuffer(10, 0xFF)));
-        ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, "isc"));
+        ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, false, "isc"));
     }
 
     // Get options from the pool and check if all 10 are there.
@@ -287,7 +288,7 @@ TEST(Pool4Test, requiredClasses) {
     EXPECT_TRUE(pool->getRequiredClasses().contains("foo"));
 }
 
-TEST(Pool6Test, constructor_first_last) {
+TEST(Pool6Test, constructorFirstLast) {
 
     // let's construct 2001:db8:1:: - 2001:db8:1::ffff:ffff:ffff:ffff pool
     Pool6 pool1(Lease::TYPE_NA, IOAddress("2001:db8:1::"),
@@ -310,7 +311,7 @@ TEST(Pool6Test, constructor_first_last) {
                        IOAddress("2001:db8::1")), BadValue);
 }
 
-TEST(Pool6Test, constructor_prefix_len) {
+TEST(Pool6Test, constructorPrefixLen) {
 
     // let's construct 2001:db8:1::/96 pool
     Pool6 pool1(Lease::TYPE_NA, IOAddress("2001:db8:1::"), 96);
@@ -363,14 +364,21 @@ TEST(Pool6Test, PD) {
     EXPECT_THROW(Pool6 pool2(Lease::TYPE_PD, IOAddress("2001:db8:1::1"),
                              IOAddress("2001:db8:1::f")), BadValue);
 
+    // Check that it's not allowed to specify bigger prefix address than the
+    // pool prefix length
+    // Should not be able to compute prefix if first address is not starting
+    // from prefix length 32 (2001:db8::)
+    EXPECT_THROW(Pool6 pool3(Lease::TYPE_PD, IOAddress("2001:db8:1::"),
+                             32, 56), BadValue);
+
     // Check that it's not allowed to delegate bigger prefix than the pool
     // Let's try to split /64 prefix into /56 chunks (should be impossible)
-    EXPECT_THROW(Pool6 pool3(Lease::TYPE_PD, IOAddress("2001:db8:1::"),
+    EXPECT_THROW(Pool6 pool4(Lease::TYPE_PD, IOAddress("2001:db8:1::"),
                              64, 56), BadValue);
 
     // It should be possible to have a pool split into just a single chunk
     // Let's try to split 2001:db8:1::/77 into a single /77 delegated prefix
-    EXPECT_NO_THROW(Pool6 pool4(Lease::TYPE_PD, IOAddress("2001:db8:1::"),
+    EXPECT_NO_THROW(Pool6 pool5(Lease::TYPE_PD, IOAddress("2001:db8:1::"),
                                 77, 77));
 }
 
@@ -431,7 +439,7 @@ TEST(Pool6Test, PDExclude) {
                  BadValue);
 
     // Excluded prefix must be an IPv6 prefix.
-    EXPECT_THROW(Pool6(IOAddress("10::"), 8, 16,
+    EXPECT_THROW(Pool6(IOAddress("100::"), 8, 16,
                        IOAddress("10.0.0.0"), 24),
                  BadValue);
 
@@ -475,7 +483,7 @@ TEST(Pool6Test, TA) {
 }
 
 // This test creates 100 pools and verifies that their IDs are unique.
-TEST(Pool6Test, unique_id) {
+TEST(Pool6Test, uniqueID) {
 
     const int num_pools = 100;
     std::vector<Pool6Ptr> pools;
@@ -576,14 +584,15 @@ TEST(Pool6Test, addOptions) {
     // Differentiate options by their codes (100-109)
     for (uint16_t code = 100; code < 110; ++code) {
         OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
-        ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, "dhcp6"));
+        ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, false,
+                                                  "dhcp6"));
     }
 
     // Add 7 options to another option space. The option codes partially overlap
     // with option codes that we have added to dhcp6 option space.
     for (uint16_t code = 105; code < 112; ++code) {
         OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
-        ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, "isc"));
+        ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, false, "isc"));
     }
 
     // Get options from the pool and check if all 10 are there.

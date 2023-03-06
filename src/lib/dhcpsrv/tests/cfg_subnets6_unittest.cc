@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <cc/data.h>
 #include <dhcp/classify.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/option.h>
@@ -22,6 +23,7 @@
 #include <dhcpsrv/cfg_hosts.h>
 #include <stats/stats_mgr.h>
 #include <testutils/gtest_utils.h>
+#include <testutils/log_utils.h>
 #include <testutils/test_to_element.h>
 #include <util/doubles.h>
 
@@ -30,6 +32,7 @@
 
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::stats;
@@ -947,7 +950,7 @@ TEST(CfgSubnets6Test, mergeSubnets) {
     std::string value("Yay!");
     OptionPtr option(new Option(Option::V6, 1));
     option->setData(value.begin(), value.end());
-    ASSERT_NO_THROW(subnet1b->getCfgOption()->add(option, false, "isc"));
+    ASSERT_NO_THROW(subnet1b->getCfgOption()->add(option, false, false, "isc"));
 
     // subnet 3b updates subnet 3 with different UD and removes it
     // from network 2
@@ -958,7 +961,7 @@ TEST(CfgSubnets6Test, mergeSubnets) {
     value = "Team!";
     option.reset(new Option(Option::V6, 1));
     option->setData(value.begin(), value.end());
-    ASSERT_NO_THROW(subnet3b->getCfgOption()->add(option, false, "isc"));
+    ASSERT_NO_THROW(subnet3b->getCfgOption()->add(option, false, false, "isc"));
 
     // subnet 4b updates subnet 4 and moves it from network2 to network 1
     Subnet6Ptr subnet4b(new Subnet6(IOAddress("2001:4::"),
@@ -976,7 +979,7 @@ TEST(CfgSubnets6Test, mergeSubnets) {
     value = "POOLS";
     option.reset(new Option(Option::V6, 1));
     option->setData(value.begin(), value.end());
-    ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, "isc"));
+    ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, false, "isc"));
     subnet5->addPool(pool);
 
     // Add pool 2
@@ -984,7 +987,7 @@ TEST(CfgSubnets6Test, mergeSubnets) {
     value ="RULE!";
     option.reset(new Option(Option::V6, 1));
     option->setData(value.begin(), value.end());
-    ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, "isc"));
+    ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, false, "isc"));
     subnet5->addPool(pool);
 
     // Add subnets to the merge from config.
@@ -2096,6 +2099,45 @@ TEST(CfgSubnets6Test, getLinks) {
     expected = { 111 };
     EXPECT_EQ(expected, links);
     EXPECT_EQ(48, link_len);
+}
+
+/// @brief Test fixture for parsing v6 Subnets that can verify log output.
+class Subnet6ParserTest : public LogContentTest {
+public:
+
+    /// @brief virtual destructor
+    virtual ~Subnet6ParserTest() = default;
+};
+
+// This test verifies that subnet parser for IPv6 works properly
+// when using invalid renew and rebind timers.
+TEST_F(Subnet6ParserTest, parseWithInvalidRenewRebind) {
+    std::string config =
+        "{\n"
+        "    \"id\": 1,\n"
+        "    \"subnet\": \"2001:db8:1::/64\",\n"
+        "    \"valid-lifetime\": 399,\n"
+        "    \"rebind-timer\": 199,\n"
+        "    \"renew-timer\": 200\n"
+        "}";
+
+    // Basic configuration for subnet6 but with a renew-timer value
+    // larger than rebind-timer.
+    ElementPtr config_element = Element::fromJSON(config);
+
+    // Parse configuration specified above.
+    Subnet6ConfigParser parser(false);
+    Subnet6Ptr subnet;
+
+    // Parser should not throw.
+    ASSERT_NO_THROW(subnet = parser.parse(config_element));
+    ASSERT_TRUE(subnet);
+
+    // Veriy we emitted the proper log message.
+    addString("DHCPSRV_CFGMGR_RENEW_GTR_REBIND in subnet-id 1,"
+              " the value of renew-timer 200 is greater than the value"
+              " of rebind-timer 199, ignoring renew-timer");
+    EXPECT_TRUE(checkFile());
 }
 
 } // end of anonymous namespace

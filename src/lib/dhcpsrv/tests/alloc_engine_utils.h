@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -86,7 +86,8 @@ public:
     /// @brief Wrapper method for invoking AllocEngine4::updateLease4ExtendedInfo().
     /// @param lease lease to update
     /// @param ctx current packet processing context
-    void callUpdateLease4ExtendedInfo(const Lease4Ptr& lease,
+    /// @return true if extended information was changed
+    bool callUpdateLease4ExtendedInfo(const Lease4Ptr& lease,
                                       AllocEngine::ClientContext4& ctx) const {
         return (updateLease4ExtendedInfo(lease, ctx));
     }
@@ -305,13 +306,15 @@ public:
     /// @param valid valid lifetime to be used as a hint
     /// @param exp_preferred expected lease preferred lifetime
     /// @param exp_valid expected lease valid lifetime
+    /// @param class_def class definition to add to the context
     /// @return allocated lease (or NULL)
     Lease6Ptr simpleAlloc6Test(const Pool6Ptr& pool,
                                const asiolink::IOAddress& hint,
                                uint32_t preferred,
                                uint32_t valid,
                                uint32_t exp_preferred,
-                               uint32_t exp_valid);
+                               uint32_t exp_valid,
+                               ClientClassDefPtr class_def = ClientClassDefPtr());
 
     /// @brief Checks if the simple allocation can succeed for custom DUID.
     ///
@@ -339,12 +342,15 @@ public:
     /// @param hint address to be used as a hint
     /// @param fake true - this is fake allocation (SOLICIT)
     /// @param in_pool specifies whether the lease is expected to be in pool
+    /// @param hint_prefix_length The hint prefix length that the client
+    /// provided.
     /// @return allocated lease(s) (may be empty)
     Lease6Collection allocateTest(AllocEngine& engine,
                                   const Pool6Ptr& pool,
                                   const asiolink::IOAddress& hint,
                                   bool fake,
-                                  bool in_pool = true);
+                                  bool in_pool = true,
+                                  uint8_t hint_prefix_length = 128);
 
     /// @brief Checks if the allocation can be renewed.
     ///
@@ -354,12 +360,14 @@ public:
     /// @param engine a reference to Allocation Engine
     /// @param pool pool from which the lease will be allocated from
     /// @param hints address to be used as a hint
+    /// @param in_subnet whether the lease is expected to be in subnet
     /// @param in_pool specifies whether the lease is expected to be in pool
     /// @return allocated lease(s) (may be empty)
     Lease6Collection renewTest(AllocEngine& engine,
                                const Pool6Ptr& pool,
                                AllocEngine::HintContainer& hints,
-                               bool in_pool = true);
+                               bool in_subnet,
+                               bool in_pool);
 
     /// @brief Checks if the address allocation with a hint that is in range,
     ///        in pool, but is currently used, can succeed

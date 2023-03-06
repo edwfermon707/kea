@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,6 +16,7 @@
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/parsers/shared_network_parser.h>
 #include <testutils/gtest_utils.h>
+#include <testutils/log_utils.h>
 #include <gtest/gtest.h>
 #include <string>
 
@@ -26,7 +27,7 @@ using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 
 namespace {
-class SharedNetworkParserTest : public ::testing::Test {
+class SharedNetworkParserTest : public LogContentTest {
 public:
 
     /// @brief Structure for describing a single relay test scenario
@@ -42,7 +43,7 @@ public:
     };
 
     /// @brief virtual destructor
-    virtual ~SharedNetworkParserTest(){};
+    virtual ~SharedNetworkParserTest() = default;
 
     /// @brief Fetch valid shared network configuration JSON text
     virtual std::string getWorkingConfig() const = 0;
@@ -118,6 +119,7 @@ public:
     /// @return Valid shared network configuration.
     virtual std::string getWorkingConfig() const {
             std::string config = "{"
+                "    \"allocator\": \"iterative\","
                 "    \"authoritative\": true,"
                 "    \"boot-file-name\": \"/dev/null\","
                 "    \"client-class\": \"srv1\","
@@ -186,7 +188,8 @@ public:
                 "            \"t2-percent\": .65,"
                 "            \"hostname-char-set\": \"\","
                 "            \"cache-threshold\": .20,"
-                "            \"cache-max-age\": 50"
+                "            \"cache-max-age\": 50,"
+                "            \"allocator\": \"random\""
                 "        },"
                 "        {"
                 "            \"id\": 2,"
@@ -280,6 +283,7 @@ TEST_F(SharedNetwork4ParserTest, parse) {
     EXPECT_EQ(0.123, network->getCacheThreshold());
     EXPECT_EQ(123, network->getCacheMaxAge().get());
     EXPECT_TRUE(network->getDdnsUpdateOnRenew().get());
+    EXPECT_EQ("iterative", network->getAllocatorType().get());
 
     // Relay information.
     auto relay_info = network->getRelayInfo();
@@ -305,6 +309,7 @@ TEST_F(SharedNetwork4ParserTest, parse) {
     EXPECT_EQ(400, subnet->getValid().getMax());
     EXPECT_FALSE(subnet->getHostnameCharSet().unspecified());
     EXPECT_EQ("", subnet->getHostnameCharSet().get());
+    EXPECT_EQ("random", subnet->getAllocatorType().get());
 
     // Subnet with id 2
     subnet = network->getSubnet(SubnetID(2));
@@ -315,6 +320,7 @@ TEST_F(SharedNetwork4ParserTest, parse) {
     EXPECT_EQ(30, subnet->getValid().getMax());
     EXPECT_EQ("[^A-Z]", subnet->getHostnameCharSet().get());
     EXPECT_EQ("x", subnet->getHostnameCharReplacement().get());
+    EXPECT_EQ("iterative", subnet->getAllocatorType().get());
 
     // DHCP options
     ConstCfgOptionPtr cfg_option = network->getCfgOption();
@@ -490,7 +496,8 @@ TEST_F(SharedNetwork4ParserTest, iface) {
 TEST_F(SharedNetwork4ParserTest, parseWithInvalidRenewRebind) {
     IfaceMgrTestConfig ifmgr(true);
 
-    // Basic configuration for shared network.
+    // Basic configuration for shared network but with a renew-timer value
+    // larger than rebind-timer.
     std::string config = getWorkingConfig();
     ElementPtr config_element = Element::fromJSON(config);
     ConstElementPtr valid_element = config_element->get("rebind-timer");
@@ -503,8 +510,15 @@ TEST_F(SharedNetwork4ParserTest, parseWithInvalidRenewRebind) {
     SharedNetwork4Parser parser;
     SharedNetwork4Ptr network;
 
-    ASSERT_THROW(network = parser.parse(config_element), DhcpConfigError);
-    ASSERT_FALSE(network);
+    // Parser should not throw.
+    ASSERT_NO_THROW(network = parser.parse(config_element));
+    ASSERT_TRUE(network);
+
+    // Veriy we emitted the proper log message.
+    addString("DHCPSRV_CFGMGR_RENEW_GTR_REBIND in shared-network bird,"
+              " the value of renew-timer 200 is greater than the value"
+              " of rebind-timer 199, ignoring renew-timer");
+    EXPECT_TRUE(checkFile());
 }
 
 // This test verifies that shared network parser for IPv4 works properly
@@ -577,6 +591,8 @@ public:
                 "    \"cache-threshold\": 0.123,"
                 "    \"cache-max-age\": 123,"
                 "    \"ddns-update-on-renew\": true,"
+                "    \"allocator\": \"random\","
+                "    \"pd-allocator\": \"iterative\","
                 "    \"option-data\": ["
                 "        {"
                 "            \"name\": \"dns-servers\","
@@ -603,7 +619,9 @@ public:
                 "            \"reservations-in-subnet\": true,"
                 "            \"reservations-out-of-pool\": false,"
                 "            \"rapid-commit\": false,"
-                "            \"hostname-char-set\": \"\""
+                "            \"hostname-char-set\": \"\","
+                "            \"allocator\": \"iterative\","
+                "            \"pd-allocator\": \"random\""
                 "        },"
                 "        {"
                 "            \"id\": 2,"
@@ -688,6 +706,8 @@ TEST_F(SharedNetwork6ParserTest, parse) {
     EXPECT_EQ(0.123, network->getCacheThreshold());
     EXPECT_EQ(123, network->getCacheMaxAge().get());
     EXPECT_TRUE(network->getDdnsUpdateOnRenew().get());
+    EXPECT_EQ("random", network->getAllocatorType().get());
+    EXPECT_EQ("iterative", network->getPdAllocatorType().get());
 
     // Relay information.
     auto relay_info = network->getRelayInfo();
@@ -716,6 +736,8 @@ TEST_F(SharedNetwork6ParserTest, parse) {
     EXPECT_EQ(500, subnet->getValid().getMax());
     EXPECT_FALSE(subnet->getHostnameCharSet().unspecified());
     EXPECT_EQ("", subnet->getHostnameCharSet().get());
+    EXPECT_EQ("iterative", subnet->getAllocatorType().get());
+    EXPECT_EQ("random", subnet->getPdAllocatorType().get());
 
     // Subnet with id 2
     subnet = network->getSubnet(SubnetID(2));
@@ -729,6 +751,8 @@ TEST_F(SharedNetwork6ParserTest, parse) {
     EXPECT_EQ(40, subnet->getValid().getMax());
     EXPECT_EQ("[^A-Z]", subnet->getHostnameCharSet().get());
     EXPECT_EQ("x", subnet->getHostnameCharReplacement().get());
+    EXPECT_EQ("random", subnet->getAllocatorType().get());
+    EXPECT_EQ("iterative", subnet->getPdAllocatorType().get());
 
     // DHCP options
     ConstCfgOptionPtr cfg_option = network->getCfgOption();
@@ -770,7 +794,8 @@ TEST_F(SharedNetwork6ParserTest, parseWithInterfaceId) {
 TEST_F(SharedNetwork6ParserTest, parseWithInvalidRenewRebind) {
     IfaceMgrTestConfig ifmgr(true);
 
-    // Use the configuration with interface-id instead of interface parameter.
+    // Basic configuration for shared network but with a renew-timer value
+    // larger than rebind-timer.
     use_iface_id_ = true;
     std::string config = getWorkingConfig();
     ElementPtr config_element = Element::fromJSON(config);
@@ -784,8 +809,15 @@ TEST_F(SharedNetwork6ParserTest, parseWithInvalidRenewRebind) {
     SharedNetwork6Parser parser;
     SharedNetwork6Ptr network;
 
-    ASSERT_THROW(network = parser.parse(config_element), DhcpConfigError);
-    ASSERT_FALSE(network);
+    // Parser should not throw.
+    ASSERT_NO_THROW(network = parser.parse(config_element));
+    ASSERT_TRUE(network);
+
+    // Veriy we emitted the proper log message.
+    addString("DHCPSRV_CFGMGR_RENEW_GTR_REBIND in shared-network bird,"
+              " the value of renew-timer 200 is greater than the value"
+              " of rebind-timer 199, ignoring renew-timer");
+    EXPECT_TRUE(checkFile());
 }
 
 // This test verifies that shared network parser for IPv6 works properly

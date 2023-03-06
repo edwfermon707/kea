@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -100,6 +100,8 @@ const SimpleKeywords SimpleParser6::GLOBAL6_PARAMETERS = {
     { "ddns-use-conflict-resolution",     Element::boolean },
     { "compatibility",                    Element::map },
     { "parked-packet-limit",              Element::integer },
+    { "allocator",                        Element::string },
+    { "pd-allocator",                     Element::string }
 };
 
 /// @brief This table defines default global values for DHCPv6
@@ -135,7 +137,9 @@ const SimpleDefaults SimpleParser6::GLOBAL6_DEFAULTS = {
     { "reservations-lookup-first",        Element::boolean, "false" },
     { "ddns-update-on-renew",             Element::boolean, "false" },
     { "ddns-use-conflict-resolution",     Element::boolean, "true" },
-    { "parked-packet-limit",              Element::integer, "256" }
+    { "parked-packet-limit",              Element::integer, "256" },
+    { "allocator",                        Element::string,  "iterative" },
+    { "pd-allocator",                     Element::string,  "iterative" }
 };
 
 /// @brief This table defines all option definition parameters.
@@ -179,6 +183,7 @@ const SimpleKeywords SimpleParser6::OPTION6_PARAMETERS = {
     { "space",        Element::string },
     { "csv-format",   Element::boolean },
     { "always-send",  Element::boolean },
+    { "never-send",   Element::boolean },
     { "user-context", Element::map },
     { "comment",      Element::string },
     { "metadata",     Element::map }
@@ -192,7 +197,8 @@ const SimpleKeywords SimpleParser6::OPTION6_PARAMETERS = {
 const SimpleDefaults SimpleParser6::OPTION6_DEFAULTS = {
     { "space",        Element::string,  "dhcp6"}, // DHCP6_OPTION_SPACE
     { "csv-format",   Element::boolean, "true"},
-    { "always-send",  Element::boolean, "false"}
+    { "always-send",  Element::boolean, "false"},
+    { "never-send",   Element::boolean, "false"}
 };
 
 /// @brief This table defines all subnet parameters for DHCPv6.
@@ -243,7 +249,9 @@ const SimpleKeywords SimpleParser6::SUBNET6_PARAMETERS = {
     { "cache-threshold",                Element::real },
     { "cache-max-age",                  Element::integer },
     { "ddns-update-on-renew",           Element::boolean },
-    { "ddns-use-conflict-resolution",   Element::boolean }
+    { "ddns-use-conflict-resolution",   Element::boolean },
+    { "allocator",                      Element::string },
+    { "pd-allocator",                   Element::string }
 };
 
 /// @brief This table defines default values for each IPv6 subnet.
@@ -296,7 +304,9 @@ const ParamsList SimpleParser6::INHERIT_TO_SUBNET6 = {
     "t2-percent",
     "store-extended-info",
     "cache-threshold",
-    "cache-max-age"
+    "cache-max-age",
+    "allocator",
+    "pd-allocator"
 };
 
 /// @brief This table defines all pool parameters.
@@ -378,7 +388,9 @@ const SimpleKeywords SimpleParser6::SHARED_NETWORK6_PARAMETERS = {
     { "cache-threshold",                Element::real },
     { "cache-max-age",                  Element::integer },
     { "ddns-update-on-renew",           Element::boolean },
-    { "ddns-use-conflict-resolution",   Element::boolean }
+    { "ddns-use-conflict-resolution",   Element::boolean },
+    { "allocator",                      Element::string },
+    { "pd-allocator",                   Element::string }
 };
 
 /// @brief This table defines default values for each IPv6 subnet.
@@ -400,7 +412,7 @@ const SimpleDefaults SimpleParser6::DHCP_QUEUE_CONTROL6_DEFAULTS = {
 
 /// @brief This table defines default values for multi-threading in DHCPv6.
 const SimpleDefaults SimpleParser6::DHCP_MULTI_THREADING6_DEFAULTS = {
-    { "enable-multi-threading", Element::boolean, "false" },
+    { "enable-multi-threading", Element::boolean, "true" },
     { "thread-pool-size",       Element::integer, "0" },
     { "packet-queue-size",      Element::integer, "64" }
 };

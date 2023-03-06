@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -186,6 +186,22 @@ public:
     uint64_t getPoolCapacity(Lease::Type type,
                              const ClientClasses& client_classes) const;
 
+    /// @brief Returns the number of possible leases for specified lease type
+    /// allowed for a client which belongs to classes and matching selection
+    /// criteria relative to provided hint prefix length.
+    ///
+    /// @param type type of the lease
+    /// @param client_classes list of classes the client belongs to
+    /// @param prefix_length_match type which indicates the selection criteria
+    /// for the pools relative to the provided hint prefix length
+    /// @param hint_prefix_length the hint prefix length that the client
+    /// provided
+    /// @return number of leases matching lease type and classes
+    uint64_t getPoolCapacity(Lease::Type type,
+                             const ClientClasses& client_classes,
+                             Allocator::PrefixLenMatchType prefix_length_match,
+                             uint8_t hint_prefix_length) const;
+
     /// @brief Returns textual representation of the subnet (e.g.
     /// "2001:db8::/64").
     ///
@@ -290,17 +306,15 @@ public:
     ///
     /// The actual type of the state depends on the allocator type.
     ///
+    /// @param type lease type for which the allocation state is returned.
     /// @return allocation state.
-    SubnetAllocationStatePtr getAllocationState() const {
-        return (allocation_state_);
-    }
+    SubnetAllocationStatePtr getAllocationState(Lease::Type type) const;
 
     /// @brief Sets subnet-specific allocation state.
     ///
+    /// @param type lease type for which the allocation state is set.
     /// @param allocation_state allocation state instance.
-    void setAllocationState(const SubnetAllocationStatePtr& allocation_state) {
-        allocation_state_ = allocation_state;
-    }
+    void setAllocationState(Lease::Type type, const SubnetAllocationStatePtr& allocation_state);
 
 protected:
 
@@ -376,6 +390,23 @@ protected:
     uint64_t sumPoolCapacity(const PoolCollection& pools,
                              const ClientClasses& client_classes) const;
 
+    /// @brief Returns a sum of possible leases in all pools allowing classes
+    /// and matching selection criteria relative to provided hint prefix length.
+    ///
+    /// @note This function should be called only for PD pools.
+    ///
+    /// @param pools list of pools
+    /// @param client_classes list of classes
+    /// @param prefix_length_match type which indicates the selection criteria
+    /// for the pools relative to the provided hint prefix length
+    /// @param hint_prefix_length the hint prefix length that the client
+    /// provided
+    /// @return sum of possible/allowed leases
+    uint64_t sumPoolCapacity(const PoolCollection& pools,
+                             const ClientClasses& client_classes,
+                             Allocator::PrefixLenMatchType prefix_length_match,
+                             uint8_t hint_prefix_length) const;
+
     /// @brief Checks if the specified pool overlaps with an existing pool.
     ///
     /// @param pool_type Pool type.
@@ -390,6 +421,12 @@ protected:
     ///
     /// @return A pointer to unparsed subnet configuration.
     virtual data::ElementPtr toElement() const;
+
+    virtual std::string getLabel() const {
+        std::stringstream ss;
+        ss << "subnet-id " << id_;
+        return (ss.str());
+    }
 
     /// @brief Converts subnet prefix to a pair of prefix/length pair.
     ///
@@ -423,14 +460,14 @@ protected:
     /// @brief a prefix length of the subnet.
     uint8_t prefix_len_;
 
-    /// @brief Holds subnet-specific allocation state.
-    SubnetAllocationStatePtr allocation_state_;
-
     /// @brief Shared network name.
     std::string shared_network_name_;
 
     /// @brief Lease allocators used by the subnet.
     std::map<Lease::Type, AllocatorPtr> allocators_;
+
+    /// @brief Holds subnet-specific allocation state.
+    std::map<Lease::Type, SubnetAllocationStatePtr> allocation_states_;
 };
 
 /// @brief A generic pointer to either Subnet4 or Subnet6 object

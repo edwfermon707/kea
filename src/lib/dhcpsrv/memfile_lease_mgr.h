@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -639,7 +639,7 @@ private:
                             const LeasePageSize& page_size,
                             Lease4Collection& collection) const;
 
-    /// @brief Returns existing IPv6 lease for a given IPv6 address.
+    /// @brief Returns existing IPv6 lease for a given IPv6 address and type.
     ///
     /// @param type specifies lease type: (NA, TA or PD)
     /// @param addr An address of the searched lease.
@@ -647,6 +647,13 @@ private:
     /// @return a pointer to the lease (or NULL if a lease is not found)
     Lease6Ptr getLease6Internal(Lease::Type type,
                                 const isc::asiolink::IOAddress& addr) const;
+
+    /// @brief Returns existing IPv6 lease of any type for a given IPv6 address.
+    ///
+    /// @param addr An address of the searched lease.
+    ///
+    /// @return a pointer to the lease (or NULL if a lease is not found)
+    Lease6Ptr getAnyLease6Internal(const isc::asiolink::IOAddress& addr) const;
 
     /// @brief Returns existing IPv6 lease for a given DUID + IA + lease type
     /// combination
@@ -1369,6 +1376,17 @@ public:
                      uint8_t link_len,
                      const asiolink::IOAddress& lower_bound_address,
                      const LeasePageSize& page_size) override;
+
+    /// @brief Extract extended info for v4 leases.
+    ///
+    /// For v4 relay and remote identifiers are stored inside leases vs.
+    /// tables for v6.
+    ///
+    /// @param update Update extended info in database.
+    /// @param current specify whether to use current (true) or staging
+    /// (false) config.
+    /// @return The number of updates in the database or 0.
+    size_t extractExtendedInfo4(bool update, bool current);
 
     /// @brief Build extended info v6 tables.
     ///

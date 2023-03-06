@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,7 +8,6 @@
 
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
-#include <cfgrpt/config_report.h>
 #include <config/command_mgr.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
@@ -24,6 +23,7 @@
 #include <dhcpsrv/host_mgr.h>
 #include <hooks/hooks.h>
 #include <hooks/hooks_manager.h>
+#include <process/cfgrpt/config_report.h>
 #include <stats/stats_mgr.h>
 #include <util/multi_threading_mgr.h>
 
@@ -194,7 +194,8 @@ ControlledDhcpv6Srv::init(const std::string& file_name) {
 }
 
 void ControlledDhcpv6Srv::cleanup() {
-    // Nothing to do here. No need to disconnect from anything.
+    signal_set_.reset();
+    getIOService()->poll();
 }
 
 ConstElementPtr
@@ -228,6 +229,8 @@ ControlledDhcpv6Srv::commandShutdownHandler(const string&, ConstElementPtr args)
 
 ConstElementPtr
 ControlledDhcpv6Srv::commandLibReloadHandler(const string&, ConstElementPtr) {
+    LOG_WARN(dhcp6_logger, DHCP6_DEPRECATED).arg("libreload command");
+
     // stop thread pool (if running)
     MultiThreadingCriticalSection cs;
 
@@ -241,7 +244,8 @@ ControlledDhcpv6Srv::commandLibReloadHandler(const string&, ConstElementPtr) {
         static_cast<void>(HooksManager::unloadLibraries());
         bool status = HooksManager::loadLibraries(loaded);
         if (!status) {
-            isc_throw(Unexpected, "Failed to reload hooks libraries.");
+            isc_throw(Unexpected, "Failed to reload hooks libraries"
+                                  " (WARNING: libreload is deprecated).");
         }
     } catch (const std::exception& ex) {
         LOG_ERROR(dhcp6_logger, DHCP6_HOOKS_LIBS_RELOAD_FAIL);
@@ -249,7 +253,8 @@ ControlledDhcpv6Srv::commandLibReloadHandler(const string&, ConstElementPtr) {
         return (answer);
     }
     ConstElementPtr answer = isc::config::createAnswer(0,
-                             "Hooks libraries successfully reloaded.");
+                             "Hooks libraries successfully reloaded "
+                             "(WARNING: libreload is deprecated).");
     return (answer);
 }
 

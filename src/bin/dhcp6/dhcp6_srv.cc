@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -53,7 +53,7 @@
 #include <util/range_utilities.h>
 #include <log/logger.h>
 #include <cryptolink/cryptolink.h>
-#include <cfgrpt/config_report.h>
+#include <process/cfgrpt/config_report.h>
 
 #ifdef HAVE_MYSQL
 #include <dhcpsrv/mysql_lease_mgr.h>
@@ -1120,7 +1120,8 @@ Dhcpv6Srv::processDhcp6Query(Pkt6Ptr& query, Pkt6Ptr& rsp) {
                     bool in_new = false;
                     for (auto const& new_lease : ctx.new_leases_) {
                         if ((new_lease->addr_ == old_lease->addr_) &&
-                            (new_lease->prefixlen_ == old_lease->prefixlen_)) {
+                            ((new_lease->type_ != Lease::TYPE_PD) ||
+                             (new_lease->prefixlen_ == old_lease->prefixlen_))) {
                             in_new = true;
                             break;
                         }
@@ -1497,27 +1498,47 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
         requested_opts = oro_req_opts;
     }
 
-    // Iterate on the configured option list to add persistent options
+    set<uint16_t> cancelled_opts;
+
+    // Iterate on the configured option list to add persistent and
+    // cancelled options.
     for (CfgOptionList::const_iterator copts = co_list.begin();
          copts != co_list.end(); ++copts) {
         const OptionContainerPtr& opts = (*copts)->getAll(DHCP6_OPTION_SPACE);
         if (!opts) {
             continue;
         }
-        // Get persistent options
-        const OptionContainerPersistIndex& idx = opts->get<2>();
-        const OptionContainerPersistRange& range = idx.equal_range(true);
-        for (OptionContainerPersistIndex::const_iterator desc = range.first;
-             desc != range.second; ++desc) {
-            // Add the persistent option code to requested options
+        // Get persistent options.
+        const OptionContainerPersistIndex& pidx = opts->get<2>();
+        const OptionContainerPersistRange& prange = pidx.equal_range(true);
+        for (OptionContainerPersistIndex::const_iterator desc = prange.first;
+             desc != prange.second; ++desc) {
+            // Add the persistent option code to requested options.
             if (desc->option_) {
                 uint16_t code = desc->option_->getType();
                 static_cast<void>(requested_opts.insert(code));
             }
         }
+        // Get cancelled options.
+        const OptionContainerCancelIndex& cidx = opts->get<5>();
+        const OptionContainerCancelRange& crange = cidx.equal_range(true);
+        for (OptionContainerCancelIndex::const_iterator desc = crange.first;
+             desc != crange.second; ++desc) {
+            // Add the cancelled option code to the cancelled options.
+            if (desc->option_) {
+                uint16_t code = desc->option_->getType();
+                static_cast<void>(cancelled_opts.insert(code));
+            }
+        }
     }
 
+    // For each requested option code get the first instance of the option
+    // to be returned to the client.
     for (uint16_t opt : requested_opts) {
+        // Skip if cancelled.
+        if (cancelled_opts.count(opt) > 0) {
+            continue;
+        }
         // Add nothing when it is already there.
         if (!answer->getOption(opt)) {
             // Iterate on the configured option list
@@ -1533,9 +1554,14 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
         }
     }
 
-    // Special cases for vendor class and options.
-    if (requested_opts.count(D6O_VENDOR_CLASS) > 0) {
+    // Special cases for vendor class and options which are identified
+    // by the code/type and the vendor/enterprise id vs. the code/type only.
+    if ((requested_opts.count(D6O_VENDOR_CLASS) > 0) &&
+        (cancelled_opts.count(D6O_VENDOR_CLASS) == 0)) {
+        // Keep vendor ids which are already in the response to insert
+        // D6O_VENDOR_CLASS options at most once per vendor.
         set<uint32_t> vendor_ids;
+        // Get what already exists in the response.
         for (auto opt : answer->getOptions(D6O_VENDOR_CLASS)) {
             OptionVendorClassPtr vendor_class;
             vendor_class = boost::dynamic_pointer_cast<OptionVendorClass>(opt.second);
@@ -1569,8 +1595,12 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
         }
     }
 
-    if (requested_opts.count(D6O_VENDOR_OPTS) > 0) {
+    if ((requested_opts.count(D6O_VENDOR_OPTS) > 0) &&
+        (cancelled_opts.count(D6O_VENDOR_OPTS) == 0)) {
+        // Keep vendor ids which are already in the response to insert
+        // D6O_VENDOR_OPTS options at most once per vendor.
         set<uint32_t> vendor_ids;
+        // Get what already exists in the response.
         for (auto opt : answer->getOptions(D6O_VENDOR_OPTS)) {
             OptionVendorPtr vendor_opts;
             vendor_opts = boost::dynamic_pointer_cast<OptionVendor>(opt.second);
@@ -1692,7 +1722,10 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question,
         }
     }
 
-    // Iterate on the configured option list to add persistent options
+    map<uint32_t, set<uint16_t> > cancelled_opts;
+
+    // Iterate on the configured option list to add persistent and
+    // cancelled options.
     for (uint32_t vendor_id : vendor_ids) {
         for (CfgOptionList::const_iterator copts = co_list.begin();
              copts != co_list.end(); ++copts) {
@@ -1700,17 +1733,29 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question,
             if (!opts) {
                 continue;
             }
-            // Get persistent options
-            const OptionContainerPersistIndex& idx = opts->get<2>();
-            const OptionContainerPersistRange& range = idx.equal_range(true);
-            for (OptionContainerPersistIndex::const_iterator desc = range.first;
-                 desc != range.second; ++desc) {
+            // Get persistent options.
+            const OptionContainerPersistIndex& pidx = opts->get<2>();
+            const OptionContainerPersistRange& prange = pidx.equal_range(true);
+            for (OptionContainerPersistIndex::const_iterator desc = prange.first;
+                 desc != prange.second; ++desc) {
                 if (!desc->option_) {
                     continue;
                 }
                 // Add the persistent option code to requested options
                 uint16_t code = desc->option_->getType();
                 static_cast<void>(requested_opts[vendor_id].insert(code));
+            }
+            // Get cancelled options.
+            const OptionContainerCancelIndex& cidx = opts->get<5>();
+            const OptionContainerCancelRange& crange = cidx.equal_range(true);
+            for (OptionContainerCancelIndex::const_iterator desc = crange.first;
+                 desc != crange.second; ++desc) {
+                if (!desc->option_) {
+                    continue;
+                }
+                // Add the cancelled option code to cancelled options
+                uint16_t code = desc->option_->getType();
+                static_cast<void>(cancelled_opts[vendor_id].insert(code));
             }
         }
 
@@ -1732,6 +1777,9 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question,
         bool added = false;
 
         for (uint16_t opt : requested_opts[vendor_id]) {
+            if (cancelled_opts[vendor_id].count(opt) > 0) {
+                continue;
+            }
             if (!vendor_rsp->getOption(opt)) {
                 for (CfgOptionList::const_iterator copts = co_list.begin();
                      copts != co_list.end(); ++copts) {
@@ -2441,7 +2489,7 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query,
     if (hint_opt) {
         ctx.currentIA().addHint(hint_opt);
     } else {
-        ctx.currentIA().addHint(hint);
+        ctx.currentIA().addHint(hint, 0);
     }
     ctx.currentIA().type_ = Lease::TYPE_PD;
 
@@ -2635,8 +2683,8 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query,
             min_preferred_lft = (*l)->preferred_lft_;
         }
 
-        // Now remove this prefix from the hints list.
-        AllocEngine::Resource hint_type((*l)->addr_, (*l)->prefixlen_);
+        // Now remove this address from the hints list.
+        AllocEngine::Resource hint_type((*l)->addr_);
         hints.erase(std::remove(hints.begin(), hints.end(), hint_type),
                     hints.end());
     }
@@ -2655,7 +2703,7 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query,
         }
 
         // Now remove this address from the hints list.
-        AllocEngine::Resource hint_type((*l)->addr_, 128);
+        AllocEngine::Resource hint_type((*l)->addr_);
         hints.erase(std::remove(hints.begin(), hints.end(), hint_type), hints.end());
 
         // If the new FQDN settings have changed for the lease, we need to
@@ -4384,9 +4432,6 @@ Dhcpv6Srv::d2ClientErrorHandler(const
     /// them off.
     CfgMgr::instance().getD2ClientMgr().suspendUpdates();
 }
-
-// Refer to config_report so it will be embedded in the binary
-const char* const* dhcp6_config_report = isc::detail::config_report;
 
 std::string
 Dhcpv6Srv::getVersion(bool extended) {

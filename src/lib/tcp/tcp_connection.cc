@@ -1,4 +1,4 @@
-// Copyright (C) 2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2022-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -350,8 +350,8 @@ TcpConnection::handshakeCallback(const boost::system::error_code& ec) {
     } else {
         LOG_DEBUG(tcp_logger, isc::log::DBGLVL_TRACE_DETAIL,
                   TLS_REQUEST_RECEIVE_START)
-            .arg(getRemoteEndpointAddressAsText());
-
+            .arg(getRemoteEndpointAddressAsText())
+            .arg(static_cast<unsigned>(idle_timeout_/1000));
         doRead();
     }
 }

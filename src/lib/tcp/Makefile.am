@@ -24,12 +24,11 @@ libkea_tcp_la_SOURCES += tcp_stream_msg.cc tcp_stream_msg.h
 libkea_tcp_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_tcp_la_CPPFLAGS = $(AM_CPPFLAGS)
 libkea_tcp_la_LDFLAGS  = $(AM_LDFLAGS)
-libkea_tcp_la_LDFLAGS += -no-undefined -version-info 1:0:0
+libkea_tcp_la_LDFLAGS += -no-undefined -version-info 3:0:0
 
-libkea_tcp_la_LIBADD  =
-libkea_tcp_la_LIBADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
-libkea_tcp_la_LIBADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
+libkea_tcp_la_LIBADD  = $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libkea_tcp_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la
+libkea_tcp_la_LIBADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libkea_tcp_la_LIBADD += $(top_builddir)/src/lib/log/libkea-log.la
 libkea_tcp_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_tcp_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la

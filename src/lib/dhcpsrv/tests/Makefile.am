@@ -122,6 +122,8 @@ libdhcpsrv_unittests_SOURCES += pgsql_lease_mgr_unittest.cc
 libdhcpsrv_unittests_SOURCES += pgsql_host_data_source_unittest.cc
 endif
 libdhcpsrv_unittests_SOURCES += pool_unittest.cc
+libdhcpsrv_unittests_SOURCES += random_allocation_state_unittest.cc
+libdhcpsrv_unittests_SOURCES += random_allocator_unittest.cc
 libdhcpsrv_unittests_SOURCES += resource_handler_unittest.cc
 libdhcpsrv_unittests_SOURCES += sanity_checks_unittest.cc
 libdhcpsrv_unittests_SOURCES += shared_network_parser_unittest.cc
@@ -153,7 +155,6 @@ libdhcpsrv_unittests_LDFLAGS  += $(PGSQL_LIBS)
 endif
 
 libdhcpsrv_unittests_LDADD  = $(top_builddir)/src/lib/dhcpsrv/testutils/libdhcpsrvtest.la
-
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
@@ -165,13 +166,14 @@ libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dhcp/tests/libdhcptest.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 
-if HAVE_MYSQL
-libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
-libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/mysql/testutils/libmysqltest.la
-endif
 if HAVE_PGSQL
-libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/pgsql/testutils/libpgsqltest.la
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
+endif
+
+if HAVE_MYSQL
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/mysql/testutils/libmysqltest.la
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
 endif
 
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/database/testutils/libdatabasetest.la

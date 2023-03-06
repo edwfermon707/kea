@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -135,6 +135,39 @@ const char* CONFIGS[] = {
     "}",
 
     // Configuration 3:
+    // - 1 subnet with never-send option
+    // - 2 global options (one forced with always-send)
+    "{"
+    "    \"interfaces-config\": {"
+    "    \"interfaces\": [ \"*\" ] }, "
+    "    \"rebind-timer\": 2000, "
+    "    \"renew-timer\": 1000, "
+    "    \"valid-lifetime\": 4000, "
+    "    \"subnet4\": [ {"
+    "        \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], "
+    "        \"subnet\": \"192.0.2.0/24\","
+    "        \"option-data\": ["
+    "            {"
+    "                \"name\": \"ip-forwarding\", "
+    "                \"never-send\": true"
+    "            }"
+    "        ]"
+    "    } ], "
+    "    \"option-data\": ["
+    "        {"
+    "            \"name\": \"default-ip-ttl\", "
+    "            \"data\": \"FF\", "
+    "            \"csv-format\": false"
+    "        }, "
+    "        {"
+    "            \"name\": \"ip-forwarding\", "
+    "            \"data\": \"false\", "
+    "            \"always-send\": true"
+    "        }"
+    "    ]"
+    "}",
+
+    // Configuration 4:
     // - one subnet, with one pool
     // - user-contexts defined in both subnet and pool
     "{"
@@ -3098,7 +3131,7 @@ TEST_F(Dhcpv4SrvTest, nextServerOverride) {
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config, true));
 
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
 
     CfgMgr::instance().commit();
 
@@ -3160,7 +3193,7 @@ TEST_F(Dhcpv4SrvTest, nextServerGlobal) {
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config, true));
 
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
 
     CfgMgr::instance().commit();
 
@@ -3228,7 +3261,7 @@ TEST_F(Dhcpv4SrvTest, matchClassification) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
     ASSERT_TRUE(status);
     comment_ = config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -3342,7 +3375,7 @@ TEST_F(Dhcpv4SrvTest, matchClassificationOptionName) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
     ASSERT_TRUE(status);
     comment_ = config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -3393,7 +3426,7 @@ TEST_F(Dhcpv4SrvTest, matchClassificationOptionDef) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
     ASSERT_TRUE(status);
     comment_ = config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -3449,7 +3482,7 @@ TEST_F(Dhcpv4SrvTest, subnetClassPriority) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
     ASSERT_TRUE(status);
     comment_ = config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -3523,7 +3556,7 @@ TEST_F(Dhcpv4SrvTest, subnetGlobalPriority) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
     ASSERT_TRUE(status);
     comment_ = config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -3596,7 +3629,7 @@ TEST_F(Dhcpv4SrvTest, classGlobalPriority) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
     ASSERT_TRUE(status);
     comment_ = config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -3679,7 +3712,7 @@ TEST_F(Dhcpv4SrvTest, classGlobalPersistency) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
     ASSERT_TRUE(status);
     comment_ = config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -3813,7 +3846,7 @@ TEST_F(Dhcpv4SrvTest, clientPoolClassify) {
     ASSERT_NO_THROW(json = parseDHCP4(config, true));
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
 
     CfgMgr::instance().commit();
 
@@ -3881,7 +3914,7 @@ TEST_F(Dhcpv4SrvTest, clientPoolClassifyKnown) {
     ASSERT_NO_THROW(json = parseDHCP4(config, true));
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
 
     CfgMgr::instance().commit();
 
@@ -3937,7 +3970,7 @@ TEST_F(Dhcpv4SrvTest, clientPoolClassifyUnknown) {
     ASSERT_NO_THROW(json = parseDHCP4(config, true));
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
 
     CfgMgr::instance().commit();
 
@@ -4001,7 +4034,7 @@ TEST_F(Dhcpv4SrvTest, privateOption) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
     ASSERT_TRUE(status);
     comment_ = config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -4069,7 +4102,7 @@ TEST_F(Dhcpv4SrvTest, privateOption) {
     EXPECT_EQ(12345678, opt32->getValue());
 }
 
-// Checks effect of persistency (aka always-true) flag on the PRL
+// Checks effect of persistency (aka always-send) flag on the PRL.
 TEST_F(Dhcpv4SrvTest, prlPersistency) {
     IfaceMgrTestConfig test_config(true);
 
@@ -4119,6 +4152,59 @@ TEST_F(Dhcpv4SrvTest, prlPersistency) {
     // and now a default-ip-ttl
     ASSERT_TRUE(response->getOption(DHO_DEFAULT_IP_TTL));
     // and still no arp-cache-timeout
+    ASSERT_FALSE(response->getOption(DHO_ARP_CACHE_TIMEOUT));
+}
+
+// Checks effect of cancellation (aka never-send) flag.
+TEST_F(Dhcpv4SrvTest, neverSend) {
+    IfaceMgrTestConfig test_config(true);
+
+    ASSERT_NO_THROW(configure(CONFIGS[3]));
+
+    // Create a packet with enough to select the subnet and go through
+    // the DISCOVER processing
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 1234));
+    query->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    query->addOption(clientid);
+    query->setIface("eth1");
+    query->setIndex(ETH1_INDEX);
+
+    // Create and add a PRL option for another option
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_ARP_CACHE_TIMEOUT);
+    query->addOption(prl);
+
+    // Create and add a host-name option to the query
+    OptionStringPtr hostname(new OptionString(Option::V4, 12, "foo"));
+    ASSERT_TRUE(hostname);
+    query->addOption(hostname);
+
+    // Let the server process it.
+    Pkt4Ptr response = srv_.processDiscover(query);
+
+    // Processing should not add an ip-forwarding option
+    ASSERT_FALSE(response->getOption(DHO_IP_FORWARDING));
+    // And no default-ip-ttl
+    ASSERT_FALSE(response->getOption(DHO_DEFAULT_IP_TTL));
+    // Nor an arp-cache-timeout
+    ASSERT_FALSE(response->getOption(DHO_ARP_CACHE_TIMEOUT));
+
+    // Reset PRL adding default-ip-ttl
+    query->delOption(DHO_DHCP_PARAMETER_REQUEST_LIST);
+    prl->addValue(DHO_DEFAULT_IP_TTL);
+    query->addOption(prl);
+
+    // Let the server process it again.
+    response = srv_.processDiscover(query);
+
+    // Processing should not add an ip-forwarding option
+    ASSERT_FALSE(response->getOption(DHO_IP_FORWARDING));
+    // And now a default-ip-ttl
+    ASSERT_TRUE(response->getOption(DHO_DEFAULT_IP_TTL));
+    // And still no arp-cache-timeout
     ASSERT_FALSE(response->getOption(DHO_ARP_CACHE_TIMEOUT));
 }
 
@@ -4904,8 +4990,7 @@ TEST_F(Dhcpv4SrvTest, userContext) {
 
     // This config has one subnet with user-context with one
     // pool (also with context). Make sure the configuration could be accepted.
-    cout << CONFIGS[3] << endl;
-    EXPECT_NO_THROW(configure(CONFIGS[3]));
+    EXPECT_NO_THROW(configure(CONFIGS[4]));
 
     // Now make sure the data was not lost.
     ConstSrvConfigPtr cfg = CfgMgr::instance().getCurrentCfg();
@@ -5000,7 +5085,7 @@ TEST_F(Dhcpv4SrvTest, fixedFieldsInClassOrder) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
     ASSERT_TRUE(status);
     comment_ = config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);

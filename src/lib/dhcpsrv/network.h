@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -779,10 +779,39 @@ public:
         ddns_use_conflict_resolution_ = ddns_use_conflict_resolution;
     }
 
+    /// @brief Returns allocator type.
+    ///
+    /// @param inheritance inheritance mode to be used.
+    util::Optional<std::string>
+    getAllocatorType(const Inheritance& inheritance = Inheritance::ALL) const {
+        return (getProperty<Network>(&Network::getAllocatorType,
+                                     allocator_type_,
+                                     inheritance,
+                                     CfgGlobals::ALLOCATOR));
+    }
+
+    /// @brief Sets new allocator type.
+    ///
+    /// It doesn't set the actual allocator instance. It merely remembers the
+    /// value specified in the configuration, so it can be output in the
+    /// @c toElement call.
+    ///
+    /// @param allocator_type new allocator type to use.
+    void setAllocatorType(const util::Optional<std::string>& allocator_type) {
+        allocator_type_ = allocator_type;
+    }
+
     /// @brief Unparses network object.
     ///
     /// @return A pointer to unparsed network configuration.
     virtual data::ElementPtr toElement() const;
+
+    /// @brief Generates an identifying label for logging.
+    ///
+    /// @return string containing the label
+    virtual std::string getLabel() const {
+        return ("base-network");
+    }
 
 protected:
 
@@ -1163,6 +1192,9 @@ protected:
     /// @brief Used to to tell kea-dhcp-ddns whether or not to use conflict resolution.
     util::Optional<bool> ddns_use_conflict_resolution_;
 
+    /// @brief Allocator used for IP address allocations.
+    util::Optional<std::string> allocator_type_;
+
     /// @brief Pointer to another network that this network belongs to.
     ///
     /// The most common case is that this instance is a subnet which belongs
@@ -1308,6 +1340,11 @@ private:
     util::Optional<std::string> filename_;
 };
 
+class Network6;
+
+/// @brief Pointer to the @ref Network6 object.
+typedef boost::shared_ptr<Network6> Network6Ptr;
+
 /// @brief Specialization of the @ref Network object for DHCPv6 case.
 class Network6 : public virtual Network {
 public:
@@ -1375,6 +1412,28 @@ public:
         rapid_commit_ = rapid_commit;
     };
 
+    /// @brief Returns allocator type for prefix delegation.
+    ///
+    /// @param inheritance inheritance mode to be used.
+    util::Optional<std::string>
+    getPdAllocatorType(const Inheritance& inheritance = Inheritance::ALL) const {
+        return (getProperty<Network6>(&Network6::getPdAllocatorType,
+                                      pd_allocator_type_,
+                                      inheritance,
+                                      CfgGlobals::PD_ALLOCATOR));
+    }
+
+    /// @brief Sets new allocator type for prefix delegation.
+    ///
+    /// It doesn't set the actual allocator instance. It merely remembers the
+    /// value specified in the configuration, so it can be output in the
+    /// @c toElement call.
+    ///
+    /// @param allocator_type new allocator type to use.
+    void setPdAllocatorType(const util::Optional<std::string>& allocator_type) {
+        pd_allocator_type_ = allocator_type;
+    }
+
     /// @brief Unparses network object.
     ///
     /// @return A pointer to unparsed network configuration.
@@ -1394,6 +1453,9 @@ private:
     /// It's default value is false, which indicates that the Rapid
     /// Commit is disabled for the subnet.
     util::Optional<bool> rapid_commit_;
+
+    /// @brief Allocator used for prefix delegation.
+    util::Optional<std::string> pd_allocator_type_;
 };
 
 } // end of namespace isc::dhcp

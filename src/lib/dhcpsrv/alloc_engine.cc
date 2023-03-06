@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -628,157 +628,20 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
     Lease6Collection leases;
 
     IOAddress hint = IOAddress::IPV6_ZERO_ADDRESS();
+    uint8_t hint_prefix_length = 128;
     if (!ctx.currentIA().hints_.empty()) {
         /// @todo: We support only one hint for now
         hint = ctx.currentIA().hints_[0].getAddress();
+        hint_prefix_length = ctx.currentIA().hints_[0].getPrefixLength();
     }
 
     Subnet6Ptr original_subnet = ctx.subnet_;
-    Subnet6Ptr subnet = ctx.subnet_;
 
-    Pool6Ptr pool;
+    Subnet6Ptr subnet = original_subnet;
 
-    CalloutHandle::CalloutNextStep callout_status = CalloutHandle::NEXT_STEP_CONTINUE;
-
-    auto const& classes = ctx.query_->getClasses();
-
-    for (; subnet; subnet = subnet->getNextSubnet(original_subnet)) {
-        if (!subnet->clientSupported(classes)) {
-            continue;
-        }
-
-        ctx.subnet_ = subnet;
-
-        // check if the hint is in pool and is available
-        // This is equivalent of subnet->inPool(hint), but returns the pool
-        pool = boost::dynamic_pointer_cast<Pool6>
-            (subnet->getPool(ctx.currentIA().type_, classes, hint));
-
-        // check if the pool is allowed
-        if (!pool || !pool->clientSupported(classes)) {
-            continue;
-        }
-
-        bool in_subnet = subnet->getReservationsInSubnet();
-
-        /// @todo: We support only one hint for now
-        Lease6Ptr lease =
-            LeaseMgrFactory::instance().getLease6(ctx.currentIA().type_, hint);
-        if (!lease) {
-
-            // In-pool reservations: Check if this address is reserved for someone
-            // else. There is no need to check for whom it is reserved, because if
-            // it has been reserved for us we would have already allocated a lease.
-
-            ConstHostCollection hosts;
-            // When out-of-pool flag is true the server may assume that all host
-            // reservations are for addresses that do not belong to the dynamic
-            // pool. Therefore, it can skip the reservation checks when dealing
-            // with in-pool addresses.
-            if (in_subnet &&
-                (!subnet->getReservationsOutOfPool() ||
-                 !subnet->inPool(ctx.currentIA().type_, hint))) {
-                hosts = getIPv6Resrv(subnet->getID(), hint);
-            }
-
-            if (hosts.empty()) {
-                // If the in-pool reservations are disabled, or there is no
-                // reservation for a given hint, we're good to go.
-
-                // The hint is valid and not currently used, let's create a
-                // lease for it
-                lease = createLease6(ctx, hint, pool->getLength(), callout_status);
-
-                // It can happen that the lease allocation failed (we could
-                // have lost the race condition. That means that the hint is
-                // no longer usable and we need to continue the regular
-                // allocation path.
-                if (lease) {
-
-                    /// @todo: We support only one lease per ia for now
-                    Lease6Collection collection;
-                    collection.push_back(lease);
-                    return (collection);
-                }
-            } else {
-                LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
-                          ALLOC_ENGINE_V6_HINT_RESERVED)
-                    .arg(ctx.query_->getLabel())
-                    .arg(hint.toText());
-            }
-
-        } else if (lease->expired()) {
-
-            // If the lease is expired, we may likely reuse it, but...
-            ConstHostCollection hosts;
-            // When out-of-pool flag is true the server may assume that all host
-            // reservations are for addresses that do not belong to the dynamic
-            // pool. Therefore, it can skip the reservation checks when dealing
-            // with in-pool addresses.
-            if (in_subnet &&
-                (!subnet->getReservationsOutOfPool() ||
-                 !subnet->inPool(ctx.currentIA().type_, hint))) {
-                hosts = getIPv6Resrv(subnet->getID(), hint);
-            }
-
-            // Let's check if there is a reservation for this address.
-            if (hosts.empty()) {
-
-                // Copy an existing, expired lease so as it can be returned
-                // to the caller.
-                Lease6Ptr old_lease(new Lease6(*lease));
-                ctx.currentIA().old_leases_.push_back(old_lease);
-
-                /// We found a lease and it is expired, so we can reuse it
-                lease = reuseExpiredLease(lease, ctx, pool->getLength(),
-                                          callout_status);
-
-                /// @todo: We support only one lease per ia for now
-                leases.push_back(lease);
-                return (leases);
-
-            } else {
-                LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
-                          ALLOC_ENGINE_V6_EXPIRED_HINT_RESERVED)
-                    .arg(ctx.query_->getLabel())
-                    .arg(hint.toText());
-            }
-        }
-    }
-
-    // We have the choice in the order checking the lease and
-    // the reservation. The default is to begin by the lease
-    // if the multi-threading is disabled.
-    bool check_reservation_first = MultiThreadingMgr::instance().getMode();
-    // If multi-threading is disabled, honor the configured order for host
-    // reservations lookup.
-    if (!check_reservation_first) {
-        check_reservation_first = CfgMgr::instance().getCurrentCfg()->getReservationsLookupFirst();
-    }
+    SharedNetwork6Ptr network;
 
     uint64_t total_attempts = 0;
-
-    // Need to check if the subnet belongs to a shared network. If so,
-    // we might be able to find a better subnet for lease allocation,
-    // for which it is more likely that there are some leases available.
-    // If we stick to the selected subnet, we may end up walking over
-    // the entire subnet (or more subnets) to discover that the pools
-    // have been exhausted. Using a subnet from which a lease was
-    // assigned most recently is an optimization which increases
-    // the likelihood of starting from the subnet which pools are not
-    // exhausted.
-    SharedNetwork6Ptr network;
-    original_subnet->getSharedNetwork(network);
-    if (network) {
-        // This would try to find a subnet with the same set of classes
-        // as the current subnet, but with the more recent "usage timestamp".
-        // This timestamp is only updated for the allocations made with an
-        // allocator (unreserved lease allocations), not the static
-        // allocations or requested addresses.
-        original_subnet = network->getPreferredSubnet(original_subnet, ctx.currentIA().type_);
-    }
-
-    ctx.subnet_ = subnet = original_subnet;
 
     // The following counter tracks the number of subnets with matching client
     // classes from which the allocation engine attempted to assign leases.
@@ -787,149 +650,71 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
     // no matching pools for the client.
     uint64_t subnets_with_unavail_pools = 0;
 
-    for (; subnet; subnet = subnet->getNextSubnet(original_subnet)) {
-        if (!subnet->clientSupported(classes)) {
-            continue;
+    CalloutHandle::CalloutNextStep callout_status = CalloutHandle::NEXT_STEP_CONTINUE;
+
+    // In the case of PDs, the allocation engine will try to match pools with
+    // the delegated prefix length matching the one provided in the hint. If the
+    // hint does not provide a preferred delegated prefix length (value is 0),
+    // the allocation engine will match any pool (any greater delegated prefix
+    // length pool). The match type for the pools is ignored for non PDs.
+    Lease6Ptr hint_lease;
+    bool search_hint_lease = true;
+    Allocator::PrefixLenMatchType prefix_length_match = Allocator::PREFIX_LEN_EQUAL;
+    if (ctx.currentIA().type_ == Lease::TYPE_PD) {
+        // If the hint has a value of 128, the code might be broken as the hint
+        // was added with the default value 128 for prefix_len by the addHint
+        // function instead of 0. However 128 is not a valid value anyway so it
+        // is reset to 0 (use any delegated prefix length available).
+        if (hint_prefix_length == 128) {
+            hint_prefix_length = 0;
         }
-
-        // The hint was useless (it was not provided at all, was used by someone else,
-        // was out of pool or reserved for someone else). Search the pool until first
-        // of the following occurs:
-        // - we find a free address
-        // - we find an address for which the lease has expired
-        // - we exhaust number of tries
-        uint64_t possible_attempts =
-            subnet->getPoolCapacity(ctx.currentIA().type_, classes);
-
-        // If the number of tries specified in the allocation engine constructor
-        // is set to 0 (unlimited) or the pools capacity is lower than that number,
-        // let's use the pools capacity as the maximum number of tries. Trying
-        // more than the actual pools capacity is a waste of time. If the specified
-        // number of tries is lower than the pools capacity, use that number.
-        uint64_t max_attempts = ((attempts_ == 0) || (possible_attempts < attempts_)) ? possible_attempts : attempts_;
-
-        if (max_attempts > 0) {
-            // If max_attempts is greater than 0, there are some pools in this subnet
-            // from which we can potentially get a lease.
-            ++subnets_with_unavail_leases;
-        } else {
-            // If max_attempts is 0, it is an indication that there are no pools
-            // in the subnet from which we can get a lease.
-            ++subnets_with_unavail_pools;
-            continue;
-        }
-
-        bool in_subnet = subnet->getReservationsInSubnet();
-        bool out_of_pool = subnet->getReservationsOutOfPool();
-
-        // Set the default status code in case the lease6_select callouts
-        // do not exist and the callout handle has a status returned by
-        // any of the callouts already invoked for this packet.
-        if (ctx.callout_handle_) {
-            ctx.callout_handle_->setStatus(CalloutHandle::NEXT_STEP_CONTINUE);
-        }
-
-        for (uint64_t i = 0; i < max_attempts; ++i) {
-
-            ++total_attempts;
-
-            auto allocator = subnet->getAllocator(ctx.currentIA().type_);
-            IOAddress candidate = allocator->pickAddress(classes,
-                                                         ctx.duid_,
-                                                         hint);
-            // The first step is to find out prefix length. It is 128 for
-            // non-PD leases.
-            uint8_t prefix_len = 128;
-            if (ctx.currentIA().type_ == Lease::TYPE_PD) {
-                pool = boost::dynamic_pointer_cast<Pool6>(
-                        subnet->getPool(ctx.currentIA().type_,
-                                        classes,
-                                        candidate));
-                if (pool) {
-                    prefix_len = pool->getLength();
-                }
-            }
-
-            // First check for reservation when it is the choice.
-            if (check_reservation_first && in_subnet && !out_of_pool) {
-                auto hosts = getIPv6Resrv(subnet->getID(), candidate);
-                if (!hosts.empty()) {
-                    // Don't allocate.
-                    continue;
-                }
-            }
-
-            // Check if the resource is busy i.e. can be being allocated
-            // by another thread to another client.
-            ResourceHandler resource_handler;
-            if (MultiThreadingMgr::instance().getMode() &&
-                !resource_handler.tryLock(ctx.currentIA().type_, candidate)) {
-                // Don't allocate.
-                continue;
-            }
-
-            // Look for an existing lease for the candidate.
-            Lease6Ptr existing = LeaseMgrFactory::instance().getLease6(ctx.currentIA().type_,
-                                                                       candidate);
-
-            if (!existing) {
-                /// In-pool reservations: Check if this address is reserved for someone
-                /// else. There is no need to check for whom it is reserved, because if
-                /// it has been reserved for us we would have already allocated a lease.
-                if (!check_reservation_first && in_subnet && !out_of_pool) {
-                    auto hosts = getIPv6Resrv(subnet->getID(), candidate);
-                    if (!hosts.empty()) {
-                        // Don't allocate.
-                        continue;
-                    }
-                }
-
-                // there's no existing lease for selected candidate, so it is
-                // free. Let's allocate it.
-
-                ctx.subnet_ = subnet;
-                Lease6Ptr lease = createLease6(ctx, candidate, prefix_len, callout_status);
-                if (lease) {
-                    // We are allocating a new lease (not renewing). So, the
-                    // old lease should be NULL.
-                    ctx.currentIA().old_leases_.clear();
-
-                    leases.push_back(lease);
-                    return (leases);
-
-                } else if (ctx.callout_handle_ &&
-                           (callout_status != CalloutHandle::NEXT_STEP_CONTINUE)) {
-                    // Don't retry when the callout status is not continue.
-                    break;
-                }
-
-                // Although the address was free just microseconds ago, it may have
-                // been taken just now. If the lease insertion fails, we continue
-                // allocation attempts.
-            } else if (existing->expired()) {
-                // Make sure it's not reserved.
-                if (!check_reservation_first && in_subnet && !out_of_pool) {
-                    auto hosts = getIPv6Resrv(subnet->getID(), candidate);
-                    if (!hosts.empty()) {
-                        // Don't allocate.
-                        continue;
-                    }
-                }
-
-                // Copy an existing, expired lease so as it can be returned
-                // to the caller.
-                Lease6Ptr old_lease(new Lease6(*existing));
-                ctx.currentIA().old_leases_.push_back(old_lease);
-
-                ctx.subnet_ = subnet;
-                existing = reuseExpiredLease(existing, ctx, prefix_len,
-                                             callout_status);
-
-                leases.push_back(existing);
-                return (leases);
-            }
+        if (!hint_prefix_length) {
+            prefix_length_match = Allocator::PREFIX_LEN_HIGHER;
         }
     }
+
+    // Try the first allocation using PREFIX_LEN_EQUAL (or in case of PDs,
+    // PREFIX_LEN_HIGHER when there is no valid delegated prefix length in the
+    // provided hint)
+    Lease6Ptr lease = allocateBestMatch(ctx, hint_lease, search_hint_lease,
+                                        hint, hint_prefix_length, subnet,
+                                        network, total_attempts,
+                                        subnets_with_unavail_leases,
+                                        subnets_with_unavail_pools,
+                                        callout_status, prefix_length_match);
+
+    // Try the second allocation using PREFIX_LEN_LOWER only for PDs if the
+    // first allocation using PREFIX_LEN_EQUAL failed (there was a specific
+    // delegated prefix length hint requested).
+    if (!lease && ctx.currentIA().type_ == Lease::TYPE_PD &&
+        prefix_length_match == Allocator::PREFIX_LEN_EQUAL) {
+        prefix_length_match = Allocator::PREFIX_LEN_LOWER;
+        lease = allocateBestMatch(ctx, hint_lease, search_hint_lease, hint,
+                                  hint_prefix_length, subnet, network,
+                                  total_attempts, subnets_with_unavail_leases,
+                                  subnets_with_unavail_pools, callout_status,
+                                  prefix_length_match);
+    }
+
+    // Try the third allocation using PREFIX_LEN_HIGHER only for PDs if the
+    // second allocation using PREFIX_LEN_LOWER failed (there was a specific
+    // delegated prefix length hint requested).
+    if (!lease && ctx.currentIA().type_ == Lease::TYPE_PD &&
+        prefix_length_match == Allocator::PREFIX_LEN_LOWER) {
+        prefix_length_match = Allocator::PREFIX_LEN_HIGHER;
+        lease = allocateBestMatch(ctx, hint_lease, search_hint_lease, hint,
+                                  hint_prefix_length, subnet, network,
+                                  total_attempts, subnets_with_unavail_leases,
+                                  subnets_with_unavail_pools, callout_status,
+                                  prefix_length_match);
+    }
+
+    if (lease) {
+        leases.push_back(lease);
+        return (leases);
+    }
+
+    auto const& classes = ctx.query_->getClasses();
 
     if (network) {
         // The client is in the shared network. Let's log the high level message
@@ -1007,6 +792,315 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
 
     // We failed to allocate anything. Let's return empty collection.
     return (Lease6Collection());
+}
+
+Lease6Ptr
+AllocEngine::allocateBestMatch(ClientContext6& ctx,
+                               Lease6Ptr& hint_lease,
+                               bool& search_hint_lease,
+                               const isc::asiolink::IOAddress& hint,
+                               uint8_t hint_prefix_length,
+                               Subnet6Ptr original_subnet,
+                               SharedNetwork6Ptr& network,
+                               uint64_t& total_attempts,
+                               uint64_t& subnets_with_unavail_leases,
+                               uint64_t& subnets_with_unavail_pools,
+                               hooks::CalloutHandle::CalloutNextStep& callout_status,
+                               Allocator::PrefixLenMatchType prefix_length_match) {
+    auto const& classes = ctx.query_->getClasses();
+    Pool6Ptr pool;
+    Subnet6Ptr subnet = original_subnet;
+
+    Lease6Ptr usable_hint_lease;
+    if (!search_hint_lease) {
+        usable_hint_lease = hint_lease;
+    }
+    for (; subnet; subnet = subnet->getNextSubnet(original_subnet)) {
+        if (!subnet->clientSupported(classes)) {
+            continue;
+        }
+
+        ctx.subnet_ = subnet;
+
+        // check if the hint is in pool and is available
+        // This is equivalent of subnet->inPool(hint), but returns the pool
+        pool = boost::dynamic_pointer_cast<Pool6>
+            (subnet->getPool(ctx.currentIA().type_, classes, hint));
+
+        // check if the pool is allowed
+        if (!pool || !pool->clientSupported(classes)) {
+            continue;
+        }
+
+        if (ctx.currentIA().type_ == Lease::TYPE_PD &&
+            !Allocator::isValidPrefixPool(prefix_length_match, pool,
+                                          hint_prefix_length)) {
+            continue;
+        }
+
+        bool in_subnet = subnet->getReservationsInSubnet();
+
+        /// @todo: We support only one hint for now
+        if (search_hint_lease) {
+            search_hint_lease = false;
+            hint_lease = LeaseMgrFactory::instance().getLease6(ctx.currentIA().type_, hint);
+            usable_hint_lease = hint_lease;
+        }
+        if (!usable_hint_lease) {
+
+            // In-pool reservations: Check if this address is reserved for someone
+            // else. There is no need to check for whom it is reserved, because if
+            // it has been reserved for us we would have already allocated a lease.
+
+            ConstHostCollection hosts;
+            // When out-of-pool flag is true the server may assume that all host
+            // reservations are for addresses that do not belong to the dynamic
+            // pool. Therefore, it can skip the reservation checks when dealing
+            // with in-pool addresses.
+            if (in_subnet &&
+                (!subnet->getReservationsOutOfPool() ||
+                 !subnet->inPool(ctx.currentIA().type_, hint))) {
+                hosts = getIPv6Resrv(subnet->getID(), hint);
+            }
+
+            if (hosts.empty()) {
+
+                // If the in-pool reservations are disabled, or there is no
+                // reservation for a given hint, we're good to go.
+
+                // The hint is valid and not currently used, let's create a
+                // lease for it
+                Lease6Ptr new_lease = createLease6(ctx, hint, pool->getLength(), callout_status);
+
+                // It can happen that the lease allocation failed (we could
+                // have lost the race condition. That means that the hint is
+                // no longer usable and we need to continue the regular
+                // allocation path.
+                if (new_lease) {
+                    /// @todo: We support only one lease per ia for now
+                    return (new_lease);
+                }
+            } else {
+                LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                          ALLOC_ENGINE_V6_HINT_RESERVED)
+                    .arg(ctx.query_->getLabel())
+                    .arg(hint.toText());
+            }
+
+        } else if (usable_hint_lease->expired()) {
+
+            // If the lease is expired, we may likely reuse it, but...
+            ConstHostCollection hosts;
+            // When out-of-pool flag is true the server may assume that all host
+            // reservations are for addresses that do not belong to the dynamic
+            // pool. Therefore, it can skip the reservation checks when dealing
+            // with in-pool addresses.
+            if (in_subnet &&
+                (!subnet->getReservationsOutOfPool() ||
+                 !subnet->inPool(ctx.currentIA().type_, hint))) {
+                hosts = getIPv6Resrv(subnet->getID(), hint);
+            }
+
+            // Let's check if there is a reservation for this address.
+            if (hosts.empty()) {
+
+                // Copy an existing, expired lease so as it can be returned
+                // to the caller.
+                Lease6Ptr old_lease(new Lease6(*usable_hint_lease));
+                ctx.currentIA().old_leases_.push_back(old_lease);
+
+                /// We found a lease and it is expired, so we can reuse it
+                Lease6Ptr lease = reuseExpiredLease(usable_hint_lease, ctx,
+                                                    pool->getLength(),
+                                                    callout_status);
+
+                /// @todo: We support only one lease per ia for now
+                return (lease);
+
+            } else {
+                LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                          ALLOC_ENGINE_V6_EXPIRED_HINT_RESERVED)
+                    .arg(ctx.query_->getLabel())
+                    .arg(hint.toText());
+            }
+        }
+    }
+
+    // We have the choice in the order checking the lease and
+    // the reservation. The default is to begin by the lease
+    // if the multi-threading is disabled.
+    bool check_reservation_first = MultiThreadingMgr::instance().getMode();
+    // If multi-threading is disabled, honor the configured order for host
+    // reservations lookup.
+    if (!check_reservation_first) {
+        check_reservation_first = CfgMgr::instance().getCurrentCfg()->getReservationsLookupFirst();
+    }
+
+    // Need to check if the subnet belongs to a shared network. If so,
+    // we might be able to find a better subnet for lease allocation,
+    // for which it is more likely that there are some leases available.
+    // If we stick to the selected subnet, we may end up walking over
+    // the entire subnet (or more subnets) to discover that the pools
+    // have been exhausted. Using a subnet from which a lease was
+    // assigned most recently is an optimization which increases
+    // the likelihood of starting from the subnet which pools are not
+    // exhausted.
+
+    original_subnet->getSharedNetwork(network);
+    if (network) {
+        // This would try to find a subnet with the same set of classes
+        // as the current subnet, but with the more recent "usage timestamp".
+        // This timestamp is only updated for the allocations made with an
+        // allocator (unreserved lease allocations), not the static
+        // allocations or requested addresses.
+        original_subnet = network->getPreferredSubnet(original_subnet, ctx.currentIA().type_);
+    }
+
+    ctx.subnet_ = subnet = original_subnet;
+
+    for (; subnet; subnet = subnet->getNextSubnet(original_subnet)) {
+        if (!subnet->clientSupported(classes)) {
+            continue;
+        }
+
+        // The hint was useless (it was not provided at all, was used by someone else,
+        // was out of pool or reserved for someone else). Search the pool until first
+        // of the following occurs:
+        // - we find a free address
+        // - we find an address for which the lease has expired
+        // - we exhaust number of tries
+        uint64_t possible_attempts = subnet->getPoolCapacity(ctx.currentIA().type_,
+                                                             classes,
+                                                             prefix_length_match,
+                                                             hint_prefix_length);
+
+        // If the number of tries specified in the allocation engine constructor
+        // is set to 0 (unlimited) or the pools capacity is lower than that number,
+        // let's use the pools capacity as the maximum number of tries. Trying
+        // more than the actual pools capacity is a waste of time. If the specified
+        // number of tries is lower than the pools capacity, use that number.
+        uint64_t max_attempts = ((attempts_ == 0) || (possible_attempts < attempts_)) ? possible_attempts : attempts_;
+
+        if (max_attempts > 0) {
+            // If max_attempts is greater than 0, there are some pools in this subnet
+            // from which we can potentially get a lease.
+            ++subnets_with_unavail_leases;
+        } else {
+            // If max_attempts is 0, it is an indication that there are no pools
+            // in the subnet from which we can get a lease.
+            ++subnets_with_unavail_pools;
+            continue;
+        }
+
+        bool in_subnet = subnet->getReservationsInSubnet();
+        bool out_of_pool = subnet->getReservationsOutOfPool();
+
+        // Set the default status code in case the lease6_select callouts
+        // do not exist and the callout handle has a status returned by
+        // any of the callouts already invoked for this packet.
+        if (ctx.callout_handle_) {
+            ctx.callout_handle_->setStatus(CalloutHandle::NEXT_STEP_CONTINUE);
+        }
+
+        for (uint64_t i = 0; i < max_attempts; ++i) {
+            ++total_attempts;
+
+            auto allocator = subnet->getAllocator(ctx.currentIA().type_);
+            IOAddress candidate("::");
+
+            // The first step is to find out prefix length. It is 128 for
+            // non-PD leases.
+            uint8_t prefix_len = 128;
+            if (ctx.currentIA().type_ == Lease::TYPE_PD) {
+                candidate = allocator->pickPrefix(classes, pool, ctx.duid_,
+                                                  prefix_length_match, hint,
+                                                  hint_prefix_length);
+                if (pool) {
+                    prefix_len = pool->getLength();
+                }
+            } else {
+                candidate = allocator->pickAddress(classes, ctx.duid_, hint);
+            }
+
+            // First check for reservation when it is the choice.
+            if (check_reservation_first && in_subnet && !out_of_pool) {
+                auto hosts = getIPv6Resrv(subnet->getID(), candidate);
+                if (!hosts.empty()) {
+                    // Don't allocate.
+                    continue;
+                }
+            }
+
+            // Check if the resource is busy i.e. can be being allocated
+            // by another thread to another client.
+            ResourceHandler resource_handler;
+            if (MultiThreadingMgr::instance().getMode() &&
+                !resource_handler.tryLock(ctx.currentIA().type_, candidate)) {
+                // Don't allocate.
+                continue;
+            }
+
+            // Look for an existing lease for the candidate.
+            Lease6Ptr existing = LeaseMgrFactory::instance().getLease6(ctx.currentIA().type_,
+                                                                       candidate);
+
+            if (!existing) {
+                /// In-pool reservations: Check if this address is reserved for someone
+                /// else. There is no need to check for whom it is reserved, because if
+                /// it has been reserved for us we would have already allocated a lease.
+                if (!check_reservation_first && in_subnet && !out_of_pool) {
+                    auto hosts = getIPv6Resrv(subnet->getID(), candidate);
+                    if (!hosts.empty()) {
+                        // Don't allocate.
+                        continue;
+                    }
+                }
+
+                // there's no existing lease for selected candidate, so it is
+                // free. Let's allocate it.
+
+                ctx.subnet_ = subnet;
+                Lease6Ptr new_lease = createLease6(ctx, candidate, prefix_len, callout_status);
+                if (new_lease) {
+                    // We are allocating a new lease (not renewing). So, the
+                    // old lease should be NULL.
+                    ctx.currentIA().old_leases_.clear();
+
+                    return (new_lease);
+
+                } else if (ctx.callout_handle_ &&
+                           (callout_status != CalloutHandle::NEXT_STEP_CONTINUE)) {
+                    // Don't retry when the callout status is not continue.
+                    break;
+                }
+
+                // Although the address was free just microseconds ago, it may have
+                // been taken just now. If the lease insertion fails, we continue
+                // allocation attempts.
+            } else if (existing->expired()) {
+                // Make sure it's not reserved.
+                if (!check_reservation_first && in_subnet && !out_of_pool) {
+                    auto hosts = getIPv6Resrv(subnet->getID(), candidate);
+                    if (!hosts.empty()) {
+                        // Don't allocate.
+                        continue;
+                    }
+                }
+
+                // Copy an existing, expired lease so as it can be returned
+                // to the caller.
+                Lease6Ptr old_lease(new Lease6(*existing));
+                ctx.currentIA().old_leases_.push_back(old_lease);
+
+                ctx.subnet_ = subnet;
+                existing = reuseExpiredLease(existing, ctx, prefix_len,
+                                             callout_status);
+
+                return (existing);
+            }
+        }
+    }
+    return (Lease6Ptr());
 }
 
 void
@@ -1251,6 +1345,32 @@ AllocEngine::allocateGlobalReservedLeases6(ClientContext6& ctx,
         // If there's a lease for this address, let's not create it.
         // It doesn't matter whether it is for this client or for someone else.
         if (!LeaseMgrFactory::instance().getLease6(ctx.currentIA().type_, addr)) {
+
+            // Check the feasibility of this address within this shared-network.
+            // Assign the context's subnet accordingly.
+            // Only necessary for IA_NA
+            if (type == IPv6Resrv::TYPE_NA) {
+                bool valid_subnet = false;
+                auto subnet = ctx.subnet_;
+                while (subnet) {
+                    if (subnet->inRange(addr)) {
+                        valid_subnet = true;
+                        break;
+                    }
+
+                    subnet = subnet->getNextSubnet(ctx.subnet_);
+                }
+
+                if (!valid_subnet) {
+                    LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                              ALLOC_ENGINE_IGNORING_UNSUITABLE_GLOBAL_ADDRESS6)
+                              .arg(addr.toText())
+                              .arg(labelNetworkOrSubnet(ctx.subnet_));
+                    continue;
+                }
+
+                ctx.subnet_ = subnet;
+            }
 
             if (!ghost->getHostname().empty()) {
                 // If there is a hostname reservation here we should stick
@@ -1529,7 +1649,6 @@ AllocEngine::removeNonreservedLeases6(ClientContext6& ctx,
             // If there's only one lease left, break the loop.
             break;
         }
-
     }
 
     // Remove all elements that we previously marked for deletion (those that
@@ -1561,25 +1680,11 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
     // address, lease type and prefixlen (0) stay the same
     expired->iaid_ = ctx.currentIA().iaid_;
     expired->duid_ = ctx.duid_;
-    // Use subnet's preferred triplet to conditionally determine
-    // preferred lifetime based on hint
-    if (!ctx.currentIA().hints_.empty() &&
-        ctx.currentIA().hints_[0].getPreferred()) {
-        uint32_t preferred = ctx.currentIA().hints_[0].getPreferred();
-        expired->preferred_lft_ = ctx.subnet_->getPreferred().get(preferred);
-    } else {
-        expired->preferred_lft_ = ctx.subnet_->getPreferred();
-    }
-    // Use subnet's valid triplet to conditionally determine
-    // valid lifetime based on hint
+
+    // Calculate life times.
+    getLifetimes6(ctx, expired->preferred_lft_, expired->valid_lft_);
     expired->reuseable_valid_lft_ = 0;
-    if (!ctx.currentIA().hints_.empty() &&
-        ctx.currentIA().hints_[0].getValid()) {
-        uint32_t valid = ctx.currentIA().hints_[0].getValid();
-        expired->valid_lft_ = ctx.subnet_->getValid().get(valid);
-    } else {
-        expired->valid_lft_ = ctx.subnet_->getValid();
-    }
+
     expired->cltt_ = time(NULL);
     expired->subnet_id_ = ctx.subnet_->getID();
     expired->hostname_ = ctx.hostname_;
@@ -2013,26 +2118,14 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
     Lease6Ptr old_data(new Lease6(*lease));
 
     bool changed = false;
+
+    // Calculate life times.
     uint32_t current_preferred_lft = lease->preferred_lft_;
-    if (!ctx.currentIA().hints_.empty() &&
-        ctx.currentIA().hints_[0].getPreferred()) {
-        uint32_t preferred = ctx.currentIA().hints_[0].getPreferred();
-        lease->preferred_lft_ = ctx.subnet_->getPreferred().get(preferred);
-    } else {
-        lease->preferred_lft_ = ctx.subnet_->getPreferred();
-    }
-    if (lease->preferred_lft_ < current_preferred_lft) {
-        changed = true;
-    }
-    lease->reuseable_valid_lft_ = 0;
-    if (!ctx.currentIA().hints_.empty() &&
-        ctx.currentIA().hints_[0].getValid()) {
-        uint32_t valid = ctx.currentIA().hints_[0].getValid();
-        lease->valid_lft_ = ctx.subnet_->getValid().get(valid);
-    } else {
-        lease->valid_lft_ = ctx.subnet_->getValid();
-    }
-    if (lease->valid_lft_ < lease->current_valid_lft_) {
+    getLifetimes6(ctx, lease->preferred_lft_, lease->valid_lft_);
+
+    // If either has changed set the changed flag.
+    if ((lease->preferred_lft_ != current_preferred_lft) ||
+        (lease->valid_lft_ != lease->current_valid_lft_)) {
         changed = true;
     }
 
@@ -2123,7 +2216,7 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
 
         // @todo should we call storeLease6ExtendedInfo() here ?
         updateLease6ExtendedInfo(lease, ctx);
-        if (lease->extended_info_action_ == Lease::ACTION_UPDATE) {
+        if (lease->extended_info_action_ == Lease6::ACTION_UPDATE) {
             changed = true;
         }
 
@@ -2131,7 +2224,6 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
         if (!changed) {
             setLeaseReusable(lease, current_preferred_lft, ctx);
         }
-
 
         // Now that the lease has been reclaimed, we can go ahead and update it
         // in the lease database.
@@ -2240,7 +2332,8 @@ AllocEngine::updateLeaseData(ClientContext6& ctx, const Lease6Collection& leases
 }
 
 void
-AllocEngine::reclaimExpiredLeases6(const size_t max_leases, const uint16_t timeout,
+AllocEngine::reclaimExpiredLeases6(const size_t max_leases,
+                                   const uint16_t timeout,
                                    const bool remove_lease,
                                    const uint16_t max_unwarned_cycles) {
 
@@ -2248,6 +2341,22 @@ AllocEngine::reclaimExpiredLeases6(const size_t max_leases, const uint16_t timeo
               ALLOC_ENGINE_V6_LEASES_RECLAMATION_START)
         .arg(max_leases)
         .arg(timeout);
+
+    try {
+        reclaimExpiredLeases6Internal(max_leases, timeout, remove_lease,
+                                      max_unwarned_cycles);
+    } catch (const std::exception& ex) {
+        LOG_ERROR(alloc_engine_logger,
+                  ALLOC_ENGINE_V6_LEASES_RECLAMATION_FAILED)
+            .arg(ex.what());
+    }
+}
+
+void
+AllocEngine::reclaimExpiredLeases6Internal(const size_t max_leases,
+                                           const uint16_t timeout,
+                                           const bool remove_lease,
+                                           const uint16_t max_unwarned_cycles) {
 
     // Create stopwatch and automatically start it to measure the time
     // taken by the routine.
@@ -2386,7 +2495,8 @@ AllocEngine::deleteExpiredReclaimedLeases6(const uint32_t secs) {
 }
 
 void
-AllocEngine::reclaimExpiredLeases4(const size_t max_leases, const uint16_t timeout,
+AllocEngine::reclaimExpiredLeases4(const size_t max_leases,
+                                   const uint16_t timeout,
                                    const bool remove_lease,
                                    const uint16_t max_unwarned_cycles) {
 
@@ -2394,6 +2504,22 @@ AllocEngine::reclaimExpiredLeases4(const size_t max_leases, const uint16_t timeo
               ALLOC_ENGINE_V4_LEASES_RECLAMATION_START)
         .arg(max_leases)
         .arg(timeout);
+
+    try {
+        reclaimExpiredLeases4Internal(max_leases, timeout, remove_lease,
+                                      max_unwarned_cycles);
+    } catch (const std::exception& ex) {
+        LOG_ERROR(alloc_engine_logger,
+                  ALLOC_ENGINE_V4_LEASES_RECLAMATION_FAILED)
+            .arg(ex.what());
+    }
+}
+
+void
+AllocEngine::reclaimExpiredLeases4Internal(const size_t max_leases,
+                                           const uint16_t timeout,
+                                           const bool remove_lease,
+                                           const uint16_t max_unwarned_cycles) {
 
     // Create stopwatch and automatically start it to measure the time
     // taken by the routine.
@@ -2847,6 +2973,23 @@ AllocEngine::reclaimDeclined(const Lease6Ptr& lease) {
     return (true);
 }
 
+void
+AllocEngine::clearReclaimedExtendedInfo(const Lease4Ptr& lease) const {
+    lease->relay_id_.clear();
+    lease->remote_id_.clear();
+    if (lease->getContext()) {
+        lease->setContext(ElementPtr());
+    }
+}
+
+void
+AllocEngine::clearReclaimedExtendedInfo(const Lease6Ptr& lease) const {
+    if (lease->getContext()) {
+        lease->extended_info_action_ = Lease6::ACTION_DELETE;
+        lease->setContext(ElementPtr());
+    }
+}
+
 template<typename LeasePtrType>
 void AllocEngine::reclaimLeaseInDatabase(const LeasePtrType& lease,
                                          const bool remove_lease,
@@ -2867,10 +3010,7 @@ void AllocEngine::reclaimLeaseInDatabase(const LeasePtrType& lease,
         lease->fqdn_fwd_ = false;
         lease->fqdn_rev_ = false;
         lease->state_ = Lease::STATE_EXPIRED_RECLAIMED;
-        if (lease->getContext()) {
-            lease->extended_info_action_ = Lease::ACTION_DELETE;
-            lease->setContext(ElementPtr());
-        }
+        clearReclaimedExtendedInfo(lease);
         lease_update_fun(lease);
 
     } else {
@@ -2882,6 +3022,25 @@ void AllocEngine::reclaimLeaseInDatabase(const LeasePtrType& lease,
               ALLOC_ENGINE_LEASE_RECLAIMED)
         .arg(lease->addr_.toText());
 }
+
+std::string
+AllocEngine::labelNetworkOrSubnet(SubnetPtr subnet) {
+    if (!subnet) {
+        return("<empty subnet>");
+    }
+
+    SharedNetwork4Ptr network;
+    subnet->getSharedNetwork(network);
+    std::ostringstream ss;
+    if (network) {
+        ss << "shared-network: " << network->getName();
+    } else {
+        ss << "subnet id: " << subnet->getID();
+    }
+
+    return(ss.str());
+}
+
 
 }  // namespace dhcp
 }  // namespace isc
@@ -2977,23 +3136,23 @@ hasAddressReservation(AllocEngine::ClientContext4& ctx) {
         return (false);
     }
 
-    // Flag used to perform search for global reservations only once.
-    bool search_global_done = false;
+    // Fetch the globally reserved address if there is one.
+    auto global_host = ctx.hosts_.find(SUBNET_ID_GLOBAL);
+    auto global_host_address = ((global_host != ctx.hosts_.end() && global_host->second) ?
+                                 global_host->second->getIPv4Reservation() :
+                                 IOAddress::IPV4_ZERO_ADDRESS());
 
+    // Start with currently selected subnet.
     Subnet4Ptr subnet = ctx.subnet_;
     while (subnet) {
-        // Skip search if the global reservations have already been examined.
-        if (!search_global_done && subnet->getReservationsGlobal()) {
-            auto host = ctx.hosts_.find(SUBNET_ID_GLOBAL);
-            // if we want global + other modes we would need to
-            // return only if true, else continue
-            if (host != ctx.hosts_.end() && host->second &&
-                !host->second->getIPv4Reservation().isV4Zero()) {
-                return (true);
-            }
-            // No need to perform this search again as there are no global
-            // reservations.
-            search_global_done = true;
+        // If global reservations are enabled for this subnet and there is
+        // globally reserved address and that address is feasible for this
+        // subnet, update the selected subnet and return true.
+        if (subnet->getReservationsGlobal() &&
+            (global_host_address != IOAddress::IPV4_ZERO_ADDRESS()) &&
+            (subnet->inRange(global_host_address))) {
+            ctx.subnet_ = subnet;
+            return (true);
         }
 
         if (subnet->getReservationsInSubnet()) {
@@ -3016,6 +3175,13 @@ hasAddressReservation(AllocEngine::ClientContext4& ctx) {
         // No address reservation found here, so let's try another subnet
         // within the same shared network.
         subnet = subnet->getNextSubnet(ctx.subnet_, ctx.query_->getClasses());
+    }
+
+    if (global_host_address != IOAddress::IPV4_ZERO_ADDRESS()) {
+        LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                  ALLOC_ENGINE_IGNORING_UNSUITABLE_GLOBAL_ADDRESS)
+            .arg(ctx.currentHost()->getIPv4Reservation().toText())
+            .arg(AllocEngine::labelNetworkOrSubnet(ctx.subnet_));
     }
 
     return (false);
@@ -3768,7 +3934,7 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr,
     lease->hostname_ = ctx.hostname_;
 
     // Add(update) the extended information on the lease.
-    updateLease4ExtendedInfo(lease, ctx);
+    static_cast<void>(updateLease4ExtendedInfo(lease, ctx));
 
     // Let's execute all callouts registered for lease4_select
     if (ctx.callout_handle_ &&
@@ -4347,30 +4513,28 @@ AllocEngine::updateLease4Information(const Lease4Ptr& lease,
     }
 
     // Add(update) the extended information on the lease.
-    updateLease4ExtendedInfo(lease, ctx);
-    if (lease->extended_info_action_ == Lease::ACTION_UPDATE) {
+    if (updateLease4ExtendedInfo(lease, ctx)) {
         changed = true;
     }
 
     return (changed);
 }
 
-void
+bool
 AllocEngine::updateLease4ExtendedInfo(const Lease4Ptr& lease,
                                       const AllocEngine::ClientContext4& ctx) const {
-    // The extended info action is a transient value but be safe so reset it.
-    lease->extended_info_action_ = Lease::ACTION_IGNORE;
+    bool changed = false;
 
     // If storage is not enabled then punt.
     if (!ctx.subnet_->getStoreExtendedInfo()) {
-        return;
+        return (changed);
     }
 
     // Look for relay agent information option (option 82)
     OptionPtr rai = ctx.query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     if (!rai) {
         // Pkt4 doesn't have it, so nothing to store (or update).
-        return;
+        return (changed);
     }
 
     // Create a StringElement with the hex string for relay-agent-info.
@@ -4383,6 +4547,7 @@ AllocEngine::updateLease4ExtendedInfo(const Lease4Ptr& lease,
     OptionPtr remote_id = rai->getOption(RAI_OPTION_REMOTE_ID);
     if (remote_id) {
         std::vector<uint8_t> bytes = remote_id->toBinary(false);
+        lease->remote_id_ = bytes;
         if (bytes.size() > 0) {
             extended_info->set("remote-id",
                                Element::create(encode::encodeHex(bytes)));
@@ -4392,6 +4557,7 @@ AllocEngine::updateLease4ExtendedInfo(const Lease4Ptr& lease,
     OptionPtr relay_id = rai->getOption(RAI_OPTION_RELAY_ID);
     if (relay_id) {
         std::vector<uint8_t> bytes = relay_id->toBinary(false);
+        lease->relay_id_ = bytes;
         if (bytes.size() > 0) {
             extended_info->set("relay-id",
                                Element::create(encode::encodeHex(bytes)));
@@ -4419,20 +4585,22 @@ AllocEngine::updateLease4ExtendedInfo(const Lease4Ptr& lease,
     // Add/replace the extended info entry.
     ConstElementPtr old_extended_info = mutable_isc->get("relay-agent-info");
     if (!old_extended_info || (*old_extended_info != *extended_info)) {
-        lease->extended_info_action_ = Lease::ACTION_UPDATE;
+        changed = true;
         mutable_isc->set("relay-agent-info", extended_info);
         mutable_user_context->set("ISC", mutable_isc);
     }
 
     // Update the lease's user_context.
     lease->setContext(mutable_user_context);
+
+    return (changed);
 }
 
 void
 AllocEngine::updateLease6ExtendedInfo(const Lease6Ptr& lease,
                                       const AllocEngine::ClientContext6& ctx) const {
     // The extended info action is a transient value but be safe so reset it.
-    lease->extended_info_action_ = Lease::ACTION_IGNORE;
+    lease->extended_info_action_ = Lease6::ACTION_IGNORE;
 
     // If storage is not enabled then punt.
     if (!ctx.subnet_->getStoreExtendedInfo()) {
@@ -4527,7 +4695,7 @@ AllocEngine::updateLease6ExtendedInfo(const Lease6Ptr& lease,
     // Add/replace the extended info entry.
     ConstElementPtr old_extended_info = mutable_isc->get("relay-info");
     if (!old_extended_info || (*old_extended_info != *extended_info)) {
-        lease->extended_info_action_ = Lease::ACTION_UPDATE;
+        lease->extended_info_action_ = Lease6::ACTION_UPDATE;
         mutable_isc->set("relay-info", extended_info);
         mutable_user_context->set("ISC", mutable_isc);
     }

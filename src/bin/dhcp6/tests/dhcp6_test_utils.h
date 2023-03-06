@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -170,12 +170,8 @@ public:
     /// it in fake_send_ list where test can later inspect
     /// server's response.
     virtual void sendPacket(const isc::dhcp::Pkt6Ptr& pkt) {
-        if (isc::util::MultiThreadingMgr::instance().getMode()) {
-            std::lock_guard<std::mutex> lk(mutex_);
-            fake_sent_.push_back(pkt);
-        } else {
-            fake_sent_.push_back(pkt);
-        }
+        isc::util::MultiThreadingLock lock(mutex_);
+        fake_sent_.push_back(pkt);
     }
 
     /// @brief fake receive packet from server
@@ -184,25 +180,17 @@ public:
     ///
     /// @return The received packet.
     Pkt6Ptr receiveOneMsg() {
-        if (isc::util::MultiThreadingMgr::instance().getMode()) {
-            std::lock_guard<std::mutex> lk(mutex_);
-            return (receiveOneMsgInternal());
-        } else {
-            return (receiveOneMsgInternal());
-        }
-    }
+        // Make sure the server processed all packets.
+        isc::util::MultiThreadingMgr::instance().getThreadPool().wait(2);
 
-    /// @brief fake receive packet from server
-    ///
-    /// The client uses this packet as a reply from the server.
-    /// This function should be called in a thread safe context.
-    ///
-    /// @return The received packet.
-    Pkt6Ptr receiveOneMsgInternal() {
+        // Lock the mutex for the rest of the function.
+        isc::util::MultiThreadingLock lock(mutex_);
+
         // Return empty pointer if server hasn't responded.
         if (fake_sent_.empty()) {
             return (Pkt6Ptr());
         }
+
         Pkt6Ptr msg = fake_sent_.front();
         fake_sent_.pop_front();
         return (msg);
@@ -570,6 +558,17 @@ public:
     ///
     /// Removes existing configuration.
     ~Dhcpv6SrvTest();
+
+    /// @brief Used to configure a server for tests.
+    ///
+    /// A wrapper over configureDhcp6Server() to which any other
+    /// simulations of production code are added.
+    ///
+    /// @brief server the server being tested
+    /// @brief config the configuration the server is configured with
+    ///
+    /// @return a JSON-formatted status of the reconfiguration
+    static ConstElementPtr configure(Dhcpv6Srv& server, isc::data::ConstElementPtr config);
 
     /// @brief Runs DHCPv6 configuration from the JSON string.
     ///

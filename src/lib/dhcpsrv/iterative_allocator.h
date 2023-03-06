@@ -1,4 +1,4 @@
-// Copyright (C) 2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2022-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -45,6 +45,29 @@ private:
     virtual asiolink::IOAddress pickAddressInternal(const ClientClasses& client_classes,
                                                     const DuidPtr& duid,
                                                     const asiolink::IOAddress& hint);
+
+    /// @brief Picks a delegated prefix.
+    ///
+    /// Internal thread-unsafe implementation of the @c pickPrefix.
+    ///
+    /// @param client_classes list of classes client belongs to.
+    /// @param pool the selected pool satisfying all required conditions.
+    /// @param duid Client's DUID.
+    /// @param prefix_length_match type which indicates the selection criteria
+    ///        for the pools relative to the provided hint prefix length.
+    /// @param hint Client's hint.
+    /// @param hint_prefix_length the hint prefix length that the client
+    ///        provided. The 0 value means that there is no hint and that any
+    ///        pool will suffice.
+    ///
+    /// @return the next prefix.
+    virtual isc::asiolink::IOAddress
+    pickPrefixInternal(const ClientClasses& client_classes,
+                       Pool6Ptr& pool,
+                       const DuidPtr& duid,
+                       PrefixLenMatchType prefix_length_match,
+                       const isc::asiolink::IOAddress& hint,
+                       uint8_t hint_prefix_length);
 
     /// @brief Convenience function returning subnet allocation state instance.
     ///

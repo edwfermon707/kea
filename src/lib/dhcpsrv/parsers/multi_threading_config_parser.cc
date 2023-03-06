@@ -1,4 +1,4 @@
-// Copyright (C) 2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -65,6 +65,15 @@ MultiThreadingConfigParser::parse(SrvConfig& srv_cfg,
     }
 
     srv_cfg.setDHCPMultiThreading(value);
+
+    // Set the mode so that it can be inspected by other configuration parsers
+    // such as the ones in hook libraries. This creates a dangerous discordance
+    // between the MT mode and the real configuration. For instance, it may
+    // result in packets not being processed because the listener thread sees
+    // the MT mode enabled, but in fact there are 0 threads to handle the
+    // packets. In production code, it is expected that a call to
+    // ControlledDhcpvXSrv::processConfig() applies the configuration, which
+    // should properly create the threads and close this divide.
     MultiThreadingMgr::instance().setMode(enabled);
 }
 

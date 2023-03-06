@@ -1,4 +1,4 @@
-// Copyright (C) 2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2022-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -56,7 +56,7 @@ TEST_F(IterativeAllocatorTest4, clientClass) {
 
 // This test verifies that the iterative allocator really walks over all addresses
 // in all pools in specified subnet. It also must not pick the same address twice
-// unless it runs out of pool space and must start over.
+// unless it runs out of pool space.
 TEST_F(IterativeAllocatorTest4, manyPools) {
     IterativeAllocator alloc(Lease::TYPE_V4, subnet_);
 
@@ -102,7 +102,7 @@ TEST_F(IterativeAllocatorTest4, manyPools) {
             break;
         }
 
-        if ( cnt>total ) {
+        if (cnt > total) {
             ADD_FAILURE() << "Too many unique addresses generated.";
             break;
         }
@@ -141,6 +141,60 @@ TEST_F(IterativeAllocatorTest6, clientClass) {
         IOAddress candidate = alloc->pickAddress(cc_, duid_, IOAddress("::"));
         EXPECT_TRUE(subnet_->inPool(Lease::TYPE_NA, candidate));
         EXPECT_TRUE(subnet_->inPool(Lease::TYPE_NA, candidate, cc_));
+    }
+}
+
+// This test verifies that the iterative allocator really walks over all addresses
+// in all pools in specified subnet. It also must not pick the same address twice.
+// unless it runs out of pool space.
+TEST_F(IterativeAllocatorTest6, manyPools) {
+    NakedIterativeAllocator alloc(Lease::TYPE_NA, subnet_);
+
+    // let's start from 2, as there is 2001:db8:1::10 - 2001:db8:1::20 pool already.
+    for (int i = 2; i < 10; ++i) {
+        stringstream min, max;
+
+        min << "2001:db8:1::" << hex << i * 16 + 1;
+        max << "2001:db8:1::" << hex << i * 16 + 9;
+
+        Pool6Ptr pool(new Pool6(Lease::TYPE_NA, IOAddress(min.str()),
+                                IOAddress(max.str())));
+        subnet_->addPool(pool);
+    }
+
+    int total = 17 + 8 * 9; // First pool (::10 - ::20) has 17 addresses in it,
+                            // there are 8 extra pools with 9 addresses in each.
+
+    // Let's keep picked addresses here and check their uniqueness.
+    std::set<IOAddress> generated_addrs;
+    int cnt = 0;
+    while (++cnt) {
+        IOAddress candidate = alloc.pickAddress(cc_, duid_, IOAddress("::"));
+        EXPECT_TRUE(subnet_->inPool(Lease::TYPE_NA, candidate));
+
+        // One way to easily verify that the iterative allocator really works is
+        // to uncomment the following line and observe its output that it
+        // covers all defined pools.
+        // cout << candidate.toText() << endl;
+
+        if (generated_addrs.find(candidate) == generated_addrs.end()) {
+            // We haven't had this.
+            generated_addrs.insert(candidate);
+        } else {
+            // We have seen this address before. That should mean that we
+            // iterated over all addresses.
+            if (generated_addrs.size() == total) {
+                // We have exactly the number of address in all pools.
+                break;
+            }
+            ADD_FAILURE() << "Too many or not enough unique addresses generated.";
+            break;
+        }
+
+        if (cnt > total) {
+            ADD_FAILURE() << "Too many unique addresses generated.";
+            break;
+        }
     }
 }
 
@@ -293,7 +347,7 @@ TEST_F(IterativeAllocatorTest6, addrStepOutClass) {
 // This test verifies that the allocator picks delegated prefixes from several
 // pools.
 TEST_F(IterativeAllocatorTest6, prefixStep) {
-    subnet_.reset(new Subnet6(IOAddress("2001:db8::"), 32, 1, 2, 3, 4));
+    subnet_ = Subnet6::create(IOAddress("2001:db8::"), 32, 1, 2, 3, 4);
 
     Pool6Ptr pool1(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8::"), 56, 60));
     Pool6Ptr pool2(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1::"), 48, 48));
@@ -304,6 +358,8 @@ TEST_F(IterativeAllocatorTest6, prefixStep) {
 
     NakedIterativeAllocator alloc(Lease::TYPE_PD, subnet_);
 
+    Pool6Ptr pool;
+
     // We have a 2001:db8::/48 subnet that has 3 pools defined in it:
     // 2001:db8::/56 split into /60 prefixes (16 leases) (or 2001:db8:0:X0::)
     // 2001:db8:1::/48 split into a single /48 prefix (just 1 lease)
@@ -311,68 +367,207 @@ TEST_F(IterativeAllocatorTest6, prefixStep) {
 
     // First pool check (Let's check over all 16 leases)
     EXPECT_EQ("2001:db8::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:10::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:20::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:30::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:40::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:50::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:60::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:70::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:80::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:90::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:a0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:b0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:c0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:d0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:e0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:f0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
 
     // Second pool (just one lease here)
     EXPECT_EQ("2001:db8:1::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
 
     // Third pool (256 leases, let's check first and last explicitly and the
     // rest over in a pool
     EXPECT_EQ("2001:db8:2::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     for (int i = 1; i < 255; i++) {
         stringstream exp;
         exp << "2001:db8:2:" << hex << i << dec << "::";
         EXPECT_EQ(exp.str(),
-                  alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+                  alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
 
     }
     EXPECT_EQ("2001:db8:2:ff::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
 
     // Ok, we've iterated over all prefixes in all pools. We now wrap around.
     // We're looping over now (iterating over first pool again)
     EXPECT_EQ("2001:db8::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:10::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
+}
+
+// This test verifies that the allocator picks delegated prefixes from several
+// pools.
+TEST_F(IterativeAllocatorTest6, prefixStepPreferLower) {
+    subnet_ = Subnet6::create(IOAddress("2001:db8::"), 32, 1, 2, 3, 4);
+
+    Pool6Ptr pool1(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8::"), 56, 60));
+    Pool6Ptr pool2(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1::"), 48, 48));
+    Pool6Ptr pool3(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:2::"), 56, 64));
+    subnet_->addPool(pool1);
+    subnet_->addPool(pool2);
+    subnet_->addPool(pool3);
+
+    NakedIterativeAllocator alloc(Lease::TYPE_PD, subnet_);
+
+    Pool6Ptr pool;
+
+    // We have a 2001:db8::/48 subnet that has 3 pools defined in it:
+    // 2001:db8::/56 split into /60 prefixes (16 leases) (or 2001:db8:0:X0::)
+    // 2001:db8:1::/48 split into a single /48 prefix (just 1 lease)
+    // 2001:db8:2::/56 split into /64 prefixes (256 leases) (or 2001:db8:2:XX::)
+
+    // First pool check (Let's check over all 16 leases)
+    EXPECT_EQ("2001:db8::",
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_LOWER, IOAddress("::"), 64).toText());
+    EXPECT_EQ("2001:db8:0:10::",
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_LOWER, IOAddress("::"), 64).toText());
+    EXPECT_EQ("2001:db8:0:20::",
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_LOWER, IOAddress("::"), 64).toText());
+    EXPECT_EQ("2001:db8:0:30::",
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_LOWER, IOAddress("::"), 64).toText());
+    EXPECT_EQ("2001:db8:0:40::",
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_LOWER, IOAddress("::"), 64).toText());
+    EXPECT_EQ("2001:db8:0:50::",
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_LOWER, IOAddress("::"), 64).toText());
+    EXPECT_EQ("2001:db8:0:60::",
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_LOWER, IOAddress("::"), 64).toText());
+    EXPECT_EQ("2001:db8:0:70::",
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_LOWER, IOAddress("::"), 64).toText());
+    EXPECT_EQ("2001:db8:0:80::",
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_LOWER, IOAddress("::"), 64).toText());
+    EXPECT_EQ("2001:db8:0:90::",
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_LOWER, IOAddress("::"), 64).toText());
+    EXPECT_EQ("2001:db8:0:a0::",
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_LOWER, IOAddress("::"), 64).toText());
+    EXPECT_EQ("2001:db8:0:b0::",
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_LOWER, IOAddress("::"), 64).toText());
+    EXPECT_EQ("2001:db8:0:c0::",
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_LOWER, IOAddress("::"), 64).toText());
+    EXPECT_EQ("2001:db8:0:d0::",
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_LOWER, IOAddress("::"), 64).toText());
+    EXPECT_EQ("2001:db8:0:e0::",
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_LOWER, IOAddress("::"), 64).toText());
+    EXPECT_EQ("2001:db8:0:f0::",
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_LOWER, IOAddress("::"), 64).toText());
+
+    // Second pool (just one lease here)
+    EXPECT_EQ("2001:db8:1::",
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_LOWER, IOAddress("::"), 64).toText());
+
+    // Ok, we've iterated over all prefixes in all pools. We now wrap around.
+    // We're looping over now (iterating over first pool again)
+    EXPECT_EQ("2001:db8::",
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_LOWER, IOAddress("::"), 64).toText());
+    EXPECT_EQ("2001:db8:0:10::",
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_LOWER, IOAddress("::"), 64).toText());
+}
+
+// This test verifies that the allocator picks delegated prefixes from several
+// pools.
+TEST_F(IterativeAllocatorTest6, prefixStepPreferEqual) {
+    subnet_ = Subnet6::create(IOAddress("2001:db8::"), 32, 1, 2, 3, 4);
+
+    Pool6Ptr pool1(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8::"), 56, 60));
+    Pool6Ptr pool2(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1::"), 48, 48));
+    Pool6Ptr pool3(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:2::"), 56, 64));
+    subnet_->addPool(pool1);
+    subnet_->addPool(pool2);
+    subnet_->addPool(pool3);
+
+    NakedIterativeAllocator alloc(Lease::TYPE_PD, subnet_);
+
+    Pool6Ptr pool;
+
+    // We have a 2001:db8::/48 subnet that has 3 pools defined in it:
+    // 2001:db8::/56 split into /60 prefixes (16 leases) (or 2001:db8:0:X0::)
+    // 2001:db8:1::/48 split into a single /48 prefix (just 1 lease)
+    // 2001:db8:2::/56 split into /64 prefixes (256 leases) (or 2001:db8:2:XX::)
+
+    // Second pool (just one lease here)
+    EXPECT_EQ("2001:db8:1::",
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_EQUAL, IOAddress("::"), 48).toText());
+
+    // Ok, we've iterated over all prefixes in all pools. We now wrap around.
+    // We're looping over now (iterating over second pool again)
+    EXPECT_EQ("2001:db8:1::",
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_EQUAL, IOAddress("::"), 48).toText());
+}
+
+// This test verifies that the allocator picks delegated prefixes from several
+// pools.
+TEST_F(IterativeAllocatorTest6, prefixStepPreferHigher) {
+    subnet_ = Subnet6::create(IOAddress("2001:db8::"), 32, 1, 2, 3, 4);
+
+    Pool6Ptr pool1(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8::"), 56, 60));
+    Pool6Ptr pool2(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1::"), 48, 48));
+    Pool6Ptr pool3(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:2::"), 56, 64));
+    subnet_->addPool(pool1);
+    subnet_->addPool(pool2);
+    subnet_->addPool(pool3);
+
+    NakedIterativeAllocator alloc(Lease::TYPE_PD, subnet_);
+
+    Pool6Ptr pool;
+
+    // We have a 2001:db8::/48 subnet that has 3 pools defined in it:
+    // 2001:db8::/56 split into /60 prefixes (16 leases) (or 2001:db8:0:X0::)
+    // 2001:db8:1::/48 split into a single /48 prefix (just 1 lease)
+    // 2001:db8:2::/56 split into /64 prefixes (256 leases) (or 2001:db8:2:XX::)
+
+    // Third pool (256 leases, let's check first and last explicitly and the
+    // rest over in a pool
+    EXPECT_EQ("2001:db8:2::",
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 60).toText());
+    for (int i = 1; i < 255; i++) {
+        stringstream exp;
+        exp << "2001:db8:2:" << hex << i << dec << "::";
+        EXPECT_EQ(exp.str(),
+                  alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 60).toText());
+
+    }
+    EXPECT_EQ("2001:db8:2:ff::",
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 60).toText());
+
+    // Ok, we've iterated over all prefixes in all pools. We now wrap around.
+    // We're looping over now (iterating over third pool again)
+    EXPECT_EQ("2001:db8:2::",
+                  alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 60).toText());
 }
 
 // This test verifies that the allocator picks delegated prefixes from the pools
 // with class guards.
 TEST_F(IterativeAllocatorTest6, prefixStepInClass) {
-    subnet_.reset(new Subnet6(IOAddress("2001:db8::"), 32, 1, 2, 3, 4));
+    subnet_ = Subnet6::create(IOAddress("2001:db8::"), 32, 1, 2, 3, 4);
 
     Pool6Ptr pool1(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8::"), 56, 60));
     Pool6Ptr pool2(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1::"), 48, 48));
@@ -386,6 +581,8 @@ TEST_F(IterativeAllocatorTest6, prefixStepInClass) {
 
     NakedIterativeAllocator alloc(Lease::TYPE_PD, subnet_);
 
+    Pool6Ptr pool;
+
     // Clients are in foo
     cc_.insert("foo");
 
@@ -396,67 +593,67 @@ TEST_F(IterativeAllocatorTest6, prefixStepInClass) {
 
     // First pool check (Let's check over all 16 leases)
     EXPECT_EQ("2001:db8::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:10::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:20::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:30::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:40::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:50::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:60::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:70::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:80::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:90::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:a0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:b0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:c0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:d0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:e0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:f0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
 
     // Second pool (just one lease here)
     EXPECT_EQ("2001:db8:1::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
 
     // Third pool (256 leases, let's check first and last explicitly and the
     // rest over in a pool
     EXPECT_EQ("2001:db8:2::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     for (int i = 1; i < 255; i++) {
         stringstream exp;
         exp << "2001:db8:2:" << hex << i << dec << "::";
         EXPECT_EQ(exp.str(),
-                  alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+                  alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
 
     }
     EXPECT_EQ("2001:db8:2:ff::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
 
     // Ok, we've iterated over all prefixes in all pools. We now wrap around.
     // We're looping over now (iterating over first pool again)
     EXPECT_EQ("2001:db8::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:10::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
 }
 
 // This test verifies that the allocator omits pools with non-matching client classes.
 TEST_F(IterativeAllocatorTest6, prefixStepOutClass) {
-    subnet_.reset(new Subnet6(IOAddress("2001:db8::"), 32, 1, 2, 3, 4));
+    subnet_ = Subnet6::create(IOAddress("2001:db8::"), 32, 1, 2, 3, 4);
 
     Pool6Ptr pool1(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8::"), 56, 60));
     Pool6Ptr pool2(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1::"), 48, 48));
@@ -469,6 +666,8 @@ TEST_F(IterativeAllocatorTest6, prefixStepOutClass) {
 
     NakedIterativeAllocator alloc(Lease::TYPE_PD, subnet_);
 
+    Pool6Ptr pool;
+
     // We have a 2001:db8::/48 subnet that has 3 pools defined in it:
     // 2001:db8::/56 split into /60 prefixes (16 leases) (or 2001:db8:0:X0::)
     // 2001:db8:1::/48 split into a single /48 prefix (just 1 lease)
@@ -476,60 +675,60 @@ TEST_F(IterativeAllocatorTest6, prefixStepOutClass) {
 
     // First pool check (Let's check over all 16 leases)
     EXPECT_EQ("2001:db8::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:10::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:20::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:30::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:40::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:50::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:60::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:70::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:80::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:90::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:a0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:b0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:c0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:d0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:e0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:f0::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
 
     // The second pool is skipped
 
     // Third pool (256 leases, let's check first and last explicitly and the
     // rest over in a pool
     EXPECT_EQ("2001:db8:2::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     for (int i = 1; i < 255; i++) {
         stringstream exp;
         exp << "2001:db8:2:" << hex << i << dec << "::";
         EXPECT_EQ(exp.str(),
-                  alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+                  alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
 
     }
     EXPECT_EQ("2001:db8:2:ff::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
 
     // Ok, we've iterated over all prefixes in all pools. We now wrap around.
     // We're looping over now (iterating over first pool again)
     EXPECT_EQ("2001:db8::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
     EXPECT_EQ("2001:db8:0:10::",
-              alloc.pickAddress(cc_, duid_, IOAddress("::")).toText());
+              alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0).toText());
 }
 
 // This test verifies that the iterative allocator can step over addresses.
@@ -600,60 +799,6 @@ TEST_F(IterativeAllocatorTest6, prefixIncrease) {
 
     // And now let's try something over the top
     checkPrefixIncrease(alloc, "::", 1, "8000::");
-}
-
-// This test verifies that the iterative allocator really walks over all addresses
-// in all pools in specified subnet. It also must not pick the same address twice
-// unless it runs out of pool space and must start over.
-TEST_F(IterativeAllocatorTest6, manyPools) {
-    NakedIterativeAllocator alloc(Lease::TYPE_NA, subnet_);
-
-    // let's start from 2, as there is 2001:db8:1::10 - 2001:db8:1::20 pool already.
-    for (int i = 2; i < 10; ++i) {
-        stringstream min, max;
-
-        min << "2001:db8:1::" << hex << i*16 + 1;
-        max << "2001:db8:1::" << hex << i*16 + 9;
-
-        Pool6Ptr pool(new Pool6(Lease::TYPE_NA, IOAddress(min.str()),
-                                IOAddress(max.str())));
-        subnet_->addPool(pool);
-    }
-
-    int total = 17 + 8 * 9; // First pool (::10 - ::20) has 17 addresses in it,
-                            // there are 8 extra pools with 9 addresses in each.
-
-    // Let's keep picked addresses here and check their uniqueness.
-    std::set<IOAddress> generated_addrs;
-    int cnt = 0;
-    while (++cnt) {
-        IOAddress candidate = alloc.pickAddress(cc_, duid_, IOAddress("::"));
-        EXPECT_TRUE(subnet_->inPool(Lease::TYPE_NA, candidate));
-
-        // One way to easily verify that the iterative allocator really works is
-        // to uncomment the following line and observe its output that it
-        // covers all defined pools.
-        // cout << candidate.toText() << endl;
-
-        if (generated_addrs.find(candidate) == generated_addrs.end()) {
-            // We haven't had this.
-            generated_addrs.insert(candidate);
-        } else {
-            // We have seen this address before. That should mean that we
-            // iterated over all addresses.
-            if (generated_addrs.size() == total) {
-                // We have exactly the number of address in all pools.
-                break;
-            }
-            ADD_FAILURE() << "Too many or not enough unique addresses generated.";
-            break;
-        }
-
-        if ( cnt>total ) {
-            ADD_FAILURE() << "Too many unique addresses generated.";
-            break;
-        }
-    }
 }
 
 } // end of namespace isc::dhcp::test

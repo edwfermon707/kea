@@ -65,7 +65,7 @@ libkea_dhcpsrv_la_SOURCES += allocation_state.cc allocation_state.h
 libkea_dhcpsrv_la_SOURCES += alloc_engine.cc alloc_engine.h
 libkea_dhcpsrv_la_SOURCES += alloc_engine_log.cc alloc_engine_log.h
 libkea_dhcpsrv_la_SOURCES += alloc_engine_messages.h alloc_engine_messages.cc
-libkea_dhcpsrv_la_SOURCES += allocator.h
+libkea_dhcpsrv_la_SOURCES += allocator.h allocator.cc
 libkea_dhcpsrv_la_SOURCES += base_host_data_source.h
 libkea_dhcpsrv_la_SOURCES += cache_host_data_source.h
 libkea_dhcpsrv_la_SOURCES += callout_handle_store.h
@@ -143,6 +143,8 @@ libkea_dhcpsrv_la_SOURCES += pgsql_lease_mgr.cc pgsql_lease_mgr.h
 endif
 
 libkea_dhcpsrv_la_SOURCES += pool.cc pool.h
+libkea_dhcpsrv_la_SOURCES += random_allocation_state.cc random_allocation_state.h
+libkea_dhcpsrv_la_SOURCES += random_allocator.cc random_allocator.h
 libkea_dhcpsrv_la_SOURCES += resource_handler.cc resource_handler.h
 libkea_dhcpsrv_la_SOURCES += sanity_checker.cc sanity_checker.h
 libkea_dhcpsrv_la_SOURCES += shared_network.cc shared_network.h
@@ -194,33 +196,33 @@ endif
 
 libkea_dhcpsrv_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_dhcpsrv_la_CPPFLAGS = $(AM_CPPFLAGS)
-libkea_dhcpsrv_la_LIBADD  = $(top_builddir)/src/lib/eval/libkea-eval.la
-libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
-libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/process/libkea-process.la
-libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/stats/libkea-stats.la
-libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/config/libkea-cfgclient.la
-libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/http/libkea-http.la
-libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+libkea_dhcpsrv_la_LIBADD  = $(top_builddir)/src/lib/process/libkea-process.la
+libkea_dhcpsrv_la_LIBADD += $(top_builddir)/src/lib/eval/libkea-eval.la
+libkea_dhcpsrv_la_LIBADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
+libkea_dhcpsrv_la_LIBADD += $(top_builddir)/src/lib/stats/libkea-stats.la
+libkea_dhcpsrv_la_LIBADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
+libkea_dhcpsrv_la_LIBADD += $(top_builddir)/src/lib/http/libkea-http.la
+libkea_dhcpsrv_la_LIBADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+libkea_dhcpsrv_la_LIBADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 
 if HAVE_MYSQL
-libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/mysql/libkea-mysql.la
+libkea_dhcpsrv_la_LIBADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
 endif
 if HAVE_PGSQL
-libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
+libkea_dhcpsrv_la_LIBADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
 endif
 
-libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/database/libkea-database.la
-libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
-libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/cc/libkea-cc.la
-libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/dns/libkea-dns++.la
-libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
-libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/hooks/libkea-hooks.la
-libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/log/libkea-log.la
-libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/util/libkea-util.la
-libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-libkea_dhcpsrv_la_LIBADD  += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS)
+libkea_dhcpsrv_la_LIBADD += $(top_builddir)/src/lib/database/libkea-database.la
+libkea_dhcpsrv_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la
+libkea_dhcpsrv_la_LIBADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
+libkea_dhcpsrv_la_LIBADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
+libkea_dhcpsrv_la_LIBADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
+libkea_dhcpsrv_la_LIBADD += $(top_builddir)/src/lib/log/libkea-log.la
+libkea_dhcpsrv_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
+libkea_dhcpsrv_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+libkea_dhcpsrv_la_LIBADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS)
 
-libkea_dhcpsrv_la_LDFLAGS  = -no-undefined -version-info 83:0:0
+libkea_dhcpsrv_la_LDFLAGS  = -no-undefined -version-info 85:0:0
 libkea_dhcpsrv_la_LDFLAGS += $(CRYPTO_LDFLAGS)
 if HAVE_MYSQL
 libkea_dhcpsrv_la_LDFLAGS += $(MYSQL_LIBS)
@@ -362,6 +364,8 @@ libkea_dhcpsrv_include_HEADERS = \
 	network.h \
 	network_state.h \
 	pool.h \
+	random_allocation_state.h \
+	random_allocator.h \
 	resource_handler.h \
 	sanity_checker.h \
 	shared_network.h \

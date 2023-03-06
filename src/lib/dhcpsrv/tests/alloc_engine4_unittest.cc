@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1174,6 +1174,54 @@ TEST_F(SharedNetworkAlloc4Test, discoverSharedNetworkPoolClassification) {
     EXPECT_EQ("192.0.2.17", lease->addr_.toText());
 }
 
+// Test that global reservations within shared network take precedence over the
+// existing leases regardless in which subnet belonging to a shared network
+// reservations belong.
+TEST_F(SharedNetworkAlloc4Test, discoverSharedNetworkReservationsGlobal) {
+
+    EXPECT_FALSE(HostMgr::instance().getDisableSingleQuery());
+
+    // Create reservation for the client.
+    HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
+                          Host::IDENT_HWADDR, SUBNET_ID_GLOBAL,
+                          SUBNET_ID_UNUSED, IOAddress("10.1.2.105")));
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    CfgMgr::instance().commit();
+
+    subnet1_->setReservationsGlobal(true);
+    subnet1_->setReservationsInSubnet(true);
+    subnet2_->setReservationsGlobal(true);
+    subnet2_->setReservationsInSubnet(true);
+
+    // Start allocation from subnet1. The engine should determine that the
+    // client has global reservations within subnet2 and should rather
+    // assign reserved addresses.
+    AllocEngine::ClientContext4
+        ctx(subnet1_, ClientIdPtr(), hwaddr_, IOAddress::IPV4_ZERO_ADDRESS(),
+            false, false, "host.example.com.", true);
+    ctx.query_.reset(new Pkt4(DHCPDISCOVER, 1234));
+    AllocEngine::findReservation(ctx);
+    Lease4Ptr lease = engine_.allocateLease4(ctx);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("10.1.2.105", lease->addr_.toText());
+    EXPECT_EQ(lease->subnet_id_, subnet2_->getID());
+
+    // Let's create a lease for the client to make sure the lease is not
+    // renewed but a reserved lease is offered.
+    Lease4Ptr lease2(new Lease4(IOAddress("192.0.2.17"), hwaddr_, ClientIdPtr(),
+                                501, time(NULL), subnet1_->getID()));
+    lease->cltt_ = time(NULL) - 10; // Allocated 10 seconds ago
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease2));
+    ctx.subnet_ = subnet1_;
+    ctx.hosts_.clear();
+    AllocEngine::findReservation(ctx);
+    lease = engine_.allocateLease4(ctx);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("10.1.2.105", lease->addr_.toText());
+    EXPECT_EQ(lease->subnet_id_, subnet2_->getID());
+}
+
+
 // Test that reservations within shared network take precedence over the
 // existing leases regardless in which subnet belonging to a shared network
 // reservations belong.
@@ -1184,7 +1232,7 @@ TEST_F(SharedNetworkAlloc4Test, discoverSharedNetworkReservations) {
     // Create reservation for the client.
     HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
                           Host::IDENT_HWADDR, subnet2_->getID(),
-                          SUBNET_ID_UNUSED, IOAddress("10.2.3.23")));
+                          SUBNET_ID_UNUSED, IOAddress("10.1.2.105")));
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
@@ -1198,21 +1246,38 @@ TEST_F(SharedNetworkAlloc4Test, discoverSharedNetworkReservations) {
     AllocEngine::findReservation(ctx);
     Lease4Ptr lease = engine_.allocateLease4(ctx);
     ASSERT_TRUE(lease);
-    EXPECT_EQ("10.2.3.23", lease->addr_.toText());
+    EXPECT_EQ("10.1.2.105", lease->addr_.toText());
+    EXPECT_EQ(lease->subnet_id_, subnet2_->getID());
 
-    // Let's create a lease for the client to make sure the lease is not
-    // renewed but a reserved lease is offered.
+    // Let's create a lease for the client in subnet1 to make sure the lease
+    // is not renewed but a reserved lease is offered.
     Lease4Ptr lease2(new Lease4(IOAddress("192.0.2.17"), hwaddr_, ClientIdPtr(),
                                 501, time(NULL), subnet1_->getID()));
-    lease->cltt_ = time(NULL) - 10; // Allocated 10 seconds ago
+    lease2->cltt_ = time(NULL) - 10; // Allocated 10 seconds ago
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease2));
     ctx.subnet_ = subnet1_;
     ctx.hosts_.clear();
     AllocEngine::findReservation(ctx);
     lease = engine_.allocateLease4(ctx);
     ASSERT_TRUE(lease);
-    EXPECT_EQ("10.2.3.23", lease->addr_.toText());
+    EXPECT_EQ("10.1.2.105", lease->addr_.toText());
+    EXPECT_EQ(lease->subnet_id_, subnet2_->getID());
+
+    // Let's create a lease for the client in subnet2 to make sure the lease
+    // is not renewed but a reserved lease is offered.
+    Lease4Ptr lease3(new Lease4(IOAddress("10.1.2.55"), hwaddr_, ClientIdPtr(),
+                                501, time(NULL), subnet2_->getID()));
+    lease3->cltt_ = time(NULL) - 10; // Allocated 10 seconds ago
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease3));
+    ctx.subnet_ = subnet1_;
+    ctx.hosts_.clear();
+    AllocEngine::findReservation(ctx);
+    lease = engine_.allocateLease4(ctx);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("10.1.2.105", lease->addr_.toText());
+    EXPECT_EQ(lease->subnet_id_, subnet2_->getID());
 }
+
 
 // Test that reservations within shared network take precedence over the
 // existing leases regardless in which subnet belonging to a shared network
@@ -1228,9 +1293,14 @@ TEST_F(SharedNetworkAlloc4Test, discoverSharedNetworkReservationsNoColl) {
     // Create reservation for the client.
     HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
                           Host::IDENT_HWADDR, subnet2_->getID(),
-                          SUBNET_ID_UNUSED, IOAddress("10.2.3.23")));
+                          SUBNET_ID_UNUSED, IOAddress("10.1.2.105")));
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
+
+    subnet1_->setReservationsGlobal(true);
+    subnet1_->setReservationsInSubnet(true);
+    subnet2_->setReservationsGlobal(true);
+    subnet2_->setReservationsInSubnet(true);
 
     // Start allocation from subnet1. The engine should determine that the
     // client has reservations in subnet2 and should rather assign reserved
@@ -1242,7 +1312,8 @@ TEST_F(SharedNetworkAlloc4Test, discoverSharedNetworkReservationsNoColl) {
     AllocEngine::findReservation(ctx);
     Lease4Ptr lease = engine_.allocateLease4(ctx);
     ASSERT_TRUE(lease);
-    EXPECT_EQ("10.2.3.23", lease->addr_.toText());
+    EXPECT_EQ("10.1.2.105", lease->addr_.toText());
+    EXPECT_EQ(lease->subnet_id_, subnet2_->getID());
 
     // Let's create a lease for the client to make sure the lease is not
     // renewed but a reserved lease is offered.
@@ -1255,7 +1326,8 @@ TEST_F(SharedNetworkAlloc4Test, discoverSharedNetworkReservationsNoColl) {
     AllocEngine::findReservation(ctx);
     lease = engine_.allocateLease4(ctx);
     ASSERT_TRUE(lease);
-    EXPECT_EQ("10.2.3.23", lease->addr_.toText());
+    EXPECT_EQ("10.1.2.105", lease->addr_.toText());
+    EXPECT_EQ(lease->subnet_id_, subnet2_->getID());
 }
 
 // This test verifies that the server can offer an address from a shared
@@ -1499,7 +1571,7 @@ TEST_F(SharedNetworkAlloc4Test, requestSharedNetworkReservations) {
     // Create reservation for the client.
     HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
                           Host::IDENT_HWADDR, subnet2_->getID(),
-                          SUBNET_ID_UNUSED, IOAddress("10.2.3.23")));
+                          SUBNET_ID_UNUSED, IOAddress("10.1.2.105")));
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
@@ -1513,7 +1585,8 @@ TEST_F(SharedNetworkAlloc4Test, requestSharedNetworkReservations) {
     AllocEngine::findReservation(ctx);
     Lease4Ptr lease = engine_.allocateLease4(ctx);
     ASSERT_TRUE(lease);
-    EXPECT_EQ("10.2.3.23", lease->addr_.toText());
+    EXPECT_EQ("10.1.2.105", lease->addr_.toText());
+    EXPECT_EQ(lease->subnet_id_, subnet2_->getID());
 
     // Remove the lease for another test below.
     ASSERT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
@@ -1529,7 +1602,8 @@ TEST_F(SharedNetworkAlloc4Test, requestSharedNetworkReservations) {
     AllocEngine::findReservation(ctx);
     lease = engine_.allocateLease4(ctx);
     ASSERT_TRUE(lease);
-    EXPECT_EQ("10.2.3.23", lease->addr_.toText());
+    EXPECT_EQ("10.1.2.105", lease->addr_.toText());
+    EXPECT_EQ(lease->subnet_id_, subnet2_->getID());
 }
 
 // Test that reservations within shared network take precedence over the
@@ -1546,7 +1620,7 @@ TEST_F(SharedNetworkAlloc4Test, requestSharedNetworkReservationsNoColl) {
     // Create reservation for the client.
     HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
                           Host::IDENT_HWADDR, subnet2_->getID(),
-                          SUBNET_ID_UNUSED, IOAddress("10.2.3.23")));
+                          SUBNET_ID_UNUSED, IOAddress("10.1.2.105")));
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
@@ -1560,7 +1634,8 @@ TEST_F(SharedNetworkAlloc4Test, requestSharedNetworkReservationsNoColl) {
     AllocEngine::findReservation(ctx);
     Lease4Ptr lease = engine_.allocateLease4(ctx);
     ASSERT_TRUE(lease);
-    EXPECT_EQ("10.2.3.23", lease->addr_.toText());
+    EXPECT_EQ("10.1.2.105", lease->addr_.toText());
+    EXPECT_EQ(lease->subnet_id_, subnet2_->getID());
 
     // Remove the lease for another test below.
     ASSERT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
@@ -1576,7 +1651,8 @@ TEST_F(SharedNetworkAlloc4Test, requestSharedNetworkReservationsNoColl) {
     AllocEngine::findReservation(ctx);
     lease = engine_.allocateLease4(ctx);
     ASSERT_TRUE(lease);
-    EXPECT_EQ("10.2.3.23", lease->addr_.toText());
+    EXPECT_EQ("10.1.2.105", lease->addr_.toText());
+    EXPECT_EQ(lease->subnet_id_, subnet2_->getID());
 }
 
 // This test checks if an expired lease can be reused in DHCPDISCOVER (fake
@@ -1720,7 +1796,7 @@ TEST_F(AllocEngine4Test, requestReuseExpiredLease4) {
 // to DHCPDISCOVER (fake allocation)
 TEST_F(AllocEngine4Test, discoverReuseDeclinedLease4) {
 
-    AllocEnginePtr engine(new AllocEngine(                                          0));
+    AllocEnginePtr engine(new AllocEngine(0));
     ASSERT_TRUE(engine);
 
     // Now prepare a configuration with single address pool.
@@ -1757,7 +1833,7 @@ TEST_F(AllocEngine4Test, discoverReuseDeclinedLease4) {
 TEST_F(AllocEngine4Test, discoverReuseDeclinedLease4Stats) {
 
     // Now prepare for DISCOVER processing
-    AllocEnginePtr engine(new AllocEngine(                                          0));
+    AllocEnginePtr engine(new AllocEngine(0));
     ASSERT_TRUE(engine);
 
     // Now prepare a configuration with single address pool.
@@ -1797,7 +1873,7 @@ TEST_F(AllocEngine4Test, discoverReuseDeclinedLease4Stats) {
 // to REQUEST (actual allocation)
 TEST_F(AllocEngine4Test, requestReuseDeclinedLease4) {
 
-    AllocEnginePtr engine(new AllocEngine(                                          0));
+    AllocEnginePtr engine(new AllocEngine(0));
     ASSERT_TRUE(engine);
 
     // Now prepare a configuration with single address pool.
@@ -1832,7 +1908,7 @@ TEST_F(AllocEngine4Test, requestReuseDeclinedLease4) {
 // is reused when responding to DHCPREQUEST (actual allocation)
 TEST_F(AllocEngine4Test, requestReuseDeclinedLease4Stats) {
 
-    AllocEnginePtr engine(new AllocEngine(                                          0));
+    AllocEnginePtr engine(new AllocEngine(0));
     ASSERT_TRUE(engine);
 
     // Now prepare a configuration with single address pool.
@@ -2042,7 +2118,7 @@ TEST_F(AllocEngine4Test, reservedAddressNoHint) {
 // - Client has a reservation.
 // - Client sends DHCPDISCOVER without requested IP Address.
 // - Server returns DHCPOFFER with the reserved address.
-TEST_F(AllocEngine4Test,reservedAddressNoHintFakeAllocation) {
+TEST_F(AllocEngine4Test, reservedAddressNoHintFakeAllocation) {
     // Create reservation for the client.
     HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
                           Host::IDENT_HWADDR, subnet_->getID(),
@@ -3128,11 +3204,11 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseStat) {
 // This test checks the behavior of the allocation engine in the following
 // scenario:
 // - Client has no lease in the database.
-// - Client has a global reservation.
+// - Client has a global reservation outside of the subnet.
 // - Client sends DISCOVER
-// - Client is allocated the reserved address.
+// - Client is allocated an address within the subnet.
 // - Lease is not added to the lease database
-TEST_F(AllocEngine4Test, globalReservationReservedAddressDiscover) {
+TEST_F(AllocEngine4Test, globalReservationReservedNonMatchingAddressDiscover) {
     // Create reservation for the client.
     HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
                           Host::IDENT_HWADDR, SUBNET_ID_GLOBAL,
@@ -3159,10 +3235,10 @@ TEST_F(AllocEngine4Test, globalReservationReservedAddressDiscover) {
     EXPECT_EQ(ctx.currentHost()->getHostname(), host->getHostname());
     EXPECT_EQ(ctx.currentHost()->getIPv4Reservation(), host->getIPv4Reservation());
 
-    // We should allocate the reserved address.
+    // We should allocate an address in the subnet
     Lease4Ptr lease = engine.allocateLease4(ctx);
     ASSERT_TRUE(lease);
-    EXPECT_EQ("192.0.77.123", lease->addr_.toText());
+    EXPECT_TRUE(subnet_->inRange(lease->addr_));
 
     // This is a "fake" allocation so the returned lease should not be committed
     // to the lease database.
@@ -3176,11 +3252,59 @@ TEST_F(AllocEngine4Test, globalReservationReservedAddressDiscover) {
 // This test checks the behavior of the allocation engine in the following
 // scenario:
 // - Client has no lease in the database.
-// - Client has a global reservation.
-// - Client sends REQUEST
+// - Client has a global reservation matching the current subnet.
+// - Client sends DISCOVER
 // - Client is allocated the reserved address.
+// - Lease is not added to the lease database
+TEST_F(AllocEngine4Test, globalReservationReservedMatchingAddressDiscover) {
+    // Create reservation for the client.
+    HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
+                          Host::IDENT_HWADDR, SUBNET_ID_GLOBAL,
+                          SUBNET_ID_UNUSED, IOAddress("192.0.2.10")));
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    CfgMgr::instance().commit();
+
+    AllocEngine engine(0);
+
+    subnet_->setReservationsGlobal(true);
+
+    // Query allocation engine for the lease to be assigned to this
+    // client without specifying the address to be assigned.
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
+                                    IOAddress("0.0.0.0"), false, false,
+                                    "", true);
+    ctx.query_.reset(new Pkt4(DHCPDISCOVER, 1234));
+
+    // Look up the host.
+    AllocEngine::findReservation(ctx);
+
+    // We should have the correct current host
+    EXPECT_TRUE(ctx.currentHost());
+    EXPECT_EQ(ctx.currentHost()->getHostname(), host->getHostname());
+    EXPECT_EQ(ctx.currentHost()->getIPv4Reservation(), host->getIPv4Reservation());
+
+    // We should allocate the reserved address.
+    Lease4Ptr lease = engine.allocateLease4(ctx);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("192.0.2.10", lease->addr_.toText());
+
+    // This is a "fake" allocation so the returned lease should not be committed
+    // to the lease database.
+    EXPECT_FALSE(LeaseMgrFactory::instance().getLease4(lease->addr_));
+
+    // Client had no lease in the database, so the old lease returned should
+    // be NULL.
+    ASSERT_FALSE(ctx.old_lease_);
+}
+
+// This test checks the behavior of the allocation engine in the following
+// scenario:
+// - Client has no lease in the database.
+// - Client has a global reservation outside the current subnet.
+// - Client sends REQUEST
+// - Client is allocated a dynamic address.
 // - Lease is added to the lease database
-TEST_F(AllocEngine4Test, globalReservationReservedAddressRequest) {
+TEST_F(AllocEngine4Test, globalReservationReservedNonMatchingAddressRequest) {
     // Create reservation for the client.
     HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
                           Host::IDENT_HWADDR, SUBNET_ID_GLOBAL,
@@ -3210,7 +3334,59 @@ TEST_F(AllocEngine4Test, globalReservationReservedAddressRequest) {
     // We should allocate the reserved address.
     Lease4Ptr lease = engine.allocateLease4(ctx);
     ASSERT_TRUE(lease);
-    EXPECT_EQ("192.0.77.123", lease->addr_.toText());
+    ASSERT_NE("192.0.77.123", lease->addr_.toText());
+    EXPECT_TRUE(subnet_->inRange(lease->addr_));
+
+    // Check that the lease is indeed in LeaseMgr
+    Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(lease->addr_);
+    ASSERT_TRUE(from_mgr);
+
+    // Now check that the lease in LeaseMgr has the same parameters
+    detailCompareLease(lease, from_mgr);
+
+    // Client had no lease in the database, so the old lease returned should
+    // be NULL.
+    ASSERT_FALSE(ctx.old_lease_);
+}
+
+// This test checks the behavior of the allocation engine in the following
+// scenario:
+// - Client has no lease in the database.
+// - Client has a global reservation matching the current subnet.
+// - Client sends REQUEST
+// - Client is allocated the reserved address.
+// - Lease is added to the lease database
+TEST_F(AllocEngine4Test, globalReservationReservedMatchingAddressRequest) {
+    // Create reservation for the client.
+    HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
+                          Host::IDENT_HWADDR, SUBNET_ID_GLOBAL,
+                          SUBNET_ID_UNUSED, IOAddress("192.0.2.10")));
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    CfgMgr::instance().commit();
+
+    AllocEngine engine(0);
+
+    subnet_->setReservationsGlobal(true);
+
+    // Query allocation engine for the lease to be assigned to this
+    // client without specifying the address to be assigned.
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
+                                    IOAddress("0.0.0.0"), false, false,
+                                    "", false);
+    ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+
+    // Look up the host.
+    AllocEngine::findReservation(ctx);
+
+    // We should have the correct current host
+    EXPECT_TRUE(ctx.currentHost());
+    EXPECT_EQ(ctx.currentHost()->getHostname(), host->getHostname());
+    EXPECT_EQ(ctx.currentHost()->getIPv4Reservation(), host->getIPv4Reservation());
+
+    // We should allocate the reserved address.
+    Lease4Ptr lease = engine.allocateLease4(ctx);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("192.0.2.10", lease->addr_.toText());
 
     // Check that the lease is indeed in LeaseMgr
     Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(lease->addr_);
@@ -3720,10 +3896,8 @@ TEST_F(AllocEngine4Test, updateExtendedInfo4) {
         }
 
         // Call AllocEngine::updateLease4ExtendeInfo().
-        ASSERT_NO_THROW_LOG(engine.callUpdateLease4ExtendedInfo(lease, ctx));
-        bool ret = (lease->extended_info_action_ == Lease::ACTION_UPDATE);
-        // Reset the lease action.
-        lease->extended_info_action_ = Lease::ACTION_IGNORE;
+        bool ret = false;
+        ASSERT_NO_THROW_LOG(ret = engine.callUpdateLease4ExtendedInfo(lease, ctx));
         ASSERT_EQ(scenario.exp_ret, ret);
 
         // Verify the lease has the expected user context content.

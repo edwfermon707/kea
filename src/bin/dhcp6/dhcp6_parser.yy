@@ -1,4 +1,4 @@
-/* Copyright (C) 2016-2022 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2016-2023 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -78,6 +78,9 @@ using namespace std;
   LFC_INTERVAL "lfc-interval"
   READONLY "readonly"
   CONNECT_TIMEOUT "connect-timeout"
+  READ_TIMEOUT "read-timeout"
+  WRITE_TIMEOUT "write-timeout"
+  TCP_USER_TIMEOUT "tcp-user-timeout"
   MAX_RECONNECT_TRIES "max-reconnect-tries"
   RECONNECT_WAIT_TIME "reconnect-wait-time"
   ON_FAIL "on-fail"
@@ -130,6 +133,8 @@ using namespace std;
   ENCAPSULATE "encapsulate"
   ARRAY "array"
   PARKED_PACKET_LIMIT "parked-packet-limit"
+  ALLOCATOR "allocator"
+  PD_ALLOCATOR "pd-allocator"
 
   SHARED_NETWORKS "shared-networks"
 
@@ -554,6 +559,8 @@ global_param: data_directory
             | reservations_lookup_first
             | compatibility
             | parked_packet_limit
+            | allocator
+            | pd_allocator
             | unknown_map_entry
             ;
 
@@ -776,6 +783,24 @@ parked_packet_limit: PARKED_PACKET_LIMIT COLON INTEGER {
     ctx.stack_.back()->set("parked-packet-limit", ppl);
 };
 
+allocator: ALLOCATOR {
+    ctx.unique("allocator", ctx.loc2pos(@1));
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr al(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("allocator", al);
+    ctx.leave();
+};
+
+pd_allocator: PD_ALLOCATOR {
+    ctx.unique("pd-allocator", ctx.loc2pos(@1));
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr al(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("pd-allocator", al);
+    ctx.leave();
+};
+
 early_global_reservations_lookup: EARLY_GLOBAL_RESERVATIONS_LOOKUP COLON BOOLEAN {
     ctx.unique("early-global-reservations-lookup", ctx.loc2pos(@1));
     ElementPtr early(new BoolElement($3, ctx.loc2pos(@3)));
@@ -942,6 +967,9 @@ database_map_param: database_type
                   | lfc_interval
                   | readonly
                   | connect_timeout
+                  | read_timeout
+                  | write_timeout
+                  | tcp_user_timeout
                   | max_reconnect_tries
                   | reconnect_wait_time
                   | on_fail
@@ -1031,6 +1059,25 @@ connect_timeout: CONNECT_TIMEOUT COLON INTEGER {
     ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("connect-timeout", n);
 };
+
+read_timeout: READ_TIMEOUT COLON INTEGER {
+    ctx.unique("read-timeout", ctx.loc2pos(@1));
+    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("read-timeout", n);
+};
+
+write_timeout: WRITE_TIMEOUT COLON INTEGER {
+    ctx.unique("write-timeout", ctx.loc2pos(@1));
+    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("write-timeout", n);
+};
+
+tcp_user_timeout: TCP_USER_TIMEOUT COLON INTEGER {
+    ctx.unique("tcp-user-timeout", ctx.loc2pos(@1));
+    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("tcp-user-timeout", n);
+};
+
 
 reconnect_wait_time: RECONNECT_WAIT_TIME COLON INTEGER {
     ctx.unique("reconnect-wait-time", ctx.loc2pos(@1));
@@ -1538,6 +1585,8 @@ subnet6_param: preferred_lifetime
              | ddns_update_on_renew
              | ddns_use_conflict_resolution
              | store_extended_info
+             | allocator
+             | pd_allocator
              | unknown_map_entry
              ;
 
@@ -1712,6 +1761,8 @@ shared_network_param: name
                     | ddns_update_on_renew
                     | ddns_use_conflict_resolution
                     | store_extended_info
+                    | allocator
+                    | pd_allocator
                     | unknown_map_entry
                     ;
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -2172,15 +2172,15 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedParkRapidCommitPrefixes) {
 
     // Receive and check the first response.
     ASSERT_NO_THROW(client1.receiveResponse());
-    ASSERT_TRUE(client1.getContext().response_);
     Pkt6Ptr rsp = client1.getContext().response_;
+    ASSERT_TRUE(rsp);
     EXPECT_EQ(DHCPV6_REPLY, rsp->getType());
     EXPECT_TRUE(client1.hasLeaseForPrefix(IOAddress("2001:db8:1:28::"), 64));
 
     // Receive and check the second response.
     ASSERT_NO_THROW(client2.receiveResponse());
-    ASSERT_TRUE(client2.getContext().response_);
     rsp = client2.getContext().response_;
+    ASSERT_TRUE(rsp);
     EXPECT_EQ(DHCPV6_REPLY, rsp->getType());
     EXPECT_TRUE(client2.hasLeaseForPrefix(IOAddress("2001:db8:1:29::"), 64));
 
@@ -3852,15 +3852,15 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedParkRequests) {
 
     // Receive and check the first response.
     ASSERT_NO_THROW(client1.receiveResponse());
-    ASSERT_TRUE(client1.getContext().response_);
     Pkt6Ptr rsp = client1.getContext().response_;
+    ASSERT_TRUE(rsp);
     EXPECT_EQ(DHCPV6_REPLY, rsp->getType());
     EXPECT_TRUE(client1.hasLeaseForAddress(IOAddress("2001:db8:1::28")));
 
     // Receive and check the second response.
     ASSERT_NO_THROW(client2.receiveResponse());
-    ASSERT_TRUE(client2.getContext().response_);
     rsp = client2.getContext().response_;
+    ASSERT_TRUE(rsp);
     EXPECT_EQ(DHCPV6_REPLY, rsp->getType());
     EXPECT_TRUE(client2.hasLeaseForAddress(IOAddress("2001:db8:1::29")));
 
@@ -3961,15 +3961,15 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedParkRequestsPrefixes) {
 
     // Receive and check the first response.
     ASSERT_NO_THROW(client1.receiveResponse());
-    ASSERT_TRUE(client1.getContext().response_);
     Pkt6Ptr rsp = client1.getContext().response_;
+    ASSERT_TRUE(rsp);
     EXPECT_EQ(DHCPV6_REPLY, rsp->getType());
     EXPECT_TRUE(client1.hasLeaseForPrefix(IOAddress("2001:db8:1:28::"), 64));
 
     // Receive and check the second response.
     ASSERT_NO_THROW(client2.receiveResponse());
-    ASSERT_TRUE(client2.getContext().response_);
     rsp = client2.getContext().response_;
+    ASSERT_TRUE(rsp);
     EXPECT_EQ(DHCPV6_REPLY, rsp->getType());
     EXPECT_TRUE(client2.hasLeaseForPrefix(IOAddress("2001:db8:1:29::"), 64));
 
@@ -5611,7 +5611,8 @@ TEST_F(LoadUnloadDhcpv6SrvTest, Dhcpv6SrvConfigured) {
 
         // Minimal valid configuration for the server. It includes the
         // section which loads the callout library #3, which implements
-        // dhcp6_srv_configured callout.
+        // dhcp6_srv_configured callout. MT needs to be disabled
+        // since the library is single-threaded.
         string config_str =
             "{"
             "    \"interfaces-config\": {"
@@ -5631,8 +5632,12 @@ TEST_F(LoadUnloadDhcpv6SrvTest, Dhcpv6SrvConfigured) {
             "            \"library\": \"" + std::string(CALLOUT_LIBRARY_3) + "\""
             + parameters +
             "        }"
-            "    ]"
-            "}";
+          R"(    ],
+                 "multi-threading": {
+                    "enable-multi-threading": false
+                }
+            })";
+
 
         ConstElementPtr config = Element::fromJSON(config_str);
 
@@ -5759,8 +5764,8 @@ TEST_F(HooksDhcpv6SrvTest, leases6ParkedPacketLimit) {
 
     // Receive and check the first response.
     ASSERT_NO_THROW(client1.receiveResponse());
-    ASSERT_TRUE(client1.getContext().response_);
     Pkt6Ptr rsp = client1.getContext().response_;
+    ASSERT_TRUE(rsp);
     EXPECT_EQ(DHCPV6_REPLY, rsp->getType());
     EXPECT_TRUE(client1.hasLeaseForAddress(IOAddress("2001:db8:1::28")));
 
@@ -5798,8 +5803,8 @@ TEST_F(HooksDhcpv6SrvTest, leases6ParkedPacketLimit) {
 
     // Receive and check the first response.
     ASSERT_NO_THROW(client2.receiveResponse());
-    ASSERT_TRUE(client2.getContext().response_);
     rsp = client2.getContext().response_;
+    ASSERT_TRUE(rsp);
     EXPECT_EQ(DHCPV6_REPLY, rsp->getType());
     EXPECT_TRUE(client2.hasLeaseForAddress(IOAddress("2001:db8:1::29")));
 

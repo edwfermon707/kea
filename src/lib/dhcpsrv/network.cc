@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -265,6 +265,10 @@ Network::toElement() const {
         map->set("ddns-use-conflict-resolution", Element::create(ddns_use_conflict_resolution_));
     }
 
+    if (!allocator_type_.unspecified()) {
+        map->set("allocator", Element::create(allocator_type_));
+    }
+
     return (map);
 }
 
@@ -362,6 +366,11 @@ Network6::toElement() const {
     // Set rapid-commit
     if (!rapid_commit_.unspecified()) {
         map->set("rapid-commit", Element::create(rapid_commit_.get()));
+    }
+
+    // Set pd-allocator
+    if (!pd_allocator_type_.unspecified()) {
+        map->set("pd-allocator", Element::create(pd_allocator_type_));
     }
 
     return (map);

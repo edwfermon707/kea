@@ -1,4 +1,4 @@
-// Copyright (C) 2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2022-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,7 +9,6 @@
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_service.h>
 #include <tcp_test_listener.h>
-#include <tcp_test_client.h>
 
 #include <gtest/gtest.h>
 
@@ -82,15 +81,16 @@ public:
         }
     }
 
-    /// @brief Connect to the endpoint.
+    /// @brief Create a new client.
     ///
     /// This method creates TcpTestClient instance and retains it in
     /// the clients_ list.
-    TcpTestClientPtr connectClient() {
+    /// @param tls_context TLS context to assign to the client.
+    TcpTestClientPtr createClient(TlsContextPtr tls_context = TlsContextPtr()) {
         TcpTestClientPtr client(new TcpTestClient(io_service_,
-                                    std::bind(&TcpListenerTest::clientDone, this)));
+                                    std::bind(&TcpListenerTest::clientDone, this),
+                                    tls_context));
         clients_.push_back(client);
-        client->connect();
         return (client);
     }
 
@@ -100,18 +100,24 @@ public:
     /// the clients_ list.
     ///
     /// @param request String containing the request to be sent.
-    void startRequest(const std::string& request) {
-        TcpTestClientPtr client(new TcpTestClient(io_service_,
-                                    std::bind(&TcpListenerTest::clientDone, this)));
-        clients_.push_back(client);
-        clients_.back()->startRequest(request);
+    /// @param tls_context TLS context to assign to the client.
+    void startRequest(const std::string& request,
+                      TlsContextPtr tls_context = TlsContextPtr()) {
+        TcpTestClientPtr client = createClient(tls_context);
+        client->startRequest(request);
     }
 
-    void startRequests(const std::list<std::string>& requests) {
-        TcpTestClientPtr client(new TcpTestClient(io_service_,
-                                    std::bind(&TcpListenerTest::clientDone, this)));
-        clients_.push_back(client);
-        clients_.back()->startRequests(requests);
+    /// @brief Connect to the endpoint and send a list of requests.
+    ///
+    /// This method creates a TcpTestClient instance and initiates a
+    /// series of requests.
+    ///
+    /// @param request String containing the request to be sent.
+    /// @param tls_context TLS context to assign to the client.
+    void startRequests(const std::list<std::string>& requests,
+                       TlsContextPtr tls_context = TlsContextPtr()) {
+        TcpTestClientPtr client = createClient(tls_context);
+        client->startRequests(requests);
     }
 
     /// @brief Callback function invoke upon test timeout.
@@ -192,7 +198,7 @@ public:
     size_t clients_done_;
 };
 
-// This test verifies that A TCP connection can be established and used to
+// This test verifies that a TCP connection can be established and used to
 // transmit a streamed request and receive a streamed response.
 TEST_F(TcpListenerTest, listen) {
     const std::string request = "I am done";
@@ -231,7 +237,7 @@ TEST_F(TcpListenerTest, listen) {
     io_service_.poll();
 }
 
-// This test verifies that A TCP connection can receive a complete
+// This test verifies that a TCP connection can receive a complete
 // message that spans multiple socket reads.
 TEST_F(TcpListenerTest, splitReads) {
     const std::string request = "I am done";
@@ -263,7 +269,7 @@ TEST_F(TcpListenerTest, splitReads) {
     io_service_.poll();
 }
 
-// This test verifies that A TCP connection can be established and used to
+// This test verifies that a TCP connection can be established and used to
 // transmit a streamed request and receive a streamed response.
 TEST_F(TcpListenerTest, idleTimeoutTest) {
     TcpTestListener listener(io_service_,
@@ -275,16 +281,16 @@ TEST_F(TcpListenerTest, idleTimeoutTest) {
     ASSERT_NO_THROW(listener.start());
     ASSERT_EQ(SERVER_ADDRESS, listener.getLocalAddress().toText());
     ASSERT_EQ(SERVER_PORT, listener.getLocalPort());
-    ASSERT_NO_THROW(connectClient());
-    ASSERT_EQ(1, clients_.size());
-    TcpTestClientPtr client = *clients_.begin();
-    ASSERT_TRUE(client);
-
-    // Tell the client expecting reading to fail with an EOF.
-    ASSERT_NO_THROW(client->waitForEof());
+    // Start a client with an empty request. Empty requests tell the client to read
+    // without sending anything and expect the read to fail when the listener idle
+    // times out the socket.
+    ASSERT_NO_THROW(startRequest(""));
 
     // Run until idle timer expires.
     ASSERT_NO_THROW(runIOService());
+
+    ASSERT_EQ(1, clients_.size());
+    TcpTestClientPtr client = *clients_.begin();
     EXPECT_FALSE(client->receiveDone());
     EXPECT_TRUE(client->expectedEof());
 
