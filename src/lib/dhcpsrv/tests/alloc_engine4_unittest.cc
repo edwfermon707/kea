@@ -4883,7 +4883,7 @@ TEST_F(AllocEngine4Test, bootpDelete) {
     EXPECT_FALSE(from_mgr);
 }
 
-// This test than all addresses in a pool can be allocated.
+// This test verifies that all addresses in a pool can be allocated.
 TEST_F(AllocEngine4Test, fullPool) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
@@ -4939,7 +4939,7 @@ TEST_F(AllocEngine4Test, fullPool) {
     EXPECT_EQ(found, vector<bool>(256, true));
 }
 
-// This test than all addresses in a subnet can be allocated.
+// This test verifies that all addresses in a subnet can be allocated.
 TEST_F(AllocEngine4Test, fullSubnet24) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
@@ -4996,7 +4996,7 @@ TEST_F(AllocEngine4Test, fullSubnet24) {
     EXPECT_EQ(found, vector<bool>(256, true));
 }
 
-// This test than not all addresses in a pool can be allocated when
+// This test verifies that not all addresses in a pool can be allocated when
 // exclude-first-last is true.
 TEST_F(AllocEngine4Test, excludeFirstLast) {
     boost::scoped_ptr<AllocEngine> engine;
@@ -5056,7 +5056,7 @@ TEST_F(AllocEngine4Test, excludeFirstLast) {
     EXPECT_EQ(expected, found);
 }
 
-// This test than not all addresses in a subnet can be allocated when
+// This test verifies that not all addresses in a subnet can be allocated when
 // exclude-first-last is true.
 TEST_F(AllocEngine4Test, excludeFirstLast24) {
     boost::scoped_ptr<AllocEngine> engine;
@@ -5117,8 +5117,8 @@ TEST_F(AllocEngine4Test, excludeFirstLast24) {
     EXPECT_EQ(expected, found);
 }
 
-// This test than an excluded address can be allocated when requested and
-// exclude-first-last is true.
+// This test verifies that an excluded address can be allocated when requested
+// and exclude-first-last is true.
 TEST_F(AllocEngine4Test, excludeFirstLastRequested) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
@@ -5159,8 +5159,8 @@ TEST_F(AllocEngine4Test, excludeFirstLastRequested) {
     EXPECT_EQ("10.0.1.255", lease->addr_.toText());
 }
 
-// This test than an excluded address can be allocated when reserved and
-// exclude-first-last is true.
+// This test verifies that an excluded address can be allocated when reserved
+// and exclude-first-last is true.
 TEST_F(AllocEngine4Test, excludeFirstLastReserver) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));

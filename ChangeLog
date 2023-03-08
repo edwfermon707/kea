@@ -1,5 +1,5 @@
 2108.	[func]		fdupont
-	Added a new exclude-first-last DHCPv4 global parameter
+	Added a new exclude-first-last-24 DHCPv4 global parameter
 	which when set to true (default is false) skips addresses
 	in .0 and .255 in subnets with prefix length less than 24
 	in the allocation engine routine picking a free address.
