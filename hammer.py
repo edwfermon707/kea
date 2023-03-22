@@ -2511,6 +2511,7 @@ def build_local(features, tarball_path, check_times, jobs, dry_run, ccache_dir, 
     log.info('Building for %s %s', system, revision)
 
     execute('sudo df -h', dry_run=dry_run)
+    execute('pip show sphinx_rtd_theme', dry_run=dry_run)
 
     # NOTE: the old code expects having tarball in tarball_path
     if not tarball_path:
