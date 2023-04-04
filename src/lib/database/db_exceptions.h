@@ -85,6 +85,14 @@ public:
         isc::Exception(file, line, what) {}
 };
 
+/// @brief Thrown when it was expected that some rows were affected,
+/// usually during a DELETE or an UPDATE, but none were.
+class NoRowsAffected : public Exception {
+public:
+    NoRowsAffected(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
 }  // namespace isc
 }  // namespace db
 

@@ -1141,6 +1141,10 @@ CfgHosts::del6(const SubnetID& /*subnet_id*/,
     return (false);
 }
 
+void
+CfgHosts::update(HostPtr const& host) {
+}
+
 bool
 CfgHosts::setIPReservationsUnique(const bool unique) {
     ip_reservations_unique_ = unique;

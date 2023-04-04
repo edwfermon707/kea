@@ -3191,6 +3191,14 @@ PgSqlHostDataSource::getAll6(const SubnetID& subnet_id,
     return (collection);
 }
 
+
+void
+PgSqlHostDataSource::update(HostPtr const& host) {
+    // Get a context.
+    PgSqlHostContextAlloc get_context(*impl_);
+    PgSqlHostContextPtr const ctx(get_context.ctx_);
+}
+
 // Miscellaneous database methods.
 
 std::string

@@ -245,7 +245,9 @@ public:
     ///        same IP address are allowed (false) or not (true).
     ///
     /// @return Vector of MySQL BIND objects representing the data to be added.
-    std::vector<MYSQL_BIND> createBindForSend(const HostPtr& host, const bool unique_ip) {
+    std::vector<MYSQL_BIND> createBindForSend(const HostPtr& host,
+                                              const bool unique_ip,
+                                              bool const is_update = false) {
         // Store host object to ensure it remains valid.
         host_ = host;
 
@@ -391,6 +393,23 @@ public:
         // Add the data to the vector.
         std::vector<MYSQL_BIND> vec(bind_.begin(), bind_.begin() + HOST_COLUMNS);
 
+        // If it's an update, the columns are slightly different than for insert.
+        // A bit inefficient to do post-processing, but it's more clear.
+        if (is_update) {
+            // Updates need to insert host_id with LAST_INSERT_ID(host_id) as
+            // predetermined value, so no binding.
+            vec.erase(vec.begin());
+
+            // The WHERE clause
+            vec.push_back(bind_[1]);  // dhcp_identifier
+            vec.push_back(bind_[2]);  // dhcp_identifier_type
+            if (CfgMgr::instance().getFamily() == AF_INET) {
+                vec.push_back(bind_[3]);  // subnet_id
+            } else {
+                vec.push_back(bind_[4]);  // subnet_id
+            }
+        }
+
         // When checking whether the IP is unique we need to bind the IPv4 address
         // at the end of the query as it has additional binding for the IPv4
         // address.
@@ -398,6 +417,7 @@ public:
             vec.push_back(bind_[5]); // ipv4_address
             vec.push_back(bind_[3]); // subnet_id
         }
+
         return (vec);
     };
 
@@ -1762,7 +1782,7 @@ class MySqlOptionExchange {
 private:
 
     /// @brief Number of columns in the tables holding options.
-    static const size_t OPTION_COLUMNS = 11;
+    static const size_t OPTION_COLUMNS = 10;
 
 public:
 
@@ -1773,7 +1793,7 @@ public:
           user_context_(), user_context_len_(0), subnet_id_(SUBNET_ID_UNUSED),
           host_id_(0), option_() {
 
-        BOOST_STATIC_ASSERT(10 < OPTION_COLUMNS);
+        BOOST_STATIC_ASSERT(10 <= OPTION_COLUMNS);
     }
 
     /// @brief Creates binding array to insert option data into database.
@@ -1782,7 +1802,8 @@ public:
     std::vector<MYSQL_BIND> createBindForSend(const OptionDescriptor& opt_desc,
                                               const std::string& opt_space,
                                               const Optional<SubnetID>& subnet_id,
-                                              const HostID& host_id) {
+                                              const HostID& host_id,
+                                              bool const is_update = false) {
 
         // Hold pointer to the option to make sure it remains valid until
         // we complete a query.
@@ -1895,7 +1916,21 @@ public:
                       << ex.what());
         }
 
-        return (std::vector<MYSQL_BIND>(&bind_[0], &bind_[OPTION_COLUMNS]));
+        vector<MYSQL_BIND> result(&bind_[0], &bind_[OPTION_COLUMNS]);
+
+        // If it's an update, the columns are slightly different than for insert.
+        // A bit inefficient to do post-processing, but it's more clear.
+        if (is_update) {
+            // Updates don't set option_id, so no binding.
+            result.erase(result.begin());
+
+            // The WHERE clause
+            result.push_back(bind_[1]);  // code
+            result.push_back(bind_[4]);  // space
+            result.push_back(bind_[9]);  // host_id
+        }
+
+        return (result);
     }
 
 private:
@@ -2063,7 +2098,14 @@ public:
         DEL_HOST_ADDR6,            // Delete v6 host (subnet-id, addr6)
         DEL_HOST_SUBID4_ID,        // Delete v4 host (subnet-id, ident.type, identifier)
         DEL_HOST_SUBID6_ID,        // Delete v6 host (subnet-id, ident.type, identifier)
-        NUM_STATEMENTS             // Number of statements
+        UPDATE_V4_HOST_NON_UNIQUE_IP,       //
+        UPDATE_V4_HOST_UNIQUE_IP,           //
+        UPDATE_V6_HOST,                     //
+        UPDATE_V4_HOST_OPTION,              //
+        UPDATE_V6_HOST_OPTION,              //
+        UPDATE_V6_RESERVATION_NON_UNIQUE,   //
+        UPDATE_V6_RESERVATION_UNIQUE,       //
+        NUM_STATEMENTS,                     // Number of statements
     };
 
     /// @brief Index of first statement performing write to the database.
@@ -2154,6 +2196,15 @@ public:
                       StatementIndex stindex,
                       MYSQL_BIND* bind);
 
+    /// @brief Executes statements that update rows.
+    ///
+    /// @param ctx context
+    /// @param stindex index of the statement being executed
+    /// @param bind vector of values to be bound to the prepared statement
+    uint64_t updateStatement(MySqlHostContextPtr& ctx,
+                             StatementIndex const stindex,
+                             vector<MYSQL_BIND>& bind);
+
     /// @brief Inserts IPv6 Reservation into ipv6_reservation table.
     ///
     /// @param ctx Context
@@ -2190,6 +2241,34 @@ public:
                     const StatementIndex& stindex,
                     const ConstCfgOptionPtr& options_cfg,
                     const uint64_t host_id);
+
+    /// @brief Inserts a single DHCP option into the database.
+    ///
+    /// @param ctx Context
+    /// @param stindex Index of a statement being executed.
+    /// @param opt_desc Option descriptor holding information about an option
+    /// to be inserted into the database.
+    /// @param opt_space Option space name.
+    /// @param subnet_id Subnet identifier.
+    /// @param host_id Host identifier.
+    void updateOption(MySqlHostContextPtr& ctx,
+                      MySqlHostDataSourceImpl::StatementIndex const stindex,
+                      OptionDescriptor const& opt_desc,
+                      string const& opt_space,
+                      Optional<SubnetID> const& subnet_id,
+                      HostID const host_id);
+
+    /// @brief Inserts multiple options into the database.
+    ///
+    /// @param ctx Context
+    /// @param stindex Index of a statement being executed.
+    /// @param options_cfg An object holding a collection of options to be
+    /// inserted into the database.
+    /// @param host_id Host identifier retrieved using @c mysql_insert_id.
+    void updateOptions(MySqlHostContextPtr& ctx,
+                       StatementIndex const stindex,
+                       ConstCfgOptionPtr const& options_cfg,
+                       HostID const host_id);
 
     /// @brief Check Error and Throw Exception
     ///
@@ -2736,9 +2815,63 @@ TaggedStatementArray tagged_statements = { {
     // Delete a single IPv6 reservation by subnet id and identifier.
     {MySqlHostDataSourceImpl::DEL_HOST_SUBID6_ID,
             "DELETE FROM hosts WHERE dhcp6_subnet_id = ? AND dhcp_identifier_type=? "
-            "AND dhcp_identifier = ?"}
-    }
-};
+            "AND dhcp_identifier = ?"},
+
+    {MySqlHostDataSourceImpl::UPDATE_V4_HOST_NON_UNIQUE_IP,
+    "UPDATE hosts SET host_id = LAST_INSERT_ID(host_id), dhcp_identifier = ?, dhcp_identifier_type = ?, "
+                     "dhcp4_subnet_id = ?, dhcp6_subnet_id = ?, ipv4_address = ?, hostname = ?, "
+                     "dhcp4_client_classes = ?, dhcp6_client_classes = ?, "
+                     "user_context = ?, dhcp4_next_server = ?, dhcp4_server_hostname = ?, "
+                     "dhcp4_boot_file_name = ?, auth_key = ? "
+    "WHERE dhcp_identifier = ? AND dhcp_identifier_type = ? AND dhcp4_subnet_id = ?"},
+
+    {MySqlHostDataSourceImpl::UPDATE_V4_HOST_UNIQUE_IP,
+    "UPDATE hosts SET host_id = LAST_INSERT_ID(host_id), dhcp_identifier = ?, dhcp_identifier_type = ?, "
+                     "dhcp4_subnet_id = ?, dhcp6_subnet_id = ?, ipv4_address = ?, hostname = ?, "
+                     "dhcp4_client_classes = ?, dhcp6_client_classes = ?, "
+                     "user_context = ?, dhcp4_next_server = ?, dhcp4_server_hostname = ?, "
+                     "dhcp4_boot_file_name = ?, auth_key = ? "
+    "WHERE dhcp_identifier = ? AND dhcp_identifier_type = ? AND dhcp4_subnet_id = ? "
+    "AND NOT EXISTS (SELECT 1 FROM hosts "
+                    "WHERE ipv4_address = ? AND dhcp4_subnet_id = ? "
+                    "LIMIT 1)"},
+
+    {MySqlHostDataSourceImpl::UPDATE_V6_HOST,
+    "UPDATE hosts SET host_id = LAST_INSERT_ID(host_id), dhcp_identifier = ?, dhcp_identifier_type = ?, "
+                     "dhcp4_subnet_id = ?, dhcp6_subnet_id = ?, ipv4_address = ?, hostname = ?, "
+                     "dhcp4_client_classes = ?, dhcp6_client_classes = ?, "
+                     "user_context = ?, dhcp4_next_server = ?, dhcp4_server_hostname = ?, "
+                     "dhcp4_boot_file_name = ?, auth_key = ? "
+    "WHERE dhcp_identifier = ? AND dhcp_identifier_type = ? AND dhcp6_subnet_id = ?"},
+
+    {MySqlHostDataSourceImpl::UPDATE_V4_HOST_OPTION,
+    "UPDATE dhcp4_options SET code = ?, value = ?, formatted_value = ?, "
+                             "space = ?, persistent = ?, cancelled = ?, "
+                             "user_context = ?, dhcp4_subnet_id = ?, host_id = ?, "
+                             "scope_id = 3 "
+                             "WHERE code = ? AND space = ? AND host_id = ? AND scope_id = 3"},
+
+    {MySqlHostDataSourceImpl::UPDATE_V6_HOST_OPTION,
+    "UPDATE dhcp6_options SET code = ?, value = ?, formatted_value = ?, "
+                             "space = ?, persistent = ?, cancelled = ?, "
+                             "user_context = ?, dhcp6_subnet_id = ?, host_id = ?, "
+                             "scope_id = 3 "
+                             "WHERE code = ? AND space = ? AND host_id = ? AND scope_id = 3"},
+
+    {MySqlHostDataSourceImpl::UPDATE_V6_RESERVATION_NON_UNIQUE,
+    "UPDATE ipv6_reservations SET address = ?, prefix_len = ?, type = ?, "
+                                 "dhcp6_iaid = ?, host_id = ? "
+                                 "WHERE address = ?"},
+
+    {MySqlHostDataSourceImpl::UPDATE_V6_RESERVATION_UNIQUE,
+    "UPDATE ipv6_reservations SET address = ?, prefix_len = ?, type = ?, "
+                                 "dhcp6_iaid = ?, host_id = ? "
+                                 "WHERE address = ? AND prefix_len = ? "
+                                 "AND NOT EXISTS ("
+                                    "SELECT 1 FROM ipv6_reservations "
+                                    "WHERE address = ? AND prefix_len = ? "
+                                 "LIMIT 1)"},
+}};
 
 }  // namespace
 
@@ -3009,6 +3142,25 @@ MySqlHostDataSourceImpl::delStatement(MySqlHostContextPtr& ctx,
     return (numrows != 0);
 }
 
+uint64_t
+MySqlHostDataSourceImpl::updateStatement(MySqlHostContextPtr& ctx,
+                                         StatementIndex const stindex,
+                                         vector<MYSQL_BIND>& bind) {
+    // Bind the parameters to the statement.
+    int status(mysql_stmt_bind_param(ctx->conn_.statements_[stindex], bind.data()));
+    checkError(ctx, status, stindex, "unable to bind parameters");
+
+    // Execute the statement.
+    status = MysqlExecuteStatement(ctx->conn_.statements_[stindex]);
+    if (status != 0) {
+        checkError(ctx, status, stindex, "unable to execute statement");
+    }
+
+    // Return the number of affected rows.
+    my_ulonglong const affected(mysql_stmt_affected_rows(ctx->conn_.statements_[stindex]));
+    return affected;
+}
+
 void
 MySqlHostDataSourceImpl::addResv(MySqlHostContextPtr& ctx,
                                  const IPv6Resrv& resv,
@@ -3050,6 +3202,46 @@ MySqlHostDataSourceImpl::addOptions(MySqlHostContextPtr& ctx,
         if (options && !options->empty()) {
             for (auto opt = options->begin(); opt != options->end(); ++opt) {
                 addOption(ctx, stindex, *opt, *space, Optional<SubnetID>(), host_id);
+            }
+        }
+    }
+}
+
+void
+MySqlHostDataSourceImpl::updateOption(MySqlHostContextPtr& ctx,
+                                      StatementIndex const stindex,
+                                      OptionDescriptor const& opt_desc,
+                                      string const& opt_space,
+                                      Optional<SubnetID> const& subnet_id,
+                                      HostID const id) {
+    vector<MYSQL_BIND> bind(ctx->host_option_exchange_->createBindForSend(opt_desc, opt_space,
+                                                                          subnet_id, id,
+                                                                          /* is_update = */ true));
+
+    uint64_t const affected(updateStatement(ctx, stindex, bind));
+    if (affected == 0) {
+        isc_throw(NoRowsAffected, "Host not updated (option not found).");
+    }
+}
+
+void
+MySqlHostDataSourceImpl::updateOptions(MySqlHostContextPtr& ctx,
+                                       StatementIndex const stindex,
+                                       ConstCfgOptionPtr const& options_cfg,
+                                       uint64_t const host_id) {
+    // Get option space names and vendor space names and combine them within a
+    // single list.
+    list<string> option_spaces(options_cfg->getOptionSpaceNames());
+    list<string> const vendor_spaces(options_cfg->getVendorIdsSpaceNames());
+    option_spaces.insert(option_spaces.end(), vendor_spaces.begin(), vendor_spaces.end());
+
+    // For each option space retrieve all options and insert them into the
+    // database.
+    for (string const& space : option_spaces) {
+        OptionContainerPtr const options(options_cfg->getAll(space));
+        if (options && !options->empty()) {
+            for (OptionDescriptor const& option : *options) {
+                updateOption(ctx, stindex, option, space, Optional<SubnetID>(), host_id);
             }
         }
     }
@@ -3919,6 +4111,93 @@ MySqlHostDataSource::getAll6(const SubnetID& subnet_id,
     impl_->getHostCollection(ctx, MySqlHostDataSourceImpl::GET_HOST_SUBID6_ADDR, inbind,
                              ctx->host_ipv6_exchange_, collection, false);
     return (collection);
+}
+
+void
+MySqlHostDataSource::update(HostPtr const& host) {
+    // Get a context.
+    MySqlHostContextAlloc const context(*impl_);
+    MySqlHostContextPtr ctx(context.ctx_);
+
+    // If operating in read-only mode, throw exception.
+    impl_->checkReadOnly(ctx);
+
+    // Initiate MySQL transaction as we will have to make multiple queries
+    // to update host information into multiple tables. If that fails on
+    // any stage, the transaction will be rolled back by the destructor of
+    // the MySqlTransaction class.
+    MySqlTransaction transaction(ctx->conn_);
+
+    // If we're configured to check that an IP reservation within a given subnet
+    // is unique, that the IP reservation exists and that the subnet is actually
+    // set, we will be using a special query that checks for uniqueness.
+    // Otherwise, we will use a regular update statement.
+    bool const unique_ip(impl_->ip_reservations_unique_ &&
+                         !host->getIPv4Reservation().isV4Zero() &&
+                         host->getIPv4SubnetID() != SUBNET_ID_UNUSED);
+
+    // Create the MYSQL_BIND array for the host.
+    vector<MYSQL_BIND> bind(
+        ctx->host_ipv4_exchange_->createBindForSend(host, unique_ip, /* is_update = */ true));
+
+    // Update the host.
+    if (CfgMgr::instance().getFamily() == AF_INET) {
+        uint64_t const affected(
+            impl_->updateStatement(ctx,
+                                unique_ip ? MySqlHostDataSourceImpl::UPDATE_V4_HOST_UNIQUE_IP :
+                                            MySqlHostDataSourceImpl::UPDATE_V4_HOST_NON_UNIQUE_IP,
+                                bind));
+        if (affected == 0) {
+            isc_throw(NoRowsAffected, "Host not updated (host not found"
+                                        << (unique_ip ? " or reserved address not unique" : "")
+                                        << ").");
+        }
+    } else {
+        uint64_t const affected(
+            impl_->updateStatement(ctx, MySqlHostDataSourceImpl::UPDATE_V6_HOST, bind));
+        if (affected == 0) {
+            isc_throw(NoRowsAffected, "Host not updated (host not found).");
+        }
+    }
+
+    // Get the host ID for the updated entry.
+    uint64_t const host_id(mysql_insert_id(ctx->conn_.mysql_));
+
+    // Update DHCPv4 options.
+    ConstCfgOptionPtr const cfg_option4(host->getCfgOption4());
+    if (cfg_option4) {
+        impl_->updateOptions(ctx, MySqlHostDataSourceImpl::UPDATE_V4_HOST_OPTION, cfg_option4,
+                             host_id);
+    }
+
+    // Update DHCPv6 options.
+    ConstCfgOptionPtr const cfg_option6(host->getCfgOption6());
+    if (cfg_option6) {
+        impl_->updateOptions(ctx, MySqlHostDataSourceImpl::UPDATE_V6_HOST_OPTION, cfg_option6,
+                             host_id);
+    }
+
+    // Update IPv6 reservations.
+    IPv6ResrvRange const v6_reservations(host->getIPv6Reservations());
+    if (std::distance(v6_reservations.first, v6_reservations.second) > 0) {
+        for (IPv6ResrvIterator i = v6_reservations.first; i != v6_reservations.second; ++i) {
+            bind = ctx->host_ipv6_reservation_exchange_->createBindForSend(
+                i->second, host_id, impl_->ip_reservations_unique_);
+
+            uint64_t const affected(impl_->updateStatement(
+                ctx,
+                impl_->ip_reservations_unique_ ?
+                    MySqlHostDataSourceImpl::UPDATE_V6_RESERVATION_UNIQUE :
+                    MySqlHostDataSourceImpl::UPDATE_V6_RESERVATION_NON_UNIQUE,
+                bind));
+            if (affected == 0) {
+                isc_throw(NoRowsAffected, "Host not updated (IPv6 reservation not found).");
+            }
+        }
+    }
+
+    // Everything went fine, so explicitly commit the transaction.
+    transaction.commit();
 }
 
 // Miscellaneous database methods.

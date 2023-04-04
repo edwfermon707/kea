@@ -42,13 +42,16 @@ Currently, the following commands are supported:
 - ``reservation-del``, which attempts to delete a reservation matching specified
   criteria.
 
+- ``reservation-update``, which updates all the resources of a reservation
+  determined by given identifiers.
+
 To use the commands that change reservation information
-(i.e. ``reservation-add`` and ``reservation-del``), the hosts database must be
-specified and it must not operate in read-only mode (for details, see
-the ``hosts-databases`` descriptions in :ref:`hosts-databases-configuration4`
+(i.e. ``reservation-add``, ``reservation-del``, and ``reservation-update``),
+the hosts database must be specified and it must not operate in read-only mode
+(for details, see the ``hosts-databases`` descriptions in :ref:`hosts-databases-configuration4`
 and :ref:`hosts-databases-configuration6`). If the ``hosts-databases`` are not specified or are
 running in read-only mode, the ``host_cmds`` library will load, but any
-attempts to use ``reservation-add`` or ``reservation-del`` will fail.
+attempts to use ``reservation-add``, ``reservation-del``, or ``reservation-update`` will fail.
 
 For a description of proposed future commands, see the `Control API
 Requirements <https://gitlab.isc.org/isc-projects/kea/wikis/designs/commands>`__
@@ -686,6 +689,18 @@ an error. Here are some examples of possible results:
        "text": "Unable to delete a host because there is no hosts-database
                 configured."
    }
+
+.. _command-reservation-update:
+
+The ``reservation-update`` Command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+TODO
+
+.. _general-mentions:
+
+General Mentions
+~~~~~~~~~~~~~~~~
 
 .. note::
 

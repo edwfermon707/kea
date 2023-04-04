@@ -229,9 +229,10 @@ operator<(Element const& a, Element const& b) {
         return b.boolValue() || !a.boolValue();
     case Element::string:
         return std::strcmp(a.stringValue().c_str(), b.stringValue().c_str()) < 0;
+    default:
+        isc_throw(BadValue, "cannot compare Elements of type " <<
+                                std::to_string(a.getType()));
     }
-    isc_throw(BadValue, "cannot compare Elements of type " <<
-                            std::to_string(a.getType()));
 }
 
 //

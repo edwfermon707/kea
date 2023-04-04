@@ -513,6 +513,11 @@ public:
     /// Uses gtest macros to report failures.
     void testMultipleHosts6();
 
+    /// @brief Tests that multiple hosts can be specified within an IPv6 subnet.
+    ///
+    /// Uses gtest macros to report failures.
+    void testUpdate();
+
     /// @brief Returns DUID with identical content as specified HW address
     ///
     /// This method does not have any sense in real life and is only useful

@@ -3892,6 +3892,40 @@ HostMgrTest::testGetAll6BySubnetIP(BaseHostDataSource& data_source1,
                 IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::5"))));
 }
 
+void
+GenericHostDataSourceTest::testUpdate() {
+    // Make sure there is a pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+
+    // Create a v4 host.
+    HostPtr host(HostDataSourceUtils::initializeHost4("192.0.2.1", Host::IDENT_HWADDR));
+    SubnetID const subnet1(host->getIPv4SubnetID());
+
+    // Add it to the data source.
+    ASSERT_NO_THROW(hdsptr_->add(host));
+
+    // Try to retrieve it back.
+    ConstHostPtr before = hdsptr_->get4(subnet1, IOAddress("192.0.2.1"));
+
+    // Try to delete it: del(subnet-id, addr4).
+    EXPECT_NO_THROW(hdsptr_->update(host));
+
+    // Check if it's still there.
+    ConstHostPtr after = hdsptr_->get4(subnet1, IOAddress("192.0.2.1"));
+
+    // Make sure the host was there before...
+    EXPECT_TRUE(before);
+
+    // ... and that it's gone after deletion.
+    EXPECT_FALSE(after);
+
+    // An attempt to delete it should not cause an exception. It
+    // should return false.
+    bool result = false;
+    EXPECT_NO_THROW(result = hdsptr_->del(subnet1, IOAddress("192.0.2.1")));
+    EXPECT_FALSE(result);
+}
+
 }  // namespace test
 }  // namespace dhcp
 }  // namespace isc
