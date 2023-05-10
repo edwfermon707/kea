@@ -41,7 +41,7 @@ CREATE TABLE lease4 (
     fqdn_fwd BOOL,                              # Has forward DNS update been performed by a server
     fqdn_rev BOOL,                              # Has reverse DNS update been performed by a server
     hostname VARCHAR(255)                       # The FQDN of the client
-    ) ENGINE = INNODB;
+    ) ENGINE = NDB;
 
 # Create search indexes for lease4 table
 # index by hwaddr and subnet_id
@@ -68,7 +68,7 @@ CREATE TABLE lease6 (
     fqdn_rev BOOL,                              # Has reverse DNS update been performed by a server
     hostname VARCHAR(255)                       # The FQDN of the client
 
-    ) ENGINE = INNODB;
+    ) ENGINE = NDB;
 
 # Create search indexes for lease6 table
 # index by iaid, subnet_id, and duid
@@ -82,7 +82,7 @@ CREATE INDEX lease6_by_iaid_subnet_id_duid ON lease6 (iaid, subnet_id, duid);
 CREATE TABLE lease6_types (
     lease_type TINYINT PRIMARY KEY NOT NULL,    # Lease type code.
     name VARCHAR(5)                             # Name of the lease type
-    ) ENGINE = INNODB;
+    ) ENGINE = NDB;
 
 START TRANSACTION;
 INSERT INTO lease6_types VALUES (0, 'IA_NA');   # Non-temporary v6 addresses
@@ -97,7 +97,7 @@ COMMIT;
 CREATE TABLE schema_version (
     version INT PRIMARY KEY NOT NULL,       # Major version number
     minor INT                               # Minor version number
-    ) ENGINE = INNODB;
+    ) ENGINE = NDB;
 START TRANSACTION;
 INSERT INTO schema_version VALUES (1, 0);
 COMMIT;
@@ -122,7 +122,7 @@ ALTER TABLE lease6
 CREATE TABLE lease_hwaddr_source (
     hwaddr_source INT PRIMARY KEY NOT NULL,
     name VARCHAR(40)
-) ENGINE = INNODB;
+) ENGINE = NDB;
 
 # Hardware address obtained from raw sockets
 INSERT INTO lease_hwaddr_source VALUES (1, 'HWADDR_SOURCE_RAW');
@@ -168,7 +168,7 @@ CREATE TABLE IF NOT EXISTS hosts (
     PRIMARY KEY (host_id),
     INDEX key_dhcp4_identifier_subnet_id (dhcp_identifier ASC , dhcp_identifier_type ASC),
     INDEX key_dhcp6_identifier_subnet_id (dhcp_identifier ASC , dhcp_identifier_type ASC , dhcp6_subnet_id ASC)
-)  ENGINE=INNODB;
+)  ENGINE = NDB;
 -- -----------------------------------------------------
 -- Table `ipv6_reservations`
 -- -----------------------------------------------------
@@ -184,7 +184,7 @@ CREATE TABLE IF NOT EXISTS ipv6_reservations (
     CONSTRAINT fk_ipv6_reservations_Host FOREIGN KEY (host_id)
         REFERENCES hosts (host_id)
         ON DELETE NO ACTION ON UPDATE NO ACTION
-)  ENGINE=INNODB;
+)  ENGINE = NDB;
 -- -----------------------------------------------------
 -- Table `dhcp4_options`
 -- -----------------------------------------------------
@@ -204,7 +204,7 @@ CREATE TABLE IF NOT EXISTS dhcp4_options (
     CONSTRAINT fk_options_host1 FOREIGN KEY (host_id)
         REFERENCES hosts (host_id)
         ON DELETE NO ACTION ON UPDATE NO ACTION
-)  ENGINE=INNODB;
+)  ENGINE = NDB;
 -- -----------------------------------------------------
 -- Table `dhcp6_options`
 -- -----------------------------------------------------
@@ -224,7 +224,7 @@ CREATE TABLE IF NOT EXISTS dhcp6_options (
     CONSTRAINT fk_options_host10 FOREIGN KEY (host_id)
         REFERENCES hosts (host_id)
         ON DELETE NO ACTION ON UPDATE NO ACTION
-)  ENGINE=INNODB;
+)  ENGINE = NDB;
 
 DELIMITER $$
 CREATE TRIGGER host_BDEL BEFORE DELETE ON hosts FOR EACH ROW
@@ -266,7 +266,7 @@ CREATE INDEX lease6_by_state_expire ON lease6 (state ASC, expire ASC);
 CREATE TABLE IF NOT EXISTS lease_state (
   state INT UNSIGNED PRIMARY KEY NOT NULL,
   name VARCHAR(64) NOT NULL
-) ENGINE=INNODB;
+) ENGINE = NDB;
 
 # Insert currently defined state names.
 INSERT INTO lease_state VALUES (0, 'default');
@@ -426,7 +426,7 @@ CREATE UNIQUE INDEX key_dhcp6_address_prefix_len ON ipv6_reservations (address A
 CREATE TABLE IF NOT EXISTS host_identifier_type (
     type TINYINT PRIMARY KEY NOT NULL,   # Lease type code.
     name VARCHAR(32)                     # Name of the lease type
-) ENGINE = INNODB;
+) ENGINE = NDB;
 
 START TRANSACTION;
 INSERT INTO host_identifier_type VALUES (0, 'hw-address');
@@ -453,7 +453,7 @@ ALTER TABLE dhcp6_options MODIFY dhcp6_subnet_id INT UNSIGNED NULL;
 CREATE TABLE IF NOT EXISTS dhcp_option_scope (
     scope_id TINYINT UNSIGNED PRIMARY KEY NOT NULL,
     scope_name VARCHAR(32)
-) ENGINE = INNODB;
+) ENGINE = NDB;
 
 START TRANSACTION;
 INSERT INTO dhcp_option_scope VALUES (0, 'global');
@@ -556,7 +556,7 @@ CREATE TABLE lease4_stat (
     state INT UNSIGNED NOT NULL,
     leases BIGINT,
     PRIMARY KEY (subnet_id, state)
-) ENGINE = INNODB;
+) ENGINE = NDB;
 
 # Create stat_lease4_insert trigger
 DELIMITER $$
@@ -622,7 +622,7 @@ CREATE TABLE lease6_stat (
     state INT UNSIGNED NOT NULL,
     leases BIGINT,
     PRIMARY KEY (subnet_id, lease_type, state)
-) ENGINE = INNODB;
+) ENGINE = NDB;
 
 # Create stat_lease6_insert trigger
 DELIMITER $$
@@ -776,14 +776,14 @@ CREATE TABLE logs (
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  # creation timestamp
     address VARCHAR(43) NULL,                       # address or prefix
     log TEXT NOT NULL                               # the log itself
-    ) ENGINE = INNODB;
+    ) ENGINE = NDB;
 
 # Create search index
 CREATE INDEX timestamp_index ON logs (timestamp);
 
 #add auth key for reconfiguration
 ALTER TABLE hosts
-    ADD COLUMN auth_key VARCHAR(16) NULL;
+    ADD COLUMN auth_key VARCHAR(32) NULL;
 
 # Add scope for shared network specific options.
 INSERT INTO dhcp_option_scope (scope_id, scope_name)
@@ -804,7 +804,7 @@ CREATE TABLE IF NOT EXISTS modification (
   id TINYINT(3) NOT NULL,
   modification_type VARCHAR(32) NOT NULL,
   PRIMARY KEY (id)
-) ENGINE=InnoDB;
+) ENGINE = NDB;
 
 INSERT INTO modification(id, modification_type)
     VALUES(0, "create");
@@ -826,7 +826,7 @@ CREATE TABLE IF NOT EXISTS dhcp4_server (
     PRIMARY KEY (id),
     UNIQUE KEY dhcp4_server_tag_UNIQUE (tag),
     KEY key_dhcp4_server_modification_ts (modification_ts)
-) ENGINE=InnoDB;
+) ENGINE = NDB;
 
 # Special server entry meaning "all servers". This refers to
 # the configuration entries owned by all servers.
@@ -849,7 +849,7 @@ CREATE TABLE IF NOT EXISTS dhcp4_audit (
     CONSTRAINT fk_dhcp4_audit_modification_type FOREIGN KEY (modification_type)
         REFERENCES modification (id)
         ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB;
+) ENGINE = NDB;
 
 -- -----------------------------------------------------
 -- Table `dhcp4_global_parameter`
@@ -862,7 +862,7 @@ CREATE TABLE IF NOT EXISTS dhcp4_global_parameter (
     PRIMARY KEY (id),
     KEY key_dhcp4_global_parameter_modification_ts (modification_ts),
     KEY key_dhcp4_global_parameter_name (name)
-) ENGINE=InnoDB;
+) ENGINE = NDB;
 
 -- -----------------------------------------------------
 -- Table `dhcp4_global_parameter_server`
@@ -882,7 +882,7 @@ CREATE TABLE IF NOT EXISTS dhcp4_global_parameter_server (
     CONSTRAINT fk_dhcp4_global_parameter_server_server_id FOREIGN KEY (server_id)
         REFERENCES dhcp4_server (id)
         ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB;
+) ENGINE = NDB;
 
 -- -----------------------------------------------------
 -- Table `dhcp4_option_def`
@@ -901,7 +901,7 @@ CREATE TABLE IF NOT EXISTS dhcp4_option_def (
     PRIMARY KEY (id),
     KEY key_dhcp4_option_def_modification_ts (modification_ts),
     KEY key_dhcp4_option_def_code_space (code, space)
-) ENGINE=InnoDB;
+) ENGINE = NDB;
 
 -- -----------------------------------------------------
 -- Table `dhcp4_option_def_server`
@@ -920,7 +920,7 @@ CREATE TABLE IF NOT EXISTS dhcp4_option_def_server (
         ON DELETE CASCADE ON UPDATE NO ACTION,
     CONSTRAINT fk_dhcp4_option_def_server_server_id FOREIGN KEY (server_id)
         REFERENCES dhcp4_server (id) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB;
+) ENGINE = NDB;
 
 -- -----------------------------------------------------
 -- Table `dhcp4_shared_network`
@@ -942,7 +942,7 @@ CREATE TABLE IF NOT EXISTS dhcp4_shared_network (
     PRIMARY KEY (id),
     UNIQUE KEY name_UNIQUE (name),
     KEY key_dhcp4_shared_network_modification_ts (modification_ts)
-) ENGINE=InnoDB;
+) ENGINE = NDB;
 
 -- -----------------------------------------------------
 -- Table `dhcp4_shared_network_server`
@@ -961,7 +961,7 @@ CREATE TABLE IF NOT EXISTS dhcp4_shared_network_server (
         ON DELETE NO ACTION ON UPDATE NO ACTION,
     CONSTRAINT fk_dhcp4_shared_network_server_shared_network_id FOREIGN KEY (shared_network_id)
         REFERENCES dhcp4_shared_network (id) ON DELETE CASCADE ON UPDATE NO ACTION
-) ENGINE=InnoDB;
+) ENGINE = NDB;
 
 -- -----------------------------------------------------
 -- Table `dhcp4_subnet`
@@ -994,7 +994,7 @@ CREATE TABLE IF NOT EXISTS dhcp4_subnet (
     CONSTRAINT fk_dhcp4_subnet_shared_network FOREIGN KEY (shared_network_name)
         REFERENCES dhcp4_shared_network (name)
         ON DELETE SET NULL ON UPDATE NO ACTION
-) ENGINE=InnoDB;
+) ENGINE = NDB;
 
 -- -----------------------------------------------------
 -- Table `dhcp4_pool`
@@ -1010,8 +1010,8 @@ CREATE TABLE IF NOT EXISTS dhcp4_pool (
     KEY fk_dhcp4_pool_subnet_id (subnet_id),
     CONSTRAINT fk_dhcp4_pool_subnet_id FOREIGN KEY (subnet_id)
         REFERENCES dhcp4_subnet (subnet_id)
-        ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB;
+        ON DELETE CASCADE ON UPDATE NO ACTION
+) ENGINE = NDB;
 
 -- -----------------------------------------------------
 -- Table `dhcp4_subnet_server`
@@ -1030,7 +1030,7 @@ CREATE TABLE IF NOT EXISTS dhcp4_subnet_server (
     CONSTRAINT fk_dhcp4_subnet_server_subnet_id FOREIGN KEY (subnet_id)
         REFERENCES dhcp4_subnet (subnet_id)
         ON DELETE CASCADE ON UPDATE NO ACTION
-) ENGINE=InnoDB;
+) ENGINE = NDB;
 
 # Modify the primary key to BINGINT as other tables have.
 ALTER TABLE dhcp4_options MODIFY option_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT;
@@ -1058,7 +1058,7 @@ CREATE TABLE IF NOT EXISTS dhcp4_options_server (
     CONSTRAINT fk_dhcp4_options_server_server_id FOREIGN KEY (server_id)
         REFERENCES dhcp4_server (id)
         ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB;
+) ENGINE = NDB;
 
 # Create trigger which removes pool specific options upon removal of
 # the pool.
@@ -1082,7 +1082,7 @@ CREATE TABLE IF NOT EXISTS dhcp6_server (
     PRIMARY KEY (id),
     UNIQUE KEY dhcp6_server_tag_UNIQUE (tag),
     KEY key_dhcp6_server_modification_ts (modification_ts)
-) ENGINE=InnoDB;
+) ENGINE = NDB;
 
 # Special server entry meaning "all servers". This refers to
 # the configuration entries owned by all servers.
@@ -1105,7 +1105,7 @@ CREATE TABLE IF NOT EXISTS dhcp6_audit (
     CONSTRAINT fk_dhcp6_audit_modification_type FOREIGN KEY (modification_type)
         REFERENCES modification (id)
         ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB;
+) ENGINE = NDB;
 
 -- -----------------------------------------------------
 -- Table `dhcp6_global_parameter`
@@ -1118,7 +1118,7 @@ CREATE TABLE IF NOT EXISTS dhcp6_global_parameter (
     PRIMARY KEY (id),
     KEY key_dhcp6_global_parameter_modification_ts (modification_ts),
     KEY key_dhcp6_global_parameter_name (name)
-) ENGINE=InnoDB;
+) ENGINE = NDB;
 
 -- -----------------------------------------------------
 -- Table `dhcp6_global_parameter_server`
@@ -1138,7 +1138,7 @@ CREATE TABLE IF NOT EXISTS dhcp6_global_parameter_server (
     CONSTRAINT fk_dhcp6_global_parameter_server_server_id FOREIGN KEY (server_id)
         REFERENCES dhcp6_server (id)
         ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB;
+) ENGINE = NDB;
 
 -- -----------------------------------------------------
 -- Table `dhcp6_option_def`
@@ -1157,7 +1157,7 @@ CREATE TABLE IF NOT EXISTS dhcp6_option_def (
     PRIMARY KEY (id),
     KEY key_dhcp6_option_def_modification_ts (modification_ts),
     KEY key_dhcp6_option_def_code_space (code, space)
-) ENGINE=InnoDB;
+) ENGINE = NDB;
 
 -- -----------------------------------------------------
 -- Table `dhcp6_option_def_server`
@@ -1176,7 +1176,7 @@ CREATE TABLE IF NOT EXISTS dhcp6_option_def_server (
         ON DELETE CASCADE ON UPDATE NO ACTION,
     CONSTRAINT fk_dhcp6_option_def_server_server_id FOREIGN KEY (server_id)
         REFERENCES dhcp6_server (id) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB;
+) ENGINE = NDB;
 
 -- -----------------------------------------------------
 -- Table `dhcp6_shared_network`
@@ -1199,7 +1199,7 @@ CREATE TABLE dhcp6_shared_network (
     PRIMARY KEY (id),
     UNIQUE KEY name_UNIQUE (name),
     KEY key_dhcp6_shared_network_modification_ts (modification_ts)
-) ENGINE=InnoDB;
+) ENGINE = NDB;
 
 -- -----------------------------------------------------
 -- Table `dhcp6_shared_network_server`
@@ -1219,7 +1219,7 @@ CREATE TABLE IF NOT EXISTS dhcp6_shared_network_server (
     CONSTRAINT fk_dhcp6_shared_network_server_shared_network_id FOREIGN KEY (shared_network_id)
         REFERENCES dhcp6_shared_network (id)
         ON DELETE CASCADE ON UPDATE NO ACTION
-) ENGINE=InnoDB;
+) ENGINE = NDB;
 
 -- -----------------------------------------------------
 -- Table `dhcp6_subnet`
@@ -1248,7 +1248,7 @@ CREATE TABLE dhcp6_subnet (
     CONSTRAINT fk_dhcp6_subnet_shared_network FOREIGN KEY (shared_network_name)
         REFERENCES dhcp6_shared_network (name)
         ON DELETE SET NULL ON UPDATE NO ACTION
-) ENGINE=InnoDB;
+) ENGINE = NDB;
 
 -- -----------------------------------------------------
 -- Table `dhcp6_subnet_server`
@@ -1267,7 +1267,7 @@ CREATE TABLE dhcp6_subnet_server (
     CONSTRAINT fk_dhcp6_subnet_server_subnet_id FOREIGN KEY (subnet_id)
         REFERENCES dhcp6_subnet (subnet_id)
         ON DELETE CASCADE ON UPDATE NO ACTION
-) ENGINE=InnoDB;
+) ENGINE = NDB;
 
 -- -----------------------------------------------------
 -- Table `dhcp6_pd_pool`
@@ -1283,8 +1283,8 @@ CREATE TABLE IF NOT EXISTS dhcp6_pd_pool (
     KEY fk_dhcp6_pd_pool_subnet_id (dhcp6_subnet_id),
     KEY key_dhcp6_pd_pool_modification_ts (modification_ts),
     CONSTRAINT fk_dhcp6_pd_pool_subnet_id FOREIGN KEY (dhcp6_subnet_id)
-        REFERENCES dhcp6_subnet (subnet_id) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB;
+        REFERENCES dhcp6_subnet (subnet_id) ON DELETE CASCADE ON UPDATE NO ACTION
+) ENGINE = NDB;
 
 -- -----------------------------------------------------
 -- Table `dhcp6_pool`
@@ -1299,8 +1299,8 @@ CREATE TABLE IF NOT EXISTS dhcp6_pool (
     KEY fk_dhcp6_pool_subnet_id (dhcp6_subnet_id),
     KEY key_dhcp6_pool_modification_ts (modification_ts),
     CONSTRAINT fk_dhcp6_pool_subnet_id FOREIGN KEY (dhcp6_subnet_id)
-        REFERENCES dhcp6_subnet (subnet_id) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB;
+        REFERENCES dhcp6_subnet (subnet_id) ON DELETE CASCADE ON UPDATE NO ACTION
+) ENGINE = NDB;
 
 # Modify the primary key to BINGINT as other tables have.
 ALTER TABLE dhcp6_options MODIFY option_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT;
@@ -1329,7 +1329,7 @@ CREATE TABLE IF NOT EXISTS dhcp6_options_server (
     CONSTRAINT fk_dhcp6_options_server_server_id FOREIGN KEY (server_id)
         REFERENCES dhcp6_server (id)
         ON DELETE CASCADE ON UPDATE NO ACTION
-) ENGINE=InnoDB;
+) ENGINE = NDB;
 
 # Create trigger which removes pool specific options upon removal of
 # the pool.
@@ -1516,7 +1516,7 @@ CREATE TABLE IF NOT EXISTS dhcp4_audit_revision (
     server_id BIGINT(10) UNSIGNED,
     PRIMARY KEY (id),
     KEY key_dhcp4_audit_revision_by_modification_ts (modification_ts)
-) ENGINE=InnoDB;
+) ENGINE = NDB;
 
 -- -----------------------------------------------------
 -- Drop columns from the dhcp4_audit table which now
@@ -1536,7 +1536,7 @@ ALTER TABLE dhcp4_audit
 ALTER TABLE dhcp4_audit
     ADD CONSTRAINT fk_dhcp4_audit_revision FOREIGN KEY (revision_id)
         REFERENCES dhcp4_audit_revision (id)
-        ON DELETE NO ACTION ON UPDATE CASCADE;
+        ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 -- -----------------------------------------------------
 -- Stored procedure which creates a new entry in the
@@ -1862,7 +1862,7 @@ DELIMITER ;
 CREATE TABLE IF NOT EXISTS parameter_data_type (
     id TINYINT UNSIGNED NOT NULL PRIMARY KEY,
     name VARCHAR(32) NOT NULL
-) ENGINE = InnoDB;
+) ENGINE = NDB;
 
 START TRANSACTION;
 INSERT INTO parameter_data_type VALUES (0, 'integer');
@@ -1907,13 +1907,13 @@ ALTER TABLE dhcp6_pool
     ADD CONSTRAINT fk_dhcp6_pool_subnet_id
     FOREIGN KEY (subnet_id)
     REFERENCES dhcp6_subnet (subnet_id)
-    ON DELETE CASCADE ON UPDATE CASCADE;
+    ON DELETE CASCADE ON UPDATE NO ACTION;
 
 ALTER TABLE dhcp6_pd_pool
     ADD CONSTRAINT fk_dhcp6_pd_pool_subnet_id
     FOREIGN KEY (subnet_id)
     REFERENCES dhcp6_subnet (subnet_id)
-    ON DELETE CASCADE ON UPDATE CASCADE;
+    ON DELETE CASCADE ON UPDATE NO ACTION;
 
 -- align dhcp6_shared_network_server indexes on dhcp4_shared_network_server
 
@@ -1938,14 +1938,14 @@ ALTER TABLE dhcp4_subnet_server
 ALTER TABLE dhcp4_subnet_server
     ADD CONSTRAINT fk_dhcp4_subnet_server_subnet_id FOREIGN KEY (subnet_id)
     REFERENCES dhcp4_subnet (subnet_id)
-    ON DELETE CASCADE ON UPDATE CASCADE;
+    ON DELETE CASCADE ON UPDATE NO ACTION;
 
 ALTER TABLE dhcp6_subnet_server
     DROP FOREIGN KEY fk_dhcp6_subnet_server_subnet_id;
 ALTER TABLE dhcp6_subnet_server
     ADD CONSTRAINT fk_dhcp6_subnet_server_subnet_id FOREIGN KEY (subnet_id)
     REFERENCES dhcp6_subnet (subnet_id)
-    ON DELETE CASCADE ON UPDATE CASCADE;
+    ON DELETE CASCADE ON UPDATE NO ACTION;
 
 -- -----------------------------------------------------
 -- Table `dhcp6_audit_revision`
@@ -1957,7 +1957,7 @@ CREATE TABLE IF NOT EXISTS dhcp6_audit_revision (
     server_id BIGINT(10) UNSIGNED,
     PRIMARY KEY (id),
     KEY key_dhcp6_audit_revision_by_modification_ts (modification_ts)
-) ENGINE=InnoDB;
+) ENGINE = NDB;
 
 -- -----------------------------------------------------
 -- Drop columns from the dhcp6_audit table which now
@@ -1977,7 +1977,7 @@ ALTER TABLE dhcp6_audit
 ALTER TABLE dhcp6_audit
     ADD CONSTRAINT fk_dhcp6_audit_revision FOREIGN KEY (revision_id)
         REFERENCES dhcp6_audit_revision (id)
-        ON DELETE NO ACTION ON UPDATE CASCADE;
+        ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 -- -----------------------------------------------------
 -- Stored procedure which creates a new entry in the
@@ -2384,10 +2384,6 @@ CREATE TRIGGER dhcp6_server_ADEL AFTER DELETE ON dhcp6_server
     END $$
 DELIMITER ;
 
-# Put the auth key in hexadecimal (double size but far more user friendly).
-ALTER TABLE hosts
-    MODIFY COLUMN auth_key VARCHAR(32) NULL;
-
 # Update the schema version number.
 UPDATE schema_version
     SET version = '8', minor = '1';
@@ -2434,7 +2430,7 @@ ALTER TABLE dhcp4_pool
 ALTER TABLE dhcp4_pool
     ADD CONSTRAINT fk_dhcp4_pool_subnet_id FOREIGN KEY (subnet_id)
     REFERENCES dhcp4_subnet (subnet_id)
-    ON DELETE NO ACTION ON UPDATE CASCADE;
+    ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 # Drop existing trigger on the dhcp6_shared_network table.
 DROP TRIGGER dhcp6_shared_network_ADEL;
@@ -2478,12 +2474,12 @@ ALTER TABLE dhcp6_pd_pool
 ALTER TABLE dhcp6_pool
     ADD CONSTRAINT fk_dhcp6_pool_subnet_id FOREIGN KEY (subnet_id)
     REFERENCES dhcp6_subnet (subnet_id)
-    ON DELETE NO ACTION ON UPDATE CASCADE;
+    ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 ALTER TABLE dhcp6_pd_pool
     ADD CONSTRAINT fk_dhcp6_pd_pool_subnet_id FOREIGN KEY (subnet_id)
     REFERENCES dhcp6_subnet (subnet_id)
-    ON DELETE NO ACTION ON UPDATE CASCADE;
+    ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 # Create trigger which removes pool specific options upon removal of
 # the pool.
@@ -2865,37 +2861,6 @@ ALTER TABLE dhcp4_options ADD CONSTRAINT fk_dhcp4_options_shared_network
         REFERENCES dhcp4_shared_network(name)
         ON DELETE CASCADE ON UPDATE CASCADE;
 
-ALTER TABLE dhcp4_options ADD CONSTRAINT fk_dhcp4_options_subnet
-    FOREIGN KEY (dhcp4_subnet_id)
-        REFERENCES dhcp4_subnet(subnet_id)
-        ON DELETE CASCADE ON UPDATE CASCADE;
-
-ALTER TABLE dhcp4_options ADD CONSTRAINT fk_dhcp4_options_pool
-    FOREIGN KEY (pool_id)
-        REFERENCES dhcp4_pool(id)
-        ON DELETE CASCADE ON UPDATE CASCADE;
-
-# Add missing indexes (foreign keys) to the dhcp6_options table.
-ALTER TABLE dhcp6_options ADD CONSTRAINT fk_dhcp6_options_shared_network
-    FOREIGN KEY (shared_network_name)
-        REFERENCES dhcp6_shared_network(name)
-        ON DELETE CASCADE ON UPDATE CASCADE;
-
-ALTER TABLE dhcp6_options ADD CONSTRAINT fk_dhcp6_options_subnet
-    FOREIGN KEY (dhcp6_subnet_id)
-        REFERENCES dhcp6_subnet(subnet_id)
-        ON DELETE CASCADE ON UPDATE CASCADE;
-
-ALTER TABLE dhcp6_options ADD CONSTRAINT fk_dhcp6_options_pool
-    FOREIGN KEY (pool_id)
-        REFERENCES dhcp6_pool(id)
-        ON DELETE CASCADE ON UPDATE CASCADE;
-
-ALTER TABLE dhcp6_options ADD CONSTRAINT fk_dhcp6_options_pd_pool
-    FOREIGN KEY (pd_pool_id)
-        REFERENCES dhcp6_pd_pool(id)
-        ON DELETE CASCADE ON UPDATE CASCADE;
-
 # Update the schema version number.
 UPDATE schema_version
     SET version = '9', minor = '2';
@@ -3036,17 +3001,17 @@ ALTER TABLE ipv6_reservations DROP FOREIGN KEY fk_ipv6_reservations_Host;
 ALTER TABLE ipv6_reservations ADD CONSTRAINT fk_ipv6_reservations_Host
     FOREIGN KEY (host_id)
         REFERENCES hosts(host_id)
-        ON DELETE CASCADE ON UPDATE CASCADE;
+        ON DELETE CASCADE ON UPDATE NO ACTION;
 
 ALTER TABLE dhcp4_options ADD CONSTRAINT fk_dhcp4_options_Host
     FOREIGN KEY (host_id)
         REFERENCES hosts(host_id)
-        ON DELETE CASCADE ON UPDATE CASCADE;
+        ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 ALTER TABLE dhcp6_options ADD CONSTRAINT fk_dhcp6_options_Host
     FOREIGN KEY (host_id)
         REFERENCES hosts(host_id)
-        ON DELETE CASCADE ON UPDATE CASCADE;
+        ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 # Update the schema version number.
 UPDATE schema_version
@@ -3077,12 +3042,6 @@ ALTER TABLE dhcp6_shared_network
     ADD COLUMN reservations_in_subnet BOOL DEFAULT NULL,
     ADD COLUMN reservations_out_of_pool BOOL DEFAULT NULL;
 
-# DROP reservation_mode
-ALTER TABLE dhcp4_subnet DROP COLUMN reservation_mode;
-ALTER TABLE dhcp4_shared_network DROP COLUMN reservation_mode;
-ALTER TABLE dhcp6_subnet DROP COLUMN reservation_mode;
-ALTER TABLE dhcp6_shared_network DROP COLUMN reservation_mode;
-
 # Update the schema version number.
 UPDATE schema_version
     SET version = '9', minor = '5';
@@ -3107,10 +3066,6 @@ ALTER TABLE dhcp6_subnet
 ALTER TABLE dhcp6_shared_network
     ADD COLUMN cache_threshold FLOAT DEFAULT NULL,
     ADD COLUMN cache_max_age INT(10) DEFAULT NULL;
-
-# Add an auto-increment ID as primary key to support Percona.
-ALTER TABLE logs
-    ADD id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY;
 
 # Update the schema version number.
 UPDATE schema_version
@@ -5330,7 +5285,7 @@ UPDATE schema_version
 #
 # Portability
 # ===========
-# The 'ENGINE = INNODB' on some tables is not portable to another database
+# The 'ENGINE = NDB' on some tables is not portable to another database
 # and will need to be removed.
 #
 # Some columns contain binary data so are stored as VARBINARY instead of
