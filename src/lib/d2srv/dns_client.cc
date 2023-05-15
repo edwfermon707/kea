@@ -289,10 +289,10 @@ DNSClientImpl::doUpdate(asiolink::IOService& io_service,
 void
 DNSClientImpl::incrStats(const std::string& stat, bool update_key) {
     StatsMgr& mgr = StatsMgr::instance();
-    mgr.addValue(stat, static_cast<int64_t>(1));
+    mgr.addValue(stat, int128_t(1));
     if (update_key && !tsig_key_name_.empty()) {
         mgr.addValue(StatsMgr::generateName("key", tsig_key_name_, stat),
-                     static_cast<int64_t>(1));
+                     int128_t(1));
     }
 }
 

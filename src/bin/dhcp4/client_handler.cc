@@ -243,7 +243,7 @@ ClientHandler::tryLock(Pkt4Ptr query, ContinuationPtr cont) {
                     .arg(holder_id->query_->toText())
                     .arg(holder_id->thread_);
                 stats::StatsMgr::instance().addValue("pkt4-receive-drop",
-                                                     static_cast<int64_t>(1));
+                                                     int128_t(1));
             }
         } else {
             // Logging a warning as it is supposed to be a rare event
@@ -254,7 +254,7 @@ ClientHandler::tryLock(Pkt4Ptr query, ContinuationPtr cont) {
                 .arg(holder_id->query_->toText())
                 .arg(holder_id->thread_);
             stats::StatsMgr::instance().addValue("pkt4-receive-drop",
-                                                 static_cast<int64_t>(1));
+                                                 int128_t(1));
         }
     } else {
         // This query is a by-hw duplicate so put the continuation.
@@ -268,7 +268,7 @@ ClientHandler::tryLock(Pkt4Ptr query, ContinuationPtr cont) {
                     .arg(holder_hw->query_->toText())
                     .arg(holder_hw->thread_);
                 stats::StatsMgr::instance().addValue("pkt4-receive-drop",
-                                                     static_cast<int64_t>(1));
+                                                     int128_t(1));
             }
         } else {
             // Logging a warning as it is supposed to be a rare event
@@ -279,7 +279,7 @@ ClientHandler::tryLock(Pkt4Ptr query, ContinuationPtr cont) {
                 .arg(holder_hw->query_->toText())
                 .arg(holder_hw->thread_);
             stats::StatsMgr::instance().addValue("pkt4-receive-drop",
-                                                 static_cast<int64_t>(1));
+                                                 int128_t(1));
         }
     }
     return (false);

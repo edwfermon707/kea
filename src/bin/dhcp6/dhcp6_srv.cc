@@ -263,7 +263,7 @@ void Dhcpv6Srv::setPacketStatisticsDefaults() {
     // Iterate over set of observed statistics
     for (auto it = dhcp6_statistics.begin(); it != dhcp6_statistics.end(); ++it) {
         // Initialize them with default value 0
-        stats_mgr.setValue((*it), static_cast<int64_t>(0));
+        stats_mgr.setValue((*it), int128_t(0));
     }
 }
 
@@ -480,7 +480,7 @@ Dhcpv6Srv::earlyGHRLookup(const Pkt6Ptr& query,
                           DHCP6_PACKET_DROP_DROP_CLASS_EARLY)
                     .arg(query->toText());
                 StatsMgr::instance().addValue("pkt6-receive-drop",
-                                              static_cast<int64_t>(1));
+                                              int128_t(1));
                 return (false);
             }
 
@@ -583,7 +583,7 @@ Dhcpv6Srv::initContext(const Pkt6Ptr& pkt,
         LOG_DEBUG(packet6_logger, DBGLVL_PKT_HANDLING, DHCP6_PACKET_DROP_DROP_CLASS2)
             .arg(pkt->toText());
         StatsMgr::instance().addValue("pkt6-receive-drop",
-                                      static_cast<int64_t>(1));
+                                      int128_t(1));
         drop = true;
     }
 }
@@ -656,7 +656,7 @@ void Dhcpv6Srv::run_one() {
             // any failures in unpacking will cause the packet to be dropped.
             // we will increase type specific packets further down the road.
             // See processStatsReceived().
-            StatsMgr::instance().addValue("pkt6-received", static_cast<int64_t>(1));
+            StatsMgr::instance().addValue("pkt6-received", int128_t(1));
         }
 
         // We used to log that the wait was interrupted, but this is no longer
@@ -776,7 +776,7 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
 
             // Increase the statistic of dropped packets.
             StatsMgr::instance().addValue("pkt6-receive-drop",
-                                          static_cast<int64_t>(1));
+                                          int128_t(1));
             return;
         }
 
@@ -808,9 +808,9 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
 
             // Increase the statistics of parse failures and dropped packets.
             StatsMgr::instance().addValue("pkt6-parse-failed",
-                                          static_cast<int64_t>(1));
+                                          int128_t(1));
             StatsMgr::instance().addValue("pkt6-receive-drop",
-                                          static_cast<int64_t>(1));
+                                          int128_t(1));
             return;
         }
     }
@@ -823,7 +823,7 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
     if (!testServerID(query)) {
 
         // Increase the statistic of dropped packets.
-        StatsMgr::instance().addValue("pkt6-receive-drop", static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt6-receive-drop", int128_t(1));
         return;
     }
 
@@ -833,7 +833,7 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
     if (!testUnicast(query)) {
 
         // Increase the statistic of dropped packets.
-        StatsMgr::instance().addValue("pkt6-receive-drop", static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt6-receive-drop", int128_t(1));
         return;
     }
 
@@ -881,7 +881,7 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
                 .arg(query->getLabel());
             // Increase the statistic of dropped packets.
             StatsMgr::instance().addValue("pkt6-receive-drop",
-                                          static_cast<int64_t>(1));
+                                          int128_t(1));
             return;
         }
 
@@ -898,7 +898,7 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
         LOG_DEBUG(packet6_logger, DBGLVL_PKT_HANDLING, DHCP6_PACKET_DROP_DROP_CLASS)
             .arg(query->toText());
         StatsMgr::instance().addValue("pkt6-receive-drop",
-                                      static_cast<int64_t>(1));
+                                      int128_t(1));
         return;
     }
 
@@ -1021,7 +1021,7 @@ Dhcpv6Srv::processDhcp6Query(Pkt6Ptr& query, Pkt6Ptr& rsp) {
             .arg(e.what());
 
         // Increase the statistic of dropped packets.
-        StatsMgr::instance().addValue("pkt6-receive-drop", static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt6-receive-drop", int128_t(1));
     }
 
     if (!rsp) {
@@ -1154,7 +1154,7 @@ Dhcpv6Srv::processDhcp6Query(Pkt6Ptr& query, Pkt6Ptr& rsp) {
                           .arg(parked_packet_limit)
                           .arg(query->getLabel());
                 isc::stats::StatsMgr::instance().addValue("pkt6-receive-drop",
-                                                          static_cast<int64_t>(1));
+                                                          int128_t(1));
                 rsp.reset();
                 return;
             }
@@ -1839,7 +1839,7 @@ Dhcpv6Srv::sanityCheck(const Pkt6Ptr& pkt) {
     }
 
     // Increase the statistic of dropped packets.
-    StatsMgr::instance().addValue("pkt6-receive-drop", static_cast<int64_t>(1));
+    StatsMgr::instance().addValue("pkt6-receive-drop", int128_t(1));
     return (false);
 }
 
@@ -3264,7 +3264,7 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
             // Need to decrease statistic for assigned addresses.
             StatsMgr::instance().addValue(
                 StatsMgr::generateName("subnet", lease->subnet_id_, "assigned-nas"),
-                static_cast<int64_t>(-1));
+                int128_t(-1));
 
             // Check if a lease has flags indicating that the FQDN update has
             // been performed. If so, create NameChangeRequest which removes
@@ -3461,7 +3461,7 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
             // Need to decrease statistic for assigned prefixes.
             StatsMgr::instance().addValue(
                 StatsMgr::generateName("subnet", lease->subnet_id_, "assigned-pds"),
-                static_cast<int64_t>(-1));
+                int128_t(-1));
         }
     }
 
@@ -4043,10 +4043,10 @@ Dhcpv6Srv::declineLease(const Pkt6Ptr& decline, const Lease6Ptr lease,
     // Bump up the subnet-specific statistic.
     StatsMgr::instance().addValue(
         StatsMgr::generateName("subnet", lease->subnet_id_, "declined-addresses"),
-        static_cast<int64_t>(1));
+        int128_t(1));
 
     // Global declined addresses counter.
-    StatsMgr::instance().addValue("declined-addresses", static_cast<int64_t>(1));
+    StatsMgr::instance().addValue("declined-addresses", int128_t(1));
 
     LOG_INFO(lease6_logger, DHCP6_DECLINE_LEASE).arg(decline->getLabel())
         .arg(lease->addr_.toText()).arg(lease->valid_lft_);
@@ -4586,12 +4586,12 @@ void Dhcpv6Srv::processStatsReceived(const Pkt6Ptr& query) {
             ; // do nothing
     }
 
-    StatsMgr::instance().addValue(stat_name, static_cast<int64_t>(1));
+    StatsMgr::instance().addValue(stat_name, int128_t(1));
 }
 
 void Dhcpv6Srv::processStatsSent(const Pkt6Ptr& response) {
     // Increase generic counter for sent packets.
-    StatsMgr::instance().addValue("pkt6-sent", static_cast<int64_t>(1));
+    StatsMgr::instance().addValue("pkt6-sent", int128_t(1));
 
     // Increase packet type specific counter for packets sent.
     string stat_name;
@@ -4610,7 +4610,7 @@ void Dhcpv6Srv::processStatsSent(const Pkt6Ptr& response) {
         return;
     }
 
-    StatsMgr::instance().addValue(stat_name, static_cast<int64_t>(1));
+    StatsMgr::instance().addValue(stat_name, int128_t(1));
 }
 
 int Dhcpv6Srv::getHookIndexBuffer6Send() {

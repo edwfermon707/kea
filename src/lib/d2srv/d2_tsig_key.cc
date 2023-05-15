@@ -11,9 +11,12 @@
 #include <d2srv/d2_stats.h>
 #include <d2srv/d2_tsig_key.h>
 #include <stats/stats_mgr.h>
+#include <util/bigints.h>
 
 using namespace isc::dns;
 using namespace isc::stats;
+using namespace isc::util;
+
 using namespace std;
 
 namespace isc {
@@ -39,7 +42,7 @@ D2TsigKey::initStats() {
     const string& kname = getKeyName().toText();
     for (const auto& name : D2Stats::key) {
         const string& sname = StatsMgr::generateName("key", kname, name);
-        stats_mgr.setValue(sname, static_cast<int64_t>(0));
+        stats_mgr.setValue(sname, int128_t(0));
     }
 }
 

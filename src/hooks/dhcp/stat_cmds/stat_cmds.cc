@@ -687,8 +687,8 @@ LeaseStatCmdsImpl::addValueRow4(ElementPtr value_rows, const SubnetID &subnet_id
                                 int64_t assigned, int64_t declined) {
     ElementPtr row = Element::createList();
     row->add(Element::create(static_cast<int64_t>(subnet_id)));
-    row->add(Element::create(getSubnetStat(subnet_id, "total-addresses")));
-    row->add(Element::create(getSubnetStat(subnet_id, "cumulative-assigned-addresses")));
+    row->add(Element::create(getBigSubnetStat(subnet_id, "total-addresses")));
+    row->add(Element::create(getBigSubnetStat(subnet_id, "cumulative-assigned-addresses")));
     row->add(Element::create(assigned));
     row->add(Element::create(declined));
     value_rows->add(row);
@@ -700,11 +700,11 @@ LeaseStatCmdsImpl::addValueRow6(ElementPtr value_rows, const SubnetID &subnet_id
     ElementPtr row = Element::createList();
     row->add(Element::create(static_cast<int64_t>(subnet_id)));
     row->add(Element::create(getBigSubnetStat(subnet_id, "total-nas")));
-    row->add(Element::create(getSubnetStat(subnet_id, "cumulative-assigned-nas")));
+    row->add(Element::create(getBigSubnetStat(subnet_id, "cumulative-assigned-nas")));
     row->add(Element::create(assigned));
     row->add(Element::create(declined));
     row->add(Element::create(getBigSubnetStat(subnet_id, "total-pds")));
-    row->add(Element::create(getSubnetStat(subnet_id, "cumulative-assigned-pds")));
+    row->add(Element::create(getBigSubnetStat(subnet_id, "cumulative-assigned-pds")));
     row->add(Element::create(assigned_pds));
     value_rows->add(row);
 }

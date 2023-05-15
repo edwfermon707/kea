@@ -5,20 +5,26 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
+#include <asiolink/addr_utilities.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/option_custom.h>
-#include <asiolink/addr_utilities.h>
 #include <dhcpsrv/cfg_subnets6.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/subnet_id.h>
 #include <stats/stats_mgr.h>
+#include <util/bigints.h>
+
 #include <boost/foreach.hpp>
+
 #include <string.h>
+
 #include <sstream>
 
 using namespace isc::asiolink;
 using namespace isc::data;
+using namespace isc::util;
 
 using namespace std;
 
@@ -459,13 +465,13 @@ CfgSubnets6::updateStatistics() {
         const std::string& name_nas =
             StatsMgr::generateName("subnet", subnet_id, "cumulative-assigned-nas");
         if (!stats_mgr.getObservation(name_nas)) {
-            stats_mgr.setValue(name_nas, static_cast<int64_t>(0));
+            stats_mgr.setValue(name_nas, int128_t(0));
         }
 
         const std::string& name_pds =
             StatsMgr::generateName("subnet", subnet_id, "cumulative-assigned-pds");
         if (!stats_mgr.getObservation(name_pds)) {
-            stats_mgr.setValue(name_pds, static_cast<int64_t>(0));
+            stats_mgr.setValue(name_pds, int128_t(0));
         }
 
         string const& name_ia_na_reuses(

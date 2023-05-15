@@ -264,7 +264,7 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
         LOG_DEBUG(packet4_logger, DBGLVL_PKT_HANDLING, DHCP4_PACKET_DROP_0013)
             .arg(query_->toText());
         isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
-                                                  static_cast<int64_t>(1));
+                                                  int128_t(1));
         drop = true;
     }
 }
@@ -660,7 +660,7 @@ void Dhcpv4Srv::setPacketStatisticsDefaults() {
     // Iterate over set of observed statistics
     for (auto it = dhcp4_statistics.begin(); it != dhcp4_statistics.end(); ++it) {
         // Initialize them with default value 0
-        stats_mgr.setValue((*it), static_cast<int64_t>(0));
+        stats_mgr.setValue((*it), int128_t(0));
     }
 }
 
@@ -985,7 +985,7 @@ Dhcpv4Srv::earlyGHRLookup(const Pkt4Ptr& query,
                           DHCP4_PACKET_DROP_0014)
                     .arg(query->toText());
                 isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
-                                                          static_cast<int64_t>(1));
+                                                          int128_t(1));
                 return (false);
             }
 
@@ -1143,7 +1143,7 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp, bool allow_packet_park) {
     // will increase type specific statistic further down the road.
     // See processStatsReceived().
     isc::stats::StatsMgr::instance().addValue("pkt4-received",
-                                              static_cast<int64_t>(1));
+                                              int128_t(1));
 
     bool skip_unpack = false;
 
@@ -1221,9 +1221,9 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp, bool allow_packet_park) {
 
             // Increase the statistics of parse failures and dropped packets.
             isc::stats::StatsMgr::instance().addValue("pkt4-parse-failed",
-                                                      static_cast<int64_t>(1));
+                                                      int128_t(1));
             isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
-                                                      static_cast<int64_t>(1));
+                                                      int128_t(1));
             return;
         }
     }
@@ -1244,7 +1244,7 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp, bool allow_packet_park) {
     if (!accept(query)) {
         // Increase the statistic of dropped packets.
         isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
-                                                  static_cast<int64_t>(1));
+                                                  int128_t(1));
         return;
     }
 
@@ -1301,7 +1301,7 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp, bool allow_packet_park) {
         LOG_DEBUG(packet4_logger, DBGLVL_PKT_HANDLING, DHCP4_PACKET_DROP_0010)
             .arg(query->toText());
         isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
-                                                  static_cast<int64_t>(1));
+                                                  int128_t(1));
         return;
     }
 
@@ -1398,7 +1398,7 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr& query, Pkt4Ptr& rsp,
 
         // Increase the statistic of dropped packets.
         isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
-                                                  static_cast<int64_t>(1));
+                                                  int128_t(1));
     }
 
     CalloutHandlePtr callout_handle = getCalloutHandle(query);
@@ -1469,7 +1469,7 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr& query, Pkt4Ptr& rsp,
                               .arg(parked_packet_limit)
                               .arg(query->getLabel());
                     isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
-                                                              static_cast<int64_t>(1));
+                                                              int128_t(1));
                     rsp.reset();
                     return;
                 }
@@ -3629,7 +3629,7 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release, AllocEngine::ClientContext4Ptr& cont
                     // Need to decrease statistic for assigned addresses.
                     StatsMgr::instance().addValue(
                         StatsMgr::generateName("subnet", lease->subnet_id_, "assigned-addresses"),
-                        static_cast<int64_t>(-1));
+                        int128_t(-1));
 
                     // Remove existing DNS entries for the lease, if any.
                     queueNCR(CHG_REMOVE, lease);
@@ -3790,10 +3790,10 @@ Dhcpv4Srv::declineLease(const Lease4Ptr& lease, const Pkt4Ptr& decline,
     // Per subnet declined addresses counter.
     StatsMgr::instance().addValue(
         StatsMgr::generateName("subnet", lease->subnet_id_, "declined-addresses"),
-        static_cast<int64_t>(1));
+        int128_t(1));
 
     // Global declined addresses counter.
-    StatsMgr::instance().addValue("declined-addresses", static_cast<int64_t>(1));
+    StatsMgr::instance().addValue("declined-addresses", int128_t(1));
 
     // We do not want to decrease the assigned-addresses at this time. While
     // technically a declined address is no longer allocated, the primary usage
@@ -4440,13 +4440,13 @@ void Dhcpv4Srv::processStatsReceived(const Pkt4Ptr& query) {
     }
 
     isc::stats::StatsMgr::instance().addValue(stat_name,
-                                              static_cast<int64_t>(1));
+                                              int128_t(1));
 }
 
 void Dhcpv4Srv::processStatsSent(const Pkt4Ptr& response) {
     // Increase generic counter for sent packets.
     isc::stats::StatsMgr::instance().addValue("pkt4-sent",
-                                              static_cast<int64_t>(1));
+                                              int128_t(1));
 
     // Increase packet type specific counter for packets sent.
     string stat_name;
@@ -4466,7 +4466,7 @@ void Dhcpv4Srv::processStatsSent(const Pkt4Ptr& response) {
     }
 
     isc::stats::StatsMgr::instance().addValue(stat_name,
-                                              static_cast<int64_t>(1));
+                                              int128_t(1));
 }
 
 int Dhcpv4Srv::getHookIndexBuffer4Receive() {

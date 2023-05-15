@@ -11,6 +11,7 @@
 #include <dhcp/pkt4.h>
 #include <process/daemon.h>
 #include <stats/stats_mgr.h>
+#include <util/bigints.h>
 
 #include <vector>
 
@@ -21,6 +22,7 @@ using namespace isc::hooks;
 using namespace isc::log;
 using namespace isc::process;
 using namespace isc::stats;
+using namespace isc::util;
 
 namespace {
 
@@ -107,9 +109,9 @@ int buffer4_receive(CalloutHandle& handle) {
 
         // Increase the statistics of parse failures and dropped packets.
         StatsMgr::instance().addValue("pkt4-parse-failed",
-                                      static_cast<int64_t>(1));
+                                      int128_t(1));
         StatsMgr::instance().addValue("pkt4-receive-drop",
-                                      static_cast<int64_t>(1));
+                                      int128_t(1));
 
         handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
 

@@ -724,11 +724,11 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
             .arg(subnets_with_unavail_leases)
             .arg(subnets_with_unavail_pools);
         StatsMgr::instance().addValue("v6-allocation-fail-shared-network",
-                                      static_cast<int64_t>(1));
+                                      int128_t(1));
         StatsMgr::instance().addValue(
             StatsMgr::generateName("subnet", ctx.subnet_->getID(),
                                    "v6-allocation-fail-shared-network"),
-                                   static_cast<int64_t>(1));
+                                   int128_t(1));
     } else {
         // The client is not connected to a shared network. It is connected
         // to a subnet. Let's log the ID of that subnet.
@@ -742,11 +742,11 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
             .arg(ctx.subnet_->getID())
             .arg(shared_network);
         StatsMgr::instance().addValue("v6-allocation-fail-subnet",
-                                      static_cast<int64_t>(1));
+                                      int128_t(1));
         StatsMgr::instance().addValue(
             StatsMgr::generateName("subnet", ctx.subnet_->getID(),
                                    "v6-allocation-fail-subnet"),
-                                   static_cast<int64_t>(1));
+                                   int128_t(1));
     }
     if (total_attempts == 0) {
         // In this case, it seems that none of the pools in the subnets could
@@ -756,11 +756,11 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
         LOG_WARN(alloc_engine_logger, ALLOC_ENGINE_V6_ALLOC_FAIL_NO_POOLS)
             .arg(ctx.query_->getLabel());
         StatsMgr::instance().addValue("v6-allocation-fail-no-pools",
-                                      static_cast<int64_t>(1));
+                                      int128_t(1));
         StatsMgr::instance().addValue(
             StatsMgr::generateName("subnet", ctx.subnet_->getID(),
                                    "v6-allocation-fail-no-pools"),
-                                   static_cast<int64_t>(1));
+                                   int128_t(1));
     } else {
         // This is an old log message which provides a number of attempts
         // made by the allocation engine to allocate a lease. The only case
@@ -770,11 +770,11 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
             .arg(ctx.query_->getLabel())
             .arg(total_attempts);
         StatsMgr::instance().addValue("v6-allocation-fail",
-                                      static_cast<int64_t>(1));
+                                      int128_t(1));
         StatsMgr::instance().addValue(
             StatsMgr::generateName("subnet", ctx.subnet_->getID(),
                                    "v6-allocation-fail"),
-                                   static_cast<int64_t>(1));
+                                   int128_t(1));
     }
 
     if (!classes.empty()) {
@@ -782,11 +782,11 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
             .arg(ctx.query_->getLabel())
             .arg(classes.toText());
         StatsMgr::instance().addValue("v6-allocation-fail-classes",
-                                      static_cast<int64_t>(1));
+                                      int128_t(1));
         StatsMgr::instance().addValue(
             StatsMgr::generateName("subnet", ctx.subnet_->getID(),
                                    "v6-allocation-fail-classes"),
-                                   static_cast<int64_t>(1));
+                                   int128_t(1));
     }
 
     // We failed to allocate anything. Let's return empty collection.
@@ -1523,7 +1523,7 @@ AllocEngine::removeNonmatchingReservedLeases6(ClientContext6& ctx,
             StatsMgr::generateName("subnet", candidate->subnet_id_,
                                    ctx.currentIA().type_ == Lease::TYPE_NA ?
                                    "assigned-nas" : "assigned-pds"),
-            static_cast<int64_t>(-1));
+            int128_t(-1));
 
         // In principle, we could trigger a hook here, but we will do this
         // only if we get serious complaints from actual users. We want the
@@ -1570,7 +1570,7 @@ AllocEngine::removeNonmatchingReservedNoHostLeases6(ClientContext6& ctx,
             StatsMgr::generateName("subnet", candidate->subnet_id_,
                                    ctx.currentIA().type_ == Lease::TYPE_NA ?
                                    "assigned-nas" : "assigned-pds"),
-            static_cast<int64_t>(-1));
+            int128_t(-1));
 
         // Add this to the list of removed leases.
         ctx.currentIA().old_leases_.push_back(candidate);
@@ -1641,7 +1641,7 @@ AllocEngine::removeNonreservedLeases6(ClientContext6& ctx,
             StatsMgr::generateName("subnet", (*lease)->subnet_id_,
                                    ctx.currentIA().type_ == Lease::TYPE_NA ?
                                    "assigned-nas" : "assigned-pds"),
-            static_cast<int64_t>(-1));
+            int128_t(-1));
 
         /// @todo: Probably trigger a hook here
 
@@ -1770,17 +1770,17 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
                 StatsMgr::generateName("subnet", ctx.subnet_->getID(),
                                        ctx.currentIA().type_ == Lease::TYPE_NA ?
                                        "assigned-nas" : "assigned-pds"),
-                static_cast<int64_t>(1));
+                int128_t(1));
             StatsMgr::instance().addValue(
                 StatsMgr::generateName("subnet", ctx.subnet_->getID(),
                                        ctx.currentIA().type_ == Lease::TYPE_NA ?
                                        "cumulative-assigned-nas" :
                                        "cumulative-assigned-pds"),
-                static_cast<int64_t>(1));
+                int128_t(1));
             StatsMgr::instance().addValue(ctx.currentIA().type_ == Lease::TYPE_NA ?
                                           "cumulative-assigned-nas" :
                                           "cumulative-assigned-pds",
-                                          static_cast<int64_t>(1));
+                                          int128_t(1));
         }
     }
 
@@ -1932,17 +1932,17 @@ Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
                     StatsMgr::generateName("subnet", ctx.subnet_->getID(),
                                            ctx.currentIA().type_ == Lease::TYPE_NA ?
                                            "assigned-nas" : "assigned-pds"),
-                    static_cast<int64_t>(1));
+                    int128_t(1));
                 StatsMgr::instance().addValue(
                     StatsMgr::generateName("subnet", ctx.subnet_->getID(),
                                            ctx.currentIA().type_ == Lease::TYPE_NA ?
                                            "cumulative-assigned-nas" :
                                            "cumulative-assigned-pds"),
-                    static_cast<int64_t>(1));
+                    int128_t(1));
                 StatsMgr::instance().addValue(ctx.currentIA().type_ == Lease::TYPE_NA ?
                                               "cumulative-assigned-nas" :
                                               "cumulative-assigned-pds",
-                                              static_cast<int64_t>(1));
+                                              int128_t(1));
             }
 
             // Record it so it won't be updated twice.
@@ -2109,7 +2109,7 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
         // Need to decrease statistic for assigned addresses.
         StatsMgr::instance().addValue(
             StatsMgr::generateName("subnet", ctx.subnet_->getID(), "assigned-nas"),
-            static_cast<int64_t>(-1));
+            int128_t(-1));
 
         // Add it to the removed leases list.
         ctx.currentIA().old_leases_.push_back(lease);
@@ -2244,17 +2244,17 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
                 StatsMgr::generateName("subnet", ctx.subnet_->getID(),
                                        ctx.currentIA().type_ == Lease::TYPE_NA ?
                                        "assigned-nas" : "assigned-pds"),
-                static_cast<int64_t>(1));
+                int128_t(1));
             StatsMgr::instance().addValue(
                 StatsMgr::generateName("subnet", ctx.subnet_->getID(),
                                        ctx.currentIA().type_ == Lease::TYPE_NA ?
                                        "cumulative-assigned-nas" :
                                        "cumulative-assigned-pds"),
-                static_cast<int64_t>(1));
+                int128_t(1));
             StatsMgr::instance().addValue(ctx.currentIA().type_ == Lease::TYPE_NA ?
                                           "cumulative-assigned-nas" :
                                           "cumulative-assigned-pds",
-                                          static_cast<int64_t>(1));
+                                          int128_t(1));
         }
 
     } else {
@@ -2323,17 +2323,17 @@ AllocEngine::updateLeaseData(ClientContext6& ctx, const Lease6Collection& leases
                     StatsMgr::generateName("subnet", lease->subnet_id_,
                                            ctx.currentIA().type_ == Lease::TYPE_NA ?
                                            "assigned-nas" : "assigned-pds"),
-                    static_cast<int64_t>(1));
+                    int128_t(1));
                 StatsMgr::instance().addValue(
                     StatsMgr::generateName("subnet", lease->subnet_id_,
                                            ctx.currentIA().type_ == Lease::TYPE_NA ?
                                            "cumulative-assigned-nas" :
                                            "cumulative-assigned-pds"),
-                    static_cast<int64_t>(1));
+                    int128_t(1));
                 StatsMgr::instance().addValue(ctx.currentIA().type_ == Lease::TYPE_NA ?
                                               "cumulative-assigned-nas" :
                                               "cumulative-assigned-pds",
-                                              static_cast<int64_t>(1));
+                                              int128_t(1));
             }
         }
 
@@ -2915,15 +2915,15 @@ AllocEngine::reclaimDeclined(const Lease4Ptr& lease) {
 
     // Decrease subnet specific counter for currently declined addresses
     stats_mgr.addValue(StatsMgr::generateName("subnet", lease->subnet_id_,
-        "declined-addresses"), static_cast<int64_t>(-1));
+        "declined-addresses"), int128_t(-1));
 
     // Decrease global counter for declined addresses
-    stats_mgr.addValue("declined-addresses", static_cast<int64_t>(-1));
+    stats_mgr.addValue("declined-addresses", int128_t(-1));
 
-    stats_mgr.addValue("reclaimed-declined-addresses", static_cast<int64_t>(1));
+    stats_mgr.addValue("reclaimed-declined-addresses", int128_t(1));
 
     stats_mgr.addValue(StatsMgr::generateName("subnet", lease->subnet_id_,
-        "reclaimed-declined-addresses"), static_cast<int64_t>(1));
+        "reclaimed-declined-addresses"), int128_t(1));
 
     // Note that we do not touch assigned-addresses counters. Those are
     // modified in whatever code calls this method.
@@ -2969,15 +2969,15 @@ AllocEngine::reclaimDeclined(const Lease6Ptr& lease) {
 
     // Decrease subnet specific counter for currently declined addresses
     stats_mgr.addValue(StatsMgr::generateName("subnet", lease->subnet_id_,
-        "declined-addresses"), static_cast<int64_t>(-1));
+        "declined-addresses"), int128_t(-1));
 
     // Decrease global counter for declined addresses
-    stats_mgr.addValue("declined-addresses", static_cast<int64_t>(-1));
+    stats_mgr.addValue("declined-addresses", int128_t(-1));
 
-    stats_mgr.addValue("reclaimed-declined-addresses", static_cast<int64_t>(1));
+    stats_mgr.addValue("reclaimed-declined-addresses", int128_t(1));
 
     stats_mgr.addValue(StatsMgr::generateName("subnet", lease->subnet_id_,
-        "reclaimed-declined-addresses"), static_cast<int64_t>(1));
+        "reclaimed-declined-addresses"), int128_t(1));
 
     // Note that we do not touch assigned-nas counters. Those are
     // modified in whatever code calls this method.
@@ -3610,9 +3610,9 @@ AllocEngine::discoverLease4(AllocEngine::ClientContext4& ctx) {
                                                   "subnet",
                                                   ctx.conflicting_lease_->subnet_id_,
                                                   "v4-reservation-conflicts"),
-                                              static_cast<int64_t>(1));
+                                              int128_t(1));
                 StatsMgr::instance().addValue("v4-reservation-conflicts",
-                                              static_cast<int64_t>(1));
+                                              int128_t(1));
             }
 
         } else {
@@ -3867,7 +3867,7 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
             StatsMgr::instance().addValue(
                 StatsMgr::generateName("subnet", client_lease->subnet_id_,
                                        "assigned-addresses"),
-                static_cast<int64_t>(-1));
+                int128_t(-1));
         }
     }
 
@@ -4064,13 +4064,13 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr,
             StatsMgr::instance().addValue(
                 StatsMgr::generateName("subnet", ctx.subnet_->getID(),
                                        "assigned-addresses"),
-                static_cast<int64_t>(1));
+                int128_t(1));
             StatsMgr::instance().addValue(
                 StatsMgr::generateName("subnet", ctx.subnet_->getID(),
                                        "cumulative-assigned-addresses"),
-                static_cast<int64_t>(1));
+                int128_t(1));
             StatsMgr::instance().addValue("cumulative-assigned-addresses",
-                                          static_cast<int64_t>(1));
+                                          int128_t(1));
 
             return (lease);
         } else {
@@ -4178,13 +4178,13 @@ AllocEngine::renewLease4(const Lease4Ptr& lease,
             StatsMgr::instance().addValue(
                 StatsMgr::generateName("subnet", ctx.subnet_->getID(),
                                        "assigned-addresses"),
-                static_cast<int64_t>(1));
+                int128_t(1));
             StatsMgr::instance().addValue(
                 StatsMgr::generateName("subnet", ctx.subnet_->getID(),
                                        "cumulative-assigned-addresses"),
-                static_cast<int64_t>(1));
+                int128_t(1));
             StatsMgr::instance().addValue("cumulative-assigned-addresses",
-                                          static_cast<int64_t>(1));
+                                          int128_t(1));
         }
     }
     if (skip) {
@@ -4284,13 +4284,13 @@ AllocEngine::reuseExpiredLease4(Lease4Ptr& expired,
         StatsMgr::instance().addValue(
                 StatsMgr::generateName("subnet", ctx.subnet_->getID(),
                                        "assigned-addresses"),
-                static_cast<int64_t>(1));
+                int128_t(1));
         StatsMgr::instance().addValue(
                 StatsMgr::generateName("subnet", ctx.subnet_->getID(),
                                        "cumulative-assigned-addresses"),
-                static_cast<int64_t>(1));
+                int128_t(1));
         StatsMgr::instance().addValue("cumulative-assigned-addresses",
-                                      static_cast<int64_t>(1));
+                                      int128_t(1));
     }
 
     // We do nothing for SOLICIT. We'll just update database when
@@ -4495,11 +4495,11 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
             .arg(subnets_with_unavail_leases)
             .arg(subnets_with_unavail_pools);
         StatsMgr::instance().addValue("v4-allocation-fail-shared-network",
-                                      static_cast<int64_t>(1));
+                                      int128_t(1));
         StatsMgr::instance().addValue(
             StatsMgr::generateName("subnet", ctx.subnet_->getID(),
                                    "v4-allocation-fail-shared-network"),
-                                   static_cast<int64_t>(1));
+                                   int128_t(1));
     } else {
         // The client is not connected to a shared network. It is connected
         // to a subnet. Let's log some details about the subnet.
@@ -4513,11 +4513,11 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
             .arg(ctx.subnet_->getID())
             .arg(shared_network);
         StatsMgr::instance().addValue("v4-allocation-fail-subnet",
-                                      static_cast<int64_t>(1));
+                                      int128_t(1));
         StatsMgr::instance().addValue(
             StatsMgr::generateName("subnet", ctx.subnet_->getID(),
                                    "v4-allocation-fail-subnet"),
-                                   static_cast<int64_t>(1));
+                                   int128_t(1));
     }
     if (total_attempts == 0) {
         // In this case, it seems that none of the pools in the subnets could
@@ -4527,11 +4527,11 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
         LOG_WARN(alloc_engine_logger, ALLOC_ENGINE_V4_ALLOC_FAIL_NO_POOLS)
             .arg(ctx.query_->getLabel());
         StatsMgr::instance().addValue("v4-allocation-fail-no-pools",
-                                      static_cast<int64_t>(1));
+                                      int128_t(1));
         StatsMgr::instance().addValue(
             StatsMgr::generateName("subnet", ctx.subnet_->getID(),
                                    "v4-allocation-fail-no-pools"),
-                                   static_cast<int64_t>(1));
+                                   int128_t(1));
     } else {
         // This is an old log message which provides a number of attempts
         // made by the allocation engine to allocate a lease. The only case
@@ -4541,11 +4541,11 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
             .arg(ctx.query_->getLabel())
             .arg(total_attempts);
         StatsMgr::instance().addValue("v4-allocation-fail",
-                                      static_cast<int64_t>(1));
+                                      int128_t(1));
         StatsMgr::instance().addValue(
             StatsMgr::generateName("subnet", ctx.subnet_->getID(),
                                    "v4-allocation-fail"),
-                                   static_cast<int64_t>(1));
+                                   int128_t(1));
     }
 
     if (!classes.empty()) {
@@ -4553,11 +4553,11 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
             .arg(ctx.query_->getLabel())
             .arg(classes.toText());
         StatsMgr::instance().addValue("v4-allocation-fail-classes",
-                                      static_cast<int64_t>(1));
+                                      int128_t(1));
         StatsMgr::instance().addValue(
             StatsMgr::generateName("subnet", ctx.subnet_->getID(),
                                    "v4-allocation-fail-classes"),
-                                   static_cast<int64_t>(1));
+                                   int128_t(1));
     }
 
     return (new_lease);

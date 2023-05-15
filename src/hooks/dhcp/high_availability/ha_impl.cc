@@ -16,6 +16,7 @@
 #include <dhcp/pkt6.h>
 #include <dhcpsrv/lease.h>
 #include <stats/stats_mgr.h>
+#include <util/bigints.h>
 
 using namespace isc::asiolink;
 using namespace isc::config;
@@ -23,6 +24,7 @@ using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::hooks;
 using namespace isc::log;
+using namespace isc::util;
 
 namespace isc {
 namespace ha {
@@ -88,9 +90,9 @@ HAImpl::buffer4Receive(hooks::CalloutHandle& callout_handle) {
 
         // Increase the statistics of parse failures and dropped packets.
         isc::stats::StatsMgr::instance().addValue("pkt4-parse-failed",
-                                                  static_cast<int64_t>(1));
+                                                  int128_t(1));
         isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
-                                                  static_cast<int64_t>(1));
+                                                  int128_t(1));
 
 
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
@@ -202,9 +204,9 @@ HAImpl::buffer6Receive(hooks::CalloutHandle& callout_handle) {
 
         // Increase the statistics of parse failures and dropped packets.
         isc::stats::StatsMgr::instance().addValue("pkt6-parse-failed",
-                                                  static_cast<int64_t>(1));
+                                                  int128_t(1));
         isc::stats::StatsMgr::instance().addValue("pkt6-receive-drop",
-                                                  static_cast<int64_t>(1));
+                                                  int128_t(1));
 
 
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);

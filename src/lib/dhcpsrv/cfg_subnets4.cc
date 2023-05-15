@@ -5,6 +5,9 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
+#include <asiolink/addr_utilities.h>
+#include <asiolink/io_address.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/option_custom.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -13,13 +16,14 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/subnet_id.h>
-#include <asiolink/io_address.h>
-#include <asiolink/addr_utilities.h>
 #include <stats/stats_mgr.h>
+#include <util/bigints.h>
+
 #include <sstream>
 
 using namespace isc::asiolink;
 using namespace isc::data;
+using namespace isc::util;
 
 namespace isc {
 namespace dhcp {
@@ -557,7 +561,7 @@ CfgSubnets4::updateStatistics() {
         std::string name =
             StatsMgr::generateName("subnet", subnet_id, "cumulative-assigned-addresses");
         if (!stats_mgr.getObservation(name)) {
-            stats_mgr.setValue(name, static_cast<int64_t>(0));
+            stats_mgr.setValue(name, int128_t(0));
         }
 
         name = StatsMgr::generateName("subnet", subnet_id, "v4-lease-reuses");
@@ -567,7 +571,7 @@ CfgSubnets4::updateStatistics() {
 
         name = StatsMgr::generateName("subnet", subnet_id, "v4-reservation-conflicts");
         if (!stats_mgr.getObservation(name)) {
-            stats_mgr.setValue(name, static_cast<int64_t>(0));
+            stats_mgr.setValue(name, int128_t(0));
         }
     }
 

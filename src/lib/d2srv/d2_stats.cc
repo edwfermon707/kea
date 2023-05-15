@@ -10,9 +10,12 @@
 
 #include <d2srv/d2_stats.h>
 #include <stats/stats_mgr.h>
+#include <util/bigints.h>
+
+using namespace isc::stats;
+using namespace isc::util;
 
 using namespace std;
-using namespace isc::stats;
 
 namespace isc {
 namespace d2 {
@@ -47,10 +50,10 @@ D2Stats::init() {
     StatsMgr& stats_mgr = isc::stats::StatsMgr::instance();
     stats_mgr.setMaxSampleCountDefault(0);
     for (const auto& name : D2Stats::ncr) {
-        stats_mgr.setValue(name, static_cast<int64_t>(0));
+        stats_mgr.setValue(name, int128_t(0));
     }
     for (const auto& name : D2Stats::update) {
-        stats_mgr.setValue(name, static_cast<int64_t>(0));
+        stats_mgr.setValue(name, int128_t(0));
     }
 };
 
