@@ -5064,7 +5064,7 @@ have reservations) will get their default DNS server configured.
             { "duid": "01:02:03:04:05:0A:0B:0C:0D:0E" },
             { "duid": "02:03:04:05:0A:0B:0C:0D:0E:0F" }
         ],
-        "reservations-in-subnet": true,
+        "reservation-mode": "global",
 
         "subnet6": [
             {
@@ -5105,7 +5105,7 @@ their accounts up to date.
               "client-classes": [ "blocked" ] },
             { "duid": "02:03:04:05:0A:0B:0C:0D:0E:0F" }
         ],
-        "reservations-in-subnet": true,
+        "reservation-mode": "global",
 
         "subnet6": [
             {
@@ -5120,7 +5120,8 @@ their accounts up to date.
                         "name": "dns-servers",
                         "data": "2001:db8::1"
                     }
-                ]
+                ],
+                "require-client-classes" = ["blocked"]
             }
         ]
     }

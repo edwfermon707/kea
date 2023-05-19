@@ -5862,7 +5862,7 @@ have reservations) will get their default router configured.
             { "hw-address": "aa:bb:cc:dd:ee:fe" },
             { "hw-address": "11:22:33:44:55:66" }
         ],
-        "reservations-in-subnet": true,
+        "reservation-mode": "global",
 
         "subnet4": [
             {
@@ -5902,7 +5902,7 @@ redirects those customers to a captive portal urging them to bring their account
               "client-classes": [ "blocked" ] },
             { "hw-address": "11:22:33:44:55:66" }
         ],
-        "reservations-in-subnet": true,
+        "reservation-mode": "global",
 
         "subnet4": [
             {
@@ -5917,7 +5917,8 @@ redirects those customers to a captive portal urging them to bring their account
                         "name": "routers",
                         "data": "192.0.2.250"
                     }
-                ]
+                ],
+                "require-client-classes" = ["blocked"]
             }
         ]
     }
