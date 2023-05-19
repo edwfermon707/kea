@@ -5121,7 +5121,7 @@ their accounts up to date.
                         "data": "2001:db8::1"
                     }
                 ],
-                "require-client-classes" = ["blocked"]
+                "require-client-classes": [ "blocked" ]
             }
         ]
     }

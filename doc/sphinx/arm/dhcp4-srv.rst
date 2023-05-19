@@ -5918,7 +5918,7 @@ redirects those customers to a captive portal urging them to bring their account
                         "data": "192.0.2.250"
                     }
                 ],
-                "require-client-classes" = ["blocked"]
+                "require-client-classes": [ "blocked" ]
             }
         ]
     }
