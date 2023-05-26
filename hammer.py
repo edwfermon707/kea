@@ -2457,7 +2457,7 @@ def _build_native_pkg(system, revision, features, tarball_path, env, check_times
     """Build native (RPM or DEB or Alpine APK) packages."""
 
     # enable ccache if requested
-    env = _prepare_ccache_if_needed(system, ccache_dir, env)
+    # env = _prepare_ccache_if_needed(system, ccache_dir, env)
 
     repo_url = _get_full_repo_url(repository_url, system, revision, pkg_version)
     assert repo_url is not None
