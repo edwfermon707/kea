@@ -2051,6 +2051,7 @@ def _prepare_ccache_if_needed(system, ccache_dir, env):
             env['CC'] = 'ccache gcc'
             env['CXX'] = 'ccache g++'
         elif system == 'alpine':
+            return env
             # TODO: it doesn't work yet, new abuild is needed and add 'USE_CCACHE=1' to /etc/abuild.conf
             ccache_bin_path = '/usr/lib/ccache/bin'
         env['PATH'] = ccache_bin_path + ':' + env['PATH']
@@ -2457,7 +2458,7 @@ def _build_native_pkg(system, revision, features, tarball_path, env, check_times
     """Build native (RPM or DEB or Alpine APK) packages."""
 
     # enable ccache if requested
-    # env = _prepare_ccache_if_needed(system, ccache_dir, env)
+    env = _prepare_ccache_if_needed(system, ccache_dir, env)
 
     repo_url = _get_full_repo_url(repository_url, system, revision, pkg_version)
     assert repo_url is not None
