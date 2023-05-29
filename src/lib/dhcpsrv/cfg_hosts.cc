@@ -1102,8 +1102,8 @@ CfgHosts::del(const SubnetID& subnet_id, const asiolink::IOAddress& addr) {
 
         // Delete IPv6 reservations.
         const auto& range = idx6.equal_range(boost::make_tuple(subnet_id, addr));
-        idx6.erase(range.first, range.second);
         erased_addresses = boost::distance(range);
+        idx6.erase(range.first, range.second);
 
         // Delete hosts.
         for (auto key = range.first; key != range.second; ++key) {
