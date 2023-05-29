@@ -42,6 +42,7 @@ using namespace isc::dns;
 using namespace isc::util;
 using namespace isc::util::encode;
 using namespace isc::dns::rdata;
+using namespace isc::dns::rdata::any;
 using isc::UnitTestUtil;
 using isc::util::unittests::matchWireData;
 
@@ -88,10 +89,10 @@ protected:
         badkey_name("badkey.example.com"), test_class(RRClass::IN()),
         test_ttl(86400), message(Message::RENDER),
         dummy_data(1024, 0xdd),  // should be sufficiently large for all tests
-        dummy_record(badkey_name, any::TSIG(TSIGKey::HMACMD5_NAME(),
-                                            0x4da8877a,
-                                            TSIGContext::DEFAULT_FUDGE,
-                                            0, NULL, qid, 0, 0, NULL))
+        dummy_record(badkey_name, TSIG(TSIGKey::HMACMD5_NAME(),
+                                       0x4da8877a,
+                                       TSIGContext::DEFAULT_FUDGE,
+                                       0, NULL, qid, 0, 0, NULL))
     {
         // Make sure we use the system time by default so that we won't be
         // confused due to other tests that tweak the time.
@@ -217,7 +218,7 @@ commonSignChecks(ConstTSIGRecordPtr tsig, uint16_t expected_qid,
                  const Name& expected_algorithm = TSIGKey::HMACMD5_NAME())
 {
     ASSERT_TRUE(tsig != NULL);
-    const any::TSIG& tsig_rdata = tsig->getRdata();
+    const TSIG& tsig_rdata = tsig->getRdata();
 
     EXPECT_EQ(expected_algorithm, tsig_rdata.getAlgorithm());
     EXPECT_EQ(expected_timesigned, tsig_rdata.getTimeSigned());
@@ -357,7 +358,7 @@ TEST_F(TSIGTest, signAtActualTime) {
         SCOPED_TRACE("Sign test for query at actual time");
         ConstTSIGRecordPtr tsig = createMessageAndSign(qid, test_name,
                                                        tsig_ctx.get());
-        const any::TSIG& tsig_rdata = tsig->getRdata();
+        const TSIG& tsig_rdata = tsig->getRdata();
 
         // Check the resulted time signed is in the range of [now, now + 5]
         // (5 is an arbitrary choice).  Note that due to the order of the call
@@ -469,8 +470,8 @@ TEST_F(TSIGTest, signUsingHMACSHA224) {
 
     const uint16_t sha1_qid = 0x0967;
     const uint8_t expected_mac[] = {
-        0x3b, 0x93, 0xd3, 0xc5, 0xf9, 0x64, 0xb9, 0xc5, 0x00, 0x35, 
-        0x02, 0x69, 0x9f, 0xfc, 0x44, 0xd6, 0xe2, 0x66, 0xf4, 0x08, 
+        0x3b, 0x93, 0xd3, 0xc5, 0xf9, 0x64, 0xb9, 0xc5, 0x00, 0x35,
+        0x02, 0x69, 0x9f, 0xfc, 0x44, 0xd6, 0xe2, 0x66, 0xf4, 0x08,
         0xef, 0x33, 0xa2, 0xda, 0xa1, 0x48, 0x71, 0xd3
     };
     {
@@ -791,10 +792,10 @@ TEST_F(TSIGTest, badkeyForResponse) {
 
     // A similar case with a different algorithm
     const TSIGRecord dummy_record2(test_name,
-                                  any::TSIG(TSIGKey::HMACSHA1_NAME(),
-                                            0x4da8877a,
-                                            TSIGContext::DEFAULT_FUDGE,
-                                            0, NULL, qid, 0, 0, NULL));
+                                   TSIG(TSIGKey::HMACSHA1_NAME(),
+                                        0x4da8877a,
+                                        TSIGContext::DEFAULT_FUDGE,
+                                        0, NULL, qid, 0, 0, NULL));
     {
         SCOPED_TRACE("Verify a response resulting in BADKEY due to bad alg");
         commonVerifyChecks(*tsig_ctx, &dummy_record2, &dummy_data[0],
