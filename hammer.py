@@ -2398,7 +2398,7 @@ def _build_deb(system, revision, features, tarball_path, env, check_times, dry_r
                 execute(cmd, cwd='kea-src/kea-%s/debian' % pkg_version, check_times=check_times, dry_run=dry_run)
 
     # do deb build
-    if system == 'debian' and revision == '9':
+    if system == 'debian' and revision == '12':
         # debian 12 does not have 'debuild' out of the box
         install_pkgs('build-essential', env=env, check_times=check_times)
     env['LIBRARY_PATH'] = '/usr/lib/x86_64-linux-gnu'
