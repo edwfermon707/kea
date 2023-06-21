@@ -59,9 +59,10 @@ hosted by `Cloudsmith <https://cloudsmith.io/~isc/repos/>`_ can be found
 
 The packages provided by ISC are based on the official freeradius packages
 and always have a version that includes ``1.1.7-isc``
- e.g. ``libfreeradius-client_1.1.7-isc20200318122047_amd64.deb``. When listed:
+e.g. ``libfreeradius-client_1.1.7-isc20200318122047_amd64.deb``. When listed:
 
 .. code-block:: console
+
    $ dpkg -l | grep libfreeradius
      ii  libfreeradius-client                   1.1.7-isc20200318122047        amd64        Enhanced RADIUS client library
      ii  libfreeradius-client-dev               1.1.7-isc20200318122047        amd64        Enhanced RADIUS client library development files
@@ -70,7 +71,8 @@ If official freeradius packages will be installed Kea will return error
 on startup, typically displaying:
 
 .. code-block:: console
-  HOOKS_OPEN_ERROR failed to open hook library /usr/lib64/kea/hooks/libdhcp_radius.so: /usr/lib64/kea/hooks/libdhcp_radius.so: undefined symbol: rc_acct_async
+
+   HOOKS_OPEN_ERROR failed to open hook library /usr/lib64/kea/hooks/libdhcp_radius.so: /usr/lib64/kea/hooks/libdhcp_radius.so: undefined symbol: rc_acct_async
 
 .. _hooks-radius-install:
 
