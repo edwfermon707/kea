@@ -353,7 +353,7 @@ takes many parameters. For example, this configuration could be used:
          "library": "/usr/local/lib/kea/hooks/libdhcp_host_cache.so"
      },
      {
-         "library": "/usr/local/lib/kea/hooks/libdhc_radius.so",
+         "library": "/usr/local/lib/kea/hooks/libdhcp_radius.so",
          "parameters": {
 
              # Specify where FreeRADIUS dictionary could be located
