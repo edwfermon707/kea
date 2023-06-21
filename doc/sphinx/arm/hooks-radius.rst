@@ -58,14 +58,26 @@ hosted by `Cloudsmith <https://cloudsmith.io/~isc/repos/>`_ can be found
 `on KB <https://kb.isc.org/docs/isc-kea-packages>`_
 
 The packages provided by ISC are based on the official freeradius packages
-and always have a version that includes ``1.1.7-isc``
-e.g. ``libfreeradius-client_1.1.7-isc20200318122047_amd64.deb``. When listed:
+and always have a version that includes ``1.1.7-isc``. Ones that contains compiled
+libraries need to run Kea are e.g. ``libfreeradius-client_1.1.7-isc20200318122047_amd64.deb``,
+and those which contains development (``-dev`` in deb and ``-devel`` in rpm)
+header files e.g. ``libfreeradius-client-dev_1.1.7-isc20200318122047_amd64.deb``.
+
+When listed (deb):
 
 .. code-block:: console
 
    $ dpkg -l | grep libfreeradius
      ii  libfreeradius-client                   1.1.7-isc20200318122047        amd64        Enhanced RADIUS client library
      ii  libfreeradius-client-dev               1.1.7-isc20200318122047        amd64        Enhanced RADIUS client library development files
+
+When listed (rpm):
+
+.. code-block:: console
+
+   $ dnf list installed | grep freeradius
+      freeradius-client.x86_64                      1.1.7-isc20200318134606.el8               @isc-kea-2-2-prv
+      freeradius-client-devel.x86_64                1.1.7-isc20200318134606.el8               @isc-kea-2-2-prv
 
 If official freeradius packages will be installed Kea will return error
 on startup, typically displaying:
