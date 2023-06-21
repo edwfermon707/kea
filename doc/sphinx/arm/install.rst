@@ -16,7 +16,7 @@ as dpkg or rpm). The Kea repository can also be added to the system,
 making it easier to install updates. For details, please
 go to https://cloudsmith.io/~isc/repos, choose the repository of
 interest, and then click the ``Set Me Up`` button for detailed
-instructions.
+instructions or refer to ISC `KB article <https://kb.isc.org/docs/isc-kea-packages>`_.
 
 Installation From Cloudsmith Packages
 -------------------------------------
