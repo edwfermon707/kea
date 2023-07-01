@@ -1027,7 +1027,7 @@ private:
                     option = def->optionFactory(universe_, code_, buf.begin(),
                                                 value_null_ == MLM_FALSE ? buf.end() :
                                                 buf.begin());
-                 } else {
+                } else {
                     // Spit the value specified in comma separated values
                     // format.
                     std::vector<std::string> split_vec;
