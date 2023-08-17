@@ -1,3 +1,9 @@
+2175.	[doc]		piotrek
+	Updated ARM docs with new configuration key alias
+	"output-options". All config examples, where previous
+	"output_options" key appeared, were updated.
+	(Gitlab #2904)
+
 2174.	[func]		fdupont
 	Added a new information message which displays the
 	client and the transaction identification information
