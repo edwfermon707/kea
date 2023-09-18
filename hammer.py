@@ -2242,6 +2242,16 @@ def _check_installed_rpm_or_debs(services_list):
         cmd = "sudo journalctl --since %s -u %s | grep '_STARTED Kea'" % (timestamp, svc)
         execute(cmd, attempts=10, sleep_time_after_attempt=1)
 
+def _modify_rpm_flags(add, remove, check_times, dry_run):
+    # rpm --eval "%{optflags}"
+    # rpm -E "%{build_ldflags}"
+    # remove=[] or add=[] to remove or add flags
+    execute('rpm --eval "%{optflags}" > $HOME/.rpmrc', check_times=check_times, dry_run=dry_run)
+    for flag in remove:
+        execute(f'sed -i -e s/{flag}// $HOME/.rpmrc', check_times=check_times, dry_run=dry_run)
+    for flag in add:
+        execute("sed -i -e '${s/$/ %s/;}'  $HOME/.rpmrc" % flag, check_times=check_times, dry_run=dry_run)
+
 
 def _build_rpm(system, revision, features, tarball_path, env, check_times, dry_run,
                pkg_version, pkg_isc_version, repo_url):
@@ -2321,6 +2331,8 @@ def _build_rpm(system, revision, features, tarball_path, env, check_times, dry_r
     execute('cp %s %s/SOURCES' % (tarball_path, rpm_root_path), check_times=check_times, dry_run=dry_run)
 
     execute('sed -i -e s/{FREERADIUS_CLIENT_VERSION}/%s/g %s/SPECS/kea.spec' % (frc_version, rpm_root_path), check_times=check_times, dry_run=dry_run)
+
+    _modify_rpm_flags(remove=['-flto=auto'], add=['-flto=no'], check_times=check_times, dry_run=dry_run)
 
     # do rpm build
     cmd = "rpmbuild --define 'kea_version %s' --define 'isc_version %s' -ba %s/SPECS/kea.spec"
