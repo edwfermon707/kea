@@ -2335,7 +2335,7 @@ def _build_rpm(system, revision, features, tarball_path, env, check_times, dry_r
     # _modify_rpm_flags(remove=['-flto=auto'], add=['-flto=no'], check_times=check_times, dry_run=dry_run)
 
     # do rpm build
-    cmd = "rpmbuild --define '_gcc_lto_cflags -fno-lto' --define 'kea_version %s' --define 'isc_version %s' -ba %s/SPECS/kea.spec"
+    cmd = "rpmbuild --define '_gcc_lto_cflags none' --define 'kea_version %s' --define 'isc_version %s' -ba %s/SPECS/kea.spec"
     cmd += " -D'_topdir %s'"
     cmd += " --undefine=_debugsource_packages"  # disable creating debugsource package
     cmd = cmd % (pkg_version, pkg_isc_version, rpm_root_path, rpm_root_path)
