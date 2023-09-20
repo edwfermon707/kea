@@ -2329,7 +2329,7 @@ def _build_rpm(system, revision, features, tarball_path, env, check_times, dry_r
         for f in services_list:
             for k in ['RuntimeDirectory', 'RuntimeDirectoryPreserve', 'LogsDirectory', 'LogsDirectoryMode', 'StateDirectory', 'ConfigurationDirectory']:
                 cmd = "sed -i -E 's/^(%s=.*)/#\\1/' %s" % (k, f)
-                execute(cmd, cwd=f'{rpm_root_path}/SPECS', check_times=check_times, dry_run=dry_run)
+                execute(cmd, cwd=rpm_dir, check_times=check_times, dry_run=dry_run)
 
 
     # do rpm build
