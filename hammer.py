@@ -2436,6 +2436,7 @@ def _build_deb(system, revision, features, tarball_path, env, check_times, dry_r
         # install packages
         execute('sudo dpkg -i kea-src/*deb', check_times=check_times, dry_run=dry_run)
         # check if kea services can be started
+        services_list = ['isc-kea-dhcp4-server.service', 'isc-kea-dhcp6-server.service', 'isc-kea-dhcp-ddns-server.service', 'isc-kea-ctrl-agent.service']
         _check_installed_rpm_or_debs(services_list)
 
 
