@@ -114,6 +114,17 @@ if test "x$enable_gtest" = "xyes" ; then
         GTEST_VERSION="${GTEST_VERSION#gtest-}"
         GTEST_VERSION="${GTEST_VERSION#googletest-}"
 
+        semver_regex='[^[:digit:]]\{0,\}\([[:digit:]]\{1,\}\.[[:digit:]]\{1,\}\.[[:digit:]]\{1,\}\).\{0,\}'
+        gtest_version_candidate=$(expr "$GTEST_VERSION" : "$semver_regex")
+        AC_MSG_NOTICE([posix regex match "$gtest_version_candidate"])
+
+        semver_regex='[[^0-9]]\{0,\}\([[0-9]]\{1,\}\.[[0-9]]\{1,\}\.[[0-9]]\{1,\}\).\{0,\}'
+        gtest_version_candidate=$(expr "$GTEST_VERSION" : "$semver_regex")
+        AC_MSG_NOTICE([second regex match "$gtest_version_candidate"])
+
+        gtest_version_candidate=$(echo "$GTEST_VERSION" | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+')
+        AC_MSG_NOTICE([grep regex match "$gtest_version_candidate"])
+
         posix_regex=$(expr "5" : "\([[:digit:]]\)")
         if test "${posix_regex}" = "5" ; then
             semver_regex='[^[:digit:]]\{0,\}\([[:digit:]]\{1,\}\.[[:digit:]]\{1,\}\.[[:digit:]]\{1,\}\).\{0,\}'
@@ -126,30 +137,42 @@ if test "x$enable_gtest" = "xyes" ; then
         gtest_version_found="no"
 
         if test -z "$gtest_version_candidate" ; then
+            AC_MSG_NOTICE([$GTEST_VERSION is not correct semver])
             # If the GTEST_VERSION is still not correct semver, we need to determine googletest version in other way.
             # Let's try to extract it from CMake build script used by Google Test starting from version 1.8.0.
             if test -f "$cmakelists" ; then
+                AC_MSG_NOTICE([CMakeLists.txt was found])
+                gtest_version_candidate=$(cat "$cmakelists" | grep -F 'set(GOOGLETEST_VERSION' | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+')
+                AC_MSG_NOTICE([regex match with grep1 "$gtest_version_candidate"])
+                gtest_version_candidate=$(< "$cmakelists" grep -F 'set(GOOGLETEST_VERSION' | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+')
+                AC_MSG_NOTICE([regex match with grep2 "$gtest_version_candidate"])
                 gtest_version_line=$($AWK '/set\(GOOGLETEST_VERSION/ { print }' "$cmakelists")
                 gtest_version_candidate=$(expr "$gtest_version_line" : "$semver_regex")
+                AC_MSG_NOTICE([regex match with awk and expr "$gtest_version_candidate"])
                 if test -n "$gtest_version_candidate"; then
+                    AC_MSG_NOTICE([regex match semver pass])
                     gtest_version_found="yes"
                     GTEST_VERSION=$gtest_version_candidate
                 fi
             fi
             if test $gtest_version_found = "no" ; then
+                AC_MSG_NOTICE([$GTEST_VERSION is not correct semver])
                 # Try to get googletest version from debian/ubuntu package
                 AC_PATH_PROG(DPKG, dpkg)
                 AC_PATH_PROG(DPKGQUERY, dpkg-query)
                 if test -n "${DPKG}" -a -n "${DPKGQUERY}"; then
+                    AC_MSG_NOTICE([checking debian/ubuntu packages])
                     # Let's check if there is a googletest package owning files under given GTEST_SOURCE path
                     ${DPKG} -S "$GTEST_SOURCE" 2>/dev/null | grep googletest >/dev/null 2>&1
                     if test $? -eq 0; then
+                        AC_MSG_NOTICE([googletest package was found, reading version from pkg])
                         gtest_version_found="yes"
                         GTEST_VERSION="$(${DPKGQUERY} --showformat='${Version}' --show googletest | cut -d'-' -f1)"
                     fi
                 fi
             fi
         else
+            AC_MSG_NOTICE([regex match semver pass])
             gtest_version_found="yes"
             GTEST_VERSION=$gtest_version_candidate
         fi
