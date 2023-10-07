@@ -54,14 +54,18 @@ Option6IA::clone() const {
     return (cloneInternal<Option6IA>());
 }
 
-void Option6IA::pack(isc::util::OutputBuffer& buf, bool) const {
-    buf.writeUint16(type_);
-    buf.writeUint16(len() - OPTION6_HDR_LEN);
+void Option6IA::pack(isc::util::OutputBuffer& buf, bool check,
+                     bool pack_sub_options) const {
+    // Pack option header.
+    packHeader(buf, check);
     buf.writeUint32(iaid_);
     buf.writeUint32(t1_);
     buf.writeUint32(t2_);
 
-    packOptions(buf);
+    if (pack_sub_options) {
+        // Write suboptions.
+        packOptions(buf);
+    }
 }
 
 void Option6IA::unpack(OptionBufferConstIter begin,

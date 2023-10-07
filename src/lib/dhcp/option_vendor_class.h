@@ -73,11 +73,19 @@ public:
     /// @brief Copies this option and returns a pointer to the copy.
     OptionPtr clone() const;
 
-    /// @brief Renders option into the buffer in the wire format.
+    /// @brief Writes option in wire-format to a buffer.
     ///
-    /// @param [out] buf Buffer to which the option is rendered.
-    /// @param check if set to false, allows options larger than 255 for v4
-    virtual void pack(isc::util::OutputBuffer& buf, bool check = true) const;
+    /// Writes option in wire-format to buffer, buffer pointer is advanced to
+    /// first unused byte after stored option (that is useful for writing
+    /// options one after another).
+    ///
+    /// @param [out] buf Output buffer where option data will be stored.
+    /// @param check Flag which indicates if checking the option length is
+    /// required (used only in V4).
+    /// @param pack_sub_options Flag which indicates if the sub-options should
+    /// also be written to buffer.
+    virtual void pack(isc::util::OutputBuffer& buf, bool check = true,
+                      bool pack_sub_options = true) const override;
 
     /// @brief Parses buffer holding an option.
     ///
@@ -139,8 +147,11 @@ public:
     /// @return true if the specified tuple exists for this option.
     bool hasTuple(const std::string& tuple_str) const;
 
-    /// @brief Returns the full length of the option, including option header.
-    virtual uint16_t len() const;
+    /// @brief Returns length of the complete option (data length + DHCPv4/DHCPv6
+    /// option header)
+    ///
+    /// @return length of the option
+    virtual uint16_t len() const override;
 
     /// @brief Returns text representation of the option.
     ///

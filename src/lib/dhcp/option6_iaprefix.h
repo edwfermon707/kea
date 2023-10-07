@@ -77,16 +77,21 @@ public:
     /// @brief Copies this option and returns a pointer to the copy.
     virtual OptionPtr clone() const;
 
-    /// @brief Writes option in wire-format.
+    /// @brief Writes option in wire-format to a buffer.
     ///
-    /// Writes option in wire-format to buf, returns pointer to first unused
-    /// byte after stored option.
+    /// Writes option in wire-format to buffer, buffer pointer is advanced to
+    /// first unused byte after stored option (that is useful for writing
+    /// options one after another).
+    ///
+    /// @param [out] buf Output buffer where option data will be stored.
+    /// @param check Flag which indicates if checking the option length is
+    /// required (used only in V4).
+    /// @param pack_sub_options Flag which indicates if the sub-options should
+    /// also be written to buffer.
     ///
     /// @throw BadValue if the address is not IPv6
-    ///
-    /// @param buf pointer to a buffer
-    /// @param check if set to false, allows options larger than 255 for v4
-    void pack(isc::util::OutputBuffer& buf, bool check = true) const;
+    void pack(isc::util::OutputBuffer& buf, bool check = true,
+              bool pack_sub_options = true) const override;
 
     /// @brief Parses received buffer.
     ///
@@ -102,24 +107,30 @@ public:
     virtual void unpack(OptionBufferConstIter begin,
                         OptionBufferConstIter end);
 
-    /// Returns string representation of the option.
+    /// @brief Returns string representation of the option.
     ///
     /// @param indent number of spaces before printing text
     ///
     /// @return string with text representation.
     virtual std::string toText(int indent = 0) const;
 
-    /// sets address in this option.
+    /// @brief Sets address in this option.
     ///
     /// @param prefix prefix to be sent in this option
     /// @param length prefix length
     void setPrefix(const isc::asiolink::IOAddress& prefix,
                    uint8_t length) { addr_ = prefix; prefix_len_ = length; }
 
+    /// @brief Returns the prefix length.
+    ///
+    /// @return The prefix length.
     uint8_t getLength() const { return prefix_len_; }
 
-    /// returns data length (data length + DHCPv4/DHCPv6 option header)
-    virtual uint16_t len() const;
+    /// @brief Returns length of the complete option (data length + DHCPv4/DHCPv6
+    /// option header)
+    ///
+    /// @return length of the option
+    virtual uint16_t len() const override;
 
 private:
 
@@ -136,6 +147,7 @@ private:
               const uint8_t len,
               OptionBuffer& output_address) const;
 
+    /// @brief The prefix length.
     uint8_t prefix_len_;
 };
 

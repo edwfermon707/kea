@@ -48,13 +48,10 @@ Option6IAAddr::clone() const {
     return (cloneInternal<Option6IAAddr>());
 }
 
-void Option6IAAddr::pack(isc::util::OutputBuffer& buf, bool) const {
-
-    buf.writeUint16(type_);
-
-    // len() returns complete option length. len field contains
-    // length without 4-byte option header
-    buf.writeUint16(len() - getHeaderLen());
+void Option6IAAddr::pack(isc::util::OutputBuffer& buf, bool check,
+                         bool /* pack_sub_options */) const {
+    // Pack option header.
+    packHeader(buf, check);
 
     if (!addr_.isV6()) {
         isc_throw(isc::BadValue, addr_ << " is not an IPv6 address");
@@ -64,13 +61,13 @@ void Option6IAAddr::pack(isc::util::OutputBuffer& buf, bool) const {
     buf.writeUint32(preferred_);
     buf.writeUint32(valid_);
 
-    // parse suboption (there shouldn't be any for IAADDR)
-    packOptions(buf);
+    // That's it. We don't pack any sub-options here, because this option
+    // must not contain sub-options.
 }
 
 void Option6IAAddr::unpack(OptionBuffer::const_iterator begin,
                       OptionBuffer::const_iterator end) {
-    if ( distance(begin, end) < OPTION6_IAADDR_LEN) {
+    if (distance(begin, end) < OPTION6_IAADDR_LEN) {
         isc_throw(OutOfRange, "Option " << type_ << " truncated");
     }
 

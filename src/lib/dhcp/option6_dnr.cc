@@ -24,7 +24,9 @@ Option6Dnr::clone() const {
 }
 
 void
-Option6Dnr::pack(util::OutputBuffer& buf, bool check) const {
+Option6Dnr::pack(util::OutputBuffer& buf, bool check,
+                 bool /* pack_sub_options */) const {
+    // Pack option header.
     packHeader(buf, check);
 
     buf.writeUint16(service_priority_);
@@ -37,6 +39,9 @@ Option6Dnr::pack(util::OutputBuffer& buf, bool check) const {
     buf.writeUint16(addr_length_);
     packAddresses(buf);
     packSvcParams(buf);
+
+    // That's it. We don't pack any sub-options here, because this option
+    // must not contain sub-options.
 }
 
 void

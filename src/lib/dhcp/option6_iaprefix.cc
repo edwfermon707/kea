@@ -50,16 +50,14 @@ Option6IAPrefix::clone() const {
     return (cloneInternal<Option6IAPrefix>());
 }
 
-void Option6IAPrefix::pack(isc::util::OutputBuffer& buf, bool) const {
+void Option6IAPrefix::pack(isc::util::OutputBuffer& buf, bool check,
+                           bool pack_sub_options) const {
     if (!addr_.isV6()) {
         isc_throw(isc::BadValue, addr_ << " is not an IPv6 address");
     }
 
-    buf.writeUint16(type_);
-
-    // len() returns complete option length. len field contains
-    // length without 4-byte option header
-    buf.writeUint16(len() - getHeaderLen());
+    // Pack option header.
+    packHeader(buf, check);
 
     buf.writeUint32(preferred_);
     buf.writeUint32(valid_);
@@ -67,13 +65,16 @@ void Option6IAPrefix::pack(isc::util::OutputBuffer& buf, bool) const {
 
     buf.writeData(&addr_.toBytes()[0], isc::asiolink::V6ADDRESS_LEN);
 
-    // store encapsulated options (the only defined so far is PD_EXCLUDE)
-    packOptions(buf);
+    if (pack_sub_options) {
+        // Write suboptions.
+        // store encapsulated options (the only defined so far is PD_EXCLUDE)
+        packOptions(buf);
+    }
 }
 
 void Option6IAPrefix::unpack(OptionBuffer::const_iterator begin,
                       OptionBuffer::const_iterator end) {
-    if ( distance(begin, end) < OPTION6_IAPREFIX_LEN) {
+    if (distance(begin, end) < OPTION6_IAPREFIX_LEN) {
         isc_throw(OutOfRange, "Option " << type_ << " truncated");
     }
 
@@ -142,7 +143,6 @@ Option6IAPrefix::mask(OptionBuffer::const_iterator begin,
         output_address[len/8] = (*(begin + len/8) & (0xFF << (8 - (len % 8))));
     }
 }
-
 
 } // end of namespace isc::dhcp
 } // end of namespace isc

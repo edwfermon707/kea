@@ -100,16 +100,23 @@ public:
         return (cloneInternal<OptionInt<T> >());
     }
 
-    /// Writes option in wire-format to buf, returns pointer to first unused
-    /// byte after stored option.
+    /// @brief Writes option in wire-format to a buffer.
     ///
-    /// @param [out] buf buffer (option will be stored here)
-    /// @param check if set to false, allows options larger than 255 for v4
+    /// Writes option in wire-format to buffer, buffer pointer is advanced to
+    /// first unused byte after stored option (that is useful for writing
+    /// options one after another).
+    ///
+    /// @param [out] buf Output buffer where option data will be stored.
+    /// @param check Flag which indicates if checking the option length is
+    /// required (used only in V4).
+    /// @param pack_sub_options Flag which indicates if the sub-options should
+    /// also be written to buffer.
     ///
     /// @throw isc::dhcp::InvalidDataType if size of a data field type is not
     /// equal to 1, 2 or 4 bytes. The data type is not checked in this function
     /// because it is checked in a constructor.
-    virtual void pack(isc::util::OutputBuffer& buf, bool check = true) const {
+    virtual void pack(isc::util::OutputBuffer& buf, bool check = true,
+                      bool pack_sub_options = true) const override {
         // Pack option header.
         packHeader(buf, check);
         // Depending on the data type length we use different utility functions
@@ -130,7 +137,10 @@ public:
         default:
             isc_throw(dhcp::InvalidDataType, "non-integer type");
         }
-        packOptions(buf, check);
+        if (pack_sub_options) {
+            // Write suboptions.
+            packOptions(buf, check);
+        }
     }
 
     /// @brief Parses received buffer

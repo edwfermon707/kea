@@ -452,9 +452,9 @@ OptionCustom::dataFieldToText(const OptionDataType data_type,
 }
 
 void
-OptionCustom::pack(isc::util::OutputBuffer& buf, bool check) const {
-
-    // Pack DHCP header (V4 or V6).
+OptionCustom::pack(isc::util::OutputBuffer& buf, bool check,
+                   bool pack_sub_options) const {
+    // Pack option header.
     packHeader(buf, check);
 
     // Write data from buffers.
@@ -468,10 +468,11 @@ OptionCustom::pack(isc::util::OutputBuffer& buf, bool check) const {
         }
     }
 
-    // Write suboptions.
-    packOptions(buf, check);
+    if (pack_sub_options) {
+        // Write suboptions.
+        packOptions(buf, check);
+    }
 }
-
 
 IOAddress
 OptionCustom::readAddress(const uint32_t index) const {
@@ -609,7 +610,6 @@ OptionCustom::writePrefix(const PrefixLen& prefix_len,
     std::swap(buffers_[index], buf);
 }
 
-
 PSIDTuple
 OptionCustom::readPsid(const uint32_t index) const {
     checkIndex(index);
@@ -627,7 +627,6 @@ OptionCustom::writePsid(const PSIDLen& psid_len, const PSID& psid,
     // replace the current buffer with a new buffer.
     std::swap(buffers_[index], buf);
 }
-
 
 std::string
 OptionCustom::readString(const uint32_t index) const {

@@ -35,7 +35,9 @@ OptionVendorClass::clone() const {
 }
 
 void
-OptionVendorClass::pack(isc::util::OutputBuffer& buf, bool check) const {
+OptionVendorClass::pack(isc::util::OutputBuffer& buf, bool check,
+                        bool /* pack_sub_options */) const {
+    // Pack option header.
     packHeader(buf, check);
 
     buf.writeUint32(getVendorId());
@@ -48,8 +50,8 @@ OptionVendorClass::pack(isc::util::OutputBuffer& buf, bool check) const {
             buf.writeUint32(getVendorId());
         }
         it->pack(buf);
-
     }
+
     // That's it. We don't pack any sub-options here, because this option
     // must not contain sub-options.
 }
@@ -115,7 +117,6 @@ OptionVendorClass::addTuple(const OpaqueDataTuple& tuple) {
     tuples_.push_back(tuple);
 }
 
-
 void
 OptionVendorClass::setTuple(const size_t at, const OpaqueDataTuple& tuple) {
     if (at >= getTuplesNum()) {
@@ -154,7 +155,6 @@ OptionVendorClass::hasTuple(const std::string& tuple_str) const {
     }
     return (false);
 }
-
 
 uint16_t
 OptionVendorClass::len() const {

@@ -104,15 +104,19 @@ Option::check() const {
     // both types and data size.
 }
 
-void Option::pack(isc::util::OutputBuffer& buf, bool check) const {
-    // Write a header.
+void Option::pack(isc::util::OutputBuffer& buf, bool check,
+                  bool pack_sub_options) const {
+    // Pack option header.
     packHeader(buf, check);
     // Write data.
     if (!data_.empty()) {
         buf.writeData(&data_[0], data_.size());
     }
-    // Write sub-options.
-    packOptions(buf, check);
+
+    if (pack_sub_options) {
+        // Write suboptions.
+        packOptions(buf, check);
+    }
 }
 
 void
@@ -250,12 +254,12 @@ Option::toString() const {
 }
 
 std::vector<uint8_t>
-Option::toBinary(const bool include_header) const {
+Option::toBinary(const bool include_header, const bool pack_sub_options) const {
     OutputBuffer buf(len());
     try {
         // The RFC3396 adds support for long options split over multiple options
         // using the same code.
-        pack(buf, false);
+        pack(buf, false, pack_sub_options);
 
     } catch (const std::exception &ex) {
         isc_throw(OutOfRange, "unable to obtain hexadecimal representation"

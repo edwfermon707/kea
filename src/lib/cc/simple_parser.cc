@@ -255,8 +255,8 @@ size_t
 SimpleParser::deriveParams(ConstElementPtr parent,
                            ElementPtr child,
                            const ParamsList& params) {
-    if ( (parent->getType() != Element::map) ||
-         (child->getType() != Element::map)) {
+    if ((parent->getType() != Element::map) ||
+        (child->getType() != Element::map)) {
         return (0);
     }
 

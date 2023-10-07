@@ -64,7 +64,6 @@ Option6PDExclude::Option6PDExclude(const isc::asiolink::IOAddress& delegated_pre
     boost::dynamic_bitset<uint8_t> excluded_prefix_bits(excluded_prefix_bytes.rbegin(),
                                                         excluded_prefix_bytes.rend());
 
-
     // See RFC6603, section 4.2: assert(p1>>s == p2>>s)
     const uint8_t delta = 128 - delegated_prefix_length;
 
@@ -78,7 +77,6 @@ Option6PDExclude::Option6PDExclude(const isc::asiolink::IOAddress& delegated_pre
                   << delegated_prefix << "/"
                   << static_cast<int>(delegated_prefix_length));
     }
-
 
     // Shifting prefix by delegated prefix length leaves us with only a
     // subnet id part of the excluded prefix.
@@ -126,7 +124,8 @@ Option6PDExclude::clone() const {
 }
 
 void
-Option6PDExclude::pack(isc::util::OutputBuffer& buf, bool) const {
+Option6PDExclude::pack(isc::util::OutputBuffer& buf, bool check,
+                       bool /* pack_sub_options */) const {
     // Make sure that the subnet identifier is valid. It should never
     // be empty.
     if ((excluded_prefix_length_ == 0) || subnet_id_.empty()) {
@@ -134,14 +133,17 @@ Option6PDExclude::pack(isc::util::OutputBuffer& buf, bool) const {
                   " must not be empty");
     }
 
-    // Header = option code and length.
-    packHeader(buf);
+    // Pack option header.
+    packHeader(buf, check);
 
     // Excluded prefix length is always 1 byte long field.
     buf.writeUint8(excluded_prefix_length_);
 
     // Write the subnet identifier.
     buf.writeData(static_cast<const void*>(&subnet_id_[0]), subnet_id_.size());
+
+    // That's it. We don't pack any sub-options here, because this option
+    // must not contain sub-options.
 }
 
 void

@@ -484,8 +484,9 @@ Option4ClientFqdn::getDomainNameType() const {
 }
 
 void
-Option4ClientFqdn::pack(isc::util::OutputBuffer& buf, bool check) const {
-    // Header = option code and length.
+Option4ClientFqdn::pack(isc::util::OutputBuffer& buf, bool check,
+                        bool /* pack_sub_options */) const {
+    // Pack option header.
     packHeader(buf, check);
     // Flags field.
     buf.writeUint8(impl_->flags_);
@@ -494,6 +495,9 @@ Option4ClientFqdn::pack(isc::util::OutputBuffer& buf, bool check) const {
     buf.writeUint8(impl_->rcode2_.getCode());
     // Domain name.
     packDomainName(buf);
+
+    // That's it. We don't pack any sub-options here, because this option
+    // must not contain sub-options.
 }
 
 void

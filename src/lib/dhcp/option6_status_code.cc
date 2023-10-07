@@ -49,9 +49,10 @@ Option6StatusCode::clone() const {
 }
 
 void
-Option6StatusCode::pack(isc::util::OutputBuffer& buf, bool) const {
+Option6StatusCode::pack(isc::util::OutputBuffer& buf, bool check,
+                        bool /* pack_sub_options */) const {
     // Pack option header.
-    packHeader(buf);
+    packHeader(buf, check);
     // Write numeric status code.
     buf.writeUint16(getStatusCode());
     // If there is any status message, write it.
@@ -59,7 +60,8 @@ Option6StatusCode::pack(isc::util::OutputBuffer& buf, bool) const {
         buf.writeData(&status_message_[0], status_message_.size());
     }
 
-    // Status code has no options, so leave here.
+    // That's it. We don't pack any sub-options here, because this option
+    // must not contain sub-options.
 }
 
 void
@@ -159,7 +161,8 @@ Option4SlpServiceScope::clone() const {
 }
 
 void
-Option4SlpServiceScope::pack(isc::util::OutputBuffer& buf, bool check) const {
+Option4SlpServiceScope::pack(isc::util::OutputBuffer& buf, bool check,
+                             bool /* pack_sub_options */) const {
     // Pack option header.
     packHeader(buf, check);
     // Write mandatory flag.
@@ -169,7 +172,8 @@ Option4SlpServiceScope::pack(isc::util::OutputBuffer& buf, bool check) const {
         buf.writeData(&scope_list_[0], scope_list_.size());
     }
 
-    // SLP service scope has no options, so leave here.
+    // That's it. We don't pack any sub-options here, because this option
+    // must not contain sub-options.
 }
 
 void

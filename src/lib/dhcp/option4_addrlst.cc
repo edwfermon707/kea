@@ -35,11 +35,10 @@ Option4AddrLst::Option4AddrLst(uint8_t type, const AddressContainer& addrs)
     // don't set addrs_ directly. setAddresses() will do additional checks.
 }
 
-
 Option4AddrLst::Option4AddrLst(uint8_t type, OptionBufferConstIter first,
                                OptionBufferConstIter last)
     : Option(V4, type) {
-    if ( (distance(first, last) % V4ADDRESS_LEN) ) {
+    if (distance(first, last) % V4ADDRESS_LEN) {
         isc_throw(OutOfRange, "DHCPv4 Option4AddrLst " << type_
                   << " has invalid length=" << distance(first, last)
                   << ", must be divisible by 4.");
@@ -63,14 +62,15 @@ Option4AddrLst::clone() const {
 }
 
 void
-Option4AddrLst::pack(isc::util::OutputBuffer& buf, bool check) const {
+Option4AddrLst::pack(isc::util::OutputBuffer& buf, bool check,
+                     bool /* pack_sub_options */) const {
     if (check && addrs_.size() * V4ADDRESS_LEN > 255) {
         isc_throw(OutOfRange, "DHCPv4 Option4AddrLst " << type_ << " is too big."
                   << "At most 255 bytes are supported.");
     }
 
-    buf.writeUint8(type_);
-    buf.writeUint8(len() - getHeaderLen());
+    // Pack option header.
+    packHeader(buf, check);
 
     AddressContainer::const_iterator addr = addrs_.begin();
 
@@ -78,6 +78,9 @@ Option4AddrLst::pack(isc::util::OutputBuffer& buf, bool check) const {
         buf.writeUint32(addr->toUint32());
         ++addr;
     }
+
+    // That's it. We don't pack any sub-options here, because this option
+    // must not contain sub-options.
 }
 
 void Option4AddrLst::setAddress(const isc::asiolink::IOAddress& addr) {

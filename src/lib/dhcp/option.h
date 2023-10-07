@@ -236,16 +236,19 @@ public:
 
     /// @brief Writes option in wire-format to a buffer.
     ///
-    /// Writes option in wire-format to buffer, returns pointer to first unused
-    /// byte after stored option (that is useful for writing options one after
-    /// another).
+    /// Writes option in wire-format to buffer, buffer pointer is advanced to
+    /// first unused byte after stored option (that is useful for writing
+    /// options one after another).
     ///
-    /// @param buf pointer to a buffer
-    /// @param check flag which indicates if checking the option length is
-    /// required (used only in V4)
+    /// @param [out] buf Output buffer where option data will be stored.
+    /// @param check Flag which indicates if checking the option length is
+    /// required (used only in V4).
+    /// @param pack_sub_options Flag which indicates if the sub-options should
+    /// also be written to buffer.
     ///
     /// @throw BadValue Universe of the option is neither V4 nor V6.
-    virtual void pack(isc::util::OutputBuffer& buf, bool check = true) const;
+    virtual void pack(isc::util::OutputBuffer& buf, bool check = true,
+                      bool pack_sub_options = true) const;
 
     /// @brief Parses received buffer.
     ///
@@ -274,9 +277,12 @@ public:
     /// @param include_header Boolean flag which indicates if the output should
     /// also contain header fields. The default is that it shouldn't include
     /// header fields.
+    /// @param pack_sub_options Flag which indicates if the sub-options should
+    /// also be written to buffer.
     ///
     /// @return Vector holding binary representation of the option.
-    virtual std::vector<uint8_t> toBinary(const bool include_header = false) const;
+    virtual std::vector<uint8_t> toBinary(const bool include_header = false,
+                                          const bool pack_sub_options = true) const;
 
     /// @brief Returns string containing hexadecimal representation of option.
     ///
@@ -294,7 +300,7 @@ public:
         return (type_);
     }
 
-    /// Returns length of the complete option (data length + DHCPv4/DHCPv6
+    /// @brief Returns length of the complete option (data length + DHCPv4/DHCPv6
     /// option header)
     ///
     /// @return length of the option

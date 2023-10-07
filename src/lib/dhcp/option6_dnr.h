@@ -82,16 +82,19 @@ public:
 
     /// @brief Writes option in wire-format to a buffer.
     ///
-    /// Writes option in wire-format to buffer, returns pointer to first unused
-    /// byte after stored option (that is useful for writing options one after
-    /// another).
+    /// Writes option in wire-format to buffer, buffer pointer is advanced to
+    /// first unused byte after stored option (that is useful for writing
+    /// options one after another).
     ///
-    /// @param buf pointer to a buffer
-    /// @param check flag which indicates if checking the option length is
-    /// required (used only in V4)
+    /// @param [out] buf Output buffer where option data will be stored.
+    /// @param check Flag which indicates if checking the option length is
+    /// required (used only in V4).
+    /// @param pack_sub_options Flag which indicates if the sub-options should
+    /// also be written to buffer.
     ///
     /// @throw InvalidOptionDnrDomainName Thrown when Option's mandatory field ADN is empty.
-    void pack(util::OutputBuffer& buf, bool check = false) const override;
+    void pack(util::OutputBuffer& buf, bool check = false,
+              bool pack_sub_options = true) const override;
 
     /// @brief Parses received wire data buffer.
     ///
@@ -114,7 +117,7 @@ public:
     /// option header)
     ///
     /// @return length of the option
-    uint16_t len() const override;
+    virtual uint16_t len() const override;
 
     /// @brief Writes the IP address(es) in the wire format into a buffer.
     ///

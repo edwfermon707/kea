@@ -602,12 +602,12 @@ Pkt6::unpackRelayMsg() {
         offset += relay_msg_offset; // offset is relative
         bufsize = relay_msg_len;    // length is absolute
 
-        if ( (inner_type != DHCPV6_RELAY_FORW) &&
-             (inner_type != DHCPV6_RELAY_REPL)) {
+        if ((inner_type != DHCPV6_RELAY_FORW) &&
+            (inner_type != DHCPV6_RELAY_REPL)) {
             // Ok, the inner message is not encapsulated, let's decode it
             // directly
-            return (unpackMsg(data_.begin() + offset, data_.begin() + offset
-                              + relay_msg_len));
+            return (unpackMsg(data_.begin() + offset, data_.begin() + offset +
+                              relay_msg_len));
         }
 
         // Oh well, there's inner relay-forw or relay-repl inside. Let's
@@ -615,7 +615,7 @@ Pkt6::unpackRelayMsg() {
         // of that.
     }
 
-    if ( (offset == data_.size()) && (bufsize == 0) ) {
+    if ((offset == data_.size()) && (bufsize == 0)) {
         // message has been parsed completely
         return;
     }

@@ -54,18 +54,22 @@ public:
 
     /// @brief Writes option in wire-format to a buffer.
     ///
-    /// Writes option in wire-format to buffer, returns pointer to first unused
-    /// byte after stored option (that is useful for writing options one after
-    /// another).
+    /// Writes option in wire-format to buffer, buffer pointer is advanced to
+    /// first unused byte after stored option (that is useful for writing
+    /// options one after another).
     ///
     /// The format of the option includes excluded prefix length specified as
     /// a number of bits. It also includes IPv6 subnet ID field which is
     /// computed from the delegated and excluded prefixes, according to the
     /// section 4.2 of RFC 6603.
     ///
-    /// @param [out] buf Pointer to a buffer.
-    /// @param check if set to false, allows options larger than 255 for v4
-    virtual void pack(isc::util::OutputBuffer& buf, bool check = true) const;
+    /// @param [out] buf Output buffer where option data will be stored.
+    /// @param check Flag which indicates if checking the option length is
+    /// required (used only in V4).
+    /// @param pack_sub_options Flag which indicates if the sub-options should
+    /// also be written to buffer.
+    virtual void pack(isc::util::OutputBuffer& buf, bool check = true,
+                      bool pack_sub_options = true) const override;
 
     /// @brief Parses received buffer.
     ///
@@ -73,11 +77,11 @@ public:
     /// @param end iterator to end of option data (first byte after option end)
     virtual void unpack(OptionBufferConstIter begin, OptionBufferConstIter end);
 
-    /// @brief Returns length of the complete option (data length + DHCPv6
+    /// @brief Returns length of the complete option (data length + DHCPv4/DHCPv6
     /// option header)
     ///
     /// @return length of the option
-    virtual uint16_t len() const;
+    virtual uint16_t len() const override;
 
     /// @brief Returns Prefix Exclude option in textual format.
     ///

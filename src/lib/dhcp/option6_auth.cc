@@ -36,17 +36,26 @@ Option6Auth::clone() const {
     return (cloneInternal<Option6Auth>());
 }
 
+uint16_t
+Option6Auth::len() const {
+    // header = option code + length
+    // length = 11 bytes fixed field length + length of auth information
+    return (static_cast<uint16_t>(getHeaderLen() + sizeof(protocol_) +
+                                  sizeof(algorithm_) + sizeof(rdm_method_) +
+                                  sizeof(rdm_value_) + auth_info_.size()));
+}
+
 void
-Option6Auth::pack(isc::util::OutputBuffer& buf, bool) const {
+Option6Auth::pack(isc::util::OutputBuffer& buf, bool check,
+                  bool /* pack_sub_options */) const {
     if (buf.getCapacity() < (OPTION6_AUTH_MIN_LEN + OPTION6_HASH_MSG_LEN + OPTION6_HDR)) {
        isc_throw(OutOfRange, "Option " << type_ << "Buffer too small for"
                "packing data");
     }
 
-    //header = option code + length
-    buf.writeUint16(type_);
-    // length = 11 bytes fixed field length+ length of auth information
-    buf.writeUint16(11 + uint16_t(auth_info_.size()));
+    // Pack option header.
+    packHeader(buf, check);
+
     // protocol 1 byte
     buf.writeUint8(protocol_);
     // algorithm 1 byte
@@ -54,13 +63,16 @@ Option6Auth::pack(isc::util::OutputBuffer& buf, bool) const {
     // replay detection method
     buf.writeUint8(rdm_method_);
     // replay detection value
-    buf.writeUint64( rdm_value_);
+    buf.writeUint64(rdm_value_);
     // authentication information for reconfig msg
     // should have zero
 
     for (auto i : auth_info_) {
         buf.writeUint8(i);
     }
+
+    // That's it. We don't pack any sub-options here, because this option
+    // must not contain sub-options.
 }
 
 void

@@ -49,14 +49,19 @@ public:
     /// @brief Copies this option and returns a pointer to the copy.
     virtual OptionPtr clone() const;
 
-    /// @brief Writes option in wire-format.
+    /// @brief Writes option in wire-format to a buffer.
     ///
-    /// Writes option in wire-format to buf, returns pointer to first unused
-    /// byte after stored option.
+    /// Writes option in wire-format to buffer, buffer pointer is advanced to
+    /// first unused byte after stored option (that is useful for writing
+    /// options one after another).
     ///
-    /// @param buf pointer to a buffer
-    /// @param check if set to false, allows options larger than 255 for v4
-    void pack(isc::util::OutputBuffer& buf, bool check = true) const;
+    /// @param [out] buf Output buffer where option data will be stored.
+    /// @param check Flag which indicates if checking the option length is
+    /// required (used only in V4).
+    /// @param pack_sub_options Flag which indicates if the sub-options should
+    /// also be written to buffer.
+    void pack(isc::util::OutputBuffer& buf, bool check = true,
+              bool pack_sub_options = true) const override;
 
     /// @brief Parses received buffer.
     ///
@@ -70,8 +75,7 @@ public:
     /// @param indent number of spaces before printing text
     ///
     /// @return string with text representation.
-    virtual std::string
-    toText(int indent = 0) const;
+    virtual std::string toText(int indent = 0) const;
 
 
     /// sets address in this option.
@@ -109,8 +113,11 @@ public:
     unsigned int
     getValid() const { return valid_; }
 
-    /// returns data length (data length + DHCPv4/DHCPv6 option header)
-    virtual uint16_t len() const;
+    /// @brief Returns length of the complete option (data length + DHCPv4/DHCPv6
+    /// option header)
+    ///
+    /// @return length of the option
+    virtual uint16_t len() const override;
 
 protected:
     /// contains an IPv6 address

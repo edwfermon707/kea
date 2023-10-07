@@ -27,7 +27,9 @@ Option4Dnr::clone() const {
 }
 
 void
-Option4Dnr::pack(OutputBuffer& buf, bool check) const {
+Option4Dnr::pack(OutputBuffer& buf, bool check,
+                 bool /* pack_sub_options */) const {
+    // Pack option header.
     packHeader(buf, check);
     for (const DnrInstance& dnr_instance : dnr_instances_) {
         buf.writeUint16(dnr_instance.getDnrInstanceDataLength());
@@ -42,6 +44,9 @@ Option4Dnr::pack(OutputBuffer& buf, bool check) const {
         dnr_instance.packAddresses(buf);
         dnr_instance.packSvcParams(buf);
     }
+
+    // That's it. We don't pack any sub-options here, because this option
+    // must not contain sub-options.
 }
 
 void

@@ -32,7 +32,9 @@ OptionVendor::clone() const {
     return (cloneInternal<OptionVendor>());
 }
 
-void OptionVendor::pack(isc::util::OutputBuffer& buf, bool check) const {
+void OptionVendor::pack(isc::util::OutputBuffer& buf, bool check,
+                        bool pack_sub_options) const {
+    // Pack option header.
     packHeader(buf, check);
 
     // Store vendor-id
@@ -51,7 +53,10 @@ void OptionVendor::pack(isc::util::OutputBuffer& buf, bool check) const {
         buf.writeUint8(length);
     }
 
-    packOptions(buf, check);
+    if (pack_sub_options) {
+        // Write suboptions.
+        packOptions(buf, check);
+    }
 }
 
 void OptionVendor::unpack(OptionBufferConstIter begin,

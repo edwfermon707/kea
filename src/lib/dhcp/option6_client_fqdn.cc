@@ -403,13 +403,17 @@ Option6ClientFqdn::getDomainNameType() const {
 }
 
 void
-Option6ClientFqdn::pack(isc::util::OutputBuffer& buf, bool) const {
-    // Header = option code and length.
-    packHeader(buf);
+Option6ClientFqdn::pack(isc::util::OutputBuffer& buf, bool check,
+                        bool /* pack_sub_options */) const {
+    // Pack option header.
+    packHeader(buf, check);
     // Flags field.
     buf.writeUint8(impl_->flags_);
     // Domain name.
     packDomainName(buf);
+
+    // That's it. We don't pack any sub-options here, because this option
+    // must not contain sub-options.
 }
 
 void

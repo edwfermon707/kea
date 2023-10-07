@@ -1,3 +1,8 @@
+2186.	[bug]		razvan
+	Fixed a bug which was filling in the "data" parameter on
+	options when serializing sub-options.
+	(Gitlab #2881)
+
 2185.	[func]		razvan
 	Added extended log messages: DHCP4_DISCOVER, DHCP4_REQUEST,
 	DHCP6_PROCESS_IA_NA_SOLICIT, DHCP6_PROCESS_IA_PD_SOLICIT, which

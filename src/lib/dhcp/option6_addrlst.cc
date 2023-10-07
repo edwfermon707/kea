@@ -61,12 +61,10 @@ Option6AddrLst::setAddresses(const AddressContainer& addrs) {
     addrs_ = addrs;
 }
 
-void Option6AddrLst::pack(isc::util::OutputBuffer& buf, bool) const {
-    buf.writeUint16(type_);
-
-    // len() returns complete option length.
-    // len field contains length without 4-byte option header
-    buf.writeUint16(len() - getHeaderLen());
+void Option6AddrLst::pack(isc::util::OutputBuffer& buf, bool check,
+                          bool /* pack_sub_options */) const {
+    // Pack option header.
+    packHeader(buf, check);
 
     for (AddressContainer::const_iterator addr=addrs_.begin();
          addr!=addrs_.end(); ++addr) {
@@ -78,6 +76,9 @@ void Option6AddrLst::pack(isc::util::OutputBuffer& buf, bool) const {
         // length of V6ADDRESS_LEN.
         buf.writeData(&addr->toBytes()[0], V6ADDRESS_LEN);
     }
+
+    // That's it. We don't pack any sub-options here, because this option
+    // must not contain sub-options.
 }
 
 void Option6AddrLst::unpack(OptionBufferConstIter begin,

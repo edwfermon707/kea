@@ -339,11 +339,19 @@ public:
     void writeString(const std::string& text,
                      const uint32_t index = 0);
 
-    /// @brief Writes DHCP option in a wire format to a buffer.
+    /// @brief Writes option in wire-format to a buffer.
     ///
-    /// @param buf output buffer (option will be stored there).
-    /// @param check if set to false, allows options larger than 255 for v4
-    virtual void pack(isc::util::OutputBuffer& buf, bool check = true) const;
+    /// Writes option in wire-format to buffer, buffer pointer is advanced to
+    /// first unused byte after stored option (that is useful for writing
+    /// options one after another).
+    ///
+    /// @param [out] buf Output buffer where option data will be stored.
+    /// @param check Flag which indicates if checking the option length is
+    /// required (used only in V4).
+    /// @param pack_sub_options Flag which indicates if the sub-options should
+    /// also be written to buffer.
+    virtual void pack(isc::util::OutputBuffer& buf, bool check = true,
+                      bool pack_sub_options = true) const override;
 
     /// @brief Parses received buffer.
     ///
@@ -359,8 +367,8 @@ public:
     /// @return string with text representation.
     virtual std::string toText(int indent = 0) const;
 
-    /// @brief Returns length of the complete option (data length +
-    ///        DHCPv4/DHCPv6 option header)
+    /// @brief Returns length of the complete option (data length + DHCPv4/DHCPv6
+    /// option header)
     ///
     /// @return length of the option
     virtual uint16_t len() const;

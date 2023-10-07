@@ -64,14 +64,14 @@ OptionString::setValue(const std::string& value) {
     setData(begin, end);
 }
 
-
 uint16_t
 OptionString::len() const {
     return (getHeaderLen() + getData().size());
 }
 
 void
-OptionString::pack(isc::util::OutputBuffer& buf, bool check) const {
+OptionString::pack(isc::util::OutputBuffer& buf, bool check,
+                   bool /* pack_sub_options */) const {
     // Pack option header.
     packHeader(buf, check);
     // Pack data.
