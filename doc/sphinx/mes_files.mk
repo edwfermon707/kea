@@ -16,7 +16,6 @@ mes_files += $(top_srcdir)/src/lib/dhcp_ddns/dhcp_ddns_messages.mes
 mes_files += $(top_srcdir)/src/lib/database/db_messages.mes
 mes_files += $(top_srcdir)/src/lib/log/log_messages.mes
 mes_files += $(top_srcdir)/src/lib/log/logimpl_messages.mes
-mes_files += $(top_srcdir)/src/lib/log/tests/log_test_messages.mes
 mes_files += $(top_srcdir)/src/lib/process/process_messages.mes
 mes_files += $(top_srcdir)/src/lib/asiodns/asiodns_messages.mes
 mes_files += $(top_srcdir)/src/lib/eval/eval_messages.mes

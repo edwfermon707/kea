@@ -16,7 +16,6 @@ src/lib/dhcp_ddns/dhcp_ddns_messages.mes
 src/lib/database/db_messages.mes
 src/lib/log/log_messages.mes
 src/lib/log/logimpl_messages.mes
-src/lib/log/tests/log_test_messages.mes
 src/lib/process/process_messages.mes
 src/lib/asiodns/asiodns_messages.mes
 src/lib/eval/eval_messages.mes
