@@ -1,3 +1,9 @@
+2187.	[func]		piotrek
+	Kea now supports new DHCPv4 option code 121, Classless Static Route
+	option defined in RFC 3442. Option may be defined in binary format
+	and also as a string using convenient static route notation.
+	(Gitlab #3074)
+
 2186.	[bug]		andrei
 	Fixed interface redetection which had stopped working since
 	Kea 2.3.6.
@@ -11,7 +17,7 @@
 	(Gitlab #2918)
 
 2184.	[bug]		razvan
-	Fixed a bug in evaluated expression parser which was not propelry
+	Fixed a bug in evaluated expression parser which was not properly
 	handling escaped null characters.
 	(Gitlab #3086)
 
