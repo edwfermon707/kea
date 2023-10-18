@@ -1681,7 +1681,19 @@ PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
     // Validate schema version first.
     std::pair<uint32_t, uint32_t> code_version(PGSQL_SCHEMA_VERSION_MAJOR,
                                                PGSQL_SCHEMA_VERSION_MINOR);
-    std::pair<uint32_t, uint32_t> db_version = getVersion();
+
+    std::string timer_name = "";
+    bool retry = false;
+    if (parameters.count("retry-on-startup")) {
+        if (parameters.at("retry-on-startup") == "true") {
+            retry = true;
+        }
+    }
+    if (retry) {
+        timer_name = timer_name_;
+    }
+
+    std::pair<uint32_t, uint32_t> db_version = getVersion(timer_name);
     if (code_version != db_version) {
         isc_throw(DbOpenError,
                   "PostgreSQL schema version mismatch: need version: "
@@ -1770,8 +1782,11 @@ PgSqlLeaseMgr::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
 PgSqlLeaseContextPtr
 PgSqlLeaseMgr::createContext() const {
     PgSqlLeaseContextPtr ctx(new PgSqlLeaseContext(parameters_,
-        IOServiceAccessorPtr(new IOServiceAccessor(&LeaseMgr::getIOService)),
+        IOServiceAccessorPtr(new IOServiceAccessor(&DatabaseConnection::getIOService)),
         &PgSqlLeaseMgr::dbReconnect));
+
+    // Create ReconnectCtl for this connection.
+    ctx->conn_.makeReconnectCtl(timer_name_);
 
     // Open the database.
     ctx->conn_.openDatabase();
@@ -1792,9 +1807,6 @@ PgSqlLeaseMgr::createContext() const {
     // program and the database.
     ctx->exchange4_.reset(new PgSqlLease4Exchange());
     ctx->exchange6_.reset(new PgSqlLease6Exchange());
-
-    // Create ReconnectCtl for this connection.
-    ctx->conn_.makeReconnectCtl(timer_name_);
 
     return (ctx);
 }
@@ -3023,10 +3035,13 @@ PgSqlLeaseMgr::getDescription() const {
 }
 
 std::pair<uint32_t, uint32_t>
-PgSqlLeaseMgr::getVersion() const {
+PgSqlLeaseMgr::getVersion(const string& timer_name) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_VERSION);
 
-    return (PgSqlConnection::getVersion(parameters_));
+    IOServiceAccessorPtr ac(new IOServiceAccessor(&DatabaseConnection::getIOService));
+    DbCallback cb(&PgSqlLeaseMgr::dbReconnect);
+
+    return (PgSqlConnection::getVersion(parameters_, ac, cb, timer_name));
 }
 
 void
