@@ -229,7 +229,11 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t server_port, uint16_t client_port)
         // Port 0 is used for testing purposes where in most cases we don't
         // rely on the physical interfaces. Therefore, it should be possible
         // to create an object even when there are no usable interfaces.
-        if ((server_port > 0) && (IfaceMgr::instance().countIfaces() == 0)) {
+
+        // TODO: transform into parser entry "allow-non-ready".
+        constexpr bool allow_non_ready(true);
+        if ((server_port > 0) && (IfaceMgr::instance().countIfaces() == 0) &&
+            !allow_non_ready) {
             LOG_ERROR(dhcp6_logger, DHCP6_NO_INTERFACES);
             return;
         }

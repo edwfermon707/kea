@@ -119,11 +119,16 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
             // names of interfaces when they are being added (use()
             // function). But, if someone has triggered detection of
             // interfaces since then, some interfaces may have disappeared.
+
+            // TODO: transform into parser entry "allow-non-ready".
+            constexpr bool allow_non_ready(true);
             if (iface == NULL) {
-                isc_throw(Unexpected,
-                          "fail to open socket on interface '"
-                          << *iface_name << "' as this interface doesn't"
-                          " exist");
+                if (!allow_non_ready) {
+                    isc_throw(Unexpected,
+                              "fail to open socket on interface '"
+                                  << *iface_name
+                                  << "' as this interface doesn't exist");
+                }
 
             } else if (family == AF_INET) {
                 iface->inactive4_ = false;
@@ -140,11 +145,16 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
     for (ExplicitAddressMap::const_iterator unicast = address_map_.begin();
          unicast != address_map_.end(); ++unicast) {
         IfacePtr iface = IfaceMgr::instance().getIface(unicast->first);
+
+        // TODO: transform into parser entry "allow-non-ready".
+        constexpr bool allow_non_ready(true);
         if (iface == NULL) {
-            isc_throw(Unexpected,
-                      "fail to open unicast socket on interface '"
-                      << unicast->first << "' as this interface doesn't"
-                      " exist");
+            if (!allow_non_ready) {
+                isc_throw(Unexpected,
+                          "fail to open unicast socket on interface '"
+                              << unicast->first
+                              << "' as this interface doesn't exist");
+            }
         }
         if (family == AF_INET6) {
             iface->addUnicast(unicast->second);
@@ -400,8 +410,16 @@ CfgIface::use(const uint16_t family, const std::string& iface_name) {
 
         } else if (name != ALL_IFACES_KEYWORD) {
             if (IfaceMgr::instance().getIface(name) == NULL) {
-                isc_throw(NoSuchIface, "interface '" << name
-                          << "' doesn't exist in the system");
+                // TODO: transform into parser entry "allow-non-ready".
+                constexpr bool allow_non_ready(true);
+                if (allow_non_ready) {
+                    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
+                              DHCPSRV_CFGMGR_NO_SUCH_IFACE)
+                        .arg(name);
+                } else {
+                    isc_throw(NoSuchIface, "interface '" << name
+                        << "' doesn't exist in the system");
+                }
             }
 
         } else if (wildcard_used_) {
@@ -449,9 +467,16 @@ CfgIface::use(const uint16_t family, const std::string& iface_name) {
         // Interface must exist.
         IfacePtr iface = IfaceMgr::instance().getIface(name);
         if (!iface) {
-            isc_throw(NoSuchIface, "interface '" << name
-                      << "' doesn't exist in the system");
-
+            // TODO: transform into parser entry "allow-non-ready".
+            constexpr bool allow_non_ready(true);
+            if (allow_non_ready) {
+                LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
+                          DHCPSRV_CFGMGR_NO_SUCH_IFACE)
+                    .arg(name);
+            } else {
+                    isc_throw(NoSuchIface, "interface '" << name
+                        << "' doesn't exist in the system");
+            }
         }
 
         // Convert address string. This may throw an exception if the address

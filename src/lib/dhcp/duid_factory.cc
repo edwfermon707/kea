@@ -295,8 +295,12 @@ DUIDFactory::createLinkLayerId(std::vector<uint8_t>& identifier,
     // We failed to find an interface which link layer address could be
     // used for generating DUID-LLT.
     if (identifier.empty()) {
-        isc_throw(Unexpected, "unable to find suitable interface for "
-                  "generating a DUID-LLT");
+        // TODO: transform into parser entry "allow-non-ready".
+        constexpr bool allow_non_ready(true);
+        if (!allow_non_ready) {
+            isc_throw(Unexpected, "unable to find suitable interface for "
+                                  "generating a DUID-LLT");
+        }
     }
 }
 

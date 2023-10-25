@@ -31,6 +31,7 @@ extern const isc::log::MessageID DHCPSRV_CFGMGR_NEW_SUBNET4 = "DHCPSRV_CFGMGR_NE
 extern const isc::log::MessageID DHCPSRV_CFGMGR_NEW_SUBNET6 = "DHCPSRV_CFGMGR_NEW_SUBNET6";
 extern const isc::log::MessageID DHCPSRV_CFGMGR_NO_SUBNET4 = "DHCPSRV_CFGMGR_NO_SUBNET4";
 extern const isc::log::MessageID DHCPSRV_CFGMGR_NO_SUBNET6 = "DHCPSRV_CFGMGR_NO_SUBNET6";
+extern const isc::log::MessageID DHCPSRV_CFGMGR_NO_SUCH_IFACE = "DHCPSRV_CFGMGR_NO_SUCH_IFACE";
 extern const isc::log::MessageID DHCPSRV_CFGMGR_ONLY_SUBNET4 = "DHCPSRV_CFGMGR_ONLY_SUBNET4";
 extern const isc::log::MessageID DHCPSRV_CFGMGR_ONLY_SUBNET6 = "DHCPSRV_CFGMGR_ONLY_SUBNET6";
 extern const isc::log::MessageID DHCPSRV_CFGMGR_OPTION_DUPLICATE = "DHCPSRV_CFGMGR_OPTION_DUPLICATE";
@@ -315,6 +316,7 @@ const char* values[] = {
     "DHCPSRV_CFGMGR_NEW_SUBNET6", "a new subnet has been added to configuration: %1",
     "DHCPSRV_CFGMGR_NO_SUBNET4", "no suitable subnet is defined for address hint %1",
     "DHCPSRV_CFGMGR_NO_SUBNET6", "no suitable subnet is defined for address hint %1",
+    "DHCPSRV_CFGMGR_NO_SUCH_IFACE", "interface %1 doesn't exist in the system",
     "DHCPSRV_CFGMGR_ONLY_SUBNET4", "retrieved subnet %1 for address hint %2",
     "DHCPSRV_CFGMGR_ONLY_SUBNET6", "retrieved subnet %1 for address hint %2",
     "DHCPSRV_CFGMGR_OPTION_DUPLICATE", "multiple options with the code: %1 added to the subnet: %2",

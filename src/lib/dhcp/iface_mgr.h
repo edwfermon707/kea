@@ -17,6 +17,7 @@
 #include <dhcp/pkt_filter.h>
 #include <dhcp/pkt_filter6.h>
 #include <util/optional.h>
+#include <util/thread_pool.h>
 #include <util/watch_socket.h>
 #include <util/watched_thread.h>
 
@@ -34,8 +35,10 @@
 #include <mutex>
 
 namespace isc {
-
 namespace dhcp {
+
+/// @brief Represents a set of interface names.
+using IfaceSet = std::set<std::string>;
 
 /// @brief IfaceMgr exception thrown thrown when interface detection fails.
 class IfaceDetectError : public Exception {
@@ -1126,8 +1129,8 @@ public:
 
     /// @brief Closes all open sockets.
     ///
-    /// It calls @c stopDHCPReceiver to stop the receiver thread and then
-    /// it closes all open interface sockets.
+    /// It calls @c stopDHCPReceiver to stop the receiver thread, it calls
+    /// @c stopEventMonitor and then it closes all open interface sockets.
     ///
     /// Is used in destructor, but also from Dhcpv4Srv and Dhcpv6Srv classes.
     void closeSockets();
@@ -1308,6 +1311,9 @@ public:
     /// the packet queue is flushed.
     void stopDHCPReceiver();
 
+    /// @brief Stop the link state event monitor.
+    void stopEventMonitor();
+
     /// @brief Returns true if there is a receiver exists and its
     /// thread is currently running.
     bool isDHCPReceiverRunning() const {
@@ -1338,6 +1344,10 @@ public:
     /// @param sockets pointer to the set of sockets
     /// @throw BadValue if sockets is null
     static void addFDtoSet(int fd, int& maxfd, fd_set* sockets);
+
+    /// @brief Start monitoring interface link state changes and address
+    /// assignments.
+    void startEventMonitor(IfaceSet const& interfaces);
 
     // don't use private, we need derived classes in tests
 protected:
@@ -1620,6 +1630,8 @@ private:
 
     /// @brief DHCP packet receiver.
     isc::util::WatchedThreadPtr dhcp_receiver_;
+
+    isc::util::WatchedThread event_monitor_;
 };
 
 }  // namespace isc::dhcp

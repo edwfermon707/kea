@@ -168,6 +168,11 @@ public:
     /// @return true if objects are equal, false otherwise.
     bool equals(const CfgIface& other) const;
 
+    /// @brief Returns the set of configured interfaces.
+    IfaceSet const& interfaces() const {
+        return iface_set_;
+    }
+
     /// @brief Tries to open sockets on selected interfaces.
     ///
     /// This function opens sockets bound to link-local address as well as
@@ -199,12 +204,13 @@ public:
     /// to receive DHCP traffic.
     ///
     /// @throw InvalidIfaceName If the interface name is incorrect, e.g. empty.
-    /// @throw NoSuchIface If the specified interface is not present.
+    /// @throw NoSuchIface If the specified interface is not present and
+    /// "allow-non-ready" is disabled
     /// @throw NoSuchAddress If the specified unicast address is not assigned
     /// to the interface.
     /// @throw DuplicateIfaceName If the interface is already selected, i.e.
-    /// @throw IOError when specified unicast address is invalid.
     /// @c CfgIface::use has been already called for this interface.
+    /// @throw IOError when specified unicast address is invalid.
     void use(const uint16_t family, const std::string& iface_name);
 
     /// @brief Sets the specified socket type to be used by the server.
@@ -489,6 +495,9 @@ private:
 
     /// @brief A maximum number of attempts to bind the service sockets.
     uint32_t service_sockets_max_retries_;
+
+    /// @brief is configuration of not ready interfaces allowed?
+    bool allow_not_ready_;
 
     /// @brief Indicates how outbound interface is selected for relayed traffic.
     OutboundIface outbound_iface_;

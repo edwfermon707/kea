@@ -32,6 +32,7 @@ extern const isc::log::MessageID DHCPSRV_CFGMGR_NEW_SUBNET4;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_NEW_SUBNET6;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_NO_SUBNET4;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_NO_SUBNET6;
+extern const isc::log::MessageID DHCPSRV_CFGMGR_NO_SUCH_IFACE;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_ONLY_SUBNET4;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_ONLY_SUBNET6;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_OPTION_DUPLICATE;

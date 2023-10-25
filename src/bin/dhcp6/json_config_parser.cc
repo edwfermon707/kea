@@ -965,6 +965,12 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
                     CfgIfacePtr cfg_iface = srv_config->getCfgIface();
                     cfg_iface->reset();
                     parser.parse(cfg_iface, ifaces_config);
+
+                    // TODO: transform into parser entry "allow-non-ready".
+                    constexpr bool allow_non_ready(true);
+                    if (allow_non_ready) {
+                        IfaceMgr::instance().startEventMonitor(cfg_iface->interfaces());
+                    }
                 }
             } catch (const isc::Exception& ex) {
                 LOG_ERROR(dhcp6_logger, DHCP6_PARSER_FAIL)

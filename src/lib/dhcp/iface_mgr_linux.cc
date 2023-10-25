@@ -37,7 +37,9 @@
 #include <fcntl.h>
 #include <stdint.h>
 #include <net/if.h>
+#include <linux/if.h>
 #include <linux/rtnetlink.h>
+#include <signal.h>
 
 using namespace std;
 using namespace isc;
@@ -94,15 +96,21 @@ public:
         rtnl_close_socket();
     }
 
-
-    void rtnl_open_socket();
+    void rtnl_open_socket(unsigned int multicast_groups_mask = 0);
     void rtnl_send_request(int family, int type);
     void rtnl_store_reply(NetlinkMessages& storage, const nlmsghdr* msg);
     void parse_rtattr(RTattribPtrs& table, rtattr* rta, int len);
     void ipaddrs_get(Iface& iface, NetlinkMessages& addr_info);
-    void rtnl_process_reply(NetlinkMessages& info);
+    void rtnl_process_reply(NetlinkMessages& info,
+                            IfaceSet const& interfaces = IfaceSet());
     void release_list(NetlinkMessages& messages);
     void rtnl_close_socket();
+
+    /// @brief Return file descriptor, most likely to be able to multiplex on
+    /// it.
+    int fd() const {
+        return fd_;
+    }
 
 private:
     int fd_;            // Netlink file descriptor
@@ -121,8 +129,7 @@ const static size_t RCVBUF_SIZE = 32768;
 /// @brief Opens netlink socket and initializes handle structure.
 ///
 /// @throw isc::Unexpected Thrown if socket configuration fails.
-void Netlink::rtnl_open_socket() {
-
+void Netlink::rtnl_open_socket(unsigned int multicast_groups_mask /* = 0 */) {
     fd_ = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
     if (fd_ < 0) {
         isc_throw(Unexpected, "Failed to create NETLINK socket.");
@@ -141,7 +148,7 @@ void Netlink::rtnl_open_socket() {
     }
 
     local_.nl_family = AF_NETLINK;
-    local_.nl_groups = 0;
+    local_.nl_groups = multicast_groups_mask;
 
     if (::bind(fd_, convertSockAddr(&local_), sizeof(local_)) < 0) {
         isc_throw(Unexpected, "Failed to bind netlink socket.");
@@ -317,7 +324,9 @@ void Netlink::ipaddrs_get(Iface& iface, NetlinkMessages& addr_info) {
 /// @param info received netlink messages will be stored here.  It is the
 ///        caller's responsibility to release the memory associated with the
 ///        messages by calling the release_list() method.
-void Netlink::rtnl_process_reply(NetlinkMessages& info) {
+void Netlink::rtnl_process_reply(
+    NetlinkMessages& info,
+    IfaceSet const& interfaces /* = IfaceSet() */) {
     sockaddr_nl nladdr;
     iovec iov;
     msghdr msg;
@@ -340,14 +349,64 @@ void Netlink::rtnl_process_reply(NetlinkMessages& info) {
             }
             isc_throw(Unexpected, "Error " << errno
                       << " while processing reply from netlink socket.");
+
         }
 
         if (status == 0) {
             isc_throw(Unexpected, "EOF while reading netlink socket.");
         }
 
-        nlmsghdr* header = static_cast<nlmsghdr*>(static_cast<void*>(buf));
+        nlmsghdr* header(reinterpret_cast<nlmsghdr*>(buf));
         while (NLMSG_OK(header, status)) {
+            // If we have an interface set to check network events against...
+            if (interfaces.size() > 0) {
+                // If event is link change or adrress addedd...
+                if (header->nlmsg_type == RTM_NEWLINK ||
+                    header->nlmsg_type == RTM_NEWADDR) {
+                    ifinfomsg* const interface_info(
+                        reinterpret_cast<ifinfomsg*>(NLMSG_DATA(header)));
+
+                    // Exclude loopback.
+                    if (interface_info->ifi_flags & IFF_LOOPBACK) {
+                        return;
+                    }
+
+                    // Sanity check
+                    if (header->nlmsg_len <
+                        sizeof(*header) + sizeof(*interface_info)) {
+                        return;
+                    }
+
+                    // Get interface name.
+                    rtattr const* rta(reinterpret_cast<rtattr*>(
+                        reinterpret_cast<char*>(interface_info) +
+                        NLMSG_ALIGN(sizeof(*interface_info))));
+                    size_t length(NLMSG_PAYLOAD(header, sizeof(*interface_info)));
+                    string notified_interface;
+                    while (RTA_OK(rta, length) || notified_interface.empty()) {
+                        if (rta->rta_type == IFLA_IFNAME) {
+                            notified_interface = string((char const*)RTA_DATA(rta));
+                        } else if (rta->rta_type == IFLA_UNSPEC) {
+                            // End of message sequence
+                            return;
+                        }
+                        rta = RTA_NEXT(rta, length);
+                    }
+
+                    // If event reports that the interface has been brought up...
+                    if (interface_info->ifi_flags & IFF_UP ||
+                        interface_info->ifi_flags & IFF_LOWER_UP) {
+                        // If it is one of the configured interfaces...
+                        for (std::string const& configured_interface : interfaces) {
+                            if (configured_interface == notified_interface) {
+                                // Store confirmation for the caller.
+                                rtnl_store_reply(info, header);
+                            }
+                        }
+                    }
+                    return;
+                }
+            }
 
             // Received a message not addressed to our process, or not
             // with a sequence number we are expecting.  Ignore, and
@@ -362,16 +421,16 @@ void Netlink::rtnl_process_reply(NetlinkMessages& info) {
             if (header->nlmsg_type == NLMSG_DONE) {
                 // End of message.
                 return;
-            }
 
-            if (header->nlmsg_type == NLMSG_ERROR) {
+            } else if (header->nlmsg_type == NLMSG_ERROR) {
                 nlmsgerr* err = static_cast<nlmsgerr*>(NLMSG_DATA(header));
                 if (header->nlmsg_len < NLMSG_LENGTH(sizeof(struct nlmsgerr))) {
                     // We are really out of luck here. We can't even say what is
                     // wrong as error message is truncated. D'oh.
                     isc_throw(Unexpected, "Netlink reply read failed.");
                 } else {
-                    isc_throw(Unexpected, "Netlink reply read error " << -err->error);
+                    isc_throw(Unexpected,
+                              "Netlink reply read error " << -err->error);
                 }
                 // Never happens we throw before we reach here
                 return;
@@ -386,7 +445,9 @@ void Netlink::rtnl_process_reply(NetlinkMessages& info) {
             isc_throw(Unexpected, "Message received over netlink truncated.");
         }
         if (status) {
-            isc_throw(Unexpected, "Trailing garbage of " << status << " bytes received over netlink.");
+            isc_throw(Unexpected, "Trailing garbage of "
+                                      << status
+                                      << " bytes received over netlink.");
         }
     }
 }
@@ -522,6 +583,83 @@ void IfaceMgr::detectIfaces(bool update_only) {
 
     nl.release_list(link_info);
     nl.release_list(addr_info);
+}
+
+void IfaceMgr::startEventMonitor(IfaceSet const& interfaces) {
+    static mutex m;
+    lock_guard<mutex> l(m);
+    if (event_monitor_.isRunning()) {
+        return;
+    }
+    event_monitor_.start([&, this]() {
+        try {
+            // Open netlink socket.
+            Netlink netlink;
+            netlink.rtnl_open_socket(RTMGRP_LINK | RTMGRP_IPV4_IFADDR |
+                                     RTMGRP_IPV6_IFADDR);
+
+            while (true) {
+                int maxfd(0);
+                fd_set sockets;
+                FD_ZERO(&sockets);
+
+                // Add terminate watch socket.
+                addFDtoSet(netlink.fd(), maxfd, &sockets);
+                addFDtoSet(event_monitor_.getWatchFd(
+                               isc::util::WatchedThread::TERMINATE),
+                           maxfd, &sockets);
+
+                // Wait until network event or terminate event.
+                int result = select(maxfd + 1, &sockets, 0, 0, 0);
+
+                if (result == 0) {
+                    // Timeout expired, but there is no timeout, should never
+                    // happen.
+                    continue;
+
+                } else if (result < 0) {
+                    // Error
+                    event_monitor_.setError(strerror(errno));
+                    continue;
+                }
+
+                // Check if monitor is being stopped.
+                if (event_monitor_.shouldTerminate()) {
+                    return;
+                }
+
+                // Receive event message.
+                Netlink::NetlinkMessages link_info;
+                netlink.rtnl_process_reply(link_info, interfaces);
+
+                // Check if the received message is relevant to triggering
+                // interface redetection.
+                if (link_info.empty() ||
+                    (link_info.at(0)->nlmsg_type != RTM_NEWLINK &&
+                     link_info.at(0)->nlmsg_type != RTM_NEWADDR)) {
+                    continue;
+                }
+
+                // Redetect interfaces to take the newly brought up interface
+                // into account. Simulate a re-detect.
+                clearIfaces();
+                detectIfaces();
+
+                // Sleep 1s before reconfiguring. Empirically, it seems that
+                // interfaces are not always ready immediately after new link or
+                // new address.
+                sleep(1);
+
+                // Reconfigure to start listening on the new interfaces.
+                kill(getpid(), SIGHUP);
+            }
+        } catch (std::exception const& ex) {
+            std::cout << ex.what() << std::endl;
+        } catch (...) {
+            std::cout << "..." << std::endl;
+            abort();
+        }
+    });
 }
 
 /// @brief sets flag_*_ fields.
