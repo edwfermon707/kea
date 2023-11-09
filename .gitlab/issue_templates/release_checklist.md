@@ -9,7 +9,7 @@ This is thoroughly documented in [the Kea Release Process guide](https://wiki.is
 
 ## Pre-Release Preparation
 
-Some of those checks and updates can be made before the actual freeze. For new stable releases or maintenance releases, please don't use `kea-dev` build farm. Use dedicated build farm for each release cycle.
+Some of these checks and updates can be made before the actual freeze. For new stable releases or maintenance releases, please don't use the `kea-dev` build farm; use a dedicated build farm for each release cycle.
 
 1. [ ] Check Jenkins results:
    1. [ ] Check Jenkins jobs for failures: [distcheck](https://jenkins.aws.isc.org/job/kea-dev/job/distcheck/), etc...
@@ -106,7 +106,7 @@ This is the last moment to freeze code! :snowflake:
       1. next rc# if this is a respin after some fixes (note: it is not possible to pick previous rc number - it will result in an error)
    1. Submit the job that will automatically:
       1. Upload the tarballs and if this is not the final version:
-      1. Create a GitLab issue for sanity checks, put there the announcement
+      1. Create a GitLab issue for sanity checks, put the announcement there
       1. Send Sanity Checks announcement on the Kea/DHCP channel on Mattermost.\
          The announcement includes:
          - a link to chapter 4 Sanity Checks of the release process: [KeaReleaseProcess - SanityChecks](https://wiki.isc.org/bin/view/QA/KeaReleaseProcess#4.%20Sanity%20Checks)
@@ -132,7 +132,7 @@ Now it's time to publish the code.
        - Open an issue on [the signing repository](https://gitlab.isc.org/isc-private/signing/-/issues) for signing final tarballs on repo.isc.org.
        - Create Git tags `Kea-a.b.c` in Kea main and premium repositories.
        - If release engineer is holding personal signing key, please use [sign, verify, and upload script](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/build/sign_kea_and_upload_asc.sh).
-       - If release engineer do NOT have signing key, please contact team member.
+       - If release engineer does NOT have signing key, please contact team member.
  1. [ ] Confirm that the tarballs have the checksums mentioned on the signing ticket.
  1. [ ] Wait for clearance from Security Officer to proceed with the public release (if applicable). If this is a security release, next steps will be impacted by CVE checklist.
  1. [ ] Login to repo.isc.org and upload final tarball to public ftp using make-available script (only OPS can remove incorrectly uploaded tarballs).
@@ -161,10 +161,10 @@ Now it's time to publish the code.
 ## Marketing
 
 1. [ ] Publish links to downloads on ISC website.
-1. [ ] Update the supported versions document in the Portal (if there are stable versions released), update the Kea document in the portal.
+1. [ ] Update the supported versions document in the Salesforce portal (if there are stable versions released), and update the Kea document in the portal.
 1. [ ] If it is a new `major.minor` version, SWENG will have created a new repo in Cloudsmith, which will need the customer tokens migrated from an existing repo. Verify that the KB on installing from Cloudsmith has also been updated, then update the Kea document in the SF portal and notify support customers that this new private repo exists.
 1. [ ] If a new Cloudsmith repository is used, make sure that the Zapier scripts are updated.
-   - If those are not updated, there was en error made during preparation for new stable release, please contact QA team and coordinate fix.
+   - If those are not updated, there was en error made during preparation for new stable release. Please contact QA team and coordinate fix.
 1. [ ] Upload Premium hooks tarball to SendOwl. Create a new product if a new branch, otherwise update existing product. Send notifications to existing subscribers of the new version.
 1. [ ] Write release email to _kea-announce_.
 1. [ ] Write email to _kea-users_ (if a major release).
@@ -174,7 +174,7 @@ Now it's time to publish the code.
 1. [ ] Update [Kea page on website if any new hooks](https://www.isc.org/kea/).
 1. [ ] Update Kea Premium and Kea Subscription data sheets if any new hooks.
 1. [ ] Update [significant features matrix](https://kb.isc.org/docs/en/aa-01615) (if any significant new features).
-1. [ ] Contact Support team, find a person who will continue this release and assign this issue to him.
+1. [ ] Contact Support team, find a person who will continue this release and assign this issue to them.
 
 ## Support
 
