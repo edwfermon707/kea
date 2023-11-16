@@ -48,8 +48,9 @@ The following steps may involve changing files in the repository.
 
 1. [ ] Run [update-code-for-release.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/build/update-code-for-release.py) \
    Example command: `GITLAB_TOKEN='...' ./update-code-for-release.py 2.3.4 --repo-dir ~/isc/repos/kea/`. \
-   Help: `GITLAB_TOKEN='...' ./update-code-for-release.py --help`\
-   This script makes the following changes and actions:
+   Help: `GITLAB_TOKEN='...' ./update-code-for-release.py --help`. \
+   The script requires an explicit flag for stable and maintenances releases e.g. `--repo-branch v2_4`. \
+   The script makes the following changes and actions:
    1. Runs [prepare_kea_release.sh](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/build/prepare_kea_release.sh) that:
       1. Adds release entries in ChangeLogs.
       1. Updates Kea version in configure.ac.
@@ -57,7 +58,7 @@ The following steps may involve changing files in the repository.
       1. Sorts message files.
       1. Regenerates message files headers.
    1. Regenerates parsers using Bison from Docker
-1. [ ] Run the script again with the `--upload` flag which:
+1. [ ] Run the script again with the `--upload-only` flag which:
    1. Creates an issue in GitLab for release changes in kea repo.
    1. Creates branches and merge requests for kea and kea-premium.
    1. Commits the changes in both repos.
