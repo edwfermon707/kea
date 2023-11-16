@@ -34,6 +34,13 @@ Some of these checks and updates can be made before the actual freeze. For new s
    1. If a new Cloudsmith repository is used, then:
       1. [ ] Make sure freeradius packages are uploaded to the Cloudsmith repository or copied from a previous repository.
       1. [ ] Make sure access tokens have been synchronized from previous Cloudsmith repositories and to the [check-pkgs.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/pkgs-check/check-pkgs.py) QA tool.
+ 1. [ ] Check that Docker images can be uploaded to Cloudsmith. Run [build-upload-docker](https://jenkins.aws.isc.org/job/kea-dev/job/build-upload-docker/).
+    * Make sure the right package job is selected under `Packages`.
+    * Tick `Upload`.
+    * Leave `TestProdRepos` to `testing`.
+    * Leave `versionTag` ticked.
+    * Tick `latestTag` if this is a stable or a maintenance release.
+    * Press `Build`.
 1. [ ] Check if ReadTheDocs can build Kea documentation. Alternatively, look for failures in emails if you know that the ReadTheDocs webhook is working.
    1. Trigger rebuilding docs on [readthedocs.org](https://readthedocs.org/projects/kea/builds) and wait for the build to complete.
 
@@ -146,6 +153,13 @@ Now it's time to publish the code.
     1. Pick your selected pkg build in the `Packages` field, the corresponding tarball build in the `Tarball` field, `PrivPubRepos: "both"`, `TarballOrPkg: "both"`, `TestProdRepos: "production"` and click `Build`.
        - This step also verifies sign files.
     1. When it finishes run check: [releases-pkgs-check](https://jenkins.aws.isc.org/job/kea-dev/job/release-pkgs-check/).
+ 1. [ ] Build and upload Docker images to Cloudsmith. Run [build-upload-docker](https://jenkins.aws.isc.org/job/kea-dev/job/build-upload-docker/).
+    * Make sure the right package job is selected under `Packages`.
+    * Tick `Upload`.
+    * Change `TestProdRepos` to `production`.
+    * Leave `versionTag` ticked.
+    * Tick `latestTag` if this is a stable or a maintenance release.
+    * Press `Build`.
  1. [ ] Update ReadTheDocs:
     1. Trick ReadTheDocs into pulling the latest tags. Click `Build version` on [readthedocs.org](https://readthedocs.org/projects/kea/builds).
     1. Publish currently released version. On the `Versions` tab, scroll down to `Activate a version`, search for `kea-a.b.c` and click `Activate`.
