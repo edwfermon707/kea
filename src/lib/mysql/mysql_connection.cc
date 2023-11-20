@@ -348,7 +348,6 @@ MySqlConnection::getVersion(const ParameterMap& parameters) {
 void
 MySqlConnection::ensureSchemaVersion(const ParameterMap& parameters) {
     pair<uint32_t, uint32_t> schema_version;
-    bool initialized(false);
     try {
         schema_version = getVersion(parameters);
     } catch (DbOperationError const& exception) {
@@ -359,11 +358,8 @@ MySqlConnection::ensureSchemaVersion(const ParameterMap& parameters) {
         // cause, it will fail again during initialization or during the
         // subsequent version retrieval and that is fine.
         initializeSchema(parameters);
-        initialized = true;
-    }
 
-    // Retrieve again because the initial retrieval failed.
-    if (initialized) {
+        // Retrieve again because the initial retrieval failed.
         schema_version = getVersion(parameters);
     }
 
@@ -381,10 +377,69 @@ MySqlConnection::ensureSchemaVersion(const ParameterMap& parameters) {
 
 void
 MySqlConnection::initializeSchema(const ParameterMap& parameters) {
+    if (parameters.count("readonly") && parameters.at("readonly") == "true") {
+        // The readonly flag is historically used for host backends. Still, if
+        // enabled, it is a strong indication that we should not meDDLe with it.
+        return;
+    }
+
+    // Convert parameters.
+    vector<string> kea_admin_parameters(toKeaAdminParameters(parameters));
+    kea_admin_parameters.insert(kea_admin_parameters.begin(), "db-init");
+
+    // Run.
     IOServicePtr io_service(new IOService());
-    ProcessSpawn kea_admin(io_service, KEA_ADMIN, {"db-init", "mysql"});
-    kea_admin.spawn();
+    ProcessSpawn kea_admin(io_service, KEA_ADMIN, kea_admin_parameters);
+    DB_LOG_INFO(MYSQL_INITIALIZE_SCHEMA).arg(kea_admin.getCommandLine());
+    pid_t const pid(kea_admin.spawn());
     io_service->run_one();
+    if (kea_admin.isRunning(pid)) {
+        isc_throw(SchemaInitializationFailed, "kea-admin still running");
+    }
+    int const exit_code(kea_admin.getExitStatus(pid));
+    if (exit_code != 0) {
+        isc_throw(SchemaInitializationFailed, "Expected exit code 0. Got " << exit_code);
+    }
+}
+
+vector<string> MySqlConnection::toKeaAdminParameters(ParameterMap const& params) {
+    vector<string> result{"mysql"};
+    for (auto const& p : params) {
+        string const& keyword(p.first);
+        string const& value(p.second);
+
+        // These Kea parameters are the same as the kea-admin parameters.
+        if (keyword == "user" ||
+            keyword == "password" ||
+            keyword == "host" ||
+            keyword == "port" ||
+            keyword == "name"||
+            keyword == "connect-timeout") {
+            result.push_back("--" + keyword);
+            result.push_back(value);
+            continue;
+        }
+
+        // These Kea parameters do not have a direct kea-admin equivalent.
+        // But they do have a mariadb client flag equivalent.
+        // We pass them to kea-admin using the --extra flag.
+        static unordered_map<string, string> conversions{
+            {"cihper-list", "ssl-cipher"},
+            {"cert-file", "ssl-cert"},
+            {"key-file", "ssl-key"},
+            {"trust-anchor", "ssl-ca"},
+        };
+        bool extra_flag_added(false);
+        if (conversions.count(keyword)) {
+            if (!extra_flag_added) {
+                result.push_back("--extra");
+                extra_flag_added = true;
+            }
+            result.push_back("--" + conversions.at(keyword));
+            result.push_back(value);
+        }
+    }
+    return result;
 }
 
 // Prepared statement setup.  The textual form of an SQL statement is stored
@@ -440,7 +495,7 @@ MySqlConnection::~MySqlConnection() {
     // Free up the prepared statements, ignoring errors. (What would we do
     // about them? We're destroying this object and are not really concerned
     // with errors on a database connection that is about to go away.)
-    for (int i = 0; i < statements_.size(); ++i) {
+    for (size_t i = 0; i < statements_.size(); ++i) {
         if (statements_[i] != NULL) {
             (void) mysql_stmt_close(statements_[i]);
             statements_[i] = NULL;
