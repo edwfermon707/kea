@@ -269,6 +269,26 @@ public:
     static std::pair<uint32_t, uint32_t>
     getVersion(const ParameterMap& parameters);
 
+    /// @brief Retrieve schema version, validate it against the hardcoded
+    ///     version, and attempt to initialize the schema if there is an
+    ///     error during retrieval.
+    ///
+    /// @param parameters A data structure relating keywords and values
+    ///     concerned with the database.
+    ///
+    /// @throw isc::db::ScehamInitializationFailed if the initialization fails
+    static void
+    ensureSchemaVersion(const ParameterMap& parameters);
+
+    /// @brief Initialize schema.
+    ///
+    /// @param parameters A data structure relating keywords and values
+    ///     concerned with the database.
+    ///
+    /// @throw isc::db::ScehamInitializationFailed if the initialization fails
+    static void
+    initializeSchema(const ParameterMap& parameters);
+
     /// @brief Prepare Single Statement
     ///
     /// Creates a prepared statement from the text given and adds it to the

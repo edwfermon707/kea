@@ -2223,17 +2223,7 @@ MySqlLeaseMgr::MySqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
     timer_name_ += boost::lexical_cast<std::string>(reinterpret_cast<uint64_t>(this));
     timer_name_ += "]DbReconnectTimer";
 
-    // Validate schema version first.
-    std::pair<uint32_t, uint32_t> code_version(MYSQL_SCHEMA_VERSION_MAJOR,
-                                               MYSQL_SCHEMA_VERSION_MINOR);
-    std::pair<uint32_t, uint32_t> db_version = getVersion();
-    if (code_version != db_version) {
-        isc_throw(DbOpenError,
-                  "MySQL schema version mismatch: need version: "
-                      << code_version.first << "." << code_version.second
-                      << " found version: " << db_version.first << "."
-                      << db_version.second);
-    }
+    MySqlConnection::ensureSchemaVersion(parameters);
 
     // Create an initial context.
     pool_.reset(new MySqlLeaseContextPool());

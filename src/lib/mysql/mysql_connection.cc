@@ -6,6 +6,8 @@
 
 #include <config.h>
 
+#include <asiolink/io_service.h>
+#include <asiolink/process_spawn.h>
 #include <database/db_log.h>
 #include <exceptions/exceptions.h>
 #include <mysql/mysql_connection.h>
@@ -14,11 +16,12 @@
 #include <boost/lexical_cast.hpp>
 
 #include <algorithm>
-#include <stdint.h>
-#include <string>
+#include <cstdint>
 #include <limits>
+#include <string>
 
 using namespace isc;
+using namespace isc::asiolink;
 using namespace std;
 
 namespace isc {
@@ -340,6 +343,48 @@ MySqlConnection::getVersion(const ParameterMap& parameters) {
         // Send the exception to the caller.
         throw;
     }
+}
+
+void
+MySqlConnection::ensureSchemaVersion(const ParameterMap& parameters) {
+    pair<uint32_t, uint32_t> schema_version;
+    bool initialized(false);
+    try {
+        schema_version = getVersion(parameters);
+    } catch (DbOperationError const& exception) {
+        // This may fail for a variety of reasons. We don't have to necessarily
+        // check for the error that is most common in situations where the
+        // database is not initialized which would sound something like
+        // "table schema_version does not exist". If the error had another
+        // cause, it will fail again during initialization or during the
+        // subsequent version retrieval and that is fine.
+        initializeSchema(parameters);
+        initialized = true;
+    }
+
+    // Retrieve again because the initial retrieval failed.
+    if (initialized) {
+        schema_version = getVersion(parameters);
+    }
+
+    // Check that the versions match.
+    pair<uint32_t, uint32_t> const expected_version(MYSQL_SCHEMA_VERSION_MAJOR,
+                                                    MYSQL_SCHEMA_VERSION_MINOR);
+    if (schema_version != expected_version) {
+        isc_throw(DbOpenError,
+                  "MySQL schema version mismatch: expected version: "
+                  << expected_version.first << "." << expected_version.second
+                  << ", found version: " << schema_version.first << "."
+                  << schema_version.second);
+    }
+}
+
+void
+MySqlConnection::initializeSchema(const ParameterMap& parameters) {
+    IOServicePtr io_service(new IOService());
+    ProcessSpawn kea_admin(io_service, KEA_ADMIN, {"db-init", "mysql"});
+    kea_admin.spawn();
+    io_service->run_one();
 }
 
 // Prepared statement setup.  The textual form of an SQL statement is stored
