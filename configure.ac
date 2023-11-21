@@ -338,6 +338,12 @@ if less_than "5" "$CXX_DUMP_VERSION"; then
        CPPP="$CPPP -P"
 fi
 
+# Kea does not support unicode aka wide character strings. Proactively undefine
+# the most commonly used macros in this regard _UNICODE and UNICODE at the
+# compiler level in hopes that any dependency that exposes a header to Kea that
+# would otherwise have unicode enabled, disables it.
+KEA_CXXFLAGS="${KEA_CXXFLAGS} -U_UNICODE -UUNICODE"
+
 case "$host" in
 *-solaris*)
         MULTITHREADING_FLAG=-pthreads
