@@ -622,7 +622,7 @@ public:
         listener_->stop();
         listener2_->stop();
         listener3_->stop();
-        io_service_->getIOService().reset();
+        io_service_->restart();
         io_service_->poll();
         MultiThreadingMgr::instance().setMode(false);
     }
@@ -2070,7 +2070,7 @@ public:
         // Stop the IO service. This should cause the thread to terminate.
         io_service_->stop();
         thread->join();
-        io_service_->getIOService().reset();
+        io_service_->restart();
         io_service_->poll();
     }
 
@@ -2120,7 +2120,7 @@ public:
         // Stop the IO service. This should cause the thread to terminate.
         io_service_->stop();
         thread->join();
-        io_service_->getIOService().reset();
+        io_service_->restart();
         io_service_->poll();
     }
 
@@ -4542,7 +4542,7 @@ TEST_F(HAServiceTest, processMaintenanceStartSuccess) {
     // Stop the IO service. This should cause the thread to terminate.
     io_service_->stop();
     thread->join();
-    io_service_->getIOService().reset();
+    io_service_->restart();
     io_service_->poll();
 
     // The partner of our server is online and should have responded with
@@ -4594,7 +4594,7 @@ TEST_F(HAServiceTest, processMaintenanceStartSuccessAuthorized) {
     // Stop the IO service. This should cause the thread to terminate.
     io_service_->stop();
     thread->join();
-    io_service_->getIOService().reset();
+    io_service_->restart();
     io_service_->poll();
 
     // The partner of our server is online and should have responded with
@@ -4637,7 +4637,7 @@ TEST_F(HAServiceTest, processMaintenanceStartPartnerDown) {
     // Stop the IO service. This should cause the thread to terminate.
     io_service_->stop();
     thread->join();
-    io_service_->getIOService().reset();
+    io_service_->restart();
     io_service_->poll();
 
     // The partner of our server is online and should have responded with
@@ -4681,7 +4681,7 @@ TEST_F(HAServiceTest, processMaintenanceStartPartnerError) {
     // Stop the IO service. This should cause the thread to terminate.
     io_service_->stop();
     thread->join();
-    io_service_->getIOService().reset();
+    io_service_->restart();
     io_service_->poll();
 
     ASSERT_TRUE(rsp);
@@ -4723,7 +4723,7 @@ TEST_F(HAServiceTest, processMaintenanceStartPartnerUnauthorized) {
     // Stop the IO service. This should cause the thread to terminate.
     io_service_->stop();
     thread->join();
-    io_service_->getIOService().reset();
+    io_service_->restart();
     io_service_->poll();
 
     ASSERT_TRUE(rsp);
@@ -4766,7 +4766,7 @@ TEST_F(HAServiceTest, processMaintenanceStartNotAllowed) {
     // Stop the IO service. This should cause the thread to terminate.
     io_service_->stop();
     thread->join();
-    io_service_->getIOService().reset();
+    io_service_->restart();
     io_service_->poll();
 
     ASSERT_TRUE(rsp);
@@ -4810,7 +4810,7 @@ TEST_F(HAServiceTest, processMaintenanceCancelSuccess) {
     // Stop the IO service. This should cause the thread to terminate.
     io_service_->stop();
     thread->join();
-    io_service_->getIOService().reset();
+    io_service_->restart();
     io_service_->poll();
 
     // The partner of our server is online and should have responded with
@@ -4861,7 +4861,7 @@ TEST_F(HAServiceTest, processMaintenanceCancelSuccessAuthorized) {
     // Stop the IO service. This should cause the thread to terminate.
     io_service_->stop();
     thread->join();
-    io_service_->getIOService().reset();
+    io_service_->restart();
     io_service_->poll();
 
     // The partner of our server is online and should have responded with
@@ -4904,7 +4904,7 @@ TEST_F(HAServiceTest, processMaintenanceCancelPartnerError) {
     // Stop the IO service. This should cause the thread to terminate.
     io_service_->stop();
     thread->join();
-    io_service_->getIOService().reset();
+    io_service_->restart();
     io_service_->poll();
 
     // The partner should have responded with an error.
@@ -4950,7 +4950,7 @@ TEST_F(HAServiceTest, processMaintenanceCancelPartnerUnauthorized) {
     // Stop the IO service. This should cause the thread to terminate.
     io_service_->stop();
     thread->join();
-    io_service_->getIOService().reset();
+    io_service_->restart();
     io_service_->poll();
 
     // The partner should have responded with an error.
